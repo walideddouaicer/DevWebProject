@@ -1,18 +1,14 @@
 from django.contrib import admin
-from .models import StudentProfile, Project, ProjectDeliverable
+from .models import StudentProfile, Project, ProjectDeliverable, ProjectMilestone
 
-class ProjectDeliverableInline(admin.TabularInline):
-    model = ProjectDeliverable
-    extra = 1  # Show one empty form by default
+# Add a nice admin interface for StudentProfile
+class StudentProfileAdmin(admin.ModelAdmin):
+    list_display = ('student_id', 'user', 'year_of_study', 'department')
+    search_fields = ('student_id', 'user__username')
+    list_filter = ('year_of_study', 'department')
 
-class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('title', 'project_type', 'student', 'status', 'start_date')
-    list_filter = ('project_type', 'status', 'start_date')
-    search_fields = ('title', 'description', 'technologies')
-    inlines = [ProjectDeliverableInline]
-
-# StudentProfile is already registered, so we don't register it again
-# admin.site.register(StudentProfile)  
-
-admin.site.register(Project, ProjectAdmin)
+# Register all models
+admin.site.register(StudentProfile, StudentProfileAdmin)
+admin.site.register(Project)
 admin.site.register(ProjectDeliverable)
+admin.site.register(ProjectMilestone)

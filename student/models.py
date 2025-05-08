@@ -11,7 +11,7 @@ class StudentProfile(models.Model):
     department = models.CharField(max_length=100)
     
     def __str__(self):
-        return f"{self.user.first_name} {self.user.last_name} ({self.student_id})"
+        return f"{self.user.get_full_name() or self.user.username} ({self.student_id}) - {self.department}"
     
 
 
@@ -60,6 +60,8 @@ class Project(models.Model):
 
 
 
+
+
 # Project Deliverable model
 class ProjectDeliverable(models.Model):
     DELIVERABLE_TYPES = [
@@ -77,3 +79,20 @@ class ProjectDeliverable(models.Model):
     
     def __str__(self):
         return f"{self.name} - {self.project.title}"
+
+
+
+
+class ProjectMilestone(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='milestones')
+    title = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    due_date = models.DateField()
+    completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.title
+    
+    class Meta:
+        ordering = ['due_date']

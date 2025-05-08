@@ -177,6 +177,104 @@
             background-color: #f8d7da;
             color: #721c24;
         }
+        .collaborators-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .collaborator-badge {
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+        }
+        .collaborator-name {
+            font-weight: bold;
+        }
+        .collaborator-id {
+            color: #6c757d;
+            margin-left: 5px;
+            font-size: 0.9em;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-header h3 {
+            margin: 0;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 30px;
+        }
+        .timeline:before {
+            content: "";
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: -40px;
+            top: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            border: 2px solid white;
+            z-index: 1;
+        }
+        .timeline-item.completed .timeline-marker {
+            background-color: #198754;
+        }
+        .timeline-content {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 3px solid #3a6ea5;
+        }
+        .timeline-item.completed .timeline-content {
+            border-left-color: #198754;
+        }
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .timeline-header h4 {
+            margin: 0;
+        }
+        .timeline-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .due-date {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+        .btn-success {
+            background-color: #198754;
+        }
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #3a6ea5;
+            color: #3a6ea5;
+        }
     </style>
 </head>
 <body>
@@ -259,6 +357,61 @@
                     <h4>Dernière mise à jour</h4>
                     <p>{{ project.updated_at|date:"d/m/Y" }}</p>
                 </div>
+            </div>
+            
+            <div class="collaborators-section">
+                <h3>Collaborateurs</h3>
+                {% if project.collaborators.all %}
+                    <div class="collaborators-list">
+                        {% for collaborator in project.collaborators.all %}
+                            <div class="collaborator-badge">
+                                <span class="collaborator-name">{{ collaborator.user.get_full_name|default:collaborator.user.username }}</span>
+                                <span class="collaborator-id">({{ collaborator.student_id }})</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>Aucun collaborateur n'a été ajouté à ce projet.</p>
+                {% endif %}
+            </div>
+            
+            <div class="timeline-section">
+                <div class="section-header">
+                    <h3>Chronologie du projet</h3>
+                    <a href="{% url 'add_milestone' project.id %}" class="btn">Ajouter un jalon</a>
+                </div>
+                
+                {% if project.milestones.all %}
+                    <div class="timeline">
+                        {% for milestone in project.milestones.all %}
+                            <div class="timeline-item {% if milestone.completed %}completed{% endif %}">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-header">
+                                        <h4>{{ milestone.title }}</h4>
+                                        <div class="timeline-actions">
+                                            <span class="due-date">Échéance: {{ milestone.due_date }}</span>
+                                            <form method="post" action="{% url 'toggle_milestone' milestone.id %}" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn {% if milestone.completed %}btn-success{% else %}btn-outline{% endif %}">
+                                                    {% if milestone.completed %}Terminé{% else %}Marquer comme terminé{% endif %}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    {% if milestone.description %}
+                                        <p>{{ milestone.description }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>Aucun jalon n'a été défini pour ce projet.</p>
+                        <a href="{% url 'add_milestone' project.id %}" class="btn">Ajouter un jalon</a>
+                    </div>
+                {% endif %}
             </div>
             
             <div class="project-description">

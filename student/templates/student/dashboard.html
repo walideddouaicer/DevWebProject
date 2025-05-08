@@ -217,6 +217,14 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label for="view">Afficher:</label>
+                    <select id="view" name="view">
+                        <option value="all" {% if view == 'all' %}selected{% endif %}>Tous les projets</option>
+                        <option value="mine" {% if view == 'mine' %}selected{% endif %}>Mes projets</option>
+                        <option value="collaborated" {% if view == 'collaborated' %}selected{% endif %}>Projets où je collabore</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <button type="submit" class="btn">Filtrer</button>
                     {% if search_query or project_type or status %}
                         <a href="{% url 'dashboard' %}" class="btn" style="background-color: #6c757d;">Réinitialiser</a>

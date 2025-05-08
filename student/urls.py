@@ -9,4 +9,6 @@ urlpatterns = [
     path('projects/<int:project_id>/delete/', views.project_delete, name='project_delete'),
     path('projects/<int:project_id>/status/<str:new_status>/', views.project_change_status, name='project_change_status'),
     path('projects/<int:project_id>/upload/', views.upload_deliverable, name='upload_deliverable'),
+    path('projects/<int:project_id>/milestone/add/', views.add_milestone, name='add_milestone'),
+    path('milestone/<int:milestone_id>/toggle/', views.toggle_milestone, name='toggle_milestone'),
 ]

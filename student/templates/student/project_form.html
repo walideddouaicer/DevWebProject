@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ENSA Project Manager - {{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
         /* Basic styling for the form */
         body {
@@ -100,6 +103,56 @@
             background-color: #f8d7da;
             color: #721c24;
         }
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px 8px;
+            background-color: white;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #f0f7ff;
+            border: 1px solid #c2d9f8;
+            border-radius: 20px;
+            padding: 4px 10px;
+            margin: 4px 5px 4px 0;
+            font-size: 0.9em;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            margin-right: 5px;
+            color: #5c8fbd;
+            border-right: none;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+            background: none;
+            color: #dc3545;
+        }
+        .select2-container--open .select2-dropdown {
+            border-color: #80bdff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .select2-search--dropdown .select2-search__field {
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 6px;
+        }
+        .select2-results__option {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #3a6ea5;
+        }
+        .student-result {
+            padding: 2px 0;
+        }
+        .student-name {
+            font-weight: 500;
+        }
+        .student-info {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
@@ -180,6 +233,17 @@
                     {% endif %}
                 </div>
                 
+                <div class="form-group">
+                    <label for="id_collaborators">Collaborateurs:</label>
+                    {{ form.collaborators }}
+                    {% if form.collaborators.help_text %}
+                        <small>{{ form.collaborators.help_text }}</small>
+                    {% endif %}
+                    {% if form.collaborators.errors %}
+                        <div class="form-error">{{ form.collaborators.errors }}</div>
+                    {% endif %}
+                </div>
+                
                 <div class="form-actions">
                     <a href="{% url 'dashboard' %}" class="btn btn-secondary">Annuler</a>
                     <button type="submit" class="btn">Sauvegarder</button>
@@ -187,5 +251,41 @@
             </form>
         </div>
     </div>
+    <script>
+        $(document).ready(function() {
+            $('#id_collaborators').select2({
+                placeholder: 'Rechercher un collaborateur...',
+                allowClear: true,
+                width: '100%',
+                maximumSelectionLength: 10,
+                templateResult: formatResult,
+                templateSelection: formatSelection,
+                language: {
+                    maximumSelected: function() {
+                        return "Vous pouvez sélectionner 10 collaborateurs maximum";
+                    }
+                }
+            });
+            function formatResult(student) {
+                if (!student.id) return student.text;
+                const match = student.text.match(/(.+) \((\d+)\)/);
+                if (match) {
+                    const name = match[1];
+                    const id = match[2];
+                    return $(
+                        `<div class="student-result">
+                            <div class="student-name">${name}</div>
+                            <div class="student-info">ID: ${id}</div>
+                        </div>`
+                    );
+                }
+                return student.text;
+            }
+            function formatSelection(student) {
+                return student.text;
+            }
+        });
+    </script>
+
 </body>
 </html>

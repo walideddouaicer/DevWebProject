@@ -6,6 +6,11 @@ from .forms import ProjectForm
 from django.contrib import messages
 from .forms import DeliverableForm
 from .forms import ProjectDeliverable
+from .forms import MilestoneForm
+from .models import ProjectMilestone
+from django.db.models import Q
+
+
 
 @login_required
 def dashboard(request):
@@ -17,9 +22,17 @@ def dashboard(request):
         search_query = request.GET.get('search', '')
         project_type = request.GET.get('type', '')
         status = request.GET.get('status', '')
+        view = request.GET.get('view', 'all')  # 'all', 'mine', or 'collaborated'
         
         # Start with all projects for this student
-        all_projects = Project.objects.filter(student=student)
+        if view == 'mine':
+            all_projects = Project.objects.filter(student=student)
+        elif view == 'collaborated':
+            all_projects = Project.objects.filter(collaborators=student)
+        else:  # 'all' - default
+            all_projects = Project.objects.filter(
+                Q(student=student) | Q(collaborators=student)
+            ).distinct()
         
         # Apply filters if provided
         if search_query:
@@ -58,6 +71,7 @@ def dashboard(request):
             'status': status,
             'project_type_choices': project_type_choices,
             'status_choices': status_choices,
+            'view': view,
         }
         
         return render(request, 'student/dashboard.html', context)
@@ -83,6 +97,10 @@ def project_create(request):
             project.status = 'draft'  # Set initial status
             project.save()
             
+            # This is needed to save many-to-many relationships
+            form.save_m2m()
+            
+            messages.success(request, "Projet créé avec succès.")
             # Redirect to the dashboard or project detail page
             return redirect('dashboard')
     else:
@@ -123,24 +141,50 @@ def project_detail(request, project_id):
 
 
 @login_required
+def project_create(request):
+    student = get_object_or_404(StudentProfile, user=request.user)
+    
+    if request.method == 'POST':
+        form = ProjectForm(request.POST, current_student=student)
+        if form.is_valid():
+            project = form.save(commit=False)
+            project.student = student
+            project.status = 'draft'
+            project.save()
+            
+            # This is needed to save many-to-many relationships
+            form.save_m2m()
+            
+            messages.success(request, "Projet créé avec succès.")
+            return redirect('project_detail', project_id=project.id)
+    else:
+        form = ProjectForm(current_student=student)
+    
+    context = {
+        'form': form,
+        'title': 'Créer un nouveau projet'
+    }
+    
+    return render(request, 'student/project_form.html', context)
+
+@login_required
 def project_edit(request, project_id):
-    """View to edit an existing project"""
     student = get_object_or_404(StudentProfile, user=request.user)
     project = get_object_or_404(Project, id=project_id, student=student)
     
-    # Don't allow editing if the project is already validated
+    #dont allow editing if the project is already validated
     if project.status == 'validated':
         messages.warning(request, "Les projets validés ne peuvent plus être modifiés.")
         return redirect('project_detail', project_id=project.id)
     
     if request.method == 'POST':
-        form = ProjectForm(request.POST, instance=project)
+        form = ProjectForm(request.POST, instance=project, current_student=student)
         if form.is_valid():
             form.save()
-            messages.success(request, "Le projet a été mis à jour avec succès.")
+            messages.success(request, "Projet mis à jour avec succès.")
             return redirect('project_detail', project_id=project.id)
     else:
-        form = ProjectForm(instance=project)
+        form = ProjectForm(instance=project, current_student=student)
     
     context = {
         'form': form,
@@ -149,6 +193,12 @@ def project_edit(request, project_id):
     }
     
     return render(request, 'student/project_form.html', context)
+
+
+
+
+
+
 
 
 @login_required
@@ -247,3 +297,52 @@ def project_delete(request, project_id):
     }
     
     return render(request, 'student/project_delete_confirm.html', context)
+
+
+
+
+
+@login_required
+def add_milestone(request, project_id):
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_object_or_404(
+        Project, 
+        Q(student=student) | Q(collaborators=student),
+        id=project_id,
+    )
+    
+    if request.method == 'POST':
+        form = MilestoneForm(request.POST)
+        if form.is_valid():
+            milestone = form.save(commit=False)
+            milestone.project = project
+            milestone.save()
+            messages.success(request, "Jalon ajouté avec succès.")
+            return redirect('project_detail', project_id=project.id)
+    else:
+        form = MilestoneForm()
+    
+    context = {
+        'form': form,
+        'project': project,
+        'title': 'Ajouter un jalon'
+    }
+    
+    return render(request, 'student/milestone_form.html', context)
+
+@login_required
+def toggle_milestone(request, milestone_id):
+    student = get_object_or_404(StudentProfile, user=request.user)
+    milestone = get_object_or_404(
+        ProjectMilestone,
+        id=milestone_id,
+        project__in=Project.objects.filter(
+            Q(student=student) | Q(collaborators=student)
+        )
+    )
+    
+    # Toggle completed status
+    milestone.completed = not milestone.completed
+    milestone.save()
+    
+    return redirect('project_detail', project_id=milestone.project.id)
