@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENSA Project Manager - Dashboard</title>
+    <style>
+        /* Basic styling for the dashboard */
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #3a6ea5;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            padding: 0 20px;
+        }
+        .welcome-box {
+            background-color: white;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background-color: white;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card h3 {
+            font-size: 2em;
+            margin: 0;
+            color: #3a6ea5;
+        }
+        .filter-section {
+            background-color: white;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+        .form-group {
+            margin-bottom: 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .projects-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .projects-table th, .projects-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .projects-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .projects-table tr:last-child td {
+            border-bottom: none;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .status-draft { background-color: #f8f9fa; color: #6c757d; }
+        .status-submitted { background-color: #cfe2ff; color: #0d6efd; }
+        .status-in_progress { background-color: #fff3cd; color: #ffc107; }
+        .status-pending_validation { background-color: #d1e7dd; color: #198754; }
+        .status-validated { background-color: #198754; color: white; }
+        .status-rejected { background-color: #f8d7da; color: #dc3545; }
+        .btn {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #3a6ea5;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #2d5986;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        .progress-bar-container {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #3a6ea5;
+        }
+        /* Progress levels based on status */
+        .progress-draft { width: 20%; }
+        .progress-submitted { width: 40%; }
+        .progress-in_progress { width: 60%; }
+        .progress-pending_validation { width: 80%; }
+        .progress-validated { width: 100%; background-color: #198754; }
+        .progress-rejected { width: 30%; background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ENSA Project Manager</h1>
+    </div>
+
+    <div class="container">
+        <div class="welcome-box">
+            <h2>Bienvenue, 
+                {% if student.user.first_name or student.user.last_name %}
+                    {{ student.user.first_name }} {{ student.user.last_name }}
+                {% else %}
+                    {{ student.user.username }}
+                {% endif %}
+            </h2>
+            <p>ID Étudiant: {{ student.student_id }}</p>
+            <p>Année: {{ student.year_of_study }}</p>
+            <p>Département: {{ student.department }}</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>{{ total_projects }}</h3>
+                <p>Projets au total</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ completed_projects }}</h3>
+                <p>Projets validés</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ in_progress_projects }}</h3>
+                <p>Projets en cours</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ pending_validation }}</h3>
+                <p>En attente de validation</p>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <h3>Recherche et filtres</h3>
+            <form method="get" class="filter-form">
+                <div class="form-group">
+                    <label for="search">Recherche:</label>
+                    <input type="text" id="search" name="search" value="{{ search_query }}" placeholder="Titre du projet...">
+                </div>
+                <div class="form-group">
+                    <label for="type">Type de projet:</label>
+                    <select id="type" name="type">
+                        <option value="">Tous les types</option>
+                        {% for type_code, type_name in project_type_choices.items %}
+                            <option value="{{ type_code }}" {% if project_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="status">Statut:</label>
+                    <select id="status" name="status">
+                        <option value="">Tous les statuts</option>
+                        {% for status_code, status_name in status_choices.items %}
+                            <option value="{{ status_code }}" {% if status == status_code %}selected{% endif %}>{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn">Filtrer</button>
+                    {% if search_query or project_type or status %}
+                        <a href="{% url 'dashboard' %}" class="btn" style="background-color: #6c757d;">Réinitialiser</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <h2>Projets actifs</h2>
+        <div style="margin-bottom: 20px;">
+            <a href="{% url 'project_create' %}" class="btn">Créer un nouveau projet</a>
+        </div>
+        {% if active_projects %}
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>Titre du projet</th>
+                        <th>Type</th>
+                        <th>Statut</th>
+                        <th>Progression</th>
+                        <th>Date de début</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in active_projects %}
+                        <tr>
+                            <td>{{ project.title }}</td>
+                            <td>
+                                {% if project.project_type == 'stage_initiation' %}
+                                    Stage d'initiation
+                                {% elif project.project_type == 'stage_ingenieur' %}
+                                    Stage d'ingénieur adjoint
+                                {% elif project.project_type == 'stage_pfe' %}
+                                    Stage de fin d'études (PFE)
+                                {% elif project.project_type == 'module' %}
+                                    Projet de module
+                                {% else %}
+                                    {{ project.project_type }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ project.status }}">
+                                    {% if project.status == 'draft' %}
+                                        Brouillon
+                                    {% elif project.status == 'submitted' %}
+                                        Soumis
+                                    {% elif project.status == 'in_progress' %}
+                                        En cours
+                                    {% elif project.status == 'completed' %}
+                                        Complété
+                                    {% elif project.status == 'pending_validation' %}
+                                        En attente
+                                    {% elif project.status == 'validated' %}
+                                        Validé
+                                    {% elif project.status == 'rejected' %}
+                                        Rejeté
+                                    {% else %}
+                                        {{ project.status }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar progress-{{ project.status }}"></div>
+                                </div>
+                            </td>
+                            <td>{{ project.start_date }}</td>
+                            <td>
+                                <a href="{% url 'project_detail' project.id %}" class="btn">Voir</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <p>Vous n'avez aucun projet actif pour le moment.</p>
+                <a href="#" class="btn">Créer un nouveau projet</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
