@@ -1,16 +1,35 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENSA Project Manager - Login</title>
-</head>
-<body>
-    <h1>Login</h1>
+{% extends "student/base.html" %}
+{% load static %}
+
+{% block title %}ENSA Project Manager - Login{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/confirmation.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="login-form">
+    <h2>Connexion</h2>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Login</button>
+        
+        <div class="form-group">
+            <label for="{{ form.username.id_for_label }}">Nom d'utilisateur:</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+                <div class="form-error">{{ form.username.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.password.id_for_label }}">Mot de passe:</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+                <div class="form-error">{{ form.password.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="btn">Connexion</button>
     </form>
-</body>
-</html>
+</div>
+{% endblock %}

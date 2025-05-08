@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'student'
+
 urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('projects/create/', views.project_create, name='project_create'),
@@ -11,4 +13,20 @@ urlpatterns = [
     path('projects/<int:project_id>/upload/', views.upload_deliverable, name='upload_deliverable'),
     path('projects/<int:project_id>/milestone/add/', views.add_milestone, name='add_milestone'),
     path('milestone/<int:milestone_id>/toggle/', views.toggle_milestone, name='toggle_milestone'),
+    path('projects/<int:project_id>/submit/', views.project_submit, name='project_submit'),
+    path('projects/<int:project_id>/approve/', views.project_approve, name='project_approve'),
+    path('projects/<int:project_id>/reject/', views.project_reject, name='project_reject'),
+    path('milestone/<int:milestone_id>/complete/', views.complete_milestone, name='complete_milestone'),
+    path('projects/<int:project_id>/collaborator/add/', views.add_collaborator, name='add_collaborator'),
+    path('projects/<int:project_id>/feedback/add/', views.add_feedback, name='add_feedback'),
+    path('invitations/', views.invitations_list, name='invitations_list'),
+    path('invitations/<int:invitation_id>/cancel/', views.cancel_invitation, name='cancel_invitation'),
+    path('invitations/<int:invitation_id>/<str:response>/', views.respond_to_invitation, name='respond_to_invitation'),
+    path('projects/<int:project_id>/collaborator/<int:collaborator_id>/remove/', views.remove_collaborator, name='remove_collaborator'),
+    
+    path('projects/<int:project_id>/comment/', views.add_comment, name='add_comment'),
+    path('projects/<int:project_id>/submit/', views.project_submit, name='project_submit'),
+    
+    
+
 ]

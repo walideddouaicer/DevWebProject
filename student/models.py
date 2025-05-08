@@ -96,3 +96,96 @@ class ProjectMilestone(models.Model):
     
     class Meta:
         ordering = ['due_date']
+
+
+
+
+# Collab Invitations
+class CollaborationInvitation(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'En attente'),
+        ('accepted', 'Acceptée'),
+        ('rejected', 'Refusée'),
+        ('expired', 'Expirée'),
+    ]
+    
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='invitations')
+    sender = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='sent_invitations')
+    recipient = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='received_invitations')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    message = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('project', 'recipient')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Invitation from {self.sender} to {self.recipient} for {self.project}"
+    
+
+
+
+# notifications
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('invitation', 'Invitation de collaboration'),
+        ('project_update', 'Mise à jour du projet'),
+        ('milestone', 'Jalon ajouté'),
+        ('deliverable', 'Livrable ajouté'),
+    ]
+    
+    recipient = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='notifications')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='notifications')
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Notification for {self.recipient}: {self.message[:30]}..."
+    
+
+
+# Add to models.py
+class ProjectActivity(models.Model):
+    ACTIVITY_TYPES = [
+        ('created', 'Création du projet'),
+        ('status_changed', 'Changement de statut'),
+        ('collaborator_added', 'Ajout de collaborateur'),
+        ('collaborator_removed', 'Retrait de collaborateur'),
+        ('milestone_added', 'Ajout de jalon'),
+        ('milestone_completed', 'Jalon complété'),
+        ('deliverable_added', 'Ajout de livrable'),
+    ]
+    
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='activities')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    activity_type = models.CharField(max_length=20, choices=ACTIVITY_TYPES)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.activity_type} on {self.project} by {self.user}"
+    
+
+
+# comments
+class ProjectComment(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Comment by {self.author} on {self.project}"

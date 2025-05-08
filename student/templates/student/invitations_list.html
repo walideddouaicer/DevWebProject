@@ -1,0 +1,87 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}ENSA Project Manager - Invitations de Collaboration{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+    <h1>Invitations de Collaboration</h1>
+    
+    <section class="card">
+        <h2>Invitations reçues</h2>
+        {% if received_invitations %}
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>Projet</th>
+                        <th>Envoyé par</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invitation in received_invitations %}
+                    <tr>
+                        <td>{{ invitation.project.title }}</td>
+                        <td>{{ invitation.sender }}</td>
+                        <td>{{ invitation.created_at|date:"d/m/Y" }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'student:respond_to_invitation' invitation.id 'accept' %}" class="btn">Accepter</a>
+                                <a href="{% url 'student:respond_to_invitation' invitation.id 'reject' %}" class="btn btn-danger">Refuser</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty-state">Aucune invitation en attente.</p>
+        {% endif %}
+    </section>
+    
+    <section class="card">
+        <h2>Invitations envoyées</h2>
+        {% if sent_invitations %}
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>Projet</th>
+                        <th>Envoyé à</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invitation in sent_invitations %}
+                    <tr>
+                        <td>{{ invitation.project.title }}</td>
+                        <td>{{ invitation.recipient }}</td>
+                        <td>{{ invitation.created_at|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="status-badge status-{{ invitation.status }}">
+                                {{ invitation.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'student:cancel_invitation' invitation.id %}" 
+                                class="btn btn-sm btn-danger"
+                                onclick="return confirm('Êtes-vous sûr de vouloir annuler cette invitation?')">
+                                    Annuler
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty-state">Aucune invitation envoyée en attente.</p>
+        {% endif %}
+    </section>
+{% endblock %}

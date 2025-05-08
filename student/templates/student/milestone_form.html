@@ -1,171 +1,59 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENSA Project Manager - {{ title }}</title>
-    <style>
-        /* Basic styling for the form */
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f7fa;
-        }
-        .container {
-            width: 90%;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            background-color: #3a6ea5;
-            color: white;
-            padding: 20px 0;
-            margin-bottom: 20px;
-        }
-        .header h1 {
-            margin: 0;
-            padding: 0 20px;
-        }
-        .form-box {
-            background-color: white;
-            border-radius: 5px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        textarea {
-            resize: vertical;
-        }
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #3a6ea5;
-            color: white;
-            text-decoration: none;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background-color: #2d5986;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-        }
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-        .form-actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        .form-error {
-            color: #dc3545;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-        }
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .alert-warning {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>ENSA Project Manager</h1>
-    </div>
+{% extends "student/base.html" %}
+{% load static %}
 
-    <div class="container">
-        {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        
-        <div class="form-box">
-            <div class="project-info">
-                <h3>{{ title }} pour : {{ project.title }}</h3>
-            </div>
-            
-            <form method="post">
-                {% csrf_token %}
-                
-                <div class="form-group">
-                    <label for="id_title">Titre:</label>
-                    {{ form.title }}
-                    {% if form.title.errors %}
-                        <div class="form-error">{{ form.title.errors }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-group">
-                    <label for="id_description">Description:</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                        <div class="form-error">{{ form.description.errors }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-group">
-                    <label for="id_due_date">Date d'échéance:</label>
-                    {{ form.due_date }}
-                    {% if form.due_date.errors %}
-                        <div class="form-error">{{ form.due_date.errors }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-group">
-                    <label for="id_completed">
-                        {{ form.completed }}
-                        Complété
-                    </label>
-                    {% if form.completed.errors %}
-                        <div class="form-error">{{ form.completed.errors }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-actions">
-                    <a href="{% url 'project_detail' project.id %}" class="btn btn-secondary">Annuler</a>
-                    <button type="submit" class="btn">Ajouter le jalon</button>
-                </div>
-            </form>
-        </div>
+{% block title %}ENSA Project Manager - {{ title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/project_form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="form-box">
+    <div class="project-info">
+        <h3>{{ title }} pour : {{ project.title }}</h3>
     </div>
-</body>
-</html>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_title">Titre:</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+                <div class="form-error">{{ form.title.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_description">Description:</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <div class="form-error">{{ form.description.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_due_date">Date d'échéance:</label>
+            {{ form.due_date }}
+            {% if form.due_date.errors %}
+                <div class="form-error">{{ form.due_date.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_completed">
+                {{ form.completed }}
+                Complété
+            </label>
+            {% if form.completed.errors %}
+                <div class="form-error">{{ form.completed.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-actions">
+            <a href="{% url 'student:project_detail' project.id %}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn">Ajouter le jalon</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

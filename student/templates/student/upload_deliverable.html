@@ -1,165 +1,50 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENSA Project Manager - {{ title }}</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f7fa;
-        }
-        .container {
-            width: 90%;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            background-color: #3a6ea5;
-            color: white;
-            padding: 20px 0;
-            margin-bottom: 20px;
-        }
-        .header h1 {
-            margin: 0;
-            padding: 0 20px;
-        }
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-        }
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .alert-warning {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .form-box {
-            background-color: white;
-            border-radius: 5px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #3a6ea5;
-            color: white;
-            text-decoration: none;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background-color: #2d5986;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-        }
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-        .form-actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        .form-error {
-            color: #dc3545;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-        .project-info {
-            margin-bottom: 20px;
-        }
-        .project-info h3 {
-            margin-top: 0;
-            color: #3a6ea5;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>ENSA Project Manager</h1>
-    </div>
+{% extends "student/base.html" %}
+{% load static %}
 
-    <div class="container">
-        {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        
-        <div class="form-box">
-            <div class="project-info">
-                <h3>Ajouter un livrable pour : {{ project.title }}</h3>
-            </div>
-            
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                
-                <div class="form-group">
-                    <label for="id_name">Nom du livrable:</label>
-                    {{ form.name }}
-                    {% if form.name.errors %}
-                        <div class="form-error">{{ form.name.errors }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-group">
-                    <label for="id_file_type">Type de fichier:</label>
-                    {{ form.file_type }}
-                    {% if form.file_type.errors %}
-                        <div class="form-error">{{ form.file_type.errors }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-group">
-                    <label for="id_file">Fichier:</label>
-                    {{ form.file }}
-                    {% if form.file.errors %}
-                        <div class="form-error">{{ form.file.errors }}</div>
-                    {% endif %}
-                    <small>Formats acceptés: PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR (max: 10MB)</small>
-                </div>
-                
-                <div class="form-actions">
-                    <a href="{% url 'project_detail' project.id %}" class="btn btn-secondary">Annuler</a>
-                    <button type="submit" class="btn">Ajouter le livrable</button>
-                </div>
-            </form>
-        </div>
+{% block title %}ENSA Project Manager - {{ title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/project_form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="form-box">
+    <div class="project-info">
+        <h3>Ajouter un livrable pour : {{ project.title }}</h3>
     </div>
-</body>
-</html>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_name">Nom du livrable:</label>
+            {{ form.name }}
+            {% if form.name.errors %}
+                <div class="form-error">{{ form.name.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_file_type">Type de fichier:</label>
+            {{ form.file_type }}
+            {% if form.file_type.errors %}
+                <div class="form-error">{{ form.file_type.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_file">Fichier:</label>
+            {{ form.file }}
+            {% if form.file.errors %}
+                <div class="form-error">{{ form.file.errors }}</div>
+            {% endif %}
+            <small>Formats acceptés: PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR (max: 10MB)</small>
+        </div>
+        
+        <div class="form-actions">
+            <a href="{% url 'student:project_detail' project.id %}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn">Ajouter le livrable</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
