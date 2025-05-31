@@ -25,8 +25,8 @@ urlpatterns = [
     path('projects/<int:project_id>/collaborator/<int:collaborator_id>/remove/', views.remove_collaborator, name='remove_collaborator'),
     
     path('projects/<int:project_id>/comment/', views.add_comment, name='add_comment'),
-    path('projects/<int:project_id>/submit/', views.project_submit, name='project_submit'),
     
-    
-
+    path('notifications/', views.notifications, name='notifications'),
+    path('notifications/<int:notification_id>/read/', views.mark_notification_read, name='mark_notification_read'),
+    path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
 ]

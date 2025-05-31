@@ -30,6 +30,12 @@ Base template for the student app.
                         <span class="badge">{{ invitation_count }}</span>
                         {% endif %}
                     </a>
+                    <a href="{% url 'student:notifications' %}" class="nav-link-with-badge">
+                        Notifications 
+                        {% if unread_notifications_count > 0 %}
+                        <span class="badge">{{ unread_notifications_count }}</span>
+                        {% endif %}
+                    </a>
                     <!-- Other links can be added here -->
                     <a href="{% url 'logout' %}">Déconnexion</a>
                 </div>

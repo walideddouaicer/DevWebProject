@@ -67,10 +67,11 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                'student.context_processors.invitation_count',
+                'student.context_processors.student_context',
             ],
         },
     },
@@ -140,15 +141,6 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
-
-
-
-
-
-
-
 
 
 # Email settings. this is for development, in production, we will use a real email service

@@ -1,0 +1,99 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}ENSA Project Manager - Notifications{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
+<style>
+.notification-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.notification-item.unread {
+    background-color: #e8f4ff;
+    border-left: 4px solid #3a6ea5;
+}
+
+.notification-item:hover {
+    transform: translateX(5px);
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-type {
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.notification-message {
+    margin-bottom: 5px;
+}
+
+.notification-time {
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.mark-all-read {
+    text-align: right;
+    margin-bottom: 15px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Notifications</h1>
+
+{% if notifications %}
+<div class="mark-all-read">
+    <form method="post" action="{% url 'student:mark_all_notifications_read' %}" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm">Marquer tout comme lu</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="notifications-container">
+    {% if notifications %}
+        {% for notification in notifications %}
+        <div class="notification-item {% if not notification.is_read %}unread{% endif %}">
+            <div class="notification-content">
+                <div class="notification-type">{{ notification.get_notification_type_display }}</div>
+                <div class="notification-message">{{ notification.message }}</div>
+                <div class="notification-time">{{ notification.created_at|timesince }} ago</div>
+            </div>
+            <div class="notification-actions">
+                <a href="{% url 'student:project_detail' notification.project.id %}" class="btn btn-sm">Voir le projet</a>
+                {% if not notification.is_read %}
+                <form method="post" action="{% url 'student:mark_notification_read' notification.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-secondary">Marquer comme lu</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <p>Aucune notification pour le moment.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

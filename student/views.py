@@ -13,6 +13,8 @@ from .utils import send_invitation_email
 from .models import ProjectComment
 from .models import ProjectActivity
 from django.db.models import Q
+from django.utils import timezone
+from .models import Notification
 
 # Add these stub functions for the new URL patterns
 @login_required
@@ -65,12 +67,124 @@ def add_collaborator(request, project_id):
 
 @login_required
 def add_feedback(request, project_id):
-    # Implementation will be added later
+    """Allow teachers to add feedback to projects"""
+    if not request.user.is_staff:
+        messages.error(request, "Seuls les enseignants peuvent ajouter des commentaires.")
+        return redirect('student:project_detail', project_id=project_id)
+    project = get_object_or_404(Project, id=project_id)
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+            # Check if teacher has a StudentProfile (they might not)
+            try:
+                author = StudentProfile.objects.get(user=request.user)
+            except StudentProfile.DoesNotExist:
+                # Create a temporary profile for the teacher or handle differently
+                messages.error(request, "Profil enseignant non trouvé. Contactez l'administrateur.")
+                return redirect('student:project_detail', project_id=project_id)
+            # Create a special comment marked as feedback
+            comment = ProjectComment(
+                project=project,
+                author=author,
+                content=f"[FEEDBACK ENSEIGNANT]\n{content}"
+            )
+            comment.save()
+            # Create notification for project owner
+            Notification.objects.create(
+                recipient=project.student,
+                project=project,
+                notification_type='project_update',
+                message=f"Nouveau feedback de {request.user.get_full_name()} sur votre projet"
+            )
+            messages.success(request, "Feedback ajouté avec succès.")
+        else:
+            messages.error(request, "Le feedback ne peut pas être vide.")
+    return redirect('student:project_detail', project_id=project.id)
+
+@login_required
+def project_approve(request, project_id):
+    """Teacher approves a submitted project"""
+    if not request.user.is_staff:
+        messages.error(request, "Seuls les enseignants peuvent approuver les projets.")
+        return redirect('student:project_detail', project_id=project_id)
+    project = get_object_or_404(Project, id=project_id)
+    if project.status != 'submitted':
+        messages.warning(request, "Seuls les projets soumis peuvent être approuvés.")
+        return redirect('student:project_detail', project_id=project_id)
+    project.status = 'in_progress'
+    project.save()
+    # Record activity
+    ProjectActivity.objects.create(
+        project=project,
+        user=request.user,
+        activity_type='status_changed',
+        description="Projet approuvé et passé en cours"
+    )
+    # Notify student
+    Notification.objects.create(
+        recipient=project.student,
+        project=project,
+        notification_type='project_update',
+        message="Votre projet a été approuvé et est maintenant en cours"
+    )
+    messages.success(request, "Projet approuvé avec succès.")
     return redirect('student:project_detail', project_id=project_id)
 
+@login_required
+def project_reject(request, project_id):
+    """Teacher rejects a submitted project"""
+    if not request.user.is_staff:
+        messages.error(request, "Seuls les enseignants peuvent rejeter les projets.")
+        return redirect('student:project_detail', project_id=project_id)
+    project = get_object_or_404(Project, id=project_id)
+    if project.status != 'submitted':
+        messages.warning(request, "Seuls les projets soumis peuvent être rejetés.")
+        return redirect('student:project_detail', project_id=project_id)
+    project.status = 'rejected'
+    project.save()
+    # Record activity
+    ProjectActivity.objects.create(
+        project=project,
+        user=request.user,
+        activity_type='status_changed',
+        description="Projet rejeté - révisions nécessaires"
+    )
+    # Notify student
+    Notification.objects.create(
+        recipient=project.student,
+        project=project,
+        notification_type='project_update',
+        message="Votre projet a été rejeté. Veuillez consulter les commentaires et resoumettre."
+    )
+    messages.info(request, "Projet rejeté. L'étudiant peut maintenant le modifier et resoumettre.")
+    return redirect('student:project_detail', project_id=project_id)
 
+@login_required
+def notifications(request):
+    """Display all notifications for the current user"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    notifications = Notification.objects.filter(recipient=student).order_by('-created_at')
+    context = {
+        'notifications': notifications,
+    }
+    return render(request, 'student/notifications.html', context)
 
+@login_required
+def mark_notification_read(request, notification_id):
+    """Mark a single notification as read"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    notification = get_object_or_404(Notification, id=notification_id, recipient=student)
+    notification.is_read = True
+    notification.save()
+    return redirect('student:notifications')
 
+@login_required
+def mark_all_notifications_read(request):
+    """Mark all notifications as read"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    Notification.objects.filter(recipient=student, is_read=False).update(is_read=True)
+    messages.success(request, "Toutes les notifications ont été marquées comme lues.")
+    return redirect('student:notifications')
 
 # Updated dashboard view
 @login_required

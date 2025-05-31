@@ -79,6 +79,74 @@
         margin-top: 10px;
         text-align: right;
     }
+
+    .modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background-color: white;
+        width: 90%;
+        max-width: 1000px;
+        height: 90%;
+        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+    }
+
+    .close {
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #aaa;
+    }
+
+    .close:hover {
+        color: #000;
+    }
+
+    .modal-body {
+        flex: 1;
+        padding: 20px;
+        overflow: auto;
+    }
+
+    #previewContainer {
+        height: 100%;
+    }
+
+    #previewContainer iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .preview-error {
+        text-align: center;
+        padding: 50px;
+        color: #6c757d;
+    }
 </style>
 {% endblock %}
 
@@ -261,7 +329,12 @@
                                 <p>Type de fichier: {{ deliverable.get_file_type_display }}</p>
                             </div>
                             <div class="deliverable-actions">
-                                <a href="{{ deliverable.file.url }}" class="btn" target="_blank">Télécharger</a>
+                                {% if deliverable.file_type in 'report,presentation' %}
+                                    <button class="btn btn-sm" onclick="previewFile('{{ deliverable.file.url }}', '{{ deliverable.file_type }}', '{{ deliverable.name }}')">
+                                        Aperçu
+                                    </button>
+                                {% endif %}
+                                <a href="{{ deliverable.file.url }}" class="btn btn-sm" target="_blank">Télécharger</a>
                             </div>
                         </li>
                     {% endfor %}
@@ -296,6 +369,43 @@
             </div>
         </div>
 
+        <!-- Discussion Section -->
+        <div class="detail-section">
+            <h2>Discussion</h2>
+            
+            <!-- Comment form - only show if user has access to project -->
+            {% if is_owner or is_collaborator %}
+            <div class="comment-form-container">
+                <form method="post" action="{% url 'student:add_comment' project.id %}" class="comment-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <textarea name="content" rows="3" placeholder="Ajouter un commentaire..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm">Commenter</button>
+                </form>
+            </div>
+            {% endif %}
+            
+            <!-- Comments list -->
+            <div class="comments-list">
+                {% if project.comments.all %}
+                    {% for comment in project.comments.all %}
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <strong>{{ comment.author.user.get_full_name|default:comment.author.user.username }}</strong>
+                            <span class="comment-date">{{ comment.created_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        <div class="comment-content">
+                            {{ comment.content|linebreaks }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state">Aucun commentaire pour le moment.</p>
+                {% endif %}
+            </div>
+        </div>
+
         {% if user.is_staff %}
             <div class="detail-section">
                 <h2>Ajouter un feedback</h2>
@@ -310,6 +420,21 @@
             </div>
         {% endif %}
     </div>
+
+    <!-- Modal for file preview -->
+    <div id="filePreviewModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="previewTitle">Aperçu du fichier</h3>
+                <span class="close" onclick="closePreview()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="previewContainer">
+                    <!-- Content will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}
@@ -322,5 +447,70 @@
             allowClear: true
         });
     });
+</script>
+
+<script>
+function previewFile(url, fileType, fileName) {
+    const modal = document.getElementById('filePreviewModal');
+    const container = document.getElementById('previewContainer');
+    const title = document.getElementById('previewTitle');
+    
+    title.textContent = 'Aperçu: ' + fileName;
+    
+    // Clear previous content
+    container.innerHTML = '';
+    
+    if (fileType === 'report' || fileType === 'presentation') {
+        // For PDFs and office documents
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        
+        // Add error handling
+        iframe.onerror = function() {
+            container.innerHTML = `
+                <div class="preview-error">
+                    <p>Impossible de charger l'aperçu du fichier.</p>
+                    <a href="${url}" class="btn" target="_blank">Télécharger le fichier</a>
+                </div>
+            `;
+        };
+        
+        container.appendChild(iframe);
+    } else {
+        // For other file types, show a download prompt
+        container.innerHTML = `
+            <div class="preview-error">
+                <p>L'aperçu n'est pas disponible pour ce type de fichier.</p>
+                <a href="${url}" class="btn" target="_blank">Télécharger le fichier</a>
+            </div>
+        `;
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closePreview() {
+    const modal = document.getElementById('filePreviewModal');
+    modal.style.display = 'none';
+    document.getElementById('previewContainer').innerHTML = '';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('filePreviewModal');
+    if (event.target === modal) {
+        closePreview();
+    }
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePreview();
+    }
+});
 </script>
 {% endblock %}
