@@ -63,7 +63,7 @@ ROOT_URLCONF = "ensa_project_manager.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -133,9 +133,11 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Authentication settings
-LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = 'student:dashboard'
-LOGOUT_REDIRECT_URL = 'accounts:login'
+LOGIN_URL = 'login'  # The URL name for your login page
+LOGIN_REDIRECT_URL = 'student:dashboard'  # Where to go after login
+
+# Where to redirect after logout
+LOGOUT_REDIRECT_URL = 'login'  # Where to go after logout
 
 
 # Media files
