@@ -31,13 +31,10 @@ class Project(models.Model):
     ]
     
     STATUS_CHOICES = [
-        ('draft', 'Brouillon'),
-        ('submitted', 'Soumis'),
-        ('in_progress', 'En cours'),
-        ('completed', 'Complété'),
-        ('pending_validation', 'En attente de validation'),
-        ('validated', 'Validé'),
-        ('rejected', 'Rejeté'),
+        ('in_progress', 'En cours'),  # Default status when created
+        ('submitted', 'Soumis'),       # When student submits for review
+        ('validated', 'Validé'),       # When teacher approves
+        ('rejected', 'Rejeté'),        # When teacher rejects
     ]
     
     title = models.CharField(max_length=200)
@@ -49,7 +46,7 @@ class Project(models.Model):
     technologies = models.CharField(max_length=500, blank=True)  # Comma-separated list of technologies
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_progress')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -159,10 +156,18 @@ class ProjectMilestone(models.Model):
     description = models.TextField(blank=True)
     due_date = models.DateField()
     completed = models.BooleanField(default=False)
+    completed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_milestones')
+    completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
         return self.title
+    
+    def is_overdue(self):
+        """Check if milestone is overdue"""
+        if self.completed:
+            return False
+        return timezone.now().date() > self.due_date
     
     class Meta:
         ordering = ['due_date']

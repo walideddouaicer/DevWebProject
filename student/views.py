@@ -12,25 +12,123 @@ from .models import CollaborationInvitation
 from .utils import send_invitation_email
 from .models import ProjectComment
 from .models import ProjectActivity
-from django.db.models import Q
+from django.db.models import Q, OuterRef, Case, When
 from django.utils import timezone
 from .models import Notification
 
 # Add these stub functions for the new URL patterns
 @login_required
 def project_submit(request, project_id):
-    # Implementation will be added later
-    return redirect('student:project_detail', project_id=project_id)
+    student = get_object_or_404(StudentProfile, user=request.user)
+    # Allow both owners and collaborators to access the project
+    project = get_object_or_404(
+        Project,
+        Q(student=student) | Q(collaborators=student),
+        id=project_id
+    )
+
+    # Only the owner can submit
+    if project.student != student:
+        messages.error(request, "Seul le propriétaire du projet peut le soumettre.")
+        return redirect('student:project_detail', project_id=project.id)
+
+    if project.status != 'in_progress':
+        messages.warning(request, "Seuls les projets en cours peuvent être soumis.")
+        return redirect('student:project_detail', project_id=project.id)
+
+    # Change status to 'submitted'
+    project.status = 'submitted'
+    project.save()
+
+    # Record activity
+    ProjectActivity.objects.create(
+        project=project,
+        user=request.user,
+        activity_type='status_changed',
+        description="Le projet a été soumis pour évaluation"
+    )
+
+    messages.success(request, "Votre projet a été soumis avec succès.")
+    return redirect('student:project_detail', project_id=project.id)
 
 @login_required
 def project_approve(request, project_id):
-    # Implementation will be added later
-    return redirect('student:project_detail', project_id=project_id)
+    """Teacher approves a submitted project"""
+    if not request.user.is_staff:
+        messages.error(request, "Seuls les enseignants peuvent approuver les projets.")
+        return redirect('student:project_detail', project_id=project_id)
+
+    project = get_object_or_404(Project, id=project_id)
+
+    if project.status != 'submitted':
+        messages.warning(request, "Seuls les projets soumis peuvent être approuvés.")
+        return redirect('student:project_detail', project_id=project_id)
+
+    project.status = 'validated'  # Changed from 'in_progress' to 'validated'
+    project.save()
+
+    # Record activity
+    ProjectActivity.objects.create(
+        project=project,
+        user=request.user,
+        activity_type='status_changed',
+        description="Projet validé"
+    )
+
+    # Notify student with project name
+    Notification.objects.create(
+        recipient=project.student,
+        project=project,
+        notification_type='project_update',
+        message=f"Votre projet '{project.title}' a été validé"
+    )
+
+    # Notify collaborators too
+    for collaborator in project.collaborators.all():
+        Notification.objects.create(
+            recipient=collaborator,
+            project=project,
+            notification_type='project_update',
+            message=f"Le projet '{project.title}' a été validé"
+        )
+
+    messages.success(request, "Projet validé avec succès.")
+    return redirect('student:project_detail', project_id=project.id)
 
 @login_required
 def project_reject(request, project_id):
-    # Implementation will be added later
-    return redirect('student:project_detail', project_id=project_id)
+    """Teacher rejects a submitted project"""
+    if not request.user.is_staff:
+        messages.error(request, "Seuls les enseignants peuvent rejeter les projets.")
+        return redirect('student:project_detail', project_id=project_id)
+
+    project = get_object_or_404(Project, id=project_id)
+
+    if project.status != 'submitted':
+        messages.warning(request, "Seuls les projets soumis peuvent être rejetés.")
+        return redirect('student:project_detail', project_id=project_id)
+
+    project.status = 'rejected'
+    project.save()
+
+    # Record activity
+    ProjectActivity.objects.create(
+        project=project,
+        user=request.user,
+        activity_type='status_changed',
+        description="Projet rejeté - révisions nécessaires"
+    )
+
+    # Notify student with project name
+    Notification.objects.create(
+        recipient=project.student,
+        project=project,
+        notification_type='project_update',
+        message=f"Votre projet '{project.title}' a été rejeté. Veuillez consulter les commentaires et resoumettre."
+    )
+
+    messages.info(request, "Projet rejeté. L'étudiant peut maintenant le modifier et resoumettre.")
+    return redirect('student:project_detail', project_id=project.id)
 
 @login_required
 def complete_milestone(request, milestone_id):
@@ -62,8 +160,67 @@ def complete_milestone(request, milestone_id):
 
 @login_required
 def add_collaborator(request, project_id):
-    # Implementation will be added later
-    return redirect('student:project_detail', project_id=project_id)
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_object_or_404(Project, id=project_id, student=student)
+
+    # Only the project owner can add collaborators
+    if project.student != student:
+        messages.error(request, "Seul le propriétaire du projet peut ajouter des collaborateurs.")
+        return redirect('student:project_detail', project_id=project.id)
+
+    # Only in_progress projects can have collaborators added (CHANGED FROM 'draft')
+    if project.status != 'in_progress':
+        messages.warning(request, "Vous ne pouvez ajouter des collaborateurs qu'aux projets en cours.")
+        return redirect('student:project_detail', project_id=project.id)
+
+    if request.method == 'POST':
+        # Check if the maximum number of collaborators has been reached
+        if project.collaborators.count() >= 10:
+            messages.warning(request, "Vous avez atteint le nombre maximum de collaborateurs (10) pour ce projet.")
+            return redirect('student:project_detail', project_id=project.id)
+            
+        collaborator_id = request.POST.get('collaborator')
+        if collaborator_id:
+            try:
+                recipient = StudentProfile.objects.get(id=collaborator_id)
+
+                # Check if already a collaborator
+                if project.collaborators.filter(id=recipient.id).exists():
+                    messages.info(request, f"{recipient} est déjà un collaborateur de ce projet.")
+                    return redirect('student:project_detail', project_id=project.id)
+
+                # Check for existing invitations
+                existing_invitation = CollaborationInvitation.objects.filter(
+                    project=project,
+                    recipient=recipient,
+                    status='pending'
+                ).first()
+
+                if existing_invitation:
+                    messages.info(request, f"Une invitation a déjà été envoyée à {recipient}.")
+                else:
+                    # Create new invitation
+                    invitation = CollaborationInvitation(
+                        project=project,
+                        sender=student,
+                        recipient=recipient
+                    )
+                    invitation.save()
+                    send_invitation_email(invitation)
+                    messages.success(request, f"Invitation envoyée à {recipient}.")
+
+                    # Create notification for the recipient
+                    Notification.objects.create(
+                        recipient=recipient,
+                        project=project,
+                        notification_type='invitation',
+                        message=f"{student.user.get_full_name() or student.user.username} vous invite à collaborer sur le projet '{project.title}'"
+                    )
+
+            except StudentProfile.DoesNotExist:
+                messages.error(request, "Étudiant non trouvé.")
+
+    return redirect('student:project_detail', project_id=project.id)
 
 @login_required
 def add_feedback(request, project_id):
@@ -102,68 +259,27 @@ def add_feedback(request, project_id):
     return redirect('student:project_detail', project_id=project.id)
 
 @login_required
-def project_approve(request, project_id):
-    """Teacher approves a submitted project"""
-    if not request.user.is_staff:
-        messages.error(request, "Seuls les enseignants peuvent approuver les projets.")
-        return redirect('student:project_detail', project_id=project_id)
-    project = get_object_or_404(Project, id=project_id)
-    if project.status != 'submitted':
-        messages.warning(request, "Seuls les projets soumis peuvent être approuvés.")
-        return redirect('student:project_detail', project_id=project_id)
-    project.status = 'in_progress'
-    project.save()
-    # Record activity
-    ProjectActivity.objects.create(
-        project=project,
-        user=request.user,
-        activity_type='status_changed',
-        description="Projet approuvé et passé en cours"
-    )
-    # Notify student
-    Notification.objects.create(
-        recipient=project.student,
-        project=project,
-        notification_type='project_update',
-        message="Votre projet a été approuvé et est maintenant en cours"
-    )
-    messages.success(request, "Projet approuvé avec succès.")
-    return redirect('student:project_detail', project_id=project_id)
-
-@login_required
-def project_reject(request, project_id):
-    """Teacher rejects a submitted project"""
-    if not request.user.is_staff:
-        messages.error(request, "Seuls les enseignants peuvent rejeter les projets.")
-        return redirect('student:project_detail', project_id=project_id)
-    project = get_object_or_404(Project, id=project_id)
-    if project.status != 'submitted':
-        messages.warning(request, "Seuls les projets soumis peuvent être rejetés.")
-        return redirect('student:project_detail', project_id=project_id)
-    project.status = 'rejected'
-    project.save()
-    # Record activity
-    ProjectActivity.objects.create(
-        project=project,
-        user=request.user,
-        activity_type='status_changed',
-        description="Projet rejeté - révisions nécessaires"
-    )
-    # Notify student
-    Notification.objects.create(
-        recipient=project.student,
-        project=project,
-        notification_type='project_update',
-        message="Votre projet a été rejeté. Veuillez consulter les commentaires et resoumettre."
-    )
-    messages.info(request, "Projet rejeté. L'étudiant peut maintenant le modifier et resoumettre.")
-    return redirect('student:project_detail', project_id=project_id)
-
-@login_required
 def notifications(request):
     """Display all notifications for the current user"""
     student = get_object_or_404(StudentProfile, user=request.user)
-    notifications = Notification.objects.filter(recipient=student).order_by('-created_at')
+    
+    # Fetch notifications and prefetch related invitations
+    # Annotate each notification with the status of the relevant invitation if it exists
+    notifications = Notification.objects.filter(recipient=student)
+    
+    notifications = notifications.annotate(
+        invitation_status=Case(
+            When(
+                notification_type='invitation', 
+                then=CollaborationInvitation.objects.filter(
+                    project=OuterRef('project'), 
+                    recipient=OuterRef('recipient')
+                ).values('status')[:1] # Get the status of the first matching invitation
+            ),
+            default=None # Default for non-invitation notifications
+        )
+    ).order_by('-created_at')
+
     context = {
         'notifications': notifications,
     }
@@ -287,7 +403,7 @@ def project_create(request):
         if form.is_valid():
             project = form.save(commit=False)
             project.student = student
-            project.status = 'draft'
+            project.status = 'in_progress'
             project.save()
             
             # This is needed to save many-to-many relationships
@@ -349,34 +465,46 @@ def project_edit(request, project_id):
 def project_detail(request, project_id):
     """View to display detailed information about a specific project"""
     student = get_object_or_404(StudentProfile, user=request.user)
-    # Allow both project owners and collaborators to view the project
+    
+    # First, get the project by its ID. This should always return at most one object.
     project = get_object_or_404(
-        Project, 
-        Q(student=student) | Q(collaborators=student),
+        Project,
         id=project_id,
     )
 
-    
-    # Check if user is owner or collaborator
+    # Now, check if the requesting user is either the owner or a collaborator.
     is_owner = (project.student == student)
-    is_collaborator = project.collaborators.filter(id=student.id).exists()
-    
+    is_collaborator = project.collaborators.filter(user=request.user).exists()
+
+    # If the user is neither, deny access.
+    if not is_owner and not is_collaborator:
+        messages.error(request, "Vous n'avez pas l'autorisation de voir ce projet.")
+        return redirect('student:dashboard') # Redirect to dashboard or another appropriate page
+
+    # If authorized, proceed to fetch related data and render the template.
     deliverables = ProjectDeliverable.objects.filter(project=project)
-    collaborators = project.collaborators.all()
+    # collaborators = project.collaborators.all() # Collaborators are already part of the project object fetched
     milestones = ProjectMilestone.objects.filter(project=project)
-    
+
     # Get project activities
     project_activities = ProjectActivity.objects.filter(project=project)
-    
+
     # For project owners, get available students for collaboration
     available_students = []
-    if is_owner and project.status == 'draft':
+    if is_owner and project.status == 'in_progress':
         # Get students who are not already collaborators and not the owner
+        # Also exclude students who have pending invitations
+        invited_student_ids = CollaborationInvitation.objects.filter(
+            project=project,
+            status='pending'
+        ).values_list('recipient_id', flat=True)
+
         available_students = StudentProfile.objects.exclude(
-            Q(id=student.id) | 
-            Q(id__in=project.collaborators.values_list('id', flat=True))
+            Q(id=student.id) |
+            Q(id__in=project.collaborators.values_list('id', flat=True)) |
+            Q(id__in=invited_student_ids)
         )
-    
+
     # For project owners, show pending invitations
     pending_invitations = []
     if is_owner:
@@ -384,11 +512,11 @@ def project_detail(request, project_id):
             project=project,
             status='pending'
         )
-    
+
     context = {
         'project': project,
         'deliverables': deliverables,
-        'collaborators': collaborators,
+        'collaborators': project.collaborators.all(), # Use the collaborators from the fetched project
         'milestones': milestones,
         'available_students': available_students,
         'pending_invitations': pending_invitations,
@@ -396,7 +524,7 @@ def project_detail(request, project_id):
         'is_collaborator': is_collaborator,
         'project_activities': project_activities,
     }
-    
+
     return render(request, 'student/project_detail.html', context)
 
     
@@ -415,27 +543,25 @@ def project_change_status(request, project_id, new_status):
     """View to change the status of a project"""
     student = get_object_or_404(StudentProfile, user=request.user)
     project = get_object_or_404(Project, id=project_id, student=student)
-    
-    # Define allowed status transitions
+
+    # Simplified transitions for new workflow
     allowed_transitions = {
-        'draft': ['submitted'],
+        'in_progress': ['submitted'],
         'submitted': [],  # Only teachers can change from submitted
-        'in_progress': [],  # Only teachers can change from in_progress
-        'pending_validation': [],  # Only teachers can change from pending_validation
         'validated': [],  # Cannot change from validated
-        'rejected': ['draft']  # Can resubmit after rejection
+        'rejected': ['in_progress']  # Can go back to in_progress after rejection
     }
-    
+
     # Check if the transition is allowed
     if new_status in allowed_transitions.get(project.status, []):
         project.status = new_status
         project.save()
-        
+
         if new_status == 'submitted':
             messages.success(request, "Votre projet a été soumis pour évaluation.")
-        elif new_status == 'draft':
-            messages.success(request, "Votre projet est retourné à l'état brouillon.")
-        
+        elif new_status == 'in_progress':
+            messages.success(request, "Votre projet est retourné en cours pour modifications.")
+
         return redirect('student:project_detail', project_id=project.id)
     else:
         messages.error(request, "Ce changement de statut n'est pas autorisé.")
@@ -566,78 +692,35 @@ def toggle_milestone(request, milestone_id):
             Q(student=student) | Q(collaborators=student)
         )
     )
-    
+
     # Toggle completed status
-    old_status = milestone.completed
-    milestone.completed = not milestone.completed
-    milestone.save()
-    
-    # Add activity only when marking as completed
-    if milestone.completed and not old_status:
+    if milestone.completed:
+        # Undo completion
+        milestone.completed = False
+        milestone.completed_by = None
+        milestone.completed_at = None
+        milestone.save()
+
+        messages.success(request, f"Le jalon '{milestone.title}' a été marqué comme non complété.")
+    else:
+        # Mark as completed
+        milestone.completed = True
+        milestone.completed_by = request.user
+        milestone.completed_at = timezone.now()
+        milestone.save()
+
+        # Add activity
         ProjectActivity.objects.create(
             project=milestone.project,
             user=request.user,
             activity_type='milestone_completed',
             description=f"Jalon '{milestone.title}' marqué comme complété"
         )
-    
+
+        messages.success(request, f"Le jalon '{milestone.title}' a été marqué comme complété.")
+
     return redirect('student:project_detail', project_id=milestone.project.id)
 
-
-
-
-@login_required
-def add_collaborator(request, project_id):
-    student = get_object_or_404(StudentProfile, user=request.user)
-    project = get_object_or_404(Project, id=project_id, student=student)
-    
-    # Only the project owner can add collaborators
-    if project.student != student:
-        messages.error(request, "Seul le propriétaire du projet peut ajouter des collaborateurs.")
-        return redirect('student:project_detail', project_id=project.id)
-    
-    # Only draft projects can have collaborators added or modified
-    if project.status != 'draft':
-        messages.warning(request, "Vous ne pouvez ajouter des collaborateurs qu'aux projets en état brouillon.")
-        return redirect('student:project_detail', project_id=project.id)
-    
-    if request.method == 'POST':
-        collaborator_id = request.POST.get('collaborator')
-        if collaborator_id:
-            try:
-                recipient = StudentProfile.objects.get(id=collaborator_id)
-                
-                # Check if already a collaborator
-                if project.collaborators.filter(id=recipient.id).exists():
-                    messages.info(request, f"{recipient} est déjà un collaborateur de ce projet.")
-                    return redirect('student:project_detail', project_id=project.id)
-                
-                # Check for existing invitations
-                existing_invitation = CollaborationInvitation.objects.filter(
-                    project=project,
-                    recipient=recipient,
-                    status='pending'
-                ).first()
-                
-                if existing_invitation:
-                    messages.info(request, f"Une invitation a déjà été envoyée à {recipient}.")
-                else:
-                    # Create new invitation
-                    invitation = CollaborationInvitation(
-                        project=project,
-                        sender=student,
-                        recipient=recipient
-                    )
-                    invitation.save()
-                    send_invitation_email(invitation)
-                    messages.success(request, f"Invitation envoyée à {recipient}.")
-                    
-                    # Here you could add email notification logic
-                    
-            except StudentProfile.DoesNotExist:
-                messages.error(request, "Étudiant non trouvé.")
-        
-    return redirect('student:project_detail', project_id=project.id)
 
 
 
@@ -715,8 +798,8 @@ def remove_collaborator(request, project_id, collaborator_id):
         return redirect('student:project_detail', project_id=project.id)
     
     # Verify the project is in draft status
-    if project.status != 'draft':
-        messages.warning(request, "Les collaborateurs ne peuvent être retirés que pour les projets en état brouillon.")
+    if project.status != 'in_progress':
+        messages.warning(request, "Les collaborateurs ne peuvent être retirés que pour les projets en cours.")
         return redirect('student:project_detail', project_id=project.id)
     
     try:
@@ -791,31 +874,4 @@ def add_comment(request, project_id):
         else:
             messages.error(request, "Le commentaire ne peut pas être vide.")
     
-    return redirect('student:project_detail', project_id=project.id)
-
-
-
-
-@login_required
-def project_submit(request, project_id):
-    student = get_object_or_404(StudentProfile, user=request.user)
-    project = get_object_or_404(Project, id=project_id, student=student)
-    
-    if project.status != 'draft':
-        messages.warning(request, "Seuls les projets en brouillon peuvent être soumis.")
-        return redirect('student:project_detail', project_id=project.id)
-    
-    # Change status to 'submitted'
-    project.status = 'submitted'
-    project.save()
-    
-    # Record activity
-    ProjectActivity.objects.create(
-        project=project,
-        user=request.user,
-        activity_type='status_changed',
-        description="Le projet a été soumis pour évaluation"
-    )
-    
-    messages.success(request, "Votre projet a été soumis avec succès.")
     return redirect('student:project_detail', project_id=project.id)

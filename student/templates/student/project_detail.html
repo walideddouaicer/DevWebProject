@@ -147,6 +147,214 @@
         padding: 50px;
         color: #6c757d;
     }
+
+/* Add these styles to project_detail.css */
+
+/* Overdue milestone styling */
+.timeline-item.overdue .timeline-marker {
+    background-color: #dc3545;
+    animation: pulse 2s infinite;
+}
+
+.timeline-item.overdue .timeline-content {
+    border-left-color: #dc3545;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+/* Badge styling for overdue indicator */
+.badge {
+    display: inline-block;
+    padding: 0.25em 0.6em;
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+.badge-danger {
+    color: #fff;
+    background-color: #dc3545;
+}
+
+/* Completion info styling */
+.completion-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #d4edda;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #155724;
+}
+
+.completion-info span {
+    margin-right: 10px;
+}
+
+.completed-by {
+    font-weight: bold;
+}
+
+.completed-date {
+    color: #155724;
+    opacity: 0.8;
+}
+
+/* Updated status colors for simplified workflow */
+.status-in_progress {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.status-submitted {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.status-validated {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-rejected {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Progress bar updates for new workflow */
+.progress-in_progress {
+    width: 50%;
+    background-color: #17a2b8;
+}
+
+.progress-submitted {
+    width: 75%;
+    background-color: #ffc107;
+}
+
+.progress-validated {
+    width: 100%;
+    background-color: #28a745;
+}
+
+.progress-rejected {
+    width: 25%;
+    background-color: #dc3545;
+}
+
+/* Better styling for action buttons */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.action-buttons form {
+    margin: 0;
+}
+
+/* File preview modal improvements */
+.preview-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: #6c757d;
+}
+
+.preview-error p {
+    margin-bottom: 1rem;
+    font-size: 1.1em;
+}
+
+/* Improved collaborator list styling */
+.collaborators-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.collaborator-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.collaborator-item:hover {
+    background-color: #e9ecef;
+}
+
+.current-collaborators {
+    margin-bottom: 30px;
+}
+
+.collaborator-info-text {
+    color: #6c757d;
+    font-style: italic;
+    margin-bottom: 15px;
+}
+
+.department {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.student-select-item {
+    padding: 2px 0;
+}
+
+.student-select-item .student-name {
+    font-weight: 500;
+}
+
+.student-select-item .student-details {
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.student-select-item .student-details span {
+    margin-right: 10px;
+}
+
+.add-collaborator-form {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.info-message {
+    background-color: #e7f3ff;
+    padding: 10px 15px;
+    border-radius: 4px;
+    color: #0066cc;
+    margin-top: 15px;
+}
 </style>
 {% endblock %}
 
@@ -162,27 +370,34 @@
     </div>
 
     <div class="action-buttons">
-        {% if project.status == 'draft' %}
-            <a href="{% url 'student:project_edit' project.id %}" class="btn">Modifier</a>
-            <a href="{% url 'student:project_delete' project.id %}" class="btn btn-danger">Supprimer</a>
-            <form method="post" action="{% url 'student:project_submit' project.id %}" style="display: inline;">
+        {% if project.status == 'in_progress' %}
+            {% if is_owner %}
+                <a href="{% url 'student:project_edit' project.id %}" class="btn">Modifier</a>
+                <a href="{% url 'student:project_delete' project.id %}" class="btn btn-danger">Supprimer</a>
+                <form method="post" action="{% url 'student:project_submit' project.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn" onclick="return confirm('Êtes-vous sûr de vouloir soumettre ce projet? Vous ne pourrez plus le modifier après soumission.')">Soumettre pour validation</button>
+                </form>
+            {% endif %}
+            <!-- Both owner and collaborators can add milestones and deliverables -->
+            <a href="{% url 'student:add_milestone' project.id %}" class="btn">Ajouter un jalon</a>
+            <a href="{% url 'student:upload_deliverable' project.id %}" class="btn">Uploader un livrable</a>
+        {% elif project.status == 'rejected' and is_owner %}
+            <form method="post" action="{% url 'student:project_change_status' project.id 'in_progress' %}" style="display: inline;">
                 {% csrf_token %}
-                <button type="submit" class="btn" onclick="return confirm('Êtes-vous sûr de vouloir soumettre ce projet? Vous ne pourrez plus le modifier après soumission.')">Soumettre</button>
+                <button type="submit" class="btn">Retourner en cours pour modifications</button>
             </form>
         {% endif %}
+
         {% if user.is_staff and project.status == 'submitted' %}
             <form method="post" action="{% url 'student:project_approve' project.id %}" style="display: inline;">
                 {% csrf_token %}
-                <button type="submit" class="btn">Approuver</button>
+                <button type="submit" class="btn">Valider</button>
             </form>
             <form method="post" action="{% url 'student:project_reject' project.id %}" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger">Rejeter</button>
             </form>
-        {% endif %}
-        {% if project.status == 'in_progress' %}
-            <a href="{% url 'student:add_milestone' project.id %}" class="btn">Ajouter un jalon</a>
-            <a href="{% url 'student:upload_deliverable' project.id %}" class="btn">Uploader un livrable</a>
         {% endif %}
     </div>
 
@@ -214,74 +429,106 @@
             </table>
         </div>
 
+        <!-- Enhanced collaborator section for project_detail.html -->
+
         <div class="detail-section">
             <h2>Collaborateurs</h2>
+
+            <!-- Current collaborators list -->
             {% if collaborators %}
-            <ul class="collaborators-list">
-                {% for collaborator in collaborators %}
-                    <li class="collaborator-item">
-                        <div class="collaborator-info">
-                            <strong>{{ collaborator.user.get_full_name|default:collaborator.user.username }}</strong>
-                            <span class="student-id">({{ collaborator.student_id }})</span>
-                        </div>
-                        {% if is_owner and project.status == 'draft' %}
-                            <div class="collaborator-actions">
-                                <a href="{% url 'student:remove_collaborator' project.id collaborator.id %}" 
-                                   class="btn btn-sm btn-danger" 
-                                   onclick="return confirm('Êtes-vous sûr de vouloir retirer ce collaborateur?')">
-                                    Retirer
-                                </a>
+            <div class="current-collaborators">
+                <h4>Collaborateurs actuels ({{ collaborators.count }})</h4>
+                <ul class="collaborators-list">
+                    {% for collaborator in collaborators %}
+                        <li class="collaborator-item">
+                            <div class="collaborator-info">
+                                <strong>{{ collaborator.user.get_full_name|default:collaborator.user.username }}</strong>
+                                <span class="student-id">({{ collaborator.student_id }})</span>
+                                <span class="department">- {{ collaborator.department }}</span>
                             </div>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
+                            {% if is_owner and project.status == 'in_progress' %}
+                                <div class="collaborator-actions">
+                                    <a href="{% url 'student:remove_collaborator' project.id collaborator.id %}" 
+                                       class="btn btn-sm btn-danger" 
+                                       onclick="return confirm('Êtes-vous sûr de vouloir retirer {{ collaborator.user.get_full_name|default:collaborator.user.username }} du projet?')">
+                                        Retirer
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
             {% else %}
                 <p class="empty-state">Aucun collaborateur pour ce projet.</p>
             {% endif %}
 
-            {% if project.status == 'draft' and is_owner %}
+            <!-- Add collaborators form - only show if owner and project is in progress -->
+            {% if project.status == 'in_progress' and is_owner %}
                 <div class="collaborator-form">
                     <h3>Ajouter des collaborateurs</h3>
-                    <form method="post" action="{% url 'student:add_collaborator' project.id %}">
+
+                    <!-- Show remaining slots -->
+                    <p class="collaborator-info-text">
+                        Il reste {{ 10|add:"-"|add:collaborators.count }} place(s) pour des collaborateurs supplémentaires (sur un maximum de 10).
+                    </p>
+
+                    {% if collaborators.count < 10 %}
+                    <form method="post" action="{% url 'student:add_collaborator' project.id %}" class="add-collaborator-form">
                         {% csrf_token %}
                         <div class="form-group">
-                            <label for="collaborator">Sélectionner des étudiants:</label>
-                            <select name="collaborator" id="collaborator" class="select2" style="width: 100%">
-                                <option value="">Choisir un étudiant...</option>
+                            <label for="collaborator">Sélectionner un étudiant:</label>
+                            <select name="collaborator" id="collaborator" class="select2" style="width: 100%" required>
+                                <option value="">Rechercher un étudiant...</option>
                                 {% for student in available_students %}
-                                    <option value="{{ student.id }}">
-                                        {{ student.user.get_full_name|default:student.user.username }} ({{ student.student_id }})
+                                    <option value="{{ student.id }}" 
+                                            data-department="{{ student.department }}"
+                                            data-year="{{ student.year_of_study }}">
+                                        {{ student.user.get_full_name|default:student.user.username }}
+                                        ({{ student.student_id }}) - {{ student.department }} - {{ student.get_year_of_study_display }}
                                     </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <button type="submit" class="btn">Ajouter</button>
+                        <button type="submit" class="btn">Envoyer l'invitation</button>
                     </form>
-                </div>
-                
-                <!-- New section for pending invitations -->
-                <div class="invitations-section">
-                    <h3>Invitations en attente</h3>
-                    {% if pending_invitations %}
-                        <ul class="invitations-list">
-                            {% for invitation in pending_invitations %}
-                                <li class="invitation-item">
-                                    <div class="invitation-info">
-                                        <strong>{{ invitation.recipient.user.get_full_name|default:invitation.recipient.user.username }}</strong>
-                                        <span class="student-id">({{ invitation.recipient.student_id }})</span>
-                                        <span class="status-badge status-pending">En attente</span>
-                                    </div>
-                                    <div class="invitation-meta">
-                                        <span class="invitation-date">Envoyée le {{ invitation.created_at|date:"d/m/Y" }}</span>
-                                    </div>
-                                </li>
-                            {% endfor %}
-                        </ul>
                     {% else %}
-                        <p class="empty-state">Aucune invitation en attente</p>
+                    <p class="alert alert-info">
+                        Vous avez atteint le nombre maximum de collaborateurs (10) pour ce projet.
+                    </p>
                     {% endif %}
                 </div>
+
+                <!-- Pending invitations section -->
+                {% if pending_invitations %}
+                <div class="invitations-section">
+                    <h3>Invitations en attente ({{ pending_invitations.count }})</h3>
+                    <ul class="invitations-list">
+                        {% for invitation in pending_invitations %}
+                            <li class="invitation-item">
+                                <div class="invitation-info">
+                                    <strong>{{ invitation.recipient.user.get_full_name|default:invitation.recipient.user.username }}</strong>
+                                    <span class="student-id">({{ invitation.recipient.student_id }})</span>
+                                    <span class="department">- {{ invitation.recipient.department }}</span>
+                                    <span class="status-badge status-pending">En attente</span>
+                                </div>
+                                <div class="invitation-meta">
+                                    <span class="invitation-date">Envoyée le {{ invitation.created_at|date:"d/m/Y à H:i" }}</span>
+                                    <a href="{% url 'student:cancel_invitation' invitation.id %}" 
+                                       class="btn btn-sm btn-secondary"
+                                       onclick="return confirm('Annuler cette invitation?')">
+                                        Annuler
+                                    </a>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            {% elif project.status != 'in_progress' %}
+                <p class="info-message">
+                    <em>Les collaborateurs ne peuvent être modifiés que lorsque le projet est en cours.</em>
+                </p>
             {% endif %}
         </div>
 
@@ -291,21 +538,35 @@
                 {% if milestones %}
                     <ul class="timeline-list">
                         {% for milestone in milestones %}
-                            <li class="timeline-item {% if milestone.completed %}completed{% endif %}">
+                            <li class="timeline-item {% if milestone.completed %}completed{% elif milestone.is_overdue %}overdue{% endif %}">
                                 <div class="timeline-marker"></div>
                                 <div class="timeline-content">
-                                    <h3>{{ milestone.title }}</h3>
+                                    <h3>
+                                        {{ milestone.title }}
+                                        {% if milestone.is_overdue and not milestone.completed %}
+                                            <span class="badge badge-danger">En retard</span>
+                                        {% endif %}
+                                    </h3>
                                     <p class="timeline-date">Date prévue: {{ milestone.due_date|date:"d/m/Y" }}</p>
                                     <p>{{ milestone.description }}</p>
+
                                     {% if milestone.completed %}
-                                        <span class="completed-badge">Complété</span>
-                                    {% else %}
-                                        {% if project.status == 'in_progress' and user == project.student.user %}
-                                            <form method="post" action="{% url 'student:complete_milestone' milestone.id %}">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn">Marquer comme complété</button>
-                                            </form>
-                                        {% endif %}
+                                        <div class="completion-info">
+                                            <span class="completed-badge">Complété</span>
+                                            <span class="completed-by">par {{ milestone.completed_by.get_full_name|default:milestone.completed_by.username }}</span>
+                                            <span class="completed-date">le {{ milestone.completed_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if project.status == 'in_progress' %}
+                                        <form method="post" action="{% url 'student:toggle_milestone' milestone.id %}">
+                                            {% csrf_token %}
+                                            {% if milestone.completed %}
+                                                <button type="submit" class="btn btn-sm btn-secondary">Marquer comme non complété</button>
+                                            {% else %}
+                                                <button type="submit" class="btn btn-sm">Marquer comme complété</button>
+                                            {% endif %}
+                                        </form>
                                     {% endif %}
                                 </div>
                             </li>
@@ -343,7 +604,7 @@
                 <p class="empty-state">Aucun livrable disponible pour le moment.</p>
             {% endif %}
         </div>
-        
+
         <div class="detail-section">
             <h2>Activités du projet</h2>
             <div class="activity-timeline">
@@ -372,7 +633,7 @@
         <!-- Discussion Section -->
         <div class="detail-section">
             <h2>Discussion</h2>
-            
+
             <!-- Comment form - only show if user has access to project -->
             {% if is_owner or is_collaborator %}
             <div class="comment-form-container">
@@ -385,7 +646,7 @@
                 </form>
             </div>
             {% endif %}
-            
+
             <!-- Comments list -->
             <div class="comments-list">
                 {% if project.comments.all %}
@@ -399,6 +660,17 @@
                             {{ comment.content|linebreaks }}
                         </div>
                     </div>
+                    {% for feedback in comment.feedback.all %}
+    <div class="feedback-item">
+        <div class="feedback-header">
+            <strong>Feedback par {{ feedback.author.user.get_full_name|default:feedback.author.user.username }}</strong>
+            <span class="feedback-date">{{ feedback.created_at|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="feedback-content">
+            {{ feedback.content|linebreaks }}
+        </div>
+    </div>
+{% endfor %}
                     {% endfor %}
                 {% else %}
                     <p class="empty-state">Aucun commentaire pour le moment.</p>
@@ -441,12 +713,66 @@
 <!-- Include Select2 JS for the collaborator selection -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('.select2').select2({
-            placeholder: "Sélectionner un étudiant...",
-            allowClear: true
-        });
+$(document).ready(function() {
+    $('#collaborator').select2({
+        placeholder: "Rechercher par nom, ID étudiant, ou département...",
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return "Aucun étudiant disponible";
+            },
+            searching: function() {
+                return "Recherche...";
+            }
+        },
+        templateResult: function(student) {
+            if (!student.id) return student.text;
+
+            // Extract department and year from data attributes
+            var $option = $(student.element);
+            var department = $option.data('department');
+            var year = $option.data('year');
+
+            // Create a rich display for the dropdown
+            var $result = $(
+                '<div class="student-select-item">' +
+                    '<div class="student-name">' + student.text.split('(')[0].trim() + '</div>' +
+                    '<div class="student-details">' +
+                        '<span class="student-id">ID: ' + student.text.match(/\((.*?)\)/)[1] + '</span>' +
+                        '<span class="student-dept">' + department + '</span>' +
+                    '</div>' +
+                '</div>'
+            );
+
+            return $result;
+        },
+        matcher: function(params, data) {
+            // If there are no search terms, return all data
+            if ($.trim(params.term) === '') {
+                return data;
+            }
+
+            // Do not display the option if there is no 'text' property
+            if (typeof data.text === 'undefined') {
+                return null;
+            }
+
+            // Search in the full text (includes name, ID, department, year)
+            if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+                return data;
+            }
+
+            // Return null if no match
+            return null;
+        }
     });
+
+    // Show a loading indicator while Select2 loads
+    $('#collaborator').on('select2:opening', function() {
+        console.log('Opening collaborator dropdown with', $('#collaborator option').length - 1, 'students');
+    });
+});
 </script>
 
 <script>
@@ -454,21 +780,47 @@ function previewFile(url, fileType, fileName) {
     const modal = document.getElementById('filePreviewModal');
     const container = document.getElementById('previewContainer');
     const title = document.getElementById('previewTitle');
-    
+
     title.textContent = 'Aperçu: ' + fileName;
-    
-    // Clear previous content
     container.innerHTML = '';
-    
+
+    // For local development, we need to handle the URL properly
+    // If the URL doesn't start with http, prepend the current origin
+    if (!url.startsWith('http')) {
+        url = window.location.origin + url;
+    }
+
     if (fileType === 'report' || fileType === 'presentation') {
-        // For PDFs and office documents
+        // Create a more robust preview system
         const iframe = document.createElement('iframe');
         iframe.src = url;
         iframe.style.width = '100%';
         iframe.style.height = '100%';
         iframe.style.border = 'none';
-        
-        // Add error handling
+
+        // Add sandbox attribute for security but allow necessary permissions
+        iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+
+        // Handle load errors more gracefully
+        iframe.onload = function() {
+            // Check if the iframe loaded successfully
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (!iframeDoc || iframeDoc.body.innerHTML === '') {
+                    throw new Error('Empty content');
+                }
+            } catch (e) {
+                // If we can't access the content, provide a fallback
+                container.innerHTML = `
+                    <div class="preview-error">
+                        <p>L'aperçu direct n'est pas disponible.</p>
+                        <p>Le fichier peut être téléchargé et visualisé localement.</p>
+                        <a href="${url}" class="btn" target="_blank">Télécharger le fichier</a>
+                    </div>
+                `;
+            }
+        };
+
         iframe.onerror = function() {
             container.innerHTML = `
                 <div class="preview-error">
@@ -477,10 +829,9 @@ function previewFile(url, fileType, fileName) {
                 </div>
             `;
         };
-        
+
         container.appendChild(iframe);
     } else {
-        // For other file types, show a download prompt
         container.innerHTML = `
             <div class="preview-error">
                 <p>L'aperçu n'est pas disponible pour ce type de fichier.</p>
@@ -488,7 +839,7 @@ function previewFile(url, fileType, fileName) {
             </div>
         `;
     }
-    
+
     modal.style.display = 'flex';
 }
 

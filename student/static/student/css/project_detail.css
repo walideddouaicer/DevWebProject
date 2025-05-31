@@ -359,3 +359,164 @@
 .comment-content {
     color: #495057;
 }
+
+/* Add these styles to project_detail.css */
+
+/* Overdue milestone styling */
+.timeline-item.overdue .timeline-marker {
+    background-color: #dc3545;
+    animation: pulse 2s infinite;
+}
+
+.timeline-item.overdue .timeline-content {
+    border-left-color: #dc3545;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+/* Badge styling for overdue indicator */
+.badge {
+    display: inline-block;
+    padding: 0.25em 0.6em;
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+.badge-danger {
+    color: #fff;
+    background-color: #dc3545;
+}
+
+/* Completion info styling */
+.completion-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #d4edda;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #155724;
+}
+
+.completion-info span {
+    margin-right: 10px;
+}
+
+.completed-by {
+    font-weight: bold;
+}
+
+.completed-date {
+    color: #155724;
+    opacity: 0.8;
+}
+
+/* Updated status colors for simplified workflow */
+.status-in_progress {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.status-submitted {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.status-validated {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-rejected {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Progress bar updates for new workflow */
+.progress-in_progress {
+    width: 50%;
+    background-color: #17a2b8;
+}
+
+.progress-submitted {
+    width: 75%;
+    background-color: #ffc107;
+}
+
+.progress-validated {
+    width: 100%;
+    background-color: #28a745;
+}
+
+.progress-rejected {
+    width: 25%;
+    background-color: #dc3545;
+}
+
+/* Better styling for action buttons */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.action-buttons form {
+    margin: 0;
+}
+
+/* File preview modal improvements */
+.preview-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: #6c757d;
+}
+
+.preview-error p {
+    margin-bottom: 1rem;
+    font-size: 1.1em;
+}
+
+/* Improved collaborator list styling */
+.collaborators-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.collaborator-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.collaborator-item:hover {
+    background-color: #e9ecef;
+}

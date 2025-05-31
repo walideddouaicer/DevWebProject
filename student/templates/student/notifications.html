@@ -80,7 +80,17 @@
                 <div class="notification-time">{{ notification.created_at|timesince }} ago</div>
             </div>
             <div class="notification-actions">
-                <a href="{% url 'student:project_detail' notification.project.id %}" class="btn btn-sm">Voir le projet</a>
+                {% comment %}
+                Check if it's an invitation notification and if the corresponding invitation is accepted.
+                Accessing invitation status directly in template is now possible using the annotated field.
+                {% endcomment %}
+                {% if notification.notification_type == 'invitation' and notification.invitation_status == 'accepted' %}
+                    <a href="{% url 'student:project_detail' notification.project.id %}" class="btn btn-sm">Voir le projet</a>
+                {% elif notification.notification_type != 'invitation' %}
+                    {# For other notification types, always show the link #}
+                    <a href="{% url 'student:project_detail' notification.project.id %}" class="btn btn-sm">Voir le projet</a>
+                {% endif %}
+                
                 {% if not notification.is_read %}
                 <form method="post" action="{% url 'student:mark_notification_read' notification.id %}" style="display: inline;">
                     {% csrf_token %}
