@@ -1,0 +1,708 @@
+{% extends 'administrator/base.html' %}
+{% load static %}
+
+{% block title %}Supprimer {{ module.code }} - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+    <span class="breadcrumb-separator">›</span>
+    <a href="{% url 'administrator:modules_list' %}">Gestion des Modules</a>
+    <span class="breadcrumb-separator">›</span>
+    <a href="{% url 'administrator:module_detail' module.id %}">{{ module.code }}</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>Supprimer</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .delete-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20px;
+        width: 100px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+    }
+    
+    .warning-section {
+        background: #fff3cd;
+        border: 3px solid #ffc107;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .warning-title {
+        color: #856404;
+        font-weight: bold;
+        font-size: 1.2em;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .warning-text {
+        color: #856404;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    
+    .danger-section {
+        background: #f8d7da;
+        border: 3px solid #dc3545;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .danger-title {
+        color: #721c24;
+        font-weight: bold;
+        font-size: 1.2em;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .danger-text {
+        color: #721c24;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    
+    .module-info {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-left: 4px solid #dc3545;
+        margin-bottom: 30px;
+    }
+    
+    .module-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .detail-item {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .detail-label {
+        font-size: 0.8em;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+    
+    .detail-value {
+        font-weight: bold;
+        color: #495057;
+        font-size: 1.1em;
+    }
+    
+    .impact-analysis {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-left: 4px solid #17a2b8;
+        margin-bottom: 30px;
+    }
+    
+    .impact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .impact-item {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #6c757d;
+    }
+    
+    .impact-item.blocked {
+        background: #f8d7da;
+        border-left-color: #dc3545;
+    }
+    
+    .impact-item.safe {
+        background: #d4edda;
+        border-left-color: #28a745;
+    }
+    
+    .impact-icon {
+        font-size: 2em;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    
+    .impact-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+    
+    .impact-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+    
+    .impact-value.danger {
+        color: #dc3545;
+    }
+    
+    .impact-value.safe {
+        color: #28a745;
+    }
+    
+    .impact-description {
+        font-size: 0.9em;
+        color: #6c757d;
+        text-align: center;
+    }
+    
+    .consequences-list {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .consequences-list h4 {
+        color: #856404;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .consequences-list ul {
+        color: #856404;
+        line-height: 1.6;
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .delete-form {
+        background: #f8d7da;
+        border: 3px solid #dc3545;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .confirmation-section {
+        margin-bottom: 25px;
+    }
+    
+    .confirmation-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        border: 2px solid #dc3545;
+    }
+    
+    .confirmation-checkbox input[type="checkbox"] {
+        transform: scale(1.5);
+    }
+    
+    .confirmation-text {
+        color: #721c24;
+        font-weight: 500;
+    }
+    
+    .verification-input {
+        width: 100%;
+        padding: 15px;
+        border: 3px solid #dc3545;
+        border-radius: 8px;
+        font-size: 1em;
+        background: white;
+        color: #495057;
+        margin-bottom: 20px;
+    }
+    
+    .verification-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+    }
+    
+    .btn-delete-confirm {
+        background: #dc3545;
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    
+    .btn-delete-confirm.enabled {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    
+    .btn-delete-confirm.enabled:hover {
+        background: #c82333;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .btn-cancel {
+        background: #28a745;
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-cancel:hover {
+        background: #1e7e34;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    .alternative-actions {
+        background: #d1ecf1;
+        border: 2px solid #17a2b8;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .alternative-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .alternative-option {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        border: 2px solid #17a2b8;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+    }
+    
+    .alternative-option:hover {
+        background: #e8f4ff;
+        transform: translateY(-2px);
+        color: inherit;
+        text-decoration: none;
+    }
+    
+    .option-icon {
+        font-size: 2em;
+        margin-bottom: 10px;
+        color: #17a2b8;
+    }
+    
+    .option-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .option-desc {
+        font-size: 0.9em;
+        color: #6c757d;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .module-details {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .impact-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .alternative-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .delete-header {
+            padding: 20px;
+        }
+        
+        .delete-form, .module-info, .impact-analysis {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Delete Header -->
+    <div class="delete-header">
+        <h1 style="margin: 0 0 10px 0; font-size: 2em;">🗑️ Supprimer le Module</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 5px;">{{ module.code }}</div>
+                <div style="opacity: 0.9;">{{ module.name }}</div>
+            </div>
+            <div style="text-align: right; font-size: 0.9em;">
+                <div>⚠️ SUPPRESSION DÉFINITIVE</div>
+                <div>📅 Action irréversible</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Information -->
+    <div class="module-info">
+        <h3 style="margin: 0 0 20px 0; color: #495057;">📋 Informations du Module</h3>
+        <div class="module-details">
+            <div class="detail-item">
+                <div class="detail-label">Code Module</div>
+                <div class="detail-value">{{ module.code }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Nom</div>
+                <div class="detail-value">{{ module.name|truncatechars:20 }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Année Académique</div>
+                <div class="detail-value">{{ module.academic_year }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Semestre</div>
+                <div class="detail-value">{{ module.get_semester_display }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Statut</div>
+                <div class="detail-value">
+                    {% if module.is_active %}🟢 Actif{% else %}🔴 Inactif{% endif %}
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Date de Création</div>
+                <div class="detail-value">{{ module.created_at|date:"d/m/Y" }}</div>
+            </div>
+        </div>
+        
+        {% if module.description %}
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px;">
+            <strong>Description:</strong>
+            <p style="margin: 10px 0 0 0; color: #6c757d;">{{ module.description }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Impact Analysis -->
+    <div class="impact-analysis">
+        <h3 style="margin: 0 0 15px 0; color: #17a2b8;">📊 Analyse d'Impact</h3>
+        <p style="color: #6c757d; margin-bottom: 20px;">
+            Vérification des éléments qui seraient affectés par la suppression de ce module.
+        </p>
+        
+        <div class="impact-grid">
+            <div class="impact-item {% if student_count > 0 %}blocked{% else %}safe{% endif %}">
+                <div class="impact-icon">👥</div>
+                <div class="impact-title">Étudiants Inscrits</div>
+                <div class="impact-value {% if student_count > 0 %}danger{% else %}safe{% endif %}">
+                    {{ student_count }}
+                </div>
+                <div class="impact-description">
+                    {% if student_count > 0 %}
+                        Étudiants perdront l'accès au module
+                    {% else %}
+                        Aucun étudiant affecté
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="impact-item {% if teacher_count > 0 %}blocked{% else %}safe{% endif %}">
+                <div class="impact-icon">👨‍🏫</div>
+                <div class="impact-title">Enseignants Assignés</div>
+                <div class="impact-value {% if teacher_count > 0 %}danger{% else %}safe{% endif %}">
+                    {{ teacher_count }}
+                </div>
+                <div class="impact-description">
+                    {% if teacher_count > 0 %}
+                        Assignations seront supprimées
+                    {% else %}
+                        Aucune assignation
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="impact-item {% if project_count > 0 %}blocked{% else %}safe{% endif %}">
+                <div class="impact-icon">📋</div>
+                <div class="impact-title">Projets Associés</div>
+                <div class="impact-value {% if project_count > 0 %}danger{% else %}safe{% endif %}">
+                    {{ project_count }}
+                </div>
+                <div class="impact-description">
+                    {% if project_count > 0 %}
+                        Projets perdront leur association
+                    {% else %}
+                        Aucun projet associé
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning or Danger Section based on impact -->
+    {% if student_count > 0 or teacher_count > 0 or project_count > 0 %}
+        <div class="danger-section">
+            <div class="danger-title">
+                🚫 Suppression Bloquée
+            </div>
+            <div class="danger-text">
+                Ce module ne peut pas être supprimé car il est actuellement utilisé par:
+            </div>
+            <ul style="color: #721c24; line-height: 1.6; margin: 15px 0;">
+                {% if student_count > 0 %}
+                    <li><strong>{{ student_count }} étudiant{{ student_count|pluralize }}</strong> inscrit{{ student_count|pluralize }}</li>
+                {% endif %}
+                {% if teacher_count > 0 %}
+                    <li><strong>{{ teacher_count }} enseignant{{ teacher_count|pluralize }}</strong> assigné{{ teacher_count|pluralize }}</li>
+                {% endif %}
+                {% if project_count > 0 %}
+                    <li><strong>{{ project_count }} projet{{ project_count|pluralize }}</strong> associé{{ project_count|pluralize }}</li>
+                {% endif %}
+            </ul>
+            <div class="danger-text">
+                <strong>Pour supprimer ce module, vous devez d'abord:</strong>
+            </div>
+            <ol style="color: #721c24; line-height: 1.6; margin: 15px 0; padding-left: 20px;">
+                {% if student_count > 0 %}
+                    <li>Désinscrire tous les étudiants ou les transférer vers d'autres modules</li>
+                {% endif %}
+                {% if teacher_count > 0 %}
+                    <li>Retirer toutes les assignations d'enseignants</li>
+                {% endif %}
+                {% if project_count > 0 %}
+                    <li>Dissocier tous les projets ou les supprimer</li>
+                {% endif %}
+            </ol>
+        </div>
+
+        <!-- Alternative Actions -->
+        <div class="alternative-actions">
+            <h3 style="margin: 0 0 15px 0; color: #17a2b8;">🔧 Actions Alternatives</h3>
+            <p style="color: #0c5460; margin-bottom: 15px;">
+                Plutôt que de supprimer définitivement, considérez ces alternatives:
+            </p>
+            
+            <div class="alternative-grid">
+                <a href="{% url 'administrator:module_edit' module.id %}" class="alternative-option">
+                    <div class="option-icon">⏸️</div>
+                    <div class="option-title">Désactiver le Module</div>
+                    <div class="option-desc">Masquer aux nouveaux étudiants tout en conservant les données</div>
+                </a>
+                
+                <a href="{% url 'administrator:assignments_management' %}?module={{ module.id }}" class="alternative-option">
+                    <div class="option-icon">👥</div>
+                    <div class="option-title">Gérer les Assignations</div>
+                    <div class="option-desc">Retirer les enseignants assignés à ce module</div>
+                </a>
+                
+                <a href="{% url 'administrator:module_detail' module.id %}" class="alternative-option">
+                    <div class="option-icon">👤</div>
+                    <div class="option-title">Gérer les Inscriptions</div>
+                    <div class="option-desc">Voir et gérer les étudiants inscrits</div>
+                </a>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Safe to delete -->
+        <div class="warning-section">
+            <div class="warning-title">
+                ⚠️ Confirmer la Suppression
+            </div>
+            <div class="warning-text">
+                Ce module peut être supprimé en toute sécurité car aucun étudiant, enseignant ou projet n'y est associé.
+            </div>
+            <div class="consequences-list">
+                <h4>📋 Conséquences de la suppression:</h4>
+                <ul>
+                    <li>Le module sera définitivement supprimé de la base de données</li>
+                    <li>Le code "{{ module.code }}" pourra être réutilisé pour un nouveau module</li>
+                    <li>Cette action est <strong>irréversible</strong></li>
+                    <li>Aucun utilisateur ne sera affecté</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Delete Form -->
+        <form method="post" class="delete-form" id="delete-form">
+            {% csrf_token %}
+            <h3 style="margin: 0 0 20px 0; color: #721c24;">🗑️ Confirmation de Suppression</h3>
+            
+            <div class="confirmation-section">
+                <div class="confirmation-checkbox">
+                    <input type="checkbox" id="confirm-understand" onchange="updateDeleteButton()">
+                    <label for="confirm-understand" class="confirmation-text">
+                        Je comprends que cette action est irréversible
+                    </label>
+                </div>
+                
+                <div class="confirmation-checkbox">
+                    <input type="checkbox" id="confirm-consequences" onchange="updateDeleteButton()">
+                    <label for="confirm-consequences" class="confirmation-text">
+                        J'ai lu et compris les conséquences de la suppression
+                    </label>
+                </div>
+                
+                <div class="confirmation-checkbox">
+                    <input type="checkbox" id="confirm-authorize" onchange="updateDeleteButton()">
+                    <label for="confirm-authorize" class="confirmation-text">
+                        J'autorise la suppression définitive de ce module
+                    </label>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="verification-code" style="display: block; margin-bottom: 10px; color: #721c24; font-weight: bold;">
+                    Pour confirmer, tapez le code du module: <span style="background: #721c24; color: white; padding: 2px 8px; border-radius: 4px;">{{ module.code }}</span>
+                </label>
+                <input type="text" id="verification-code" class="verification-input" 
+                       placeholder="Tapez {{ module.code }} ici" onkeyup="updateDeleteButton()">
+            </div>
+            
+            <div class="form-actions">
+                <a href="{% url 'administrator:module_detail' module.id %}" class="btn-cancel">
+                    ✅ Annuler et Retourner
+                </a>
+                <button type="submit" class="btn-delete-confirm" id="delete-button" disabled>
+                    🗑️ SUPPRIMER DÉFINITIVEMENT
+                </button>
+            </div>
+        </form>
+    {% endif %}
+
+    <!-- Additional Information -->
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #6c757d;">
+        <h4 style="color: #495057; margin-bottom: 15px;">💡 Informations Importantes</h4>
+        <ul style="color: #6c757d; line-height: 1.6;">
+            <li><strong>Suppression définitive:</strong> Aucune récupération possible après suppression</li>
+            <li><strong>Code module:</strong> Le code "{{ module.code }}" pourra être réutilisé</li>
+            <li><strong>Historique:</strong> Toutes les données liées au module seront perdues</li>
+            <li><strong>Alternative:</strong> Considérez désactiver le module au lieu de le supprimer</li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateDeleteButton() {
+        const confirmUnderstand = document.getElementById('confirm-understand').checked;
+        const confirmConsequences = document.getElementById('confirm-consequences').checked;
+        const confirmAuthorize = document.getElementById('confirm-authorize').checked;
+        const verificationCode = document.getElementById('verification-code').value.trim().toUpperCase();
+        const expectedCode = '{{ module.code }}';
+        
+        const allConfirmed = confirmUnderstand && confirmConsequences && confirmAuthorize;
+        const codeMatches = verificationCode === expectedCode;
+        
+        const deleteButton = document.getElementById('delete-button');
+        
+        if (allConfirmed && codeMatches) {
+            deleteButton.classList.add('enabled');
+            deleteButton.disabled = false;
+        } else {
+            deleteButton.classList.remove('enabled');
+            deleteButton.disabled = true;
+        }
+        
+        // Visual feedback for verification code
+        const verificationInput = document.getElementById('verification-code');
+        if (verificationCode && codeMatches) {
+            verificationInput.style.borderColor = '#28a745';
+            verificationInput.style.background = '#d4edda';
+        } else if (verificationCode) {
+            verificationInput.style.borderColor = '#dc3545';
+            verificationInput.style.background = '#f8d7da';
+        } else {
+            verificationInput.style.borderColor = '#dc3545';
+            verificationInput.style.background = 'white';
+        }
+    }
+    
+    // Form submission with final confirmation
+    document.getElementById('delete-form').addEventListener('submit', function(e) {
+        const finalConfirm = confirm(
+            `DERNIÈRE CONFIRMATION\n\n` +
+            `Vous êtes sur le point de supprimer définitivement le module:\n` +
+            `"{{ module.code }} - {{ module.name }}"\n\n` +
+            `Cette action est IRRÉVERSIBLE.\n\n` +
+            `Continuer ?`
+        );
+        
+        if (!finalConfirm) {
+            e.preventDefault();
+        }
+    });
+    
+    // Prevent accidental form submission
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.id !== 'verification-code') {
+            e.preventDefault();
+        }
+    });
+    
+    // Auto-focus on first checkbox
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('confirm-understand').focus();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,716 @@
+{% extends 'administrator/base.html' %}
+{% load static %}
+
+{% block title %}Modifier {{ module.code }} - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+    <span class="breadcrumb-separator">›</span>
+    <a href="{% url 'administrator:modules_list' %}">Gestion des Modules</a>
+    <span class="breadcrumb-separator">›</span>
+    <a href="{% url 'administrator:module_detail' module.id %}">{{ module.code }}</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>Modifier</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-header {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .edit-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20px;
+        width: 100px;
+        height: 200%;
+        background: rgba(255,255,255,0.2);
+        transform: rotate(15deg);
+    }
+    
+    .edit-form {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-left: 4px solid #ffc107;
+        margin-bottom: 30px;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 25px;
+    }
+    
+    .form-group-full {
+        grid-column: 1 / -1;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.95em;
+    }
+    
+    .form-group label .required {
+        color: #dc3545;
+        margin-left: 2px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 0.95em;
+        transition: all 0.3s ease;
+        background: #fafafa;
+    }
+    
+    .form-control:focus {
+        border-color: #ffc107;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+        background: white;
+    }
+    
+    .form-control.readonly {
+        background: #e9ecef;
+        cursor: not-allowed;
+    }
+    
+    .help-text {
+        font-size: 0.8em;
+        color: #6c757d;
+        margin-top: 5px;
+        font-style: italic;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        border-left: 4px solid #6c757d;
+    }
+    
+    .section-title {
+        margin: 0 0 15px 0;
+        color: #495057;
+        font-size: 1.1em;
+        font-weight: 600;
+    }
+    
+    .status-toggle {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .toggle-switch {
+        position: relative;
+        width: 60px;
+        height: 30px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 30px;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+    
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: #28a745;
+    }
+    
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(30px);
+    }
+    
+    .status-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .status-description {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        padding-top: 25px;
+        border-top: 2px solid #e9ecef;
+        margin-top: 30px;
+    }
+    
+    .btn-save {
+        background: #ffc107;
+        color: #212529;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-save:hover {
+        background: #e0a800;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-delete:hover {
+        background: #c82333;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .semester-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    
+    .semester-option {
+        position: relative;
+    }
+    
+    .semester-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .semester-label {
+        display: block;
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #fafafa;
+        font-weight: 500;
+    }
+    
+    .semester-option input[type="radio"]:checked + .semester-label {
+        border-color: #ffc107;
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .semester-label:hover {
+        border-color: #ffc107;
+        background: #fffbf0;
+    }
+    
+    .current-info {
+        background: #e8f4ff;
+        border: 2px solid #007bff;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .current-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #b3d9ff;
+    }
+    
+    .stat-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #007bff;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 0.8em;
+        color: #6c757d;
+    }
+    
+    .warning-section {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .warning-title {
+        color: #856404;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .warning-text {
+        color: #856404;
+        font-size: 0.9em;
+        line-height: 1.4;
+    }
+    
+    .change-indicator {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        font-weight: 500;
+        margin-top: 5px;
+        display: none;
+    }
+    
+    .change-indicator.show {
+        display: block;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .edit-header {
+            padding: 20px;
+        }
+        
+        .edit-form {
+            padding: 20px;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .semester-options {
+            grid-template-columns: 1fr;
+        }
+        
+        .current-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Edit Header -->
+    <div class="edit-header">
+        <h1 style="margin: 0 0 10px 0; font-size: 2em;">✏️ Modifier le Module</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-size: 1.3em; font-weight: bold; margin-bottom: 5px;">{{ module.code }}</div>
+                <div style="opacity: 0.8;">{{ module.name }}</div>
+            </div>
+            <div style="text-align: right; font-size: 0.9em;">
+                <div>📅 Créé le {{ module.created_at|date:"d/m/Y" }}</div>
+                <div>📊 {% if module.is_active %}Statut: Actif{% else %}Statut: Inactif{% endif %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Module Statistics -->
+    <div class="current-info">
+        <h3 style="margin: 0 0 15px 0; color: #007bff;">📊 Statistiques Actuelles</h3>
+        <div class="current-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ total_students }}</div>
+                <div class="stat-label">Étudiants Inscrits</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ total_teachers }}</div>
+                <div class="stat-label">Enseignants Assignés</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ total_projects }}</div>
+                <div class="stat-label">Projets Associés</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ module.academic_year }}</div>
+                <div class="stat-label">Année Académique</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning Section -->
+    {% if total_students > 0 or total_projects > 0 %}
+    <div class="warning-section">
+        <div class="warning-title">
+            ⚠️ Attention - Module Actif
+        </div>
+        <div class="warning-text">
+            Ce module contient {{ total_students }} étudiant{{ total_students|pluralize }} et {{ total_projects }} projet{{ total_projects|pluralize }}. 
+            Les modifications peuvent affecter les utilisateurs existants. Procédez avec prudence.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Edit Form -->
+    <form method="post" class="edit-form" id="module-edit-form">
+        {% csrf_token %}
+        
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <h3 class="section-title">📋 Informations de Base</h3>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="name">Nom du Module <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" class="form-control" 
+                           value="{{ module.name }}" required maxlength="200"
+                           oninput="trackChanges(this)">
+                    <div class="help-text">Nom descriptif et complet du module</div>
+                    <div class="change-indicator" id="name-change">📝 Nom modifié</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="code">Code du Module</label>
+                    <input type="text" id="code" name="code" class="form-control readonly" 
+                           value="{{ module.code }}" readonly
+                           title="Le code du module ne peut pas être modifié après création">
+                    <div class="help-text">⚠️ Le code ne peut pas être modifié après création</div>
+                </div>
+            </div>
+            
+            <div class="form-group form-group-full">
+                <label for="description">Description du Module</label>
+                <textarea id="description" name="description" class="form-control" 
+                          rows="4" placeholder="Décrivez les objectifs, contenu et compétences du module..."
+                          oninput="trackChanges(this)">{{ module.description }}</textarea>
+                <div class="help-text">Description optionnelle pour clarifier le contenu du module</div>
+                <div class="change-indicator" id="description-change">📝 Description modifiée</div>
+            </div>
+        </div>
+
+        <!-- Academic Settings Section -->
+        <div class="form-section">
+            <h3 class="section-title">📅 Paramètres Académiques</h3>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="academic_year">Année Académique <span class="required">*</span></label>
+                    <select id="academic_year" name="academic_year" class="form-control" required onchange="trackChanges(this)">
+                        <option value="">Sélectionner l'année</option>
+                        <option value="2024-2025" {% if module.academic_year == "2024-2025" %}selected{% endif %}>2024-2025</option>
+                        <option value="2025-2026" {% if module.academic_year == "2025-2026" %}selected{% endif %}>2025-2026</option>
+                        <option value="2026-2027" {% if module.academic_year == "2026-2027" %}selected{% endif %}>2026-2027</option>
+                    </select>
+                    <div class="help-text">Année académique pour ce module</div>
+                    <div class="change-indicator" id="academic_year-change">📝 Année modifiée</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Semestre <span class="required">*</span></label>
+                    <div class="semester-options">
+                        {% for key, label in semester_choices %}
+                        <div class="semester-option">
+                            <input type="radio" id="semester_{{ key }}" name="semester" value="{{ key }}" 
+                                   {% if module.semester == key %}checked{% endif %} onchange="trackChanges(this)">
+                            <label for="semester_{{ key }}" class="semester-label">{{ label }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="help-text">Période d'enseignement du module</div>
+                    <div class="change-indicator" id="semester-change">📝 Semestre modifié</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Module Status Section -->
+        <div class="form-section">
+            <h3 class="section-title">⚙️ Statut du Module</h3>
+            
+            <div class="status-toggle">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="is_active" name="is_active" 
+                           {% if module.is_active %}checked{% endif %} onchange="trackChanges(this)">
+                    <span class="toggle-slider"></span>
+                </div>
+                <div>
+                    <div class="status-label">Module Actif</div>
+                    <div class="status-description">
+                        Les modules actifs sont visibles par les étudiants et peuvent recevoir de nouvelles inscriptions.
+                        Les modules inactifs sont masqués mais conservent leurs données.
+                    </div>
+                    <div class="change-indicator" id="is_active-change">📝 Statut modifié</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="{% url 'administrator:module_detail' module.id %}" class="btn-cancel">
+                ← Annuler
+            </a>
+            {% if total_students == 0 and total_projects == 0 %}
+            <a href="{% url 'administrator:module_delete' module.id %}" class="btn-delete"
+               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce module ? Cette action est irréversible.')">
+                🗑️ Supprimer
+            </a>
+            {% endif %}
+            <button type="submit" class="btn-save">
+                💾 Enregistrer les Modifications
+            </button>
+        </div>
+    </form>
+
+    <!-- Impact Information -->
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #6c757d;">
+        <h4 style="color: #495057; margin-bottom: 15px;">💡 Impact des Modifications</h4>
+        <ul style="color: #6c757d; line-height: 1.6;">
+            <li><strong>Nom et Description:</strong> Mis à jour immédiatement pour tous les utilisateurs</li>
+            <li><strong>Année/Semestre:</strong> Affecte l'organisation et peut impacter les rapports</li>
+            <li><strong>Statut Inactif:</strong> Le module devient invisible pour les nouveaux étudiants</li>
+            <li><strong>Suppression:</strong> Uniquement possible si aucun étudiant ni projet n'est associé</li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let originalValues = {};
+    let hasChanges = false;
+    
+    // Store original values on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            if (input.type === 'radio') {
+                if (input.checked) {
+                    originalValues[input.name] = input.value;
+                }
+            } else if (input.type === 'checkbox') {
+                originalValues[input.name] = input.checked;
+            } else {
+                originalValues[input.name] = input.value;
+            }
+        });
+    });
+    
+    function trackChanges(element) {
+        let currentValue;
+        
+        if (element.type === 'radio') {
+            currentValue = element.value;
+        } else if (element.type === 'checkbox') {
+            currentValue = element.checked;
+        } else {
+            currentValue = element.value;
+        }
+        
+        const fieldName = element.name;
+        const hasChanged = originalValues[fieldName] !== currentValue;
+        
+        // Show/hide change indicator
+        const indicator = document.getElementById(fieldName + '-change');
+        if (indicator) {
+            if (hasChanged) {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+            }
+        }
+        
+        // Update global change status
+        updateChangeStatus();
+    }
+    
+    function updateChangeStatus() {
+        const changeIndicators = document.querySelectorAll('.change-indicator.show');
+        hasChanges = changeIndicators.length > 0;
+        
+        // Update save button appearance
+        const saveButton = document.querySelector('.btn-save');
+        if (hasChanges) {
+            saveButton.style.background = '#28a745';
+            saveButton.innerHTML = '💾 Enregistrer les Modifications (' + changeIndicators.length + ')';
+        } else {
+            saveButton.style.background = '#ffc107';
+            saveButton.innerHTML = '💾 Enregistrer les Modifications';
+        }
+    }
+    
+    // Form validation
+    document.getElementById('module-edit-form').addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const academicYear = document.getElementById('academic_year').value;
+        const semester = document.querySelector('input[name="semester"]:checked');
+        
+        if (!name) {
+            e.preventDefault();
+            alert('Le nom du module est requis.');
+            document.getElementById('name').focus();
+            return;
+        }
+        
+        if (!academicYear) {
+            e.preventDefault();
+            alert('L\'année académique est requise.');
+            document.getElementById('academic_year').focus();
+            return;
+        }
+        
+        if (!semester) {
+            e.preventDefault();
+            alert('Le semestre est requis.');
+            return;
+        }
+        
+        // Confirm if making significant changes
+        if (hasChanges) {
+            const confirmMessage = `Confirmer les modifications suivantes ?\n\n` +
+                                 `${document.querySelectorAll('.change-indicator.show').length} champ(s) modifié(s)`;
+            
+            if (!confirm(confirmMessage)) {
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+    
+    // Warn about unsaved changes when leaving page
+    window.addEventListener('beforeunload', function(e) {
+        if (hasChanges) {
+            const confirmationMessage = 'Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?';
+            e.returnValue = confirmationMessage;
+            return confirmationMessage;
+        }
+    });
+    
+    // Handle radio button changes
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            trackChanges(this);
+        });
+    });
+    
+    // Status toggle visual feedback
+    document.getElementById('is_active').addEventListener('change', function() {
+        const statusLabel = document.querySelector('.status-label');
+        const statusDesc = document.querySelector('.status-description');
+        
+        if (this.checked) {
+            statusLabel.textContent = 'Module Actif';
+            statusDesc.textContent = 'Le module est visible et accessible aux étudiants. Nouvelles inscriptions autorisées.';
+            statusDesc.style.color = '#155724';
+        } else {
+            statusLabel.textContent = 'Module Inactif';
+            statusDesc.textContent = 'Le module est masqué aux nouveaux étudiants. Les données existantes sont conservées.';
+            statusDesc.style.color = '#721c24';
+        }
+        
+        trackChanges(this);
+    });
+    
+    // Real-time validation feedback
+    document.getElementById('name').addEventListener('input', function() {
+        const value = this.value.trim();
+        if (value.length < 3) {
+            this.style.borderColor = '#dc3545';
+        } else {
+            this.style.borderColor = '#28a745';
+        }
+    });
+</script>
+{% endblock %}

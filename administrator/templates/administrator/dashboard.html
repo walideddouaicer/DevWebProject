@@ -1,0 +1,535 @@
+{% extends 'administrator/base.html' %}
+{% load static %}
+
+{% block title %}ENSA Project Manager - Tableau de Bord Administration{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .welcome-section {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20px;
+        width: 100px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+    }
+    
+    .quick-actions {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .action-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 20px;
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #495057;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        background: #e9ecef;
+        border-color: #6c757d;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .action-btn.priority {
+        background: #fff3cd;
+        border-color: #ffc107;
+        color: #856404;
+    }
+    
+    .action-btn.priority:hover {
+        background: #ffeaa7;
+        border-color: #f39c12;
+    }
+    
+    .action-count {
+        background: #6c757d;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: bold;
+    }
+    
+    .priority .action-count {
+        background: #856404;
+    }
+    
+    .overview-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .stats-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .stats-section h3 {
+        margin: 0 0 20px 0;
+        color: #495057;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 10px;
+    }
+    
+    .status-breakdown {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .status-item {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #6c757d;
+    }
+    
+    .status-item.in-progress {
+        border-left-color: #17a2b8;
+    }
+    
+    .status-item.submitted {
+        border-left-color: #ffc107;
+    }
+    
+    .status-item.validated {
+        border-left-color: #28a745;
+    }
+    
+    .status-item.rejected {
+        border-left-color: #dc3545;
+    }
+    
+    .status-value {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .status-label {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .activity-feed {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .activity-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e8f4ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 1.2em;
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-title {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 4px;
+    }
+    
+    .activity-meta {
+        font-size: 0.85em;
+        color: #6c757d;
+    }
+    
+    .module-overview {
+        margin-top: 30px;
+    }
+    
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .module-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-left: 4px solid #6c757d;
+        transition: transform 0.3s ease;
+    }
+    
+    .module-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    }
+    
+    .module-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .module-code {
+        font-weight: bold;
+        color: #495057;
+        font-size: 1.1em;
+    }
+    
+    .module-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .module-stat {
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+    
+    .module-stat-value {
+        font-weight: bold;
+        color: #495057;
+        display: block;
+    }
+    
+    .module-stat-label {
+        font-size: 0.8em;
+        color: #6c757d;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 60px;
+        color: #6c757d;
+    }
+    
+    .no-data i {
+        font-size: 4em;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Dashboard Header Grid -->
+    <div class="dashboard-grid">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h2 style="margin: 0 0 15px 0; font-size: 1.8em;">
+                👋 Bienvenue, 
+                {% if admin.user.first_name or admin.user.last_name %}
+                    {{ admin.user.first_name }} {{ admin.user.last_name }}
+                {% else %}
+                    {{ admin.user.username }}
+                {% endif %}
+            </h2>
+            <p style="margin: 0 0 20px 0; opacity: 0.9; font-size: 1.1em;">
+                Interface d'administration ENSA Project Manager
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px;">
+                <div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">ID Administrateur</div>
+                    <div style="font-weight: bold;">{{ admin.admin_id|default:"Non défini" }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">Département</div>
+                    <div style="font-weight: bold;">{{ admin.department }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">Rôle</div>
+                    <div style="font-weight: bold;">{{ admin.role }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">Dernière Connexion</div>
+                    <div style="font-weight: bold;">{{ request.user.last_login|date:"d/m/Y H:i"|default:"Première connexion" }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions Panel -->
+        <div class="quick-actions">
+            <h3 style="margin: 0 0 15px 0; color: #495057;">🚀 Actions Rapides</h3>
+            <div class="action-grid">
+                {% if projects_submitted > 0 %}
+                <a href="{% url 'administrator:projects_list' %}?status=submitted" class="action-btn priority">
+                    <span>⏳ Projets soumis</span>
+                    <span class="action-count">{{ projects_submitted }}</span>
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'administrator:projects_list' %}" class="action-btn">
+                    <span>📋 Tous les projets</span>
+                    <span class="action-count">{{ total_projects }}</span>
+                </a>
+                
+                <a href="{% url 'administrator:modules_list' %}" class="action-btn">
+                    <span>📚 Gérer modules</span>
+                    <span class="action-count">{{ total_modules }}</span>
+                </a>
+                
+                <a href="{% url 'administrator:module_create' %}" class="action-btn">
+                    <span>➕ Nouveau module</span>
+                    <span class="action-count">+</span>
+                </a>
+                
+                <a href="{% url 'administrator:assignments_management' %}" class="action-btn">
+                    <span>👥 Assignations</span>
+                    <span class="action-count">{{ total_teachers }}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Statistics Overview -->
+    <div class="quick-stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_projects }}</div>
+            <div class="stat-label">Projets Totaux</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_students }}</div>
+            <div class="stat-label">Étudiants</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_teachers }}</div>
+            <div class="stat-label">Enseignants</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_modules }}</div>
+            <div class="stat-label">Modules Actifs</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ recent_projects }}</div>
+            <div class="stat-label">Nouveaux Projets (30j)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ recent_enrollments }}</div>
+            <div class="stat-label">Nouvelles Inscriptions (30j)</div>
+        </div>
+    </div>
+
+    <!-- Detailed Overview Grid -->
+    <div class="overview-grid">
+        <!-- Project Status Breakdown -->
+        <div class="stats-section">
+            <h3>📊 État des Projets</h3>
+            <div class="status-breakdown">
+                <div class="status-item in-progress">
+                    <div class="status-value">{{ projects_in_progress }}</div>
+                    <div class="status-label">En Cours</div>
+                </div>
+                <div class="status-item submitted">
+                    <div class="status-value">{{ projects_submitted }}</div>
+                    <div class="status-label">Soumis</div>
+                </div>
+                <div class="status-item validated">
+                    <div class="status-value">{{ projects_validated }}</div>
+                    <div class="status-label">Validés</div>
+                </div>
+                <div class="status-item rejected">
+                    <div class="status-value">{{ projects_rejected }}</div>
+                    <div class="status-label">Rejetés</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="stats-section">
+            <h3>🔄 Activité Récente</h3>
+            {% if latest_projects %}
+                <ul class="activity-list">
+                    {% for project in latest_projects %}
+                    <li class="activity-item">
+                        <div class="activity-icon">
+                            {% if project.status == 'submitted' %}⏳
+                            {% elif project.status == 'validated' %}✅
+                            {% elif project.status == 'rejected' %}❌
+                            {% else %}📝{% endif %}
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                <a href="{% url 'administrator:project_detail' project.id %}" style="text-decoration: none; color: inherit;">
+                                    {{ project.title|truncatechars:40 }}
+                                </a>
+                            </div>
+                            <div class="activity-meta">
+                                {{ project.student.user.get_full_name|default:project.student.user.username }} • 
+                                {{ project.updated_at|timesince }}
+                                {% if project.module %} • {{ project.module.code }}{% endif %}
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="no-data">
+                    <div>📭</div>
+                    <p>Aucune activité récente</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Top Modules Section -->
+    <div class="module-overview">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: #495057;">📚 Modules les Plus Actifs</h2>
+            <a href="{% url 'administrator:modules_list' %}" class="btn">Voir Tous les Modules</a>
+        </div>
+        
+        {% if modules_with_stats %}
+            <div class="module-grid">
+                {% for module in modules_with_stats %}
+                <div class="module-card">
+                    <div class="module-header">
+                        <div>
+                            <div class="module-code">{{ module.code }}</div>
+                            <div style="color: #6c757d; font-size: 0.9em;">{{ module.name|truncatechars:30 }}</div>
+                        </div>
+                        <div style="text-align: right; font-size: 0.8em; color: #6c757d;">
+                            {{ module.academic_year }}<br>{{ module.get_semester_display }}
+                        </div>
+                    </div>
+                    <div class="module-stats">
+                        <div class="module-stat">
+                            <span class="module-stat-value">{{ module.student_count }}</span>
+                            <span class="module-stat-label">Étudiants</span>
+                        </div>
+                        <div class="module-stat">
+                            <span class="module-stat-value">{{ module.teacher_count }}</span>
+                            <span class="module-stat-label">Enseignants</span>
+                        </div>
+                        <div class="module-stat">
+                            <span class="module-stat-value">{{ module.project_count }}</span>
+                            <span class="module-stat-label">Projets</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; text-align: center;">
+                        <a href="{% url 'administrator:module_detail' module.id %}" class="btn btn-sm">Voir Détails</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="admin-content">
+                <div class="no-data">
+                    <div>📚</div>
+                    <h3>Aucun Module Disponible</h3>
+                    <p>Commencez par créer des modules pour organiser les projets.</p>
+                    <a href="{% url 'administrator:module_create' %}" class="btn btn-primary">Créer un Module</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Links Section -->
+    <div class="admin-content">
+        <h3>🔗 Liens Rapides</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 2em; margin-bottom: 10px;">📊</div>
+                <h4 style="margin: 0 0 10px 0;">Statistiques Avancées</h4>
+                <p style="font-size: 0.9em; color: #6c757d; margin-bottom: 15px;">Analyses détaillées et rapports</p>
+                <a href="{% url 'administrator:statistics' %}" class="btn btn-sm">Voir Statistiques</a>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 2em; margin-bottom: 10px;">👤</div>
+                <h4 style="margin: 0 0 10px 0;">Gestion Utilisateurs</h4>
+                <p style="font-size: 0.9em; color: #6c757d; margin-bottom: 15px;">Étudiants et enseignants</p>
+                <a href="{% url 'administrator:users_overview' %}" class="btn btn-sm">Gérer Utilisateurs</a>
+            </div>
+            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 2em; margin-bottom: 10px;">📤</div>
+                <h4 style="margin: 0 0 10px 0;">Exports & Rapports</h4>
+                <p style="font-size: 0.9em; color: #6c757d; margin-bottom: 15px;">Télécharger les données</p>
+                <a href="{% url 'administrator:exports' %}" class="btn btn-sm">Exporter Données</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any dashboard-specific JavaScript here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-refresh statistics every 5 minutes
+        setInterval(function() {
+            // This could be enhanced to update stats without full page reload
+            console.log('Statistics refresh interval');
+        }, 300000);
+    });
+</script>
+{% endblock %}
