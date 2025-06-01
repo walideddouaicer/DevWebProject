@@ -1,136 +1,431 @@
 {% extends 'teacher/base.html' %}
 {% load static %}
 
-{% block title %}Projets Étudiants - ENSA Project Manager{% endblock %}
+{% block title %}Projets & Évaluations - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator">></span>
+<span>Projets & Évaluations</span>
+{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
 <link rel="stylesheet" href="{% static 'teacher/css/teacher.css' %}">
 <style>
-.project-row {
-    padding: 15px;
-    border-bottom: 1px solid #e9ecef;
-    transition: background-color 0.2s;
-}
-
-.project-row:hover {
-    background-color: #f8f9fa;
-}
-
-.project-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 10px;
-}
-
-.project-title {
-    color: #2c5aa0;
-    font-weight: bold;
-    font-size: 1.1em;
-    text-decoration: none;
-}
-
-.project-title:hover {
-    text-decoration: underline;
-}
-
-.project-meta {
-    font-size: 0.9em;
-    color: #6c757d;
-}
-
-.project-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.filter-section {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-}
-
-.filter-form {
-    display: flex;
-    gap: 15px;
-    align-items: end;
-    flex-wrap: wrap;
-}
-
-.quick-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.quick-stat {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    border-left: 4px solid #2c5aa0;
-    text-align: center;
-}
-
-.quick-stat h3 {
-    margin: 0;
-    color: #2c5aa0;
-    font-size: 1.5em;
-}
-
-.quick-stat p {
-    margin: 5px 0 0 0;
-    color: #6c757d;
-    font-size: 0.9em;
-}
+    .workspace-header {
+        background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .workspace-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50px;
+        width: 150px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+    }
+    
+    .priority-section {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .priority-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .priority-icon {
+        background: #ffc107;
+        color: #212529;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5em;
+        font-weight: bold;
+    }
+    
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-left: 4px solid #2c5aa0;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card.clickable {
+        cursor: pointer;
+    }
+    
+    .stat-card.clickable:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-left-color: #1e3d72;
+    }
+    
+    .stat-value {
+        font-size: 2.5em;
+        font-weight: bold;
+        color: #2c5aa0;
+        margin-bottom: 8px;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9em;
+        font-weight: 500;
+    }
+    
+    .stat-card.urgent {
+        border-left-color: #dc3545;
+    }
+    
+    .stat-card.urgent .stat-value {
+        color: #dc3545;
+    }
+    
+    .workspace-controls {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+        border-left: 4px solid #2c5aa0;
+    }
+    
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        align-items: end;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .filter-group label {
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: #2c5aa0;
+    }
+    
+    .filter-group select {
+        padding: 12px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        transition: border-color 0.3s ease;
+        background: white;
+    }
+    
+    .filter-group select:focus {
+        border-color: #2c5aa0;
+        outline: none;
+    }
+    
+    .projects-workspace {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .workspace-toolbar {
+        background: #f8f9fa;
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .project-card {
+        padding: 25px;
+        border-bottom: 1px solid #f1f3f4;
+        transition: all 0.3s ease;
+    }
+    
+    .project-card:hover {
+        background: #f8f9fa;
+    }
+    
+    .project-card:last-child {
+        border-bottom: none;
+    }
+    
+    .project-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    
+    .project-title {
+        color: #2c5aa0;
+        font-weight: bold;
+        font-size: 1.3em;
+        text-decoration: none;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .project-title:hover {
+        text-decoration: underline;
+    }
+    
+    .project-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+        font-size: 0.9em;
+        color: #6c757d;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .project-description {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+        font-size: 0.95em;
+        color: #6c757d;
+        border-left: 3px solid #e9ecef;
+    }
+    
+    .project-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #f1f3f4;
+    }
+    
+    .action-btn {
+        padding: 10px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.9em;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .action-btn.primary {
+        background: #2c5aa0;
+        color: white;
+    }
+    
+    .action-btn.primary:hover {
+        background: #1e3d72;
+        transform: translateY(-1px);
+    }
+    
+    .action-btn.success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .action-btn.success:hover {
+        background: #1e7e34;
+        transform: translateY(-1px);
+    }
+    
+    .action-btn.danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .action-btn.danger:hover {
+        background: #c82333;
+        transform: translateY(-1px);
+    }
+    
+    .empty-workspace {
+        text-align: center;
+        padding: 80px;
+        color: #6c757d;
+    }
+    
+    .quick-filters {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .quick-filter {
+        padding: 8px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 20px;
+        text-decoration: none;
+        color: #6c757d;
+        font-size: 0.9em;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-filter:hover, .quick-filter.active {
+        border-color: #2c5aa0;
+        color: #2c5aa0;
+        background: #e8f4ff;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+    
+    .status-submitted {
+        background: #ffc107;
+    }
+    
+    .status-validated {
+        background: #28a745;
+    }
+    
+    .status-rejected {
+        background: #dc3545;
+    }
+    
+    .status-in_progress {
+        background: #6c757d;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-    <div class="teacher-welcome-box">
-        <h2>Projets Étudiants</h2>
-        <p>Gérez et évaluez les projets de vos étudiants</p>
-    </div>
-
-    <!-- Quick Statistics -->
-    <div class="quick-stats">
-        <div class="quick-stat">
-            <h3>{{ total_projects }}</h3>
-            <p>Total projets</p>
-        </div>
-        <div class="quick-stat">
-            <h3>{{ submitted_projects }}</h3>
-            <p>En attente d'évaluation</p>
-        </div>
-        <div class="quick-stat">
-            <h3>{{ validated_projects }}</h3>
-            <p>Validés</p>
-        </div>
-        <div class="quick-stat">
-            <h3>{{ rejected_projects }}</h3>
-            <p>Rejetés</p>
+    <!-- Workspace Header -->
+    <div class="workspace-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="margin: 0 0 10px 0; font-size: 2.5em;">📋 Centre d'Évaluation</h1>
+                <p style="margin: 0; font-size: 1.2em; opacity: 0.9;">
+                    Gérez et évaluez tous les projets de vos étudiants
+                </p>
+            </div>
+            <div style="text-align: right; opacity: 0.2;">
+                <div style="font-size: 4em;">⚡</div>
+            </div>
         </div>
     </div>
 
-    <!-- Filters -->
-    <div class="filter-section">
-        <h3>Filtres</h3>
-        <form method="get" class="filter-form">
-            <div class="form-group">
-                <label for="status">Statut:</label>
+    <!-- Priority Section for Pending Projects -->
+    {% if pending_projects > 0 %}
+    <div class="priority-section">
+        <div class="priority-header">
+            <div class="priority-icon">{{ pending_projects }}</div>
+            <div>
+                <h3 style="margin: 0 0 5px 0; color: #856404;">⚠️ Action Requise</h3>
+                <p style="margin: 0; color: #856404;">
+                    {{ pending_projects }} projet{{ pending_projects|pluralize }} en attente de votre évaluation
+                </p>
+            </div>
+            <div style="margin-left: auto;">
+                <a href="{% url 'teacher:student_projects' %}?status=submitted" class="btn" style="background: #ffc107; color: #212529; font-weight: bold;">
+                    Évaluer Maintenant
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Dashboard Statistics - FIXED: Removed onclick handlers -->
+    <div class="dashboard-stats">
+        <a href="{% url 'teacher:student_projects' %}" class="stat-card clickable" style="text-decoration: none; color: inherit;">
+            <div class="stat-value">{{ total_projects }}</div>
+            <div class="stat-label">Projets Totaux</div>
+        </a>
+        <a href="{% url 'teacher:student_projects' %}?status=submitted" class="stat-card clickable {% if submitted_projects > 0 %}urgent{% endif %}" style="text-decoration: none; color: inherit;">
+            <div class="stat-value">{{ submitted_projects }}</div>
+            <div class="stat-label">En Attente d'Évaluation</div>
+        </a>
+        <a href="{% url 'teacher:student_projects' %}?status=validated" class="stat-card clickable" style="text-decoration: none; color: inherit;">
+            <div class="stat-value">{{ validated_projects }}</div>
+            <div class="stat-label">Projets Validés</div>
+        </a>
+        <a href="{% url 'teacher:student_projects' %}?status=rejected" class="stat-card clickable" style="text-decoration: none; color: inherit;">
+            <div class="stat-value">{{ rejected_projects }}</div>
+            <div class="stat-label">Projets Rejetés</div>
+        </a>
+    </div>
+
+    <!-- Workspace Controls -->
+    <div class="workspace-controls">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: #2c5aa0;">🔧 Contrôles de l'Espace de Travail</h3>
+            <span style="font-size: 0.9em; color: #6c757d;">Filtrez et organisez vos projets</span>
+        </div>
+        
+        <!-- Quick Filters -->
+        <div class="quick-filters">
+            <a href="{% url 'teacher:student_projects' %}" class="quick-filter {% if not status_filter and not module_filter %}active{% endif %}">
+                🔍 Tous les projets
+            </a>
+            <a href="{% url 'teacher:student_projects' %}?status=submitted" class="quick-filter {% if status_filter == 'submitted' %}active{% endif %}">
+                ⏳ À évaluer ({{ submitted_projects }})
+            </a>
+            <a href="{% url 'teacher:student_projects' %}?status=validated" class="quick-filter {% if status_filter == 'validated' %}active{% endif %}">
+                ✅ Validés ({{ validated_projects }})
+            </a>
+            <a href="{% url 'teacher:student_projects' %}?status=rejected" class="quick-filter {% if status_filter == 'rejected' %}active{% endif %}">
+                ❌ Rejetés ({{ rejected_projects }})
+            </a>
+        </div>
+        
+        <!-- Advanced Filters -->
+        <form method="get" class="filter-grid">
+            <div class="filter-group">
+                <label for="status">📊 Statut du Projet</label>
                 <select name="status" id="status">
                     <option value="">Tous les statuts</option>
-                    <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>En cours</option>
-                    <option value="submitted" {% if status_filter == 'submitted' %}selected{% endif %}>Soumis</option>
-                    <option value="validated" {% if status_filter == 'validated' %}selected{% endif %}>Validé</option>
-                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejeté</option>
+                    <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>📝 En cours</option>
+                    <option value="submitted" {% if status_filter == 'submitted' %}selected{% endif %}>⏳ Soumis</option>
+                    <option value="validated" {% if status_filter == 'validated' %}selected{% endif %}>✅ Validé</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>❌ Rejeté</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="module">Module:</label>
+            <div class="filter-group">
+                <label for="module">📚 Module</label>
                 <select name="module" id="module">
                     <option value="">Tous les modules</option>
                     {% for mod in modules %}
@@ -140,83 +435,168 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="form-group">
-                <button type="submit" class="btn">Appliquer</button>
+            <div class="filter-group">
+                <button type="submit" class="btn" style="background: #2c5aa0; color: white; width: 100%; padding: 14px; font-weight: 500;">
+                    Appliquer les Filtres
+                </button>
             </div>
         </form>
     </div>
 
-    <!-- Projects List -->
-    <div class="card">
-        <h2>Liste des Projets {% if projects %} ({{ projects.count }}){% endif %}</h2>
+    <!-- Projects Workspace -->
+    <div class="projects-workspace">
+        <div class="workspace-toolbar">
+            <h2 style="margin: 0; color: #2c5aa0;">
+                📋 Projets 
+                {% if projects %}({{ projects.count }}){% endif %}
+                {% if status_filter or module_filter %}
+                    - Filtrés
+                {% endif %}
+            </h2>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                {% if status_filter or module_filter %}
+                <a href="{% url 'teacher:student_projects' %}" class="btn btn-sm">Réinitialiser les filtres</a>
+                {% endif %}
+            </div>
+        </div>
         
         {% if projects %}
             {% for project in projects %}
-            <div class="project-row">
+            <div class="project-card">
                 <div class="project-header">
-                    <div>
+                    <div style="flex: 1;">
                         <a href="{% url 'teacher:project_review' project.id %}" class="project-title">
+                            <span class="status-indicator status-{{ project.status }}"></span>
                             {{ project.title }}
                         </a>
                         <div class="project-meta">
-                            Par <strong>{{ project.student.user.get_full_name|default:project.student.user.username }}</strong>
+                            <div class="meta-item">
+                                <strong>👤 Étudiant:</strong> {{ project.student.user.get_full_name|default:project.student.user.username }}
+                            </div>
                             {% if project.module %}
-                                • Module: <strong>{{ project.module.code }}</strong>
+                            <div class="meta-item">
+                                <strong>📚 Module:</strong> 
+                                <a href="{% url 'teacher:module_detail' project.module.id %}" style="color: inherit;">
+                                    {{ project.module.code }}
+                                </a>
+                            </div>
                             {% endif %}
-                            • {{ project.get_project_type_display }}
+                            <div class="meta-item">
+                                <strong>📂 Type:</strong> {{ project.get_project_type_display }}
+                            </div>
+                            {% if project.collaborators.exists %}
+                            <div class="meta-item">
+                                <strong>👥 Collaborateurs:</strong> {{ project.collaborators.count }}
+                            </div>
+                            {% endif %}
+                            <div class="meta-item">
+                                <strong>📅 Dernière MAJ:</strong> {{ project.updated_at|date:"d/m/Y H:i" }}
+                            </div>
+                            {% if project.deliverables.exists %}
+                            <div class="meta-item">
+                                <strong>📎 Livrables:</strong> {{ project.deliverables.count }}
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
-                    <div>
-                        <span class="status-badge status-{{ project.status|lower }}">
+                    <div style="text-align: right;">
+                        <span class="status-badge status-{{ project.status|lower }}" style="font-size: 0.9em;">
                             {{ project.get_status_display }}
                         </span>
                     </div>
                 </div>
-                
-                <div class="project-meta">
-                    <strong>Dernière mise à jour:</strong> {{ project.updated_at|date:"d/m/Y H:i" }}
-                    {% if project.collaborators.exists %}
-                        • <strong>Collaborateurs:</strong> {{ project.collaborators.count }}
-                    {% endif %}
-                    {% if project.deliverables.exists %}
-                        • <strong>Livrables:</strong> {{ project.deliverables.count }}
-                    {% endif %}
+
+                {% if project.description %}
+                <div class="project-description">
+                    {{ project.description|truncatewords:30 }}
                 </div>
+                {% endif %}
 
                 <div class="project-actions">
-                    <a href="{% url 'teacher:project_review' project.id %}" class="btn btn-sm">Examiner</a>
+                    <a href="{% url 'teacher:project_review' project.id %}" class="action-btn primary">
+                        📋 Examiner en Détail
+                    </a>
                     {% if project.status == 'submitted' %}
                         <form method="post" action="{% url 'teacher:approve_project' project.id %}" style="display: inline;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm" style="background: #28a745; color: white;">Valider</button>
+                            <button type="submit" class="action-btn success" 
+                                    onclick="return confirm('Êtes-vous sûr de vouloir valider ce projet?')">
+                                ✓ Valider Projet
+                            </button>
                         </form>
                         <form method="post" action="{% url 'teacher:reject_project' project.id %}" style="display: inline;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-danger">Rejeter</button>
+                            <button type="submit" class="action-btn danger" 
+                                    onclick="return confirm('Êtes-vous sûr de vouloir rejeter ce projet?')">
+                                ✗ Rejeter Projet
+                            </button>
                         </form>
+                    {% endif %}
+                    {% if project.module %}
+                    <a href="{% url 'teacher:module_projects' project.module.id %}" class="action-btn" style="background: #6c757d; color: white;">
+                        📚 Autres Projets du Module
+                    </a>
                     {% endif %}
                 </div>
             </div>
             {% endfor %}
         {% else %}
-            <div class="empty-state">
-                <p>Aucun projet trouvé avec les filtres sélectionnés.</p>
-                {% if not modules %}
-                    <p><em>Vous devez avoir des modules assignés et des étudiants inscrits pour voir leurs projets.</em></p>
+            <div class="empty-workspace">
+                <div style="font-size: 5em; margin-bottom: 30px; opacity: 0.3;">
+                    {% if status_filter or module_filter %}🔍{% else %}📋{% endif %}
+                </div>
+                {% if status_filter or module_filter %}
+                    <h3>Aucun projet trouvé avec ces filtres</h3>
+                    <p style="margin-bottom: 30px;">Essayez de modifier vos critères de recherche ou consultez tous les projets.</p>
+                    <a href="{% url 'teacher:student_projects' %}" class="btn" style="background: #2c5aa0; color: white;">
+                        Voir Tous les Projets
+                    </a>
+                {% elif not modules %}
+                    <h3>Aucun module assigné</h3>
+                    <p style="margin-bottom: 30px;">
+                        Vous devez avoir des modules assignés et des étudiants inscrits pour voir leurs projets.
+                    </p>
+                    <a href="{% url 'teacher:modules_list' %}" class="btn" style="background: #2c5aa0; color: white;">
+                        Gérer mes Modules
+                    </a>
+                {% else %}
+                    <h3>Aucun projet soumis</h3>
+                    <p style="margin-bottom: 30px;">
+                        Les projets apparaîtront ici lorsque vos étudiants créeront et soumettront leurs projets.
+                    </p>
+                    <a href="{% url 'teacher:modules_list' %}" class="btn" style="background: #2c5aa0; color: white;">
+                        Voir mes Modules
+                    </a>
                 {% endif %}
             </div>
         {% endif %}
     </div>
 
-    <!-- Information Box -->
-    <div class="card" style="margin-top: 30px;">
-        <h3>Information</h3>
-        <p>Cette page affiche tous les projets des étudiants inscrits dans vos modules.</p>
-        <ul>
-            <li><strong>En cours:</strong> L'étudiant travaille encore sur le projet</li>
-            <li><strong>Soumis:</strong> Le projet attend votre évaluation</li>
-            <li><strong>Validé:</strong> Vous avez approuvé le projet</li>
-            <li><strong>Rejeté:</strong> Le projet nécessite des révisions</li>
-        </ul>
+    <!-- Information Panel -->
+    <div style="background: #e8f4ff; padding: 25px; border-radius: 12px; margin-top: 30px; border: 1px solid #b8daff;">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="font-size: 3em; opacity: 0.5;">💡</div>
+            <div style="flex: 1;">
+                <h3 style="margin: 0 0 15px 0; color: #2c5aa0;">Guide des Statuts</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.9em;">
+                    <div>
+                        <span class="status-indicator status-in_progress"></span>
+                        <strong>En cours:</strong> L'étudiant travaille sur le projet
+                    </div>
+                    <div>
+                        <span class="status-indicator status-submitted"></span>
+                        <strong>Soumis:</strong> Le projet attend votre évaluation
+                    </div>
+                    <div>
+                        <span class="status-indicator status-validated"></span>
+                        <strong>Validé:</strong> Vous avez approuvé le projet
+                    </div>
+                    <div>
+                        <span class="status-indicator status-rejected"></span>
+                        <strong>Rejeté:</strong> Le projet nécessite des révisions
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

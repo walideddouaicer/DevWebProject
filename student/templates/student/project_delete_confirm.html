@@ -1,22 +1,473 @@
 {% extends "student/base.html" %}
 {% load static %}
 
-{% block title %}ENSA Project Manager - Supprimer le projet{% endblock %}
+{% block title %}Supprimer le Projet - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator">></span>
+<a href="{% url 'student:dashboard' %}">Projets</a>
+<span class="breadcrumb-separator">></span>
+<a href="{% url 'student:project_detail' project.id %}">{{ project.title|truncatewords:3 }}</a>
+<span class="breadcrumb-separator">></span>
+<span>Supprimer</span>
+{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'student/css/confirmation.css' %}">
+<style>
+    .delete-workspace {
+        max-width: 800px;
+        margin: 0 auto;
+        display: grid;
+        gap: 30px;
+    }
+    
+    .warning-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+    }
+    
+    .warning-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50px;
+        width: 150px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+    }
+    
+    .warning-icon {
+        font-size: 4em;
+        margin-bottom: 15px;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .confirm-container {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 2px solid #dc3545;
+    }
+    
+    .project-summary {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 0.95em;
+    }
+    
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+    
+    .summary-label {
+        font-weight: 500;
+        color: #dc3545;
+    }
+    
+    .summary-value {
+        color: #6c757d;
+    }
+    
+    .consequences-list {
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .consequence-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 15px;
+        font-size: 0.95em;
+    }
+    
+    .consequence-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .consequence-icon {
+        background: #dc3545;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8em;
+        font-weight: bold;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    
+    .confirmation-form {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 8px;
+        border: 2px dashed #dc3545;
+        margin: 25px 0;
+    }
+    
+    .confirm-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1em;
+        margin-top: 10px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .confirm-input:focus {
+        outline: none;
+        border-color: #dc3545;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 12px 25px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 140px;
+        justify-content: center;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+    }
+    
+    .btn-danger:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+    }
+    
+    .safety-notice {
+        background: #e8f4ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .alternative-actions {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .action-button {
+        background: #28a745;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.9em;
+        margin-right: 10px;
+        margin-top: 8px;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .action-button:hover {
+        background: #1e7e34;
+        transform: translateY(-1px);
+    }
+    
+    .collaborators-warning {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+    }
+    
+    .typing-indicator {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-top: 10px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .typing-indicator.show {
+        opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+        
+        .delete-workspace {
+            margin: 10px;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="confirm-box">
-    <h2>Supprimer le projet</h2>
-    <p>Êtes-vous sûr de vouloir supprimer le projet "<strong>{{ project.title }}</strong>"?</p>
-    <p>Cette action est irréversible et tous les livrables associés seront également supprimés.</p>
-    
-    <form method="post">
-        {% csrf_token %}
-        <a href="{% url 'student:project_detail' project.id %}" class="btn btn-secondary">Annuler</a>
-        <button type="submit" class="btn btn-danger">Confirmer la suppression</button>
-    </form>
-</div>
+    <div class="delete-workspace">
+        <!-- Warning Header -->
+        <div class="warning-header">
+            <div class="warning-icon">⚠️</div>
+            <h1 style="margin: 0 0 10px 0; font-size: 2.2em;">Supprimer le Projet</h1>
+            <p style="margin: 0; font-size: 1.1em; opacity: 0.9;">
+                Cette action est définitive et ne peut pas être annulée
+            </p>
+        </div>
+
+        <!-- Confirmation Container -->
+        <div class="confirm-container">
+            <div style="text-align: center; margin-bottom: 25px;">
+                <h2 style="color: #dc3545; margin: 0 0 10px 0;">Êtes-vous absolument certain?</h2>
+                <p style="color: #6c757d; margin: 0;">
+                    Vous êtes sur le point de supprimer définitivement le projet suivant et toutes ses données associées.
+                </p>
+            </div>
+
+            <!-- Project Summary -->
+            <div class="project-summary">
+                <h3 style="margin: 0 0 15px 0; color: #dc3545;">📊 Récapitulatif du Projet</h3>
+                <div class="summary-item">
+                    <span class="summary-label">📝 Nom du projet</span>
+                    <span class="summary-value"><strong>{{ project.title }}</strong></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">📂 Type</span>
+                    <span class="summary-value">{{ project.get_project_type_display }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">📅 Créé le</span>
+                    <span class="summary-value">{{ project.created_at|date:"d/m/Y" }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">📊 Statut actuel</span>
+                    <span class="summary-value">{{ project.get_status_display }}</span>
+                </div>
+                {% if project.module %}
+                <div class="summary-item">
+                    <span class="summary-label">📚 Module associé</span>
+                    <span class="summary-value">{{ project.module.code }} - {{ project.module.name }}</span>
+                </div>
+                {% endif %}
+                {% if project.collaborators.count > 0 %}
+                <div class="summary-item">
+                    <span class="summary-label">👥 Collaborateurs</span>
+                    <span class="summary-value">{{ project.collaborators.count }} collaborateur{{ project.collaborators.count|pluralize }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Collaborators Warning -->
+            {% if project.collaborators.count > 0 %}
+            <div class="collaborators-warning">
+                <h4 style="margin: 0 0 10px 0; color: #856404;">👥 Attention: Collaborateurs Actifs</h4>
+                <p style="margin: 0; color: #856404; font-size: 0.95em;">
+                    Ce projet a {{ project.collaborators.count }} collaborateur{{ project.collaborators.count|pluralize }}. 
+                    La suppression les privera également d'accès à ce projet et à tout son contenu.
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- Consequences List -->
+            <div class="consequences-list">
+                <h3 style="margin: 0 0 15px 0; color: #dc3545;">⚠️ Conséquences de la Suppression</h3>
+                <div class="consequence-item">
+                    <div class="consequence-icon">1</div>
+                    <div>
+                        <strong>Perte de données définitive:</strong> Le projet et toutes ses informations seront supprimés de façon permanente.
+                    </div>
+                </div>
+                <div class="consequence-item">
+                    <div class="consequence-icon">2</div>
+                    <div>
+                        <strong>Suppression des livrables:</strong> Tous les fichiers uploadés (documents, rapports, présentations) seront effacés.
+                    </div>
+                </div>
+                <div class="consequence-item">
+                    <div class="consequence-icon">3</div>
+                    <div>
+                        <strong>Perte de l'historique:</strong> Tous les jalons, commentaires et l'historique des activités seront perdus.
+                    </div>
+                </div>
+                <div class="consequence-item">
+                    <div class="consequence-icon">4</div>
+                    <div>
+                        <strong>Impact sur les collaborateurs:</strong> Les collaborateurs perdront l'accès au projet et à tous ses contenus.
+                    </div>
+                </div>
+                <div class="consequence-item">
+                    <div class="consequence-icon">5</div>
+                    <div>
+                        <strong>Aucune récupération possible:</strong> Il sera impossible de restaurer le projet après sa suppression.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alternative Actions -->
+            <div class="alternative-actions">
+                <h4 style="margin: 0 0 12px 0; color: #155724;">💡 Alternatives Recommandées</h4>
+                <p style="margin: 0 0 15px 0; color: #155724; font-size: 0.95em;">
+                    Avant de supprimer définitivement, considérez ces options moins radicales:
+                </p>
+                <a href="{% url 'student:project_edit' project.id %}" class="action-button">
+                    ✏️ Modifier le Projet
+                </a>
+                <a href="{% url 'student:project_detail' project.id %}" class="action-button">
+                    📂 Archiver Temporairement
+                </a>
+                <a href="{% url 'student:project_detail' project.id %}" class="action-button">
+                    👥 Retirer des Collaborateurs
+                </a>
+            </div>
+
+            <!-- Safety Notice -->
+            <div class="safety-notice">
+                <h4 style="margin: 0 0 10px 0; color: #3a6ea5;">🔒 Mesure de Sécurité</h4>
+                <p style="margin: 0 0 15px 0; color: #3a6ea5; font-size: 0.95em;">
+                    Pour confirmer la suppression, tapez exactement le nom du projet dans le champ ci-dessous:
+                </p>
+                <strong style="color: #dc3545; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; font-family: monospace;">
+                    {{ project.title }}
+                </strong>
+            </div>
+
+            <!-- Confirmation Form -->
+            <form method="post" id="deleteForm">
+                {% csrf_token %}
+                <div class="confirmation-form">
+                    <label for="confirmInput" style="font-weight: 600; color: #dc3545; margin-bottom: 10px; display: block;">
+                        Tapez le nom du projet pour confirmer:
+                    </label>
+                    <input type="text" id="confirmInput" class="confirm-input" 
+                           placeholder="Tapez exactement: {{ project.title }}" 
+                           autocomplete="off" required>
+                    <div class="typing-indicator" id="typingFeedback">
+                        Tapez le nom exact du projet...
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <a href="{% url 'student:project_detail' project.id %}" class="btn btn-secondary">
+                        🔙 Annuler et Retourner au Projet
+                    </a>
+                    <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                        🗑️ Supprimer Définitivement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmInput = document.getElementById('confirmInput');
+            const deleteButton = document.getElementById('deleteButton');
+            const typingFeedback = document.getElementById('typingFeedback');
+            const projectTitle = "{{ project.title }}";
+            
+            confirmInput.addEventListener('input', function() {
+                const inputValue = this.value.trim();
+                typingFeedback.classList.add('show');
+                
+                if (inputValue === projectTitle) {
+                    deleteButton.disabled = false;
+                    deleteButton.style.opacity = '1';
+                    typingFeedback.textContent = '✅ Nom correct. Vous pouvez maintenant supprimer le projet.';
+                    typingFeedback.style.color = '#28a745';
+                } else if (inputValue.length > 0) {
+                    deleteButton.disabled = true;
+                    deleteButton.style.opacity = '0.6';
+                    typingFeedback.textContent = '❌ Le nom ne correspond pas. Vérifiez l\'orthographe.';
+                    typingFeedback.style.color = '#dc3545';
+                } else {
+                    deleteButton.disabled = true;
+                    deleteButton.style.opacity = '0.6';
+                    typingFeedback.textContent = 'Tapez le nom exact du projet...';
+                    typingFeedback.style.color = '#6c757d';
+                }
+            });
+            
+            // Final confirmation before submission
+            document.getElementById('deleteForm').addEventListener('submit', function(e) {
+                if (!confirm('Dernière confirmation: Êtes-vous absolument certain de vouloir supprimer ce projet? Cette action est IRRÉVERSIBLE.')) {
+                    e.preventDefault();
+                }
+            });
+            
+            // Auto-focus on the input
+            confirmInput.focus();
+        });
+    </script>
 {% endblock %}

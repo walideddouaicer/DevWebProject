@@ -1,35 +1,358 @@
 {% extends "student/base.html" %}
 {% load static %}
 
-{% block title %}ENSA Project Manager - Login{% endblock %}
+{% block title %}Connexion - ENSA Project Manager{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'student/css/confirmation.css' %}">
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .container {
+        width: 100%;
+        max-width: 450px;
+        margin: 20px;
+    }
+    
+    .header {
+        display: none;
+    }
+    
+    .login-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        overflow: hidden;
+        animation: slideUp 0.6s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .login-header {
+        background: linear-gradient(135deg, #3a6ea5 0%, #2c5aa0 100%);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .login-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -30px;
+        width: 100px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+    }
+    
+    .login-header h2 {
+        margin: 0 0 10px 0;
+        font-size: 2em;
+        font-weight: 600;
+    }
+    
+    .login-header p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1.1em;
+    }
+    
+    .login-form {
+        padding: 40px 30px;
+    }
+    
+    .welcome-message {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .welcome-message h3 {
+        color: #3a6ea5;
+        margin: 0 0 8px 0;
+        font-size: 1.3em;
+    }
+    
+    .welcome-message p {
+        color: #6c757d;
+        margin: 0;
+        font-size: 0.95em;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+        position: relative;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #3a6ea5;
+        font-size: 0.95em;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        box-sizing: border-box;
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: #3a6ea5;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(58, 110, 165, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    .form-group input::placeholder {
+        color: #adb5bd;
+    }
+    
+    .form-error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-top: 8px;
+        font-size: 0.9em;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .login-button {
+        width: 100%;
+        background: linear-gradient(135deg, #3a6ea5 0%, #2c5aa0 100%);
+        color: white;
+        padding: 15px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+        box-shadow: 0 4px 15px rgba(58, 110, 165, 0.3);
+    }
+    
+    .login-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(58, 110, 165, 0.4);
+    }
+    
+    .login-button:active {
+        transform: translateY(0);
+    }
+    
+    .login-footer {
+        background: #f8f9fa;
+        padding: 20px 30px;
+        text-align: center;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .footer-links a {
+        color: #3a6ea5;
+        text-decoration: none;
+        font-size: 0.9em;
+        transition: color 0.3s ease;
+    }
+    
+    .footer-links a:hover {
+        color: #2c5aa0;
+        text-decoration: underline;
+    }
+    
+    .system-info {
+        color: #6c757d;
+        font-size: 0.8em;
+        margin: 0;
+    }
+    
+    .feature-highlights {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .feature-item {
+        text-align: center;
+        padding: 15px 10px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .feature-icon {
+        font-size: 1.8em;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .feature-title {
+        font-size: 0.85em;
+        font-weight: 500;
+        opacity: 0.9;
+    }
+    
+    .input-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-size: 1.1em;
+        pointer-events: none;
+    }
+    
+    .form-group.with-icon input {
+        padding-left: 50px;
+    }
+    
+    @media (max-width: 480px) {
+        .container {
+            margin: 10px;
+        }
+        
+        .login-header,
+        .login-form {
+            padding: 30px 20px;
+        }
+        
+        .feature-highlights {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="login-form">
-    <h2>Connexion</h2>
-    <form method="post">
-        {% csrf_token %}
+<div class="login-container">
+    <!-- Login Header -->
+    <div class="login-header">
+        <h2>🎓 ENSA Project Manager</h2>
+        <p>Plateforme de Gestion de Projets Étudiants</p>
         
-        <div class="form-group">
-            <label for="{{ form.username.id_for_label }}">Nom d'utilisateur:</label>
-            {{ form.username }}
-            {% if form.username.errors %}
-                <div class="form-error">{{ form.username.errors }}</div>
-            {% endif %}
+        <!-- Feature Highlights -->
+        <div class="feature-highlights">
+            <div class="feature-item">
+                <span class="feature-icon">📊</span>
+                <div class="feature-title">Suivi de Projets</div>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🤝</span>
+                <div class="feature-title">Collaboration</div>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📚</span>
+                <div class="feature-title">Modules</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Login Form -->
+    <div class="login-form">
+        <div class="welcome-message">
+            <h3>Connexion à votre Espace</h3>
+            <p>Accédez à vos projets et collaborations</p>
         </div>
         
-        <div class="form-group">
-            <label for="{{ form.password.id_for_label }}">Mot de passe:</label>
-            {{ form.password }}
-            {% if form.password.errors %}
-                <div class="form-error">{{ form.password.errors }}</div>
-            {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group with-icon">
+                <label for="{{ form.username.id_for_label }}">👤 Nom d'utilisateur</label>
+                <div style="position: relative;">
+                    <span class="input-icon">👤</span>
+                    {{ form.username }}
+                </div>
+                {% if form.username.errors %}
+                    <div class="form-error">
+                        {{ form.username.errors|join:", " }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group with-icon">
+                <label for="{{ form.password.id_for_label }}">🔒 Mot de passe</label>
+                <div style="position: relative;">
+                    <span class="input-icon">🔒</span>
+                    {{ form.password }}
+                </div>
+                {% if form.password.errors %}
+                    <div class="form-error">
+                        {{ form.password.errors|join:", " }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <button type="submit" class="login-button">
+                🚀 Se Connecter
+            </button>
+        </form>
+    </div>
+    
+    <!-- Login Footer -->
+    <div class="login-footer">
+        <div class="footer-links">
+            <a href="#">📧 Aide & Support</a>
+            <a href="#">🔒 Mot de passe oublié?</a>
+            <a href="#">📖 Guide d'utilisation</a>
         </div>
-        
-        <button type="submit" class="btn">Connexion</button>
-    </form>
+        <p class="system-info">
+            © 2024 ENSA Project Manager - Plateforme sécurisée pour étudiants
+        </p>
+    </div>
 </div>
+
+<!-- Background Animation -->
+<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1;">
+    <div style="position: absolute; top: 10%; left: 10%; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; animation: float 6s ease-in-out infinite;"></div>
+    <div style="position: absolute; top: 60%; right: 10%; width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%; animation: float 8s ease-in-out infinite reverse;"></div>
+    <div style="position: absolute; bottom: 20%; left: 30%; width: 80px; height: 80px; background: rgba(255,255,255,0.08); border-radius: 50%; animation: float 7s ease-in-out infinite;"></div>
+</div>
+
+<style>
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+</style>
 {% endblock %}

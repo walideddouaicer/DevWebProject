@@ -1,50 +1,834 @@
 {% extends "student/base.html" %}
 {% load static %}
 
-{% block title %}ENSA Project Manager - {{ title }}{% endblock %}
+{% block title %}{{ title }} - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator">></span>
+<a href="{% url 'student:dashboard' %}">Projets</a>
+<span class="breadcrumb-separator">></span>
+<a href="{% url 'student:project_detail' project.id %}">{{ project.title|truncatewords:3 }}</a>
+<span class="breadcrumb-separator">></span>
+<span>{{ title }}</span>
+{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'student/css/project_form.css' %}">
+<style>
+    .upload-workspace {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .upload-header {
+        background: linear-gradient(135deg, #3a6ea5 0%, #2c5aa0 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        grid-column: 1 / -1;
+    }
+    
+    .upload-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50px;
+        width: 150px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+    }
+    
+    .project-context {
+        background: rgba(255,255,255,0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+    
+    .form-main {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-left: 4px solid #3a6ea5;
+        height: fit-content;
+    }
+    
+    .form-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .sidebar-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-left: 4px solid #3a6ea5;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #3a6ea5;
+        font-size: 1em;
+    }
+    
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #3a6ea5;
+        box-shadow: 0 0 0 3px rgba(58, 110, 165, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    .file-upload-area {
+        border: 3px dashed #e9ecef;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .file-upload-area:hover {
+        border-color: #3a6ea5;
+        background: #e8f4ff;
+    }
+    
+    .file-upload-area.dragover {
+        border-color: #28a745;
+        background: #d4edda;
+        transform: scale(1.02);
+    }
+    
+    .file-upload-icon {
+        font-size: 4em;
+        color: #6c757d;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .file-upload-area:hover .file-upload-icon {
+        color: #3a6ea5;
+        transform: scale(1.1);
+    }
+    
+    .file-upload-text {
+        margin-bottom: 15px;
+    }
+    
+    .file-upload-text h4 {
+        margin: 0 0 8px 0;
+        color: #3a6ea5;
+        font-size: 1.2em;
+    }
+    
+    .file-upload-text p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.95em;
+    }
+    
+    .file-input-hidden {
+        position: absolute;
+        left: -9999px;
+        opacity: 0;
+    }
+    
+    .file-upload-button {
+        background: #3a6ea5;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    
+    .file-upload-button:hover {
+        background: #2c5aa0;
+        transform: translateY(-1px);
+    }
+    
+    .file-preview {
+        background: #e8f4ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        display: none;
+    }
+    
+    .file-preview.show {
+        display: block;
+    }
+    
+    .file-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .file-icon {
+        width: 40px;
+        height: 40px;
+        background: #3a6ea5;
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+    
+    .file-details {
+        flex: 1;
+    }
+    
+    .file-name {
+        font-weight: bold;
+        color: #3a6ea5;
+        margin-bottom: 4px;
+    }
+    
+    .file-size {
+        font-size: 0.85em;
+        color: #6c757d;
+    }
+    
+    .file-remove {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 0.8em;
+        transition: all 0.3s ease;
+    }
+    
+    .file-remove:hover {
+        background: #c82333;
+    }
+    
+    .form-error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-top: 8px;
+        font-size: 0.9em;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 2px solid #f1f3f4;
+    }
+    
+    .btn {
+        padding: 12px 25px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-primary {
+        background: #3a6ea5;
+        color: white;
+        box-shadow: 0 4px 12px rgba(58, 110, 165, 0.3);
+    }
+    
+    .btn-primary:hover {
+        background: #2c5aa0;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(58, 110, 165, 0.4);
+    }
+    
+    .btn-primary:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+    }
+    
+    .file-requirements {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .requirement-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+    }
+    
+    .requirement-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .requirement-icon {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .upload-progress {
+        width: 100%;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 10px 0;
+        display: none;
+    }
+    
+    .upload-progress.show {
+        display: block;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #3a6ea5, #28a745);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+        width: 0%;
+    }
+    
+    .upload-status {
+        font-size: 0.9em;
+        color: #6c757d;
+        text-align: center;
+        margin-top: 8px;
+    }
+    
+    .project-info-card {
+        background: #e8f4ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 12px;
+        padding: 20px;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(58, 110, 165, 0.2);
+        font-size: 0.9em;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 500;
+        color: #3a6ea5;
+    }
+    
+    .info-value {
+        color: #6c757d;
+    }
+    
+    .tips-card {
+        background: #f8f9fa;
+        border-left: 4px solid #28a745;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    
+    .tip-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-size: 0.9em;
+    }
+    
+    .tip-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .tip-icon {
+        background: #28a745;
+        color: white;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7em;
+        font-weight: bold;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+    
+    .required-field {
+        color: #dc3545;
+        margin-left: 3px;
+    }
+
+    @media (max-width: 768px) {
+        .upload-workspace {
+            grid-template-columns: 1fr;
+        }
+        
+        .file-upload-area {
+            padding: 30px 15px;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn {
+            justify-content: center;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="form-box">
-    <div class="project-info">
-        <h3>Ajouter un livrable pour : {{ project.title }}</h3>
+    <div class="upload-workspace">
+        <!-- Upload Header -->
+        <div class="upload-header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <h1 style="margin: 0 0 10px 0; font-size: 2.2em;">📎 {{ title }}</h1>
+                    <p style="margin: 0; opacity: 0.9; font-size: 1.1em;">
+                        Ajoutez un document, rapport ou présentation à votre projet
+                    </p>
+                    
+                    <div class="project-context">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>Projet:</strong> {{ project.title }}
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; font-size: 0.9em;">
+                                {{ project.get_status_display }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="font-size: 4em; opacity: 0.2;">📎</div>
+            </div>
+        </div>
+
+        <!-- Main Form -->
+        <div class="form-main">
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="id_name">Nom du Livrable <span class="required-field">*</span></label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="form-error">{{ form.name.errors|join:", " }}</div>
+                    {% endif %}
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                        💡 Donnez un nom descriptif (ex: "Rapport final", "Présentation prototype", "Documentation technique")
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_file_type">Type de Fichier <span class="required-field">*</span></label>
+                    {{ form.file_type }}
+                    {% if form.file_type.errors %}
+                        <div class="form-error">{{ form.file_type.errors|join:", " }}</div>
+                    {% endif %}
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 8px; font-size: 0.9em; color: #6c757d;">
+                        📂 Sélectionnez le type qui correspond le mieux à votre document pour une meilleure organisation.
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_file">Fichier à Uploader <span class="required-field">*</span></label>
+                    
+                    <!-- Custom File Upload Area -->
+                    <div class="file-upload-area" id="fileDropArea">
+                        <div class="file-upload-icon">📁</div>
+                        <div class="file-upload-text">
+                            <h4>Glissez-déposez votre fichier ici</h4>
+                            <p>ou cliquez pour sélectionner un fichier</p>
+                        </div>
+                        <button type="button" class="file-upload-button" onclick="document.getElementById('id_file').click()">
+                            🔍 Parcourir les Fichiers
+                        </button>
+                        {{ form.file }}
+                    </div>
+                    
+                    <!-- File Preview -->
+                    <div class="file-preview" id="filePreview">
+                        <div class="file-info">
+                            <div class="file-icon" id="fileIcon">📄</div>
+                            <div class="file-details">
+                                <div class="file-name" id="fileName"></div>
+                                <div class="file-size" id="fileSize"></div>
+                            </div>
+                            <button type="button" class="file-remove" onclick="removeFile()">🗑️</button>
+                        </div>
+                        
+                        <!-- Upload Progress -->
+                        <div class="upload-progress" id="uploadProgress">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                        <div class="upload-status" id="uploadStatus"></div>
+                    </div>
+                    
+                    {% if form.file.errors %}
+                        <div class="form-error">{{ form.file.errors|join:", " }}</div>
+                    {% endif %}
+                    
+                    <!-- File Requirements -->
+                    <div class="file-requirements">
+                        <h5 style="margin: 0 0 10px 0; color: #3a6ea5;">📋 Exigences du Fichier</h5>
+                        <div class="requirement-item">
+                            <span class="requirement-icon">✓</span>
+                            <span>Formats acceptés: PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR</span>
+                        </div>
+                        <div class="requirement-item">
+                            <span class="requirement-icon">✓</span>
+                            <span>Taille maximale: 10 MB</span>
+                        </div>
+                        <div class="requirement-item">
+                            <span class="requirement-icon">✓</span>
+                            <span>Nom de fichier sans caractères spéciaux</span>
+                        </div>
+                        <div class="requirement-item">
+                            <span class="requirement-icon">✓</span>
+                            <span>Contenu approprié et lié au projet</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <a href="{% url 'student:project_detail' project.id %}" class="btn btn-secondary">
+                        ❌ Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                        📤 Uploader le Livrable
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="form-sidebar">
+            <!-- Project Information -->
+            <div class="project-info-card">
+                <h4 style="margin: 0 0 15px 0; color: #3a6ea5;">📊 Informations du Projet</h4>
+                
+                <div class="info-item">
+                    <span class="info-label">📝 Titre</span>
+                    <span class="info-value">{{ project.title|truncatewords:3 }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">📂 Type</span>
+                    <span class="info-value">{{ project.get_project_type_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">📅 Créé le</span>
+                    <span class="info-value">{{ project.created_at|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">📊 Statut</span>
+                    <span class="info-value">{{ project.get_status_display }}</span>
+                </div>
+                {% if project.module %}
+                <div class="info-item">
+                    <span class="info-label">📚 Module</span>
+                    <span class="info-value">{{ project.module.code }}</span>
+                </div>
+                {% endif %}
+                
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(58, 110, 165, 0.2);">
+                    <a href="{% url 'student:project_detail' project.id %}" style="color: #3a6ea5; text-decoration: none; font-size: 0.9em;">
+                        👁️ Voir les détails complets du projet →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Upload Tips -->
+            <div class="sidebar-card">
+                <h4 style="margin: 0 0 15px 0; color: #3a6ea5;">💡 Conseils d'Upload</h4>
+                <div class="tips-card">
+                    <div class="tip-item">
+                        <div class="tip-icon">1</div>
+                        <div>
+                            <strong>Noms explicites:</strong> Utilisez des noms de fichiers descriptifs et professionnels.
+                        </div>
+                    </div>
+                    <div class="tip-item">
+                        <div class="tip-icon">2</div>
+                        <div>
+                            <strong>Organisation:</strong> Classez vos documents par type pour une meilleure gestion.
+                        </div>
+                    </div>
+                    <div class="tip-item">
+                        <div class="tip-icon">3</div>
+                        <div>
+                            <strong>Versions:</strong> Incluez la version dans le nom (v1.0, v2.0, final).
+                        </div>
+                    </div>
+                    <div class="tip-item">
+                        <div class="tip-icon">4</div>
+                        <div>
+                            <strong>Sécurité:</strong> Assurez-vous que vos fichiers ne contiennent pas d'informations sensibles.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Types Guide -->
+            <div class="sidebar-card">
+                <h4 style="margin: 0 0 15px 0; color: #3a6ea5;">📂 Guide des Types</h4>
+                <div style="font-size: 0.9em; line-height: 1.6;">
+                    <div style="margin-bottom: 12px;">
+                        <strong style="color: #3a6ea5;">📄 Rapport:</strong> Documents de synthèse, analyses, rapports de stage
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <strong style="color: #3a6ea5;">📊 Présentation:</strong> Slides PowerPoint, présentations de soutenance
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <strong style="color: #3a6ea5;">💻 Code:</strong> Archives de code source, applications
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <strong style="color: #3a6ea5;">📋 Documentation:</strong> Manuels, guides d'utilisation, spécifications
+                    </div>
+                    <div style="margin: 0;">
+                        <strong style="color: #3a6ea5;">🔗 Autre:</strong> Tous les autres types de fichiers
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="sidebar-card">
+                <h4 style="margin: 0 0 15px 0; color: #3a6ea5;">🔄 Après l'Upload</h4>
+                <div style="font-size: 0.9em; color: #6c757d; line-height: 1.6;">
+                    <p style="margin-bottom: 12px;">
+                        Une fois uploadé, votre livrable sera visible dans la section "Livrables" de votre projet.
+                    </p>
+                    <p style="margin-bottom: 12px;">
+                        Vous pourrez le télécharger, le prévisualiser (pour certains formats), et le partager avec vos collaborateurs.
+                    </p>
+                    <p style="margin: 0;">
+                        Les enseignants pourront également consulter vos livrables lors de l'évaluation du projet.
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        
-        <div class="form-group">
-            <label for="id_name">Nom du livrable:</label>
-            {{ form.name }}
-            {% if form.name.errors %}
-                <div class="form-error">{{ form.name.errors }}</div>
-            {% endif %}
-        </div>
-        
-        <div class="form-group">
-            <label for="id_file_type">Type de fichier:</label>
-            {{ form.file_type }}
-            {% if form.file_type.errors %}
-                <div class="form-error">{{ form.file_type.errors }}</div>
-            {% endif %}
-        </div>
-        
-        <div class="form-group">
-            <label for="id_file">Fichier:</label>
-            {{ form.file }}
-            {% if form.file.errors %}
-                <div class="form-error">{{ form.file.errors }}</div>
-            {% endif %}
-            <small>Formats acceptés: PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR (max: 10MB)</small>
-        </div>
-        
-        <div class="form-actions">
-            <a href="{% url 'student:project_detail' project.id %}" class="btn btn-secondary">Annuler</a>
-            <button type="submit" class="btn">Ajouter le livrable</button>
-        </div>
-    </form>
-</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('id_file');
+            const dropArea = document.getElementById('fileDropArea');
+            const filePreview = document.getElementById('filePreview');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Hide the original file input
+            fileInput.classList.add('file-input-hidden');
+            
+            // Drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight(e) {
+                dropArea.classList.add('dragover');
+            }
+            
+            function unhighlight(e) {
+                dropArea.classList.remove('dragover');
+            }
+            
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    handleFileSelect();
+                }
+            }
+            
+            // File selection
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            function handleFileSelect() {
+                const file = fileInput.files[0];
+                if (file) {
+                    displayFilePreview(file);
+                    submitBtn.disabled = false;
+                } else {
+                    hideFilePreview();
+                    submitBtn.disabled = true;
+                }
+            }
+            
+            function displayFilePreview(file) {
+                const fileName = document.getElementById('fileName');
+                const fileSize = document.getElementById('fileSize');
+                const fileIcon = document.getElementById('fileIcon');
+                
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                
+                // Set appropriate icon based on file type
+                const extension = file.name.split('.').pop().toLowerCase();
+                switch(extension) {
+                    case 'pdf':
+                        fileIcon.textContent = '📕';
+                        break;
+                    case 'doc':
+                    case 'docx':
+                        fileIcon.textContent = '📄';
+                        break;
+                    case 'ppt':
+                    case 'pptx':
+                        fileIcon.textContent = '📊';
+                        break;
+                    case 'zip':
+                    case 'rar':
+                        fileIcon.textContent = '📦';
+                        break;
+                    default:
+                        fileIcon.textContent = '📎';
+                }
+                
+                filePreview.classList.add('show');
+                dropArea.style.display = 'none';
+            }
+            
+            function hideFilePreview() {
+                filePreview.classList.remove('show');
+                dropArea.style.display = 'block';
+            }
+            
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Remove file function
+            window.removeFile = function() {
+                fileInput.value = '';
+                hideFilePreview();
+                submitBtn.disabled = true;
+            };
+            
+            // Form submission with progress
+            document.getElementById('uploadForm').addEventListener('submit', function(e) {
+                const uploadProgress = document.getElementById('uploadProgress');
+                const progressBar = document.getElementById('progressBar');
+                const uploadStatus = document.getElementById('uploadStatus');
+                
+                uploadProgress.classList.add('show');
+                uploadStatus.textContent = 'Upload en cours...';
+                submitBtn.disabled = true;
+                submitBtn.textContent = '⏳ Upload en cours...';
+                
+                // Simulate upload progress (in real implementation, this would be handled by the server)
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90;
+                    progressBar.style.width = progress + '%';
+                    
+                    if (progress > 90) {
+                        clearInterval(interval);
+                        uploadStatus.textContent = 'Finalisation...';
+                        progressBar.style.width = '100%';
+                    }
+                }, 200);
+            });
+            
+            // Validate file size
+            fileInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file && file.size > 10 * 1024 * 1024) { // 10MB
+                    alert('⚠️ Le fichier est trop volumineux. Taille maximale: 10 MB');
+                    this.value = '';
+                    hideFilePreview();
+                    submitBtn.disabled = true;
+                }
+            });
+        });
+    </script>
 {% endblock %}

@@ -1,109 +1,560 @@
 {% extends 'student/base.html' %}
 {% load static %}
 
-{% block title %}ENSA Project Manager - Notifications{% endblock %}
+{% block title %}Centre de Notifications - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator">></span>
+<span>Notifications</span>
+{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
 <style>
-.notification-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    margin-bottom: 10px;
-    background-color: #f8f9fa;
-    border-radius: 5px;
-    transition: all 0.2s;
-}
+    .notifications-header {
+        background: linear-gradient(135deg, #3a6ea5 0%, #2c5aa0 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .notifications-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50px;
+        width: 150px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+    }
+    
+    .notifications-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-left: 4px solid #3a6ea5;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .stat-number {
+        font-size: 2em;
+        font-weight: bold;
+        color: #3a6ea5;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+    
+    .actions-bar {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+        border-left: 4px solid #3a6ea5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .notifications-workspace {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .workspace-header {
+        background: #f8f9fa;
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .notification-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 20px;
+        border-bottom: 1px solid #f1f3f4;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .notification-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+    
+    .notification-item.unread {
+        background: #e8f4ff;
+        border-left: 4px solid #3a6ea5;
+    }
+    
+    .notification-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5em;
+        font-weight: bold;
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+    
+    .notification-invitation {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .notification-project {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .notification-system {
+        background: #28a745;
+        color: white;
+    }
+    
+    .notification-feedback {
+        background: #6f42c1;
+        color: white;
+    }
+    
+    .notification-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+    
+    .notification-type {
+        font-size: 0.8em;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #3a6ea5;
+        background: rgba(58, 110, 165, 0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        display: inline-block;
+    }
+    
+    .notification-message {
+        color: #333;
+        line-height: 1.5;
+        margin-bottom: 8px;
+    }
+    
+    .notification-time {
+        font-size: 0.85em;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .notification-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+    
+    .action-btn {
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.8em;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .action-btn.primary {
+        background: #3a6ea5;
+        color: white;
+    }
+    
+    .action-btn.primary:hover {
+        background: #2c5aa0;
+        transform: translateY(-1px);
+    }
+    
+    .action-btn.secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .action-btn.secondary:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+    }
+    
+    .read-indicator {
+        position: absolute;
+        top: 15px;
+        left: 10px;
+        width: 8px;
+        height: 8px;
+        background: #3a6ea5;
+        border-radius: 50%;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 80px 40px;
+        color: #6c757d;
+    }
+    
+    .filter-tabs {
+        display: flex;
+        gap: 5px;
+        background: #e9ecef;
+        padding: 4px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .filter-tab {
+        padding: 8px 16px;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        color: #6c757d;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .filter-tab.active {
+        background: #3a6ea5;
+        color: white;
+    }
+    
+    .filter-tab:hover {
+        background: rgba(58, 110, 165, 0.1);
+        color: #3a6ea5;
+    }
+    
+    .filter-tab.active:hover {
+        background: #2c5aa0;
+        color: white;
+    }
+    
+    .priority-alert {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .alert-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .alert-icon {
+        background: #ffc107;
+        color: #212529;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+    
+    .btn {
+        background: #3a6ea5;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-block;
+        cursor: pointer;
+    }
+    
+    .btn:hover {
+        background: #2c5aa0;
+        transform: translateY(-1px);
+    }
+    
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 0.9em;
+    }
 
-.notification-item.unread {
-    background-color: #e8f4ff;
-    border-left: 4px solid #3a6ea5;
-}
-
-.notification-item:hover {
-    transform: translateX(5px);
-}
-
-.notification-content {
-    flex: 1;
-}
-
-.notification-type {
-    font-size: 0.85em;
-    color: #6c757d;
-    margin-bottom: 5px;
-}
-
-.notification-message {
-    margin-bottom: 5px;
-}
-
-.notification-time {
-    font-size: 0.85em;
-    color: #6c757d;
-}
-
-.notification-actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.mark-all-read {
-    text-align: right;
-    margin-bottom: 15px;
-}
+    @media (max-width: 768px) {
+        .notification-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .notification-actions {
+            width: 100%;
+            justify-content: flex-start;
+            margin-top: 10px;
+        }
+        
+        .actions-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<h1>Notifications</h1>
-
-{% if notifications %}
-<div class="mark-all-read">
-    <form method="post" action="{% url 'student:mark_all_notifications_read' %}" style="display: inline;">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-sm">Marquer tout comme lu</button>
-    </form>
-</div>
-{% endif %}
-
-<div class="notifications-container">
-    {% if notifications %}
-        {% for notification in notifications %}
-        <div class="notification-item {% if not notification.is_read %}unread{% endif %}">
-            <div class="notification-content">
-                <div class="notification-type">{{ notification.get_notification_type_display }}</div>
-                <div class="notification-message">{{ notification.message }}</div>
-                <div class="notification-time">{{ notification.created_at|timesince }} ago</div>
+    <!-- Notifications Header -->
+    <div class="notifications-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="margin: 0 0 10px 0; font-size: 2.2em;">🔔 Centre de Notifications</h1>
+                <p style="margin: 0; opacity: 0.9; font-size: 1.1em;">
+                    Restez informé de toutes les activités importantes
+                </p>
             </div>
-            <div class="notification-actions">
-                {% comment %}
-                Check if it's an invitation notification and if the corresponding invitation is accepted.
-                Accessing invitation status directly in template is now possible using the annotated field.
-                {% endcomment %}
-                {% if notification.notification_type == 'invitation' and notification.invitation_status == 'accepted' %}
-                    <a href="{% url 'student:project_detail' notification.project.id %}" class="btn btn-sm">Voir le projet</a>
-                {% elif notification.notification_type != 'invitation' %}
-                    {# For other notification types, always show the link #}
-                    <a href="{% url 'student:project_detail' notification.project.id %}" class="btn btn-sm">Voir le projet</a>
-                {% endif %}
-                
-                {% if not notification.is_read %}
-                <form method="post" action="{% url 'student:mark_notification_read' notification.id %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-secondary">Marquer comme lu</button>
-                </form>
-                {% endif %}
+            <div style="text-align: right; opacity: 0.2;">
+                <div style="font-size: 4em;">🔔</div>
             </div>
         </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty-state">
-            <p>Aucune notification pour le moment.</p>
+    </div>
+
+    <!-- Priority Alert for Unread Notifications -->
+    {% if notifications and notifications.0.is_read == False %}
+    <div class="priority-alert">
+        <div class="alert-header">
+            <div class="alert-icon">{{ unread_notifications_count|default:0 }}</div>
+            <div>
+                <h3 style="margin: 0 0 5px 0; color: #856404;">📬 Nouvelles Notifications</h3>
+                <p style="margin: 0; color: #856404;">
+                    Vous avez {{ unread_notifications_count|default:0 }} notification{{ unread_notifications_count|default:0|pluralize }} non lue{{ unread_notifications_count|default:0|pluralize }}.
+                </p>
+            </div>
         </div>
+    </div>
     {% endif %}
-</div>
-{% endblock %} 
+
+    <!-- Notifications Statistics -->
+    <div class="notifications-stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ notifications.count }}</div>
+            <div class="stat-label">Total Notifications</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ unread_notifications_count|default:0 }}</div>
+            <div class="stat-label">Non Lues</div>
+        </div>
+        
+    </div>
+
+    <!-- Actions Bar -->
+    {% if notifications %}
+    <div class="actions-bar">
+        <div>
+            <h3 style="margin: 0; color: #3a6ea5;">⚡ Actions Rapides</h3>
+            <p style="margin: 0; color: #6c757d; font-size: 0.9em;">Gérez vos notifications efficacement</p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <form method="post" action="{% url 'student:mark_all_notifications_read' %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm">✅ Marquer Tout comme Lu</button>
+            </form>
+            <a href="{% url 'student:dashboard' %}" class="btn btn-sm" style="background: #6c757d;">🏠 Retour au Tableau de Bord</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Notifications Workspace -->
+    <div class="notifications-workspace">
+        <div class="workspace-header">
+            <h2 style="margin: 0; color: #3a6ea5;">
+                📬 Vos Notifications 
+                {% if notifications %}({{ notifications.count }}){% endif %}
+            </h2>
+            
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <a href="?filter=all" class="filter-tab {% if not request.GET.filter or request.GET.filter == 'all' %}active{% endif %}">
+                    📋 Toutes
+                </a>
+                <a href="?filter=unread" class="filter-tab {% if request.GET.filter == 'unread' %}active{% endif %}">
+                    📬 Non Lues
+                </a>
+                <a href="?filter=invitation" class="filter-tab {% if request.GET.filter == 'invitation' %}active{% endif %}">
+                    👥 Invitations
+                </a>
+                <a href="?filter=project" class="filter-tab {% if request.GET.filter == 'project' %}active{% endif %}">
+                    📊 Projets
+                </a>
+            </div>
+        </div>
+        
+        {% if notifications %}
+            <div>
+                {% for notification in notifications %}
+                <div class="notification-item {% if not notification.is_read %}unread{% endif %}">
+                    {% if not notification.is_read %}
+                    <div class="read-indicator"></div>
+                    {% endif %}
+                    
+                    <div class="notification-icon notification-{{ notification.notification_type }}">
+                        {% if notification.notification_type == 'invitation' %}👥
+                        {% elif notification.notification_type == 'project' %}📊
+                        {% elif notification.notification_type == 'feedback' %}💬
+                        {% else %}🔔{% endif %}
+                    </div>
+                    
+                    <div class="notification-content">
+                        <div class="notification-type">
+                            {{ notification.get_notification_type_display }}
+                        </div>
+                        
+                        <div class="notification-message">
+                            {{ notification.message }}
+                        </div>
+                        
+                        <div class="notification-time">
+                            🕒 {{ notification.created_at|timesince }} 
+                            {% if not notification.is_read %}
+                                <span style="color: #3a6ea5; font-weight: bold;">• NOUVEAU</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="notification-actions">
+                        <!-- Action button based on notification type -->
+                        {% if notification.notification_type == 'invitation' and notification.invitation_status == 'accepted' %}
+                            <a href="{% url 'student:project_detail' notification.project.id %}" class="action-btn primary">
+                                👁️ Voir le Projet
+                            </a>
+                        {% elif notification.notification_type != 'invitation' and notification.project %}
+                            <a href="{% url 'student:project_detail' notification.project.id %}" class="action-btn primary">
+                                👁️ Voir le Projet
+                            </a>
+                        {% endif %}
+                        
+                        {% if not notification.is_read %}
+                        <form method="post" action="{% url 'student:mark_notification_read' notification.id %}" style="display: inline; margin: 0;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn secondary">
+                                ✅ Marquer Lu
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div style="font-size: 5em; margin-bottom: 30px; opacity: 0.3;">
+                    {% if request.GET.filter == 'unread' %}📭
+                    {% elif request.GET.filter == 'invitation' %}👥
+                    {% elif request.GET.filter == 'project' %}📊
+                    {% else %}🔔{% endif %}
+                </div>
+                <h3>
+                    {% if request.GET.filter == 'unread' %}Toutes les notifications sont lues
+                    {% elif request.GET.filter == 'invitation' %}Aucune notification d'invitation
+                    {% elif request.GET.filter == 'project' %}Aucune notification de projet
+                    {% else %}Aucune notification{% endif %}
+                </h3>
+                <p style="margin-bottom: 30px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    {% if request.GET.filter == 'unread' %}
+                        Excellent! Vous êtes à jour avec toutes vos notifications.
+                    {% elif request.GET.filter %}
+                        Aucune notification de ce type pour le moment.
+                    {% else %}
+                        Les notifications apparaîtront ici lorsque vous recevrez des invitations de collaboration, 
+                        des mises à jour de projets ou des messages de vos enseignants.
+                    {% endif %}
+                </p>
+                {% if request.GET.filter %}
+                <a href="{% url 'student:notifications' %}" class="btn">📋 Voir Toutes les Notifications</a>
+                {% else %}
+                <a href="{% url 'student:dashboard' %}" class="btn">🏠 Retour au Tableau de Bord</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Help Section -->
+    <div style="background: #e8f4ff; border: 1px solid #b3d9ff; border-radius: 12px; padding: 25px; margin-top: 30px;">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="font-size: 3em; opacity: 0.5;">💡</div>
+            <div>
+                <h3 style="margin: 0 0 15px 0; color: #3a6ea5;">Guide des Notifications</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; font-size: 0.9em;">
+                    <div>
+                        <strong>👥 Invitations:</strong> Notifications d'invitations de collaboration sur des projets.
+                    </div>
+                    <div>
+                        <strong>📊 Projets:</strong> Mises à jour sur le statut de vos projets et commentaires.
+                    </div>
+                    <div>
+                        <strong>💬 Feedback:</strong> Commentaires et retours de vos enseignants.
+                    </div>
+                    <div>
+                        <strong>🔔 Système:</strong> Notifications importantes du système et annonces.
+                    </div>
+                </div>
+                <div style="margin-top: 20px; padding: 15px; background: rgba(58, 110, 165, 0.1); border-radius: 6px;">
+                    <p style="margin: 0; font-size: 0.9em; color: #3a6ea5;">
+                        <strong>💡 Astuce:</strong> Cliquez sur "Marquer tout comme lu" pour nettoyer rapidement vos notifications ou utilisez les filtres pour trouver des types spécifiques de notifications.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

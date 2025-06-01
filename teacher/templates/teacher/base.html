@@ -1,5 +1,5 @@
 <!--
-Base template for the teacher app.
+Base template for the teacher app - Improved Navigation Structure
 -->
 {% load static %}
 <!DOCTYPE html>
@@ -14,24 +14,118 @@ Base template for the teacher app.
     
     <!-- Page-specific CSS -->
     {% block extra_css %}{% endblock %}
+    
+    <style>
+        /* Improved Navigation Styles */
+        .main-nav {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .nav-links {
+            display: flex;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 18px 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 500;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-1px);
+        }
+        
+        .nav-links a.pending-badge::after {
+            content: attr(data-count);
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 10px;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        .breadcrumb {
+            background: #f8f9fa;
+            padding: 12px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .breadcrumb-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .breadcrumb a {
+            color: #2c5aa0;
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 8px;
+            color: #6c757d;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
-        <h1>ENSA Project Manager - Interface Enseignant</h1>
+        <div style="background: white; padding: 15px 0; border-bottom: 1px solid #e9ecef;">
+            <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+                <h1 style="margin: 0; color: #2c5aa0;">ENSA Project Manager - Interface Enseignant</h1>
+            </div>
+        </div>
         
-        <!-- Teacher-specific navigation -->
-        <div class="nav-container">
-            <nav class="main-nav">
-                <div class="nav-links">
-                    <a href="{% url 'teacher:dashboard' %}">Tableau de bord</a>
-                    <a href="{% url 'teacher:modules_list' %}">Mes Modules</a>
-                    <a href="{% url 'teacher:student_projects' %}">Projets Étudiants</a>
-                    <a href="#" class="nav-link-disabled">Évaluations (à venir)</a>
-                    <a href="{% url 'logout' %}">Déconnexion</a>
-                </div>
-            </nav>
+        <!-- Improved Navigation -->
+        <nav class="main-nav">
+            <div class="nav-links">
+                <a href="{% url 'teacher:dashboard' %}" class="{% if 'dashboard' in request.resolver_match.url_name %}active{% endif %}">
+                    📊 Tableau de Bord
+                </a>
+                <a href="{% url 'teacher:modules_list' %}" class="{% if 'module' in request.resolver_match.url_name %}active{% endif %}">
+                    📚 Mes Modules
+                </a>
+                <a href="{% url 'teacher:student_projects' %}" 
+                   class="{% if 'project' in request.resolver_match.url_name %}active{% endif %} {% if pending_projects > 0 %}pending-badge{% endif %}"
+                   data-count="{{ pending_projects|default:'' }}">
+                    📋 Projets & Évaluations
+                </a>
+                <a href="{% url 'logout' %}" style="margin-left: auto;">
+                    🚪 Déconnexion
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Breadcrumb Navigation -->
+    {% block breadcrumb %}
+    {% if not 'dashboard' in request.resolver_match.url_name %}
+    <div class="breadcrumb">
+        <div class="breadcrumb-container">
+            <a href="{% url 'teacher:dashboard' %}">Accueil</a>
+            {% block breadcrumb_items %}{% endblock %}
         </div>
     </div>
+    {% endif %}
+    {% endblock %}
 
     <div class="container">
         {% if messages %}
