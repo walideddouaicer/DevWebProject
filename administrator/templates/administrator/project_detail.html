@@ -13,7 +13,7 @@
 {% block extra_css %}
 <style>
     .project-header {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
         color: white;
         padding: 30px;
         border-radius: 12px;
@@ -31,12 +31,6 @@
         height: 200%;
         background: rgba(255,255,255,0.1);
         transform: rotate(15deg);
-    }
-    
-    .project-title {
-        margin: 0 0 15px 0;
-        font-size: 2em;
-        font-weight: bold;
     }
     
     .project-meta {
@@ -114,8 +108,8 @@
         background: white;
         border-radius: 12px;
         padding: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-left: 4px solid #6c757d;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #17a2b8;
     }
     
     .section-header {
@@ -148,184 +142,207 @@
         background: #f8f9fa;
         padding: 20px;
         border-radius: 8px;
-        border-left: 4px solid #6c757d;
+        border-left: 4px solid #17a2b8;
     }
     
-    .deliverables-list {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
+    .deliverables-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
     }
     
-    .deliverable-item {
+    .deliverable-card {
         background: #f8f9fa;
-        padding: 15px;
+        padding: 20px;
         border-radius: 8px;
-        border-left: 4px solid #28a745;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .deliverable-card:hover {
+        border-color: #17a2b8;
+        background: #e8f4ff;
+        transform: translateY(-2px);
+    }
+    
+    .deliverable-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
+        margin-bottom: 10px;
     }
     
-    .deliverable-info {
-        flex: 1;
+    .deliverable-icon {
+        font-size: 2em;
+        opacity: 0.3;
     }
     
-    .deliverable-name {
-        font-weight: 500;
-        color: #495057;
-        margin-bottom: 4px;
+    .milestone-timeline {
+        position: relative;
+        padding-left: 30px;
     }
     
-    .deliverable-meta {
-        font-size: 0.8em;
-        color: #6c757d;
-    }
-    
-    .deliverable-actions {
-        display: flex;
-        gap: 8px;
-    }
-    
-    .btn-download {
-        background: #28a745;
-        color: white;
-        padding: 6px 12px;
-        border-radius: 4px;
-        text-decoration: none;
-        font-size: 0.8em;
-        transition: background 0.3s ease;
-    }
-    
-    .btn-download:hover {
-        background: #1e7e34;
-    }
-    
-    .milestones-list {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
+    .milestone-timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
     }
     
     .milestone-item {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid #17a2b8;
         position: relative;
+        padding: 20px 0;
+        border-bottom: 1px solid #f1f3f4;
     }
     
-    .milestone-item.completed {
-        border-left-color: #28a745;
-        background: #d4edda;
+    .milestone-item:last-child {
+        border-bottom: none;
     }
     
-    .milestone-item.overdue {
-        border-left-color: #dc3545;
-        background: #f8d7da;
-    }
-    
-    .milestone-header {
+    .milestone-marker {
+        position: absolute;
+        left: -22px;
+        top: 25px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 8px;
-    }
-    
-    .milestone-title {
-        font-weight: 500;
-        color: #495057;
-    }
-    
-    .milestone-status {
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 0.7em;
+        justify-content: center;
+        font-size: 0.8em;
         font-weight: bold;
-        text-transform: uppercase;
+        border: 3px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
-    .milestone-status.completed {
+    .milestone-completed {
         background: #28a745;
         color: white;
     }
     
-    .milestone-status.pending {
-        background: #ffc107;
-        color: #212529;
+    .milestone-pending {
+        background: #6c757d;
+        color: white;
     }
     
-    .milestone-status.overdue {
+    .milestone-overdue {
         background: #dc3545;
         color: white;
     }
     
-    .milestone-description {
-        color: #6c757d;
-        font-size: 0.9em;
-        margin-bottom: 8px;
-    }
-    
-    .milestone-date {
-        font-size: 0.8em;
-        color: #6c757d;
-    }
-    
-    .collaborators-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-    
-    .collaborator-item {
+    .collaborator-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #17a2b8;
         display: flex;
         align-items: center;
-        padding: 12px;
-        background: #f8f9fa;
-        border-radius: 8px;
+        gap: 12px;
+        margin-bottom: 15px;
     }
     
     .collaborator-avatar {
-        width: 40px;
-        height: 40px;
+        width: 45px;
+        height: 45px;
         border-radius: 50%;
-        background: #6c757d;
+        background: #17a2b8;
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        margin-right: 12px;
+        font-size: 1.2em;
     }
     
-    .collaborator-info {
-        flex: 1;
+    .comments-section {
+        max-height: 600px;
+        overflow-y: auto;
     }
     
-    .collaborator-name {
-        font-weight: 500;
-        color: #495057;
+    .comment-item {
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        position: relative;
     }
     
-    .collaborator-id {
-        font-size: 0.8em;
+    .teacher-comment {
+        background: #e8f4ff;
+        border-left: 4px solid #17a2b8;
+    }
+    
+    .student-comment {
+        background: #f8f9fa;
+        border-left: 4px solid #6c757d;
+    }
+    
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .comment-author {
+        font-weight: bold;
+        color: #17a2b8;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .comment-date {
+        font-size: 0.9em;
         color: #6c757d;
     }
     
-    .project-team {
-        border: 1px solid #e9ecef;
+    .comment-content {
+        line-height: 1.6;
+        color: #333;
+    }
+    
+    .quick-actions {
+        position: sticky;
+        top: 20px;
+    }
+    
+    .action-button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        text-align: center;
+        text-decoration: none;
         border-radius: 8px;
-        overflow: hidden;
+        font-weight: 500;
+        transition: all 0.3s ease;
     }
     
-    .team-header {
-        background: #f8f9fa;
-        padding: 15px;
-        border-bottom: 1px solid #e9ecef;
+    .btn-back {
+        background: #6c757d;
+        color: white;
     }
     
-    .team-content {
-        padding: 15px;
+    .btn-back:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-export {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-export:hover {
+        background: #1e7e34;
+        transform: translateY(-1px);
+        color: white;
+        text-decoration: none;
     }
     
     .owner-info {
@@ -349,6 +366,31 @@
         font-weight: bold;
         margin-right: 15px;
         font-size: 1.2em;
+    }
+    
+    .module-info-card {
+        background: #e8f4ff;
+        border: 2px solid #007bff;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    
+    .module-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .module-code {
+        font-weight: bold;
+        color: #007bff;
+        font-size: 1.1em;
+    }
+    
+    .module-details {
+        color: #6c757d;
+        font-size: 0.9em;
     }
     
     .assigned-teachers {
@@ -387,154 +429,25 @@
         font-size: 0.8em;
     }
     
-    .comments-section {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-    
-    .comment-item {
-        padding: 15px;
-        border-bottom: 1px solid #f1f3f4;
-        border-left: 4px solid #e9ecef;
-        margin-bottom: 15px;
-        border-radius: 0 8px 8px 0;
-    }
-    
-    .comment-item.teacher-comment {
-        border-left-color: #ffc107;
-        background: #fff9e6;
-    }
-    
-    .comment-item.student-comment {
-        border-left-color: #17a2b8;
-        background: #e8f7fd;
-    }
-    
-    .comment-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-    }
-    
-    .comment-author {
-        font-weight: 500;
-        color: #495057;
-    }
-    
-    .comment-date {
-        font-size: 0.8em;
-        color: #6c757d;
-    }
-    
-    .comment-content {
-        color: #495057;
-        line-height: 1.5;
-    }
-    
-    .activities-timeline {
-        position: relative;
-        padding-left: 30px;
-    }
-    
-    .activities-timeline::before {
-        content: '';
-        position: absolute;
-        left: 15px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: #e9ecef;
-    }
-    
-    .activity-item {
-        position: relative;
-        padding: 15px 0;
-        border-bottom: 1px solid #f1f3f4;
-    }
-    
-    .activity-item::before {
-        content: '';
-        position: absolute;
-        left: -23px;
-        top: 20px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: #6c757d;
-        border: 3px solid white;
-        box-shadow: 0 0 0 1px #e9ecef;
-    }
-    
-    .activity-content {
-        color: #495057;
-        font-size: 0.9em;
-    }
-    
-    .activity-date {
-        font-size: 0.8em;
-        color: #6c757d;
-        margin-top: 4px;
-    }
-    
-    .quick-actions {
-        position: sticky;
-        top: 20px;
-    }
-    
-    .action-button {
-        display: block;
-        width: 100%;
-        padding: 12px;
-        margin-bottom: 10px;
+    .empty-state {
         text-align: center;
-        text-decoration: none;
-        border-radius: 6px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-back {
-        background: #6c757d;
-        color: white;
-    }
-    
-    .btn-back:hover {
-        background: #5a6268;
-    }
-    
-    .btn-export {
-        background: #28a745;
-        color: white;
-    }
-    
-    .btn-export:hover {
-        background: #1e7e34;
-    }
-    
-    .module-info-card {
-        background: #e8f4ff;
-        border: 2px solid #007bff;
-        border-radius: 8px;
-        padding: 15px;
-    }
-    
-    .module-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    
-    .module-code {
-        font-weight: bold;
-        color: #007bff;
-        font-size: 1.1em;
-    }
-    
-    .module-details {
+        padding: 40px;
         color: #6c757d;
-        font-size: 0.9em;
+    }
+    
+    .navigation-bar {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        margin-top: 30px;
+    }
+    
+    .nav-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
     }
     
     /* Responsive Design */
@@ -551,12 +464,12 @@
             padding: 20px;
         }
         
-        .project-title {
-            font-size: 1.5em;
-        }
-        
         .content-section {
             padding: 15px;
+        }
+        
+        .deliverables-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>
@@ -565,30 +478,40 @@
 {% block content %}
     <!-- Project Header -->
     <div class="project-header">
-        <h1 class="project-title">{{ project.title }}</h1>
-        <p style="margin: 0; opacity: 0.9; font-size: 1.1em;">{{ project.get_project_type_display }}</p>
-        
-        <div class="project-meta">
-            <div class="meta-item">
-                <div class="meta-label">📊 Statut</div>
-                <div class="meta-value">
-                    <span class="project-status-badge status-{{ project.status }}">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1;">
+                <h1 style="margin: 0 0 15px 0; font-size: 2.2em;">{{ project.title }}</h1>
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                    <span class="project-status-badge status-{{ project.status|lower }}">
                         {{ project.get_status_display }}
                     </span>
+                    {% if project.module %}
+                    <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px;">
+                        📚 {{ project.module.code }}
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="project-meta">
+                    <div class="meta-item">
+                        <div class="meta-label">👤 Étudiant</div>
+                        <div class="meta-value">{{ project.student.user.get_full_name|default:project.student.user.username }}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">📂 Type de Projet</div>
+                        <div class="meta-value">{{ project.get_project_type_display }}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">📅 Créé le</div>
+                        <div class="meta-value">{{ project.created_at|date:"d/m/Y" }}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">⏰ Dernière MAJ</div>
+                        <div class="meta-value">{{ project.updated_at|date:"d/m/Y H:i" }}</div>
+                    </div>
                 </div>
             </div>
-            <div class="meta-item">
-                <div class="meta-label">📅 Créé le</div>
-                <div class="meta-value">{{ project.created_at|date:"d F Y" }}</div>
-            </div>
-            <div class="meta-item">
-                <div class="meta-label">✏️ Dernière mise à jour</div>
-                <div class="meta-value">{{ project.updated_at|date:"d F Y" }}</div>
-            </div>
-            <div class="meta-item">
-                <div class="meta-label">📋 ID Projet</div>
-                <div class="meta-value">#{{ project.id }}</div>
-            </div>
+            <div style="font-size: 4em; opacity: 0.2;">📋</div>
         </div>
     </div>
 
@@ -605,21 +528,9 @@
                     {{ project.description|linebreaks|default:"Aucune description fournie." }}
                 </div>
                 
-                {% if project.technologies %}
-                <div style="margin-top: 20px;">
-                    <h4 style="color: #495057; margin-bottom: 10px;">🛠️ Technologies Utilisées</h4>
-                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; color: #495057;">
-                        {{ project.technologies }}
-                    </div>
-                </div>
-                {% endif %}
-                
                 {% if project.module_or_company %}
-                <div style="margin-top: 20px;">
-                    <h4 style="color: #495057; margin-bottom: 10px;">🏢 Module/Entreprise</h4>
-                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; color: #495057;">
-                        {{ project.module_or_company }}
-                    </div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">
+                    <strong style="color: #17a2b8;">🏢 Module/Entreprise:</strong> {{ project.module_or_company }}
                 </div>
                 {% endif %}
             </div>
@@ -632,20 +543,21 @@
                 </div>
                 
                 {% if deliverables %}
-                    <div class="deliverables-list">
+                    <div class="deliverables-grid">
                         {% for deliverable in deliverables %}
-                        <div class="deliverable-item">
-                            <div class="deliverable-info">
-                                <div class="deliverable-name">
-                                    📄 {{ deliverable.name }}
+                        <div class="deliverable-card">
+                            <div class="deliverable-header">
+                                <div>
+                                    <h4 style="margin: 0 0 8px 0; color: #17a2b8;">{{ deliverable.name }}</h4>
+                                    <div style="font-size: 0.9em; color: #6c757d;">
+                                        <strong>Type:</strong> {{ deliverable.get_file_type_display }}<br>
+                                        <strong>Uploadé le:</strong> {{ deliverable.upload_date|date:"d/m/Y H:i" }}
+                                    </div>
                                 </div>
-                                <div class="deliverable-meta">
-                                    {{ deliverable.get_file_type_display }} • 
-                                    Ajouté le {{ deliverable.upload_date|date:"d/m/Y à H:i" }}
-                                </div>
+                                <div class="deliverable-icon">📄</div>
                             </div>
-                            <div class="deliverable-actions">
-                                <a href="{{ deliverable.file.url }}" class="btn-download" target="_blank">
+                            <div style="margin-top: 15px;">
+                                <a href="{{ deliverable.file.url }}" class="btn btn-sm" target="_blank" style="background: #17a2b8; color: white;">
                                     📥 Télécharger
                                 </a>
                             </div>
@@ -653,9 +565,9 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div style="text-align: center; padding: 40px; color: #6c757d;">
+                    <div class="empty-state">
                         <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">📎</div>
-                        <p>Aucun livrable ajouté pour ce projet.</p>
+                        <p>Aucun livrable disponible pour ce projet.</p>
                     </div>
                 {% endif %}
             </div>
@@ -663,55 +575,49 @@
             <!-- Milestones -->
             <div class="content-section">
                 <div class="section-header">
-                    <h2 class="section-title">🎯 Jalons</h2>
+                    <h2 class="section-title">🎯 Jalons du Projet</h2>
                     <span class="section-count">{{ milestones.count }}</span>
                 </div>
                 
                 {% if milestones %}
-                    <div class="milestones-list">
+                    <div class="milestone-timeline">
                         {% for milestone in milestones %}
-                        <div class="milestone-item {% if milestone.completed %}completed{% elif milestone.is_overdue %}overdue{% endif %}">
-                            <div class="milestone-header">
-                                <div class="milestone-title">🎯 {{ milestone.title }}</div>
-                                <div class="milestone-status {% if milestone.completed %}completed{% elif milestone.is_overdue %}overdue{% else %}pending{% endif %}">
+                        <div class="milestone-item">
+                            <div class="milestone-marker {% if milestone.completed %}milestone-completed{% elif milestone.is_overdue %}milestone-overdue{% else %}milestone-pending{% endif %}">
+                                {% if milestone.completed %}✓{% else %}•{% endif %}
+                            </div>
+                            <div>
+                                <h4 style="margin: 0 0 8px 0; color: #17a2b8;">{{ milestone.title }}</h4>
+                                <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 8px;">
+                                    <strong>Échéance:</strong> {{ milestone.due_date|date:"d/m/Y" }}
                                     {% if milestone.completed %}
-                                        ✅ Complété
+                                        • <span style="color: #28a745;">Complété le {{ milestone.completed_at|date:"d/m/Y" }}</span>
+                                        {% if milestone.completed_by %}
+                                            par {{ milestone.completed_by.get_full_name|default:milestone.completed_by.username }}
+                                        {% endif %}
                                     {% elif milestone.is_overdue %}
-                                        ⏰ En retard
-                                    {% else %}
-                                        ⏳ En attente
+                                        • <span style="color: #dc3545;">En retard</span>
                                     {% endif %}
                                 </div>
-                            </div>
-                            {% if milestone.description %}
-                            <div class="milestone-description">
-                                {{ milestone.description }}
-                            </div>
-                            {% endif %}
-                            <div class="milestone-date">
-                                📅 Échéance: {{ milestone.due_date|date:"d F Y" }}
-                                {% if milestone.completed %}
-                                    • ✅ Complété le {{ milestone.completed_at|date:"d/m/Y à H:i" }}
-                                    {% if milestone.completed_by %}
-                                        par {{ milestone.completed_by.get_full_name|default:milestone.completed_by.username }}
-                                    {% endif %}
+                                {% if milestone.description %}
+                                <p style="margin: 0; color: #6c757d;">{{ milestone.description }}</p>
                                 {% endif %}
                             </div>
                         </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div style="text-align: center; padding: 40px; color: #6c757d;">
+                    <div class="empty-state">
                         <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">🎯</div>
                         <p>Aucun jalon défini pour ce projet.</p>
                     </div>
                 {% endif %}
             </div>
 
-            <!-- Comments -->
+            <!-- Comments and Discussion -->
             <div class="content-section">
                 <div class="section-header">
-                    <h2 class="section-title">💬 Commentaires & Feedback</h2>
+                    <h2 class="section-title">💬 Discussion et Historique</h2>
                     <span class="section-count">{{ comments.count }}</span>
                 </div>
                 
@@ -722,12 +628,12 @@
                             <div class="comment-header">
                                 <div class="comment-author">
                                     {% if comment.is_teacher_comment %}
-                                        👨‍🏫 {{ comment.author.get_full_name|default:comment.author.username }} (Enseignant)
+                                        🎓 {{ comment.author.get_full_name|default:comment.author.username }} (Enseignant)
                                     {% else %}
                                         👤 {{ comment.author.get_full_name|default:comment.author.username }} (Étudiant)
                                     {% endif %}
                                 </div>
-                                <div class="comment-date">{{ comment.created_at|date:"d/m/Y à H:i" }}</div>
+                                <div class="comment-date">{{ comment.created_at|date:"d/m/Y H:i" }}</div>
                             </div>
                             <div class="comment-content">
                                 {{ comment.content|linebreaks }}
@@ -736,36 +642,9 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div style="text-align: center; padding: 40px; color: #6c757d;">
+                    <div class="empty-state">
                         <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">💬</div>
-                        <p>Aucun commentaire sur ce projet.</p>
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- Activities Timeline -->
-            <div class="content-section">
-                <div class="section-header">
-                    <h2 class="section-title">📈 Historique des Activités</h2>
-                    <span class="section-count">{{ activities.count }}</span>
-                </div>
-                
-                {% if activities %}
-                    <div class="activities-timeline">
-                        {% for activity in activities %}
-                        <div class="activity-item">
-                            <div class="activity-content">
-                                {{ activity.description }}
-                                <strong>{{ activity.user.get_full_name|default:activity.user.username }}</strong>
-                            </div>
-                            <div class="activity-date">{{ activity.created_at|date:"d F Y à H:i" }}</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div style="text-align: center; padding: 40px; color: #6c757d;">
-                        <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">📈</div>
-                        <p>Aucune activité enregistrée.</p>
+                        <p>Aucun commentaire pour ce projet.</p>
                     </div>
                 {% endif %}
             </div>
@@ -807,19 +686,17 @@
                 {% if collaborators %}
                 <div style="margin-top: 20px;">
                     <h4 style="color: #495057; margin-bottom: 10px;">🤝 Collaborateurs ({{ collaborators.count }})</h4>
-                    <div class="collaborators-list">
-                        {% for collaborator in collaborators %}
-                        <div class="collaborator-item">
-                            <div class="collaborator-avatar">
-                                {{ collaborator.user.first_name.0|default:collaborator.user.username.0|upper }}
-                            </div>
-                            <div class="collaborator-info">
-                                <div class="collaborator-name">{{ collaborator.user.get_full_name|default:collaborator.user.username }}</div>
-                                <div class="collaborator-id">{{ collaborator.student_id }}</div>
-                            </div>
+                    {% for collaborator in collaborators %}
+                    <div class="collaborator-card">
+                        <div class="collaborator-avatar">
+                            {{ collaborator.user.first_name.0|default:collaborator.user.username.0|upper }}
                         </div>
-                        {% endfor %}
+                        <div style="flex: 1;">
+                            <strong>{{ collaborator.user.get_full_name|default:collaborator.user.username }}</strong><br>
+                            <small style="color: #6c757d;">{{ collaborator.student_id }}</small>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
                 {% endif %}
             </div>
@@ -904,6 +781,23 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation-bar">
+        <div class="nav-buttons">
+            <a href="{% url 'administrator:projects_list' %}" class="btn btn-secondary">
+                ← Retour à la Liste
+            </a>
+            {% if project.module %}
+            <a href="{% url 'administrator:projects_list' %}?module={{ project.module.id }}" class="btn btn-secondary">
+                📚 Autres Projets du Module
+            </a>
+            {% endif %}
+            <a href="{% url 'administrator:projects_list' %}?status=submitted" class="btn" style="background: #ffc107; color: #212529;">
+                ⏳ Projets en Attente
+            </a>
         </div>
     </div>
 {% endblock %}

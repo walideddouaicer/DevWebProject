@@ -410,28 +410,8 @@
         </div>
     </div>
 
-    <!-- Current Module Statistics -->
-    <div class="current-info">
-        <h3 style="margin: 0 0 15px 0; color: #007bff;">📊 Statistiques Actuelles</h3>
-        <div class="current-stats">
-            <div class="stat-item">
-                <div class="stat-value">{{ total_students }}</div>
-                <div class="stat-label">Étudiants Inscrits</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">{{ total_teachers }}</div>
-                <div class="stat-label">Enseignants Assignés</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">{{ total_projects }}</div>
-                <div class="stat-label">Projets Associés</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">{{ module.academic_year }}</div>
-                <div class="stat-label">Année Académique</div>
-            </div>
-        </div>
-    </div>
+   
+
 
     <!-- Warning Section -->
     {% if total_students > 0 or total_projects > 0 %}

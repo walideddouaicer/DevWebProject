@@ -11,18 +11,24 @@
 {% block extra_css %}
 <style>
     .modules-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
         margin-bottom: 30px;
-        padding: 20px 0;
-        border-bottom: 2px solid #e9ecef;
+        position: relative;
+        overflow: hidden;
     }
     
-    .modules-title {
-        margin: 0;
-        color: #495057;
-        font-size: 1.8em;
+    .modules-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20px;
+        width: 100px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
     }
     
     .create-module-btn {
@@ -36,7 +42,10 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        position: absolute;
+        top: 20px;
+        right: 20px;
     }
     
     .create-module-btn:hover {
@@ -50,9 +59,9 @@
         background: white;
         border-radius: 12px;
         padding: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         margin-bottom: 25px;
-        border-left: 4px solid #6c757d;
+        border-left: 4px solid #17a2b8;
     }
     
     .filter-grid {
@@ -79,7 +88,7 @@
         background: white;
         border-radius: 12px;
         padding: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         border-left: 4px solid #28a745;
         transition: all 0.3s ease;
         position: relative;
@@ -87,13 +96,13 @@
     }
     
     .module-card:hover {
-        transform: translateY(-3px);
+        transform: translateY(-4px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
     
     .module-card.inactive {
         border-left-color: #dc3545;
-        opacity: 0.7;
+        opacity: 0.8;
     }
     
     .module-header {
@@ -175,6 +184,12 @@
         background: #f8f9fa;
         border-radius: 6px;
         border: 1px solid #e9ecef;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-item:hover {
+        transform: translateY(-2px);
+        background: #e8f4ff;
     }
     
     .stat-value {
@@ -199,7 +214,7 @@
     
     .btn-action {
         padding: 6px 12px;
-        border-radius: 4px;
+        border-radius: 6px;
         text-decoration: none;
         font-size: 0.8em;
         font-weight: 500;
@@ -217,6 +232,8 @@
     .btn-view:hover {
         background: #5a6268;
         color: white;
+        transform: translateY(-1px);
+        text-decoration: none;
     }
     
     .btn-edit {
@@ -227,6 +244,8 @@
     .btn-edit:hover {
         background: #e0a800;
         color: #212529;
+        transform: translateY(-1px);
+        text-decoration: none;
     }
     
     .btn-assignments {
@@ -237,6 +256,8 @@
     .btn-assignments:hover {
         background: #138496;
         color: white;
+        transform: translateY(-1px);
+        text-decoration: none;
     }
     
     .btn-delete {
@@ -247,6 +268,8 @@
     .btn-delete:hover {
         background: #c82333;
         color: white;
+        transform: translateY(-1px);
+        text-decoration: none;
     }
     
     .empty-state {
@@ -255,7 +278,7 @@
         color: #6c757d;
         background: white;
         border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .empty-icon {
@@ -275,9 +298,15 @@
         background: white;
         padding: 20px;
         border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-left: 4px solid #6c757d;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #17a2b8;
         text-align: center;
+        transition: transform 0.3s ease;
+    }
+    
+    .quick-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     }
     
     .quick-stat-value {
@@ -308,9 +337,10 @@
     }
     
     .bulk-actions {
-        background: #f8f9fa;
-        padding: 15px;
+        background: #fff3cd;
+        border: 2px solid #ffc107;
         border-radius: 8px;
+        padding: 15px;
         margin-bottom: 20px;
         display: none;
     }
@@ -326,12 +356,26 @@
         transform: scale(1.2);
     }
     
+    .code-display {
+        background: #17a2b8;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-weight: bold;
+        font-size: 0.9em;
+    }
+    
     /* Responsive Design */
     @media (max-width: 768px) {
         .modules-header {
-            flex-direction: column;
-            gap: 15px;
+            padding: 20px;
             text-align: center;
+        }
+        
+        .create-module-btn {
+            position: static;
+            margin-top: 20px;
         }
         
         .modules-grid {
@@ -360,7 +404,10 @@
 {% block content %}
     <!-- Modules Header -->
     <div class="modules-header">
-        <h1 class="modules-title">📚 Gestion des Modules</h1>
+        <h1 style="margin: 0 0 10px 0; font-size: 2em;">📚 Gestion des Modules</h1>
+        <p style="margin: 0; font-size: 1.1em; opacity: 0.9;">
+            Gérez vos {{ modules.count }} modules et organisez l'enseignement
+        </p>
         <a href="{% url 'administrator:module_create' %}" class="create-module-btn">
             ➕ Créer un Module
         </a>
@@ -578,7 +625,6 @@
             <a href="{% url 'administrator:assignments_management' %}" class="btn btn-primary">
                 👥 Gérer Assignations
             </a>
-            
         </div>
     </div>
     {% endif %}

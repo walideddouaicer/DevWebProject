@@ -42,7 +42,7 @@
         background: white;
         border-radius: 12px;
         padding: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         border-left: 4px solid #17a2b8;
     }
     
@@ -107,7 +107,7 @@
     .assignment-item:hover {
         background: #e9ecef;
         transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .assignment-info {
@@ -144,11 +144,12 @@
         border-radius: 4px;
         font-size: 0.8em;
         cursor: pointer;
-        transition: background 0.3s ease;
+        transition: all 0.3s ease;
     }
     
     .btn-remove:hover {
         background: #c82333;
+        transform: translateY(-1px);
     }
     
     .btn-view {
@@ -159,12 +160,14 @@
         border-radius: 4px;
         font-size: 0.8em;
         text-decoration: none;
-        transition: background 0.3s ease;
+        transition: all 0.3s ease;
     }
     
     .btn-view:hover {
         background: #5a6268;
         color: white;
+        transform: translateY(-1px);
+        text-decoration: none;
     }
     
     .teachers-grid {
@@ -178,14 +181,14 @@
         background: white;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         border-left: 4px solid #ffc107;
         transition: all 0.3s ease;
     }
     
     .teacher-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     }
     
     .teacher-header {
@@ -285,7 +288,7 @@
         background: white;
         border-radius: 12px;
         padding: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         border-left: 4px solid #dc3545;
         margin-bottom: 30px;
     }
@@ -338,11 +341,12 @@
         border-radius: 4px;
         font-size: 0.8em;
         cursor: pointer;
-        transition: background 0.3s ease;
+        transition: all 0.3s ease;
     }
     
     .assign-button:hover {
         background: #c82333;
+        transform: translateY(-1px);
     }
     
     .stats-overview {
@@ -356,9 +360,15 @@
         background: white;
         padding: 20px;
         border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         text-align: center;
         border-left: 4px solid #17a2b8;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     }
     
     .stat-value {
@@ -394,13 +404,41 @@
         color: #6c757d;
         background: white;
         border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .empty-icon {
         font-size: 4em;
         margin-bottom: 20px;
         opacity: 0.3;
+    }
+    
+    .assignment-tips {
+        background: #e8f4ff;
+        border: 2px solid #007bff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .tips-title {
+        color: #0066cc;
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .tips-list {
+        margin: 0;
+        padding-left: 20px;
+        color: #495057;
+    }
+    
+    .tips-list li {
+        margin-bottom: 8px;
+        line-height: 1.4;
     }
     
     /* Responsive Design */
@@ -423,10 +461,6 @@
         
         .stats-overview {
             grid-template-columns: repeat(2, 1fr);
-        }
-        
-        .assignments-header {
-            padding: 20px;
         }
         
         .filter-grid {
@@ -538,9 +572,11 @@
             </form>
 
             <!-- Quick Assignment Tips -->
-            <div style="background: #e8f4ff; padding: 15px; border-radius: 6px; margin-top: 15px;">
-                <h4 style="margin: 0 0 10px 0; color: #0066cc; font-size: 0.9em;">💡 Conseils d'Assignation</h4>
-                <ul style="margin: 0; padding-left: 20px; font-size: 0.85em; color: #495057;">
+            <div class="assignment-tips">
+                <div class="tips-title">
+                    💡 Conseils d'Assignation
+                </div>
+                <ul class="tips-list">
                     <li>Vérifiez la charge de travail actuelle de l'enseignant</li>
                     <li>Considérez l'expertise de l'enseignant pour le module</li>
                     <li>Évitez de surcharger un seul enseignant</li>

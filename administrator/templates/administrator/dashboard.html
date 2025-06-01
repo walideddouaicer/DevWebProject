@@ -13,7 +13,7 @@
     }
     
     .welcome-section {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
         color: white;
         padding: 30px;
         border-radius: 12px;
@@ -37,7 +37,8 @@
         padding: 25px;
         border-radius: 12px;
         border: 1px solid #e9ecef;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #17a2b8;
     }
     
     .action-grid {
@@ -63,9 +64,11 @@
     
     .action-btn:hover {
         background: #e9ecef;
-        border-color: #6c757d;
+        border-color: #17a2b8;
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        color: #495057;
+        text-decoration: none;
     }
     
     .action-btn.priority {
@@ -77,10 +80,11 @@
     .action-btn.priority:hover {
         background: #ffeaa7;
         border-color: #f39c12;
+        color: #856404;
     }
     
     .action-count {
-        background: #6c757d;
+        background: #17a2b8;
         color: white;
         padding: 4px 12px;
         border-radius: 20px;
@@ -103,7 +107,8 @@
         background: white;
         border-radius: 12px;
         padding: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #17a2b8;
     }
     
     .stats-section h3 {
@@ -125,7 +130,13 @@
         padding: 15px;
         background: #f8f9fa;
         border-radius: 8px;
-        border-left: 4px solid #6c757d;
+        border-left: 4px solid #17a2b8;
+        transition: transform 0.3s ease;
+    }
+    
+    .status-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     
     .status-item.in-progress {
@@ -160,7 +171,8 @@
         background: white;
         border-radius: 12px;
         padding: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #17a2b8;
     }
     
     .activity-list {
@@ -174,6 +186,14 @@
         align-items: center;
         padding: 15px 0;
         border-bottom: 1px solid #f1f3f4;
+        transition: background 0.3s ease;
+    }
+    
+    .activity-item:hover {
+        background: #f8f9fa;
+        margin: 0 -15px;
+        padding: 15px;
+        border-radius: 8px;
     }
     
     .activity-item:last-child {
@@ -222,14 +242,14 @@
         background: white;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-left: 4px solid #6c757d;
-        transition: transform 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #17a2b8;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
     .module-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     }
     
     .module-header {
@@ -279,6 +299,81 @@
         font-size: 4em;
         margin-bottom: 20px;
         opacity: 0.3;
+    }
+    
+    .quick-links-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #17a2b8;
+    }
+    
+    .quick-links-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .quick-link-card {
+        text-align: center;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        border: 2px solid #e9ecef;
+    }
+    
+    .quick-link-card:hover {
+        background: #e8f4ff;
+        border-color: #17a2b8;
+        transform: translateY(-2px);
+        color: inherit;
+        text-decoration: none;
+    }
+    
+    .quick-link-icon {
+        font-size: 2em;
+        margin-bottom: 10px;
+        color: #17a2b8;
+    }
+    
+    .quick-link-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .quick-link-desc {
+        font-size: 0.9em;
+        color: #6c757d;
+        line-height: 1.4;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .overview-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .status-breakdown {
+            grid-template-columns: 1fr;
+        }
+        
+        .module-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .quick-links-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
@@ -354,7 +449,7 @@
     </div>
 
     <!-- Main Statistics Overview -->
-    <div class="quick-stats">
+    <div class="grid-auto" style="margin-bottom: 30px;">
         <div class="stat-card">
             <div class="stat-value">{{ total_projects }}</div>
             <div class="stat-label">Projets Totaux</div>
@@ -484,7 +579,7 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div class="admin-content">
+            <div class="admin-card">
                 <div class="no-data">
                     <div>📚</div>
                     <h3>Aucun Module Disponible</h3>
@@ -496,22 +591,19 @@
     </div>
 
     <!-- Quick Links Section -->
-    <div class="admin-content">
-        <h3>🔗 Liens Rapides</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
-            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
-                <div style="font-size: 2em; margin-bottom: 10px;">📊</div>
-                <h4 style="margin: 0 0 10px 0;">Statistiques Avancées</h4>
-                <p style="font-size: 0.9em; color: #6c757d; margin-bottom: 15px;">Analyses détaillées et rapports</p>
-                <a href="{% url 'administrator:statistics' %}" class="btn btn-sm">Voir Statistiques</a>
-            </div>
-            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
-                <div style="font-size: 2em; margin-bottom: 10px;">👤</div>
-                <h4 style="margin: 0 0 10px 0;">Gestion Utilisateurs</h4>
-                <p style="font-size: 0.9em; color: #6c757d; margin-bottom: 15px;">Étudiants et enseignants</p>
-                <a href="{% url 'administrator:users_overview' %}" class="btn btn-sm">Gérer Utilisateurs</a>
-            </div>
-            
+    <div class="quick-links-section">
+        <h3 style="margin: 0 0 15px 0; color: #495057;">🔗 Liens Rapides</h3>
+        <div class="quick-links-grid">
+            <a href="{% url 'administrator:statistics' %}" class="quick-link-card">
+                <div class="quick-link-icon">📊</div>
+                <h4 class="quick-link-title">Statistiques Avancées</h4>
+                <p class="quick-link-desc">Analyses détaillées et rapports</p>
+            </a>
+            <a href="{% url 'administrator:users_overview' %}" class="quick-link-card">
+                <div class="quick-link-icon">👤</div>
+                <h4 class="quick-link-title">Gestion Utilisateurs</h4>
+                <p class="quick-link-desc">Étudiants et enseignants</p>
+            </a>
         </div>
     </div>
 {% endblock %}
