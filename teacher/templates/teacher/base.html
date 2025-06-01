@@ -1,3 +1,57 @@
 <!--
 Base template for the teacher app.
---> 
+-->
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ENSA Project Manager - Enseignant{% endblock %}</title>
+    
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="{% static 'student/css/base.css' %}">
+    
+    <!-- Page-specific CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="header">
+        <h1>ENSA Project Manager - Interface Enseignant</h1>
+        
+        <!-- Teacher-specific navigation -->
+        <div class="nav-container">
+            <nav class="main-nav">
+                <div class="nav-links">
+                    <a href="{% url 'teacher:dashboard' %}">Tableau de bord</a>
+                    <a href="{% url 'teacher:modules_list' %}">Mes Modules</a>
+                    <a href="{% url 'teacher:student_projects' %}">Projets Étudiants</a>
+                    <a href="#" class="nav-link-disabled">Évaluations (à venir)</a>
+                    <a href="{% url 'logout' %}">Déconnexion</a>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Common JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'student/js/main.js' %}"></script>
+    
+    <!-- Page-specific JavaScript -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

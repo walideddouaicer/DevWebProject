@@ -134,7 +134,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Authentication settings
 LOGIN_URL = 'login'  # The URL name for your login page
-LOGIN_REDIRECT_URL = 'student:dashboard'  # Where to go after login
+LOGIN_REDIRECT_URL = 'smart_redirect'  # Where to go after login
 
 # Where to redirect after logout
 LOGOUT_REDIRECT_URL = 'login'  # Where to go after logout

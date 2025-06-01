@@ -1,0 +1,222 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Projets Étudiants - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'teacher/css/teacher.css' %}">
+<style>
+.project-row {
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s;
+}
+
+.project-row:hover {
+    background-color: #f8f9fa;
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.project-title {
+    color: #2c5aa0;
+    font-weight: bold;
+    font-size: 1.1em;
+    text-decoration: none;
+}
+
+.project-title:hover {
+    text-decoration: underline;
+}
+
+.project-meta {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.project-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.filter-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.filter-form {
+    display: flex;
+    gap: 15px;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.quick-stat {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #2c5aa0;
+    text-align: center;
+}
+
+.quick-stat h3 {
+    margin: 0;
+    color: #2c5aa0;
+    font-size: 1.5em;
+}
+
+.quick-stat p {
+    margin: 5px 0 0 0;
+    color: #6c757d;
+    font-size: 0.9em;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="teacher-welcome-box">
+        <h2>Projets Étudiants</h2>
+        <p>Gérez et évaluez les projets de vos étudiants</p>
+    </div>
+
+    <!-- Quick Statistics -->
+    <div class="quick-stats">
+        <div class="quick-stat">
+            <h3>{{ total_projects }}</h3>
+            <p>Total projets</p>
+        </div>
+        <div class="quick-stat">
+            <h3>{{ submitted_projects }}</h3>
+            <p>En attente d'évaluation</p>
+        </div>
+        <div class="quick-stat">
+            <h3>{{ validated_projects }}</h3>
+            <p>Validés</p>
+        </div>
+        <div class="quick-stat">
+            <h3>{{ rejected_projects }}</h3>
+            <p>Rejetés</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section">
+        <h3>Filtres</h3>
+        <form method="get" class="filter-form">
+            <div class="form-group">
+                <label for="status">Statut:</label>
+                <select name="status" id="status">
+                    <option value="">Tous les statuts</option>
+                    <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>En cours</option>
+                    <option value="submitted" {% if status_filter == 'submitted' %}selected{% endif %}>Soumis</option>
+                    <option value="validated" {% if status_filter == 'validated' %}selected{% endif %}>Validé</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejeté</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="module">Module:</label>
+                <select name="module" id="module">
+                    <option value="">Tous les modules</option>
+                    {% for mod in modules %}
+                        <option value="{{ mod.id }}" {% if module_filter|stringformat:"s" == mod.id|stringformat:"s" %}selected{% endif %}>
+                            {{ mod.code }} - {{ mod.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn">Appliquer</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Projects List -->
+    <div class="card">
+        <h2>Liste des Projets {% if projects %} ({{ projects.count }}){% endif %}</h2>
+        
+        {% if projects %}
+            {% for project in projects %}
+            <div class="project-row">
+                <div class="project-header">
+                    <div>
+                        <a href="{% url 'teacher:project_review' project.id %}" class="project-title">
+                            {{ project.title }}
+                        </a>
+                        <div class="project-meta">
+                            Par <strong>{{ project.student.user.get_full_name|default:project.student.user.username }}</strong>
+                            {% if project.module %}
+                                • Module: <strong>{{ project.module.code }}</strong>
+                            {% endif %}
+                            • {{ project.get_project_type_display }}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="status-badge status-{{ project.status|lower }}">
+                            {{ project.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="project-meta">
+                    <strong>Dernière mise à jour:</strong> {{ project.updated_at|date:"d/m/Y H:i" }}
+                    {% if project.collaborators.exists %}
+                        • <strong>Collaborateurs:</strong> {{ project.collaborators.count }}
+                    {% endif %}
+                    {% if project.deliverables.exists %}
+                        • <strong>Livrables:</strong> {{ project.deliverables.count }}
+                    {% endif %}
+                </div>
+
+                <div class="project-actions">
+                    <a href="{% url 'teacher:project_review' project.id %}" class="btn btn-sm">Examiner</a>
+                    {% if project.status == 'submitted' %}
+                        <form method="post" action="{% url 'teacher:approve_project' project.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm" style="background: #28a745; color: white;">Valider</button>
+                        </form>
+                        <form method="post" action="{% url 'teacher:reject_project' project.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">Rejeter</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <p>Aucun projet trouvé avec les filtres sélectionnés.</p>
+                {% if not modules %}
+                    <p><em>Vous devez avoir des modules assignés et des étudiants inscrits pour voir leurs projets.</em></p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Information Box -->
+    <div class="card" style="margin-top: 30px;">
+        <h3>Information</h3>
+        <p>Cette page affiche tous les projets des étudiants inscrits dans vos modules.</p>
+        <ul>
+            <li><strong>En cours:</strong> L'étudiant travaille encore sur le projet</li>
+            <li><strong>Soumis:</strong> Le projet attend votre évaluation</li>
+            <li><strong>Validé:</strong> Vous avez approuvé le projet</li>
+            <li><strong>Rejeté:</strong> Le projet nécessite des révisions</li>
+        </ul>
+    </div>
+{% endblock %}

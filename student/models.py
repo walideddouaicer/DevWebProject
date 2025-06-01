@@ -50,6 +50,11 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    # NEW FIELD: Connect project to module, i did this after creating the teacher app
+    module = models.ForeignKey('teacher.Module', on_delete=models.SET_NULL, null=True, blank=True, 
+                              related_name='projects', help_text="Module associé à ce projet")
+    
+
     def __str__(self):
         return self.title
     

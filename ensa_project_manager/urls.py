@@ -21,6 +21,7 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
+from .views import smart_redirect  # Add this import
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,6 +31,9 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),  # Use default LogoutView
     
+     # Smart redirect after login
+    path('dashboard/', smart_redirect, name='smart_redirect'),
+
     # App URLs
     path('student/', include('student.urls', namespace='student')),
     path('teacher/', include('teacher.urls', namespace='teacher')),

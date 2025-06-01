@@ -1,0 +1,98 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Mes Modules - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'teacher/css/teacher.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="teacher-welcome-box">
+        <h2>Mes Modules Assignés</h2>
+        <p>Gérez vos modules et visualisez les étudiants inscrits</p>
+    </div>
+
+    {% if assigned_modules %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Modules ({{ assigned_modules.count }})</h2>
+            <div>
+                <span class="badge" style="background: #2c5aa0; color: white; padding: 5px 10px; border-radius: 15px;">
+                    Total étudiants: {{ total_students }}
+                </span>
+            </div>
+        </div>
+        
+        <div class="module-list-grid">
+            {% for assignment in assigned_modules %}
+            <div class="module-detail-card">
+                <h3>{{ assignment.module.code }} - {{ assignment.module.name }}</h3>
+                
+                <div class="module-info">
+                    <p><strong>Semestre:</strong> {{ assignment.module.get_semester_display }}</p>
+                    <p><strong>Année académique:</strong> {{ assignment.module.academic_year }}</p>
+                    <p><strong>Date d'assignation:</strong> {{ assignment.assigned_at|date:"d/m/Y" }}</p>
+                    {% if assignment.module.description %}
+                    <p><strong>Description:</strong> {{ assignment.module.description|truncatewords:15 }}</p>
+                    {% endif %}
+                </div>
+
+                <div style="background: #e8f4ff; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                    <h4 style="margin: 0 0 10px 0; color: #2c5aa0;">Étudiants Inscrits ({{ assignment.module.get_enrolled_students_count }})</h4>
+                    
+                    {% if assignment.module.enrollments.all %}
+                    <div class="students-list">
+                        {% for enrollment in assignment.module.enrollments.all %}
+                        {% if enrollment.is_active %}
+                        <div class="student-item">
+                            <strong>{{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}</strong>
+                            <span style="color: #6c757d;">
+                                ({{ enrollment.student.student_id }}) - {{ enrollment.student.department }}
+                            </span>
+                            <span style="float: right; font-size: 0.8em; color: #6c757d;">
+                                Inscrit le {{ enrollment.enrolled_at|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p style="color: #6c757d; font-style: italic; margin: 0;">Aucun étudiant inscrit pour le moment</p>
+                    {% endif %}
+                </div>
+
+                <div class="module-actions">
+                    <a href="#" class="btn btn-sm" style="background: #2c5aa0; color: white;">Voir les projets</a>
+                    <a href="#" class="btn btn-sm btn-secondary">Gestion du module</a>
+                </div>
+                
+                <div style="margin-top: 10px; font-size: 0.8em; color: #6c757d;">
+                    Code d'inscription: <strong>{{ assignment.module.code }}</strong>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="card" style="margin-top: 30px;">
+        <h3>Information</h3>
+        <p>Les étudiants peuvent rejoindre vos modules en utilisant le <strong>code d'inscription</strong> affiché sur chaque module.</p>
+        <p>Une fois inscrits, vous pourrez voir leurs projets soumis et les évaluer.</p>
+        <p><em>Note:</em> Les nouveaux modules sont assignés par l'administration via l'interface d'administration.</p>
+    </div>
+    
+    {% else %}
+    <div class="card">
+        <h2>Aucun Module Assigné</h2>
+        <div style="text-align: center; padding: 40px;">
+            <p style="font-size: 1.1em; color: #6c757d;">Vous n'avez actuellement aucun module assigné.</p>
+            <p>Contactez l'administration pour obtenir des assignations de modules.</p>
+            <div style="margin-top: 30px;">
+                <a href="{% url 'teacher:dashboard' %}" class="btn">Retour au tableau de bord</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}

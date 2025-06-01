@@ -24,6 +24,7 @@ Base template for the student app.
             <nav class="main-nav">
                 <div class="nav-links">
                     <a href="{% url 'student:dashboard' %}">Tableau de bord</a>
+                    <a href="{% url 'student:my_modules' %}">Mes Modules</a>
                     <a href="{% url 'student:invitations_list' %}" class="nav-link-with-badge">
                         Invitations 
                         {% if invitation_count > 0 %}

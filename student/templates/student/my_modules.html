@@ -1,0 +1,192 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}Mes Modules - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
+<style>
+.module-enrollment-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.module-enrollment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.module-title {
+    color: #3a6ea5;
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.module-code {
+    background: #3a6ea5;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.module-info {
+    margin: 10px 0;
+}
+
+.module-info p {
+    margin: 5px 0;
+    color: #6c757d;
+}
+
+.teachers-list {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.teacher-item {
+    padding: 5px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.teacher-item:last-child {
+    border-bottom: none;
+}
+
+.module-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.join-module-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.form-group-inline {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.form-group-inline input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="welcome-box">
+        <h2>Mes Modules</h2>
+        <p>Gérez vos inscriptions aux modules d'enseignement</p>
+    </div>
+
+    <!-- Join Module Section -->
+    <div class="join-module-section">
+        <h3>Rejoindre un Nouveau Module</h3>
+        <form method="post" action="{% url 'student:join_module' %}">
+            {% csrf_token %}
+            <div class="form-group-inline">
+                <input type="text" name="module_code" placeholder="Code du module (ex: UML1, CS101)" required>
+                <button type="submit" class="btn">Rejoindre</button>
+            </div>
+            <small>Entrez le code du module fourni par votre enseignant pour vous inscrire.</small>
+        </form>
+    </div>
+
+    <!-- Enrolled Modules -->
+    <div class="card">
+        <h2>Modules Inscrits ({{ enrollments.count }})</h2>
+        
+        {% if enrollments %}
+            {% for enrollment in enrollments %}
+            <div class="module-enrollment-card">
+                <div class="module-header">
+                    <div>
+                        <h3 class="module-title">{{ enrollment.module.name }}</h3>
+                        <span class="module-code">{{ enrollment.module.code }}</span>
+                    </div>
+                    <div style="text-align: right; font-size: 0.9em; color: #6c757d;">
+                        Inscrit le {{ enrollment.enrolled_at|date:"d/m/Y" }}
+                    </div>
+                </div>
+
+                <div class="module-info">
+                    <p><strong>Semestre:</strong> {{ enrollment.module.get_semester_display }}</p>
+                    <p><strong>Année académique:</strong> {{ enrollment.module.academic_year }}</p>
+                    {% if enrollment.module.description %}
+                    <p><strong>Description:</strong> {{ enrollment.module.description|truncatewords:20 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Teachers for this module -->
+                {% if enrollment.module.assignments.all %}
+                <div class="teachers-list">
+                    <h4 style="margin: 0 0 10px 0; color: #3a6ea5; font-size: 1em;">Enseignants:</h4>
+                    {% for assignment in enrollment.module.assignments.all %}
+                    {% if assignment.is_active %}
+                    <div class="teacher-item">
+                        <strong>{{ assignment.teacher.user.get_full_name|default:assignment.teacher.user.username }}</strong>
+                        <span style="color: #6c757d;">
+                            ({{ assignment.teacher.teacher_id }}) - {{ assignment.teacher.department }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="module-actions">
+                    <a href="#" class="btn btn-sm">Voir les projets</a>
+                    <a href="#" class="btn btn-sm btn-secondary">Détails du module</a>
+                    <form method="post" action="{% url 'student:leave_module' enrollment.module.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger" 
+                                onclick="return confirm('Êtes-vous sûr de vouloir quitter le module {{ enrollment.module.name }}?')">
+                            Quitter le module
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <p>Vous n'êtes inscrit à aucun module pour le moment.</p>
+                <p>Utilisez le formulaire ci-dessus pour rejoindre un module avec le code fourni par votre enseignant.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="card" style="margin-top: 30px;">
+        <h3>Information</h3>
+        <p>Pour rejoindre un module :</p>
+        <ol>
+            <li>Demandez le <strong>code du module</strong> à votre enseignant</li>
+            <li>Entrez le code dans le formulaire ci-dessus</li>
+            <li>Cliquez sur "Rejoindre"</li>
+        </ol>
+        <p><em>Note:</em> Une fois inscrit, vous pourrez voir les projets liés à ce module et interagir avec vos enseignants.</p>
+    </div>
+{% endblock %}

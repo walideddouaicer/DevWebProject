@@ -29,4 +29,10 @@ urlpatterns = [
     path('notifications/', views.notifications, name='notifications'),
     path('notifications/<int:notification_id>/read/', views.mark_notification_read, name='mark_notification_read'),
     path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
+
+
+     # Module-related URLs - ADD THESE NEW LINES
+    path('modules/join/', views.join_module, name='join_module'),
+    path('modules/', views.my_modules, name='my_modules'), 
+    path('modules/<int:module_id>/leave/', views.leave_module, name='leave_module'),
 ]

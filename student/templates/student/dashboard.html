@@ -44,9 +44,49 @@
         justify-content: flex-end;
         margin-bottom: 20px;
     }
+    /* ADD THIS CSS TO THE EXISTING <style> SECTION IN dashboard.html */
+
+    /* Module join section styling */
+    .module-join-section {
+        background: linear-gradient(135deg, #e8f4ff 0%, #f0f8ff 100%);
+        border: 1px solid #b3d9ff;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .module-join-section h3 {
+        color: #2c5aa0;
+        margin-bottom: 15px;
+    }
+
+    .form-group-inline {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .form-group-inline input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #b3d9ff;
+        border-radius: 4px;
+        font-size: 1em;
+    }
+
+    .form-group-inline input:focus {
+        outline: none;
+        border-color: #2c5aa0;
+        box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.1);
+    }
+
+    .module-join-section small {
+        color: #2c5aa0;
+        font-style: italic;
+    }
 </style>
 {% endblock %}
-
 {% block content %}
     <div class="welcome-box">
         <h2>Bienvenue, 
@@ -86,6 +126,19 @@
         <a href="{% url 'student:invitations_list' %}" class="btn">Voir les invitations</a>
     </div>
     {% endif %}
+
+    <!-- Module Join Section - NEW SECTION -->
+    <div class="module-join-section">
+        <h3>Rejoindre un Module</h3>
+        <form method="post" action="{% url 'student:join_module' %}" class="module-join-form">
+            {% csrf_token %}
+            <div class="form-group-inline">
+                <input type="text" name="module_code" placeholder="Code du module (ex: UML1, CS101)" required>
+                <button type="submit" class="btn">Rejoindre</button>
+            </div>
+            <small>Entrez le code du module fourni par votre enseignant pour vous inscrire.</small>
+        </form>
+    </div>
 
     <div class="filter-section">
         <h3>Recherche et filtres</h3>
