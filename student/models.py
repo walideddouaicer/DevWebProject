@@ -260,7 +260,7 @@ class ProjectActivity(models.Model):
 # comments
 class ProjectComment(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='comments')
-    author = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)  # Changed from StudentProfile to User
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -269,3 +269,28 @@ class ProjectComment(models.Model):
     
     def __str__(self):
         return f"Comment by {self.author} on {self.project}"
+    
+    @property
+    def is_teacher_comment(self):
+        """Check if this comment was made by a teacher"""
+        try:
+            from teacher.models import TeacherProfile
+            TeacherProfile.objects.get(user=self.author)
+            return True
+        except TeacherProfile.DoesNotExist:
+            return False
+    
+    @property
+    def author_profile(self):
+        """Get the appropriate profile (StudentProfile or TeacherProfile) for the author"""
+        if self.is_teacher_comment:
+            from teacher.models import TeacherProfile
+            try:
+                return TeacherProfile.objects.get(user=self.author)
+            except TeacherProfile.DoesNotExist:
+                return None
+        else:
+            try:
+                return StudentProfile.objects.get(user=self.author)
+            except StudentProfile.DoesNotExist:
+                return None

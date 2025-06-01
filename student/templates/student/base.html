@@ -179,9 +179,12 @@ Base template for the student app - Enhanced Navigation
                         <span class="badge">{{ unread_notifications_count }}</span>
                     {% endif %}
                 </a>
-                <a href="{% url 'logout' %}" style="margin-left: auto;">
-                    🚪 Déconnexion
-                </a>
+                <form method="post" action="{% url 'logout' %}" style="margin-left: auto; display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="background: none; border: none; color: white; padding: 18px 24px; cursor: pointer; font-weight: 500; font-size: inherit; transition: all 0.3s ease;">
+                        🚪 Déconnexion
+                    </button>
+                </form>
             </div>
         </nav>
     </div>

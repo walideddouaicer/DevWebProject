@@ -489,6 +489,9 @@ def project_detail(request, project_id):
     # Get project activities
     project_activities = ProjectActivity.objects.filter(project=project)
 
+    # Get comments with select_related('author')
+    comments = project.comments.all().select_related('author')
+
     # For project owners, get available students for collaboration
     available_students = []
     if is_owner and project.status == 'in_progress':
@@ -523,6 +526,7 @@ def project_detail(request, project_id):
         'is_owner': is_owner,
         'is_collaborator': is_collaborator,
         'project_activities': project_activities,
+        'comments': comments,
     }
 
     return render(request, 'student/project_detail.html', context)
@@ -856,7 +860,7 @@ def add_comment(request, project_id):
         if content:
             comment = ProjectComment(
                 project=project,
-                author=student,
+                author=request.user,  # Now using User directly instead of StudentProfile
                 content=content
             )
             comment.save()

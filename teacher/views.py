@@ -78,68 +78,6 @@ def modules_list(request):
 
 
 
-@login_required
-def add_teacher_comment(request, project_id):
-    """Teacher adds a comment to a student project"""
-    if request.method != 'POST':
-        return redirect('teacher:project_review', project_id=project_id)
-    
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect('login')
-    
-    # Get teacher's modules
-    teacher_modules = ModuleAssignment.objects.filter(
-        teacher=teacher,
-        is_active=True
-    ).values_list('module', flat=True)
-    
-    # Import here
-    from student.models import Project, ProjectComment, Notification
-    
-    project = get_object_or_404(
-        Project,
-        id=project_id,
-        module__in=teacher_modules
-    )
-    
-    content = request.POST.get('content')
-    if content:
-        # FIX: Create a special StudentProfile entry for the teacher or use a different approach
-        # Let's create the comment using the project owner's profile but mark it as teacher feedback
-        try:
-            # Create comment with teacher identification in the content
-            teacher_name = teacher.user.get_full_name() or teacher.user.username
-            teacher_content = f"[FEEDBACK ENSEIGNANT - {teacher_name}]\n\n{content}"
-            
-            # Use the project student's profile as author but clearly mark it as teacher feedback
-            comment = ProjectComment.objects.create(
-                project=project,
-                author=project.student,  # Temporary workaround
-                content=teacher_content
-            )
-            
-            # Add a custom attribute to identify this as a teacher comment
-            # We'll improve this model later
-            
-            # Notify student
-            Notification.objects.create(
-                recipient=project.student,
-                project=project,
-                notification_type='project_update',
-                message=f"Nouveau commentaire de {teacher_name} sur votre projet '{project.title}'"
-            )
-            
-            messages.success(request, "Commentaire ajouté avec succès.")
-        except Exception as e:
-            messages.error(request, f"Erreur lors de l'ajout du commentaire: {str(e)}")
-    else:
-        messages.error(request, "Le commentaire ne peut pas être vide.")
-    
-    return redirect('teacher:project_review', project_id=project.id)
-
 
 
 
@@ -394,6 +332,8 @@ def student_projects(request):
     
     return render(request, 'teacher/student_projects.html', context)
 
+# In teacher/views.py, replace the project_review function with this fixed version:
+
 @login_required
 def project_review(request, project_id):
     """Detailed view for teacher to review a student project"""
@@ -419,10 +359,10 @@ def project_review(request, project_id):
         module__in=teacher_modules
     )
     
-    # Get project details
+    # Get project details - FIXED: Remove the problematic select_related calls
     deliverables = project.deliverables.all()
     milestones = project.milestones.all()
-    comments = project.comments.all().select_related('author__user')
+    comments = project.comments.all().select_related('author')  # Fixed: now just 'author' since it's User
     activities = project.activities.all().select_related('user')
     
     context = {
@@ -435,6 +375,7 @@ def project_review(request, project_id):
     }
     
     return render(request, 'teacher/project_review.html', context)
+
 
 @login_required
 def approve_project(request, project_id):
@@ -559,22 +500,34 @@ def add_teacher_comment(request, project_id):
     
     content = request.POST.get('content')
     if content:
-        # Create comment with teacher flag
-        comment = ProjectComment.objects.create(
-            project=project,
-            author=teacher,  # This links to teacher's StudentProfile equivalent
-            content=f"[FEEDBACK ENSEIGNANT]\n{content}"
-        )
-        
-        # Notify student
-        Notification.objects.create(
-            recipient=project.student,
-            project=project,
-            notification_type='project_update',
-            message=f"Nouveau commentaire de {teacher.user.get_full_name() or teacher.user.username} sur votre projet '{project.title}'"
-        )
-        
-        messages.success(request, "Commentaire ajouté avec succès.")
+        try:
+            # Create comment with teacher as author (now using User model)
+            comment = ProjectComment.objects.create(
+                project=project,
+                author=request.user,  # Now using User directly
+                content=f"[FEEDBACK ENSEIGNANT]\n{content}"
+            )
+            
+            # Notify student
+            Notification.objects.create(
+                recipient=project.student,
+                project=project,
+                notification_type='project_update',
+                message=f"Nouveau commentaire de {teacher.user.get_full_name() or teacher.user.username} sur votre projet '{project.title}'"
+            )
+            
+            # Notify collaborators too
+            for collaborator in project.collaborators.all():
+                Notification.objects.create(
+                    recipient=collaborator,
+                    project=project,
+                    notification_type='project_update',
+                    message=f"Nouveau commentaire de {teacher.user.get_full_name() or teacher.user.username} sur le projet '{project.title}'"
+                )
+            
+            messages.success(request, "Commentaire ajouté avec succès.")
+        except Exception as e:
+            messages.error(request, f"Erreur lors de l'ajout du commentaire: {str(e)}")
     else:
         messages.error(request, "Le commentaire ne peut pas être vide.")
     

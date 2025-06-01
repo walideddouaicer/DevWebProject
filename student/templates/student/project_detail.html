@@ -964,13 +964,13 @@
                 {% if project.comments.all %}
                 <div class="comment-section">
                     {% for comment in project.comments.all %}
-                    <div class="comment-item {% if 'FEEDBACK ENSEIGNANT' in comment.content %}comment-teacher{% else %}comment-student{% endif %}">
+                    <div class="comment-item {% if comment.is_teacher_comment %}comment-teacher{% else %}comment-student{% endif %}">
                         <div class="comment-header">
                             <div class="comment-author">
-                                {% if 'FEEDBACK ENSEIGNANT' in comment.content %}
-                                    🎓 {{ comment.author.user.get_full_name|default:comment.author.user.username }} (Enseignant)
+                                {% if comment.is_teacher_comment %}
+                                    🎓 {{ comment.author.get_full_name|default:comment.author.username }} (Enseignant)
                                 {% else %}
-                                    👤 {{ comment.author.user.get_full_name|default:comment.author.user.username }}
+                                    👤 {{ comment.author.get_full_name|default:comment.author.username }}
                                 {% endif %}
                             </div>
                             <div class="comment-date">{{ comment.created_at|date:"d/m/Y H:i" }}</div>
