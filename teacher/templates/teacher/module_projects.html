@@ -1,0 +1,160 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Projets - {{ module.code }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'teacher/css/teacher.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="teacher-welcome-box">
+        <h2>Projets du Module</h2>
+        <h3>{{ module.code }} - {{ module.name }}</h3>
+        <p>Tous les projets soumis par les étudiants de ce module</p>
+    </div>
+
+    <!-- Quick Statistics -->
+    <div class="quick-stats">
+        <div class="quick-stat">
+            <h3>{{ total_projects }}</h3>
+            <p>Total projets</p>
+        </div>
+        <div class="quick-stat">
+            <h3>{{ submitted_projects }}</h3>
+            <p>En attente d'évaluation</p>
+        </div>
+        <div class="quick-stat">
+            <h3>{{ validated_projects }}</h3>
+            <p>Validés</p>
+        </div>
+        <div class="quick-stat">
+            <h3>{{ rejected_projects }}</h3>
+            <p>Rejetés</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section">
+        <h3>Filtrer les Projets</h3>
+        <form method="get" class="filter-form">
+            <div class="form-group">
+                <label for="status">Statut:</label>
+                <select name="status" id="status">
+                    <option value="">Tous les statuts</option>
+                    <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>En cours</option>
+                    <option value="submitted" {% if status_filter == 'submitted' %}selected{% endif %}>Soumis</option>
+                    <option value="validated" {% if status_filter == 'validated' %}selected{% endif %}>Validé</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejeté</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn">Appliquer</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Projects List -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Liste des Projets {% if projects %} ({{ projects.count }}){% endif %}</h2>
+            <a href="{% url 'teacher:module_detail' module.id %}" class="btn btn-secondary">← Retour au Module</a>
+        </div>
+        
+        {% if projects %}
+            {% for project in projects %}
+            <div class="project-row">
+                <div class="project-header">
+                    <div>
+                        <a href="{% url 'teacher:project_review' project.id %}" class="project-title">
+                            {{ project.title }}
+                        </a>
+                        <div class="project-meta">
+                            Par <strong>{{ project.student.user.get_full_name|default:project.student.user.username }}</strong>
+                            • {{ project.get_project_type_display }}
+                            {% if project.collaborators.exists %}
+                                • {{ project.collaborators.count }} collaborateur(s)
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="status-badge status-{{ project.status|lower }}">
+                            {{ project.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="project-meta">
+                    <strong>Créé le:</strong> {{ project.created_at|date:"d/m/Y" }}
+                    • <strong>Dernière mise à jour:</strong> {{ project.updated_at|date:"d/m/Y H:i" }}
+                    {% if project.deliverables.exists %}
+                        • <strong>Livrables:</strong> {{ project.deliverables.count }}
+                    {% endif %}
+                    
+                </div>
+
+                {% if project.description %}
+                <div style="margin: 10px 0; color: #6c757d; font-size: 0.9em;">
+                    {{ project.description|truncatewords:20 }}
+                </div>
+                {% endif %}
+
+                <div class="project-actions">
+                    <a href="{% url 'teacher:project_review' project.id %}" class="btn btn-sm">📋 Examiner</a>
+                    {% if project.status == 'submitted' %}
+                        <form method="post" action="{% url 'teacher:approve_project' project.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm" style="background: #28a745; color: white;" 
+                                    onclick="return confirm('Valider ce projet?')">✓ Valider</button>
+                        </form>
+                        <form method="post" action="{% url 'teacher:reject_project' project.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" 
+                                    onclick="return confirm('Rejeter ce projet?')">✗ Rejeter</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <p>Aucun projet trouvé pour ce module.</p>
+                {% if status_filter %}
+                    <p><a href="{% url 'teacher:module_projects' module.id %}">Voir tous les projets</a></p>
+                {% else %}
+                    <p><em>Les projets apparaîtront ici lorsque les étudiants créeront des projets associés à ce module.</em></p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Module Info -->
+    <div class="card" style="margin-top: 30px;">
+        <h3>À propos de ce Module</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div>
+                <strong>Code:</strong> {{ module.code }}<br>
+                <strong>Semestre:</strong> {{ module.get_semester_display }}<br>
+                <strong>Année:</strong> {{ module.academic_year }}
+            </div>
+            <div>
+                <strong>Étudiants inscrits:</strong> {{ module.get_enrolled_students_count }}<br>
+                <strong>Statut:</strong> {% if module.is_active %}Actif{% else %}Inactif{% endif %}
+            </div>
+        </div>
+        {% if module.description %}
+        <div style="margin-top: 15px;">
+            <strong>Description:</strong><br>
+            {{ module.description|linebreaks }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Navigation -->
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{% url 'teacher:module_detail' module.id %}" class="btn btn-secondary">← Détails du Module</a>
+        <a href="{% url 'teacher:module_management' module.id %}" class="btn btn-secondary">⚙️ Gestion</a>
+        <a href="{% url 'teacher:modules_list' %}" class="btn btn-secondary">Tous mes Modules</a>
+    </div>
+{% endblock %}

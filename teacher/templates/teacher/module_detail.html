@@ -1,0 +1,161 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}{{ module.code }} - Détails du Module{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'teacher/css/teacher.css' %}">
+<style>
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.quick-stat {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #2c5aa0;
+    text-align: center;
+}
+
+.quick-stat h3 {
+    margin: 0;
+    color: #2c5aa0;
+    font-size: 1.5em;
+}
+
+.quick-stat p {
+    margin: 5px 0 0 0;
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.student-card {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.project-row {
+    padding: 10px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="teacher-welcome-box">
+        <h2>{{ module.code }} - {{ module.name }}</h2>
+        <p>Détails et gestion du module</p>
+    </div>
+
+    <!-- Module Information -->
+    <div class="card">
+        <h2>Informations du Module</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <div>
+                <strong>Code:</strong> {{ module.code }}<br>
+                <strong>Nom:</strong> {{ module.name }}<br>
+                <strong>Semestre:</strong> {{ module.get_semester_display }}
+            </div>
+            <div>
+                <strong>Année académique:</strong> {{ module.academic_year }}<br>
+                <strong>Statut:</strong> {% if module.is_active %}Actif{% else %}Inactif{% endif %}<br>
+                <strong>Assigné le:</strong> {{ assignment.assigned_at|date:"d/m/Y" }}
+            </div>
+        </div>
+        {% if module.description %}
+        <div style="margin-top: 15px;">
+            <strong>Description:</strong><br>
+            {{ module.description|linebreaks }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Statistics -->
+    <div class="quick-stats">
+        <div class="quick-stat">
+            <h3>{{ total_students }}</h3>
+            <p>Étudiants inscrits</p>
+        </div>
+        <div class="quick-stat">
+            <h3>{{ total_projects }}</h3>
+            <p>Projets totaux</p>
+        </div>
+        <div class="quick-stat">
+            <h3>{{ submitted_projects }}</h3>
+            <p>Projets soumis</p>
+        </div>
+        <div class="quick-stat">
+            <h3>{{ validated_projects }}</h3>
+            <p>Projets validés</p>
+        </div>
+    </div>
+
+    <!-- Students List -->
+    <div class="card">
+        <h2>Étudiants Inscrits ({{ total_students }})</h2>
+        {% if enrollments %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+                {% for enrollment in enrollments %}
+                <div class="student-card">
+                    <h4 style="margin: 0 0 10px 0; color: #2c5aa0;">
+                        {{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}
+                    </h4>
+                    <p style="margin: 5px 0; color: #6c757d;">
+                        <strong>ID:</strong> {{ enrollment.student.student_id }}<br>
+                        <strong>Département:</strong> {{ enrollment.student.department }}<br>
+                        <strong>Année:</strong> {{ enrollment.student.get_year_of_study_display }}<br>
+                        <strong>Inscrit le:</strong> {{ enrollment.enrolled_at|date:"d/m/Y" }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">Aucun étudiant inscrit pour le moment.</p>
+        {% endif %}
+    </div>
+
+    <!-- Recent Projects -->
+    {% if module_projects %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2>Projets Récents</h2>
+            <a href="{% url 'teacher:module_projects' module.id %}" class="btn">Voir tous les projets</a>
+        </div>
+        
+        {% for project in module_projects %}
+        <div class="project-row">
+            <div>
+                <strong>{{ project.title }}</strong><br>
+                <small style="color: #6c757d;">
+                    Par {{ project.student.user.get_full_name|default:project.student.user.username }} 
+                    • {{ project.updated_at|date:"d/m/Y" }}
+                </small>
+            </div>
+            <div>
+                <span class="status-badge status-{{ project.status|lower }}">
+                    {{ project.get_status_display }}
+                </span>
+                <a href="{% url 'teacher:project_review' project.id %}" class="btn btn-sm" style="margin-left: 10px;">Voir</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{% url 'teacher:module_projects' module.id %}" class="btn" style="background: #2c5aa0; color: white;">📋 Tous les Projets</a>
+        <a href="{% url 'teacher:module_management' module.id %}" class="btn btn-secondary">⚙️ Gestion du Module</a>
+        <a href="{% url 'teacher:modules_list' %}" class="btn btn-secondary">← Retour aux Modules</a>
+    </div>
+{% endblock %}

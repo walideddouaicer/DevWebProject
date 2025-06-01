@@ -1,0 +1,216 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Gestion - {{ module.code }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'teacher/css/teacher.css' %}">
+<style>
+.table-responsive {
+    overflow-x: auto;
+}
+
+.management-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.management-table th,
+.management-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.management-table th {
+    background: #f8f9fa;
+    font-weight: bold;
+    color: #2c5aa0;
+}
+
+.management-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.stat-box {
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.module-code-display {
+    background: #2c5aa0;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.future-feature {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px dashed #dee2e6;
+}
+
+.future-feature h4 {
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.future-feature p {
+    color: #6c757d;
+    font-size: 0.9em;
+    margin: 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="teacher-welcome-box">
+        <h2>Gestion du Module</h2>
+        <h3>{{ module.code }} - {{ module.name }}</h3>
+        <p>Interface de gestion des étudiants et paramètres du module</p>
+    </div>
+
+    <!-- Module Settings -->
+    <div class="card">
+        <h2>Paramètres du Module</h2>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+            <p><strong>Code d'inscription:</strong> <span class="module-code-display">{{ module.code }}</span></p>
+            <p><small>Les étudiants utilisent ce code pour rejoindre votre module.</small></p>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <p><strong>Statut:</strong> {% if module.is_active %}<span style="color: #28a745;">Actif</span>{% else %}<span style="color: #dc3545;">Inactif</span>{% endif %}</p>
+            <p><strong>Semestre:</strong> {{ module.get_semester_display }}</p>
+            <p><strong>Année académique:</strong> {{ module.academic_year }}</p>
+            {% if module.description %}
+            <p><strong>Description:</strong> {{ module.description }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Students Management -->
+    <div class="card">
+        <h2>Gestion des Étudiants ({{ enrollments.count }})</h2>
+        
+        {% if enrollments %}
+            <div class="table-responsive">
+                <table class="management-table">
+                    <thead>
+                        <tr>
+                            <th>Étudiant</th>
+                            <th>ID</th>
+                            <th>Département</th>
+                            <th>Année</th>
+                            <th>Inscrit le</th>
+                            <th style="text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for enrollment in enrollments %}
+                        <tr>
+                            <td>
+                                <strong>{{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}</strong>
+                            </td>
+                            <td>{{ enrollment.student.student_id }}</td>
+                            <td>{{ enrollment.student.department }}</td>
+                            <td>{{ enrollment.student.get_year_of_study_display }}</td>
+                            <td>{{ enrollment.enrolled_at|date:"d/m/Y" }}</td>
+                            <td style="text-align: center;">
+                                <a href="{% url 'teacher:student_projects' %}?module={{ module.id }}" class="btn btn-sm">Voir Projets</a>
+                                <!-- Future: Add remove student functionality -->
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state" style="padding: 40px; text-align: center;">
+                <p>Aucun étudiant inscrit dans ce module.</p>
+                <p><em>Les étudiants peuvent rejoindre en utilisant le code: <strong>{{ module.code }}</strong></em></p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Module Statistics -->
+    <div class="card">
+        <h2>Statistiques du Module</h2>
+        <div class="stats-grid">
+            <div class="stat-box" style="background: #e8f4ff;">
+                <h3 style="margin: 0; color: #2c5aa0;">{{ enrollments.count }}</h3>
+                <p style="margin: 5px 0 0 0; color: #6c757d;">Étudiants Inscrits</p>
+            </div>
+            <div class="stat-box" style="background: #fff3cd;">
+                <h3 style="margin: 0; color: #856404;">À venir</h3>
+                <p style="margin: 5px 0 0 0; color: #6c757d;">Projets Assignés</p>
+            </div>
+            <div class="stat-box" style="background: #d4edda;">
+                <h3 style="margin: 0; color: #155724;">À venir</h3>
+                <p style="margin: 5px 0 0 0; color: #6c757d;">Projets Complétés</p>
+            </div>
+            <div class="stat-box" style="background: #f8d7da;">
+                <h3 style="margin: 0; color: #721c24;">À venir</h3>
+                <p style="margin: 5px 0 0 0; color: #6c757d;">Note Moyenne</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Future Features -->
+    <div class="card">
+        <h2>Fonctionnalités à Venir</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+            <div class="future-feature">
+                <h4>📋 Modèles de Projets</h4>
+                <p>Créez des modèles de projets avec des exigences spécifiques pour ce module.</p>
+            </div>
+            <div class="future-feature">
+                <h4>📊 Système de Notes</h4>
+                <p>Assignez des notes et générez des rapports de performance.</p>
+            </div>
+            <div class="future-feature">
+                <h4>📧 Communication</h4>
+                <p>Envoyez des annonces et communiquez avec tous les étudiants du module.</p>
+            </div>
+            <div class="future-feature">
+                <h4>👥 Gestion Avancée</h4>
+                <p>Retirez des étudiants, gérez les permissions et exportez des données.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+        <h2>Actions Rapides</h2>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <a href="{% url 'teacher:module_projects' module.id %}" class="btn" style="background: #2c5aa0; color: white;">
+                📋 Voir tous les projets ({{ total_projects|default:0 }})
+            </a>
+            <a href="{% url 'teacher:student_projects' %}?module={{ module.id }}&status=submitted" class="btn" style="background: #ffc107; color: #212529;">
+                ⏳ Projets en attente ({{ submitted_projects|default:0 }})
+            </a>
+            <a href="{% url 'teacher:student_projects' %}?module={{ module.id }}&status=validated" class="btn" style="background: #28a745; color: white;">
+                ✅ Projets validés ({{ validated_projects|default:0 }})
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{% url 'teacher:module_detail' module.id %}" class="btn btn-secondary">← Retour aux Détails</a>
+        <a href="{% url 'teacher:module_projects' module.id %}" class="btn" style="background: #2c5aa0; color: white;">📋 Voir les Projets</a>
+        <a href="{% url 'teacher:modules_list' %}" class="btn btn-secondary">Tous mes Modules</a>
+    </div>
+{% endblock %}

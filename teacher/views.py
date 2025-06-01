@@ -78,6 +78,239 @@ def modules_list(request):
 
 
 
+@login_required
+def add_teacher_comment(request, project_id):
+    """Teacher adds a comment to a student project"""
+    if request.method != 'POST':
+        return redirect('teacher:project_review', project_id=project_id)
+    
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+    
+    # Get teacher's modules
+    teacher_modules = ModuleAssignment.objects.filter(
+        teacher=teacher,
+        is_active=True
+    ).values_list('module', flat=True)
+    
+    # Import here
+    from student.models import Project, ProjectComment, Notification
+    
+    project = get_object_or_404(
+        Project,
+        id=project_id,
+        module__in=teacher_modules
+    )
+    
+    content = request.POST.get('content')
+    if content:
+        # FIX: Create a special StudentProfile entry for the teacher or use a different approach
+        # Let's create the comment using the project owner's profile but mark it as teacher feedback
+        try:
+            # Create comment with teacher identification in the content
+            teacher_name = teacher.user.get_full_name() or teacher.user.username
+            teacher_content = f"[FEEDBACK ENSEIGNANT - {teacher_name}]\n\n{content}"
+            
+            # Use the project student's profile as author but clearly mark it as teacher feedback
+            comment = ProjectComment.objects.create(
+                project=project,
+                author=project.student,  # Temporary workaround
+                content=teacher_content
+            )
+            
+            # Add a custom attribute to identify this as a teacher comment
+            # We'll improve this model later
+            
+            # Notify student
+            Notification.objects.create(
+                recipient=project.student,
+                project=project,
+                notification_type='project_update',
+                message=f"Nouveau commentaire de {teacher_name} sur votre projet '{project.title}'"
+            )
+            
+            messages.success(request, "Commentaire ajouté avec succès.")
+        except Exception as e:
+            messages.error(request, f"Erreur lors de l'ajout du commentaire: {str(e)}")
+    else:
+        messages.error(request, "Le commentaire ne peut pas être vide.")
+    
+    return redirect('teacher:project_review', project_id=project.id)
+
+
+
+
+
+
+# ADD these missing functions to the END of your teacher/views.py file
+
+@login_required
+def module_detail(request, module_id):
+    """Detailed view of a specific module"""
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+    
+    # Verify teacher has access to this module
+    try:
+        assignment = ModuleAssignment.objects.get(
+            teacher=teacher,
+            module_id=module_id,
+            is_active=True
+        )
+        module = assignment.module
+    except ModuleAssignment.DoesNotExist:
+        messages.error(request, "Vous n'avez pas accès à ce module.")
+        return redirect('teacher:modules_list')
+    
+    # Get module statistics
+    enrollments = ModuleEnrollment.objects.filter(
+        module=module,
+        is_active=True
+    ).select_related('student__user')
+    
+    # Import here to avoid circular imports
+    from student.models import Project
+    
+    # Get projects from this module
+    module_projects = Project.objects.filter(
+        module=module
+    ).select_related('student__user').order_by('-updated_at')
+    
+    # Statistics
+    total_students = enrollments.count()
+    total_projects = module_projects.count()
+    submitted_projects = module_projects.filter(status='submitted').count()
+    validated_projects = module_projects.filter(status='validated').count()
+    
+    context = {
+        'teacher': teacher,
+        'module': module,
+        'assignment': assignment,
+        'enrollments': enrollments,
+        'module_projects': module_projects[:10],  # Show recent 10
+        'total_students': total_students,
+        'total_projects': total_projects,
+        'submitted_projects': submitted_projects,
+        'validated_projects': validated_projects,
+    }
+    
+    return render(request, 'teacher/module_detail.html', context)
+
+@login_required
+def module_projects(request, module_id):
+    """View all projects for a specific module"""
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+    
+    # Verify teacher has access to this module
+    try:
+        assignment = ModuleAssignment.objects.get(
+            teacher=teacher,
+            module_id=module_id,
+            is_active=True
+        )
+        module = assignment.module
+    except ModuleAssignment.DoesNotExist:
+        messages.error(request, "Vous n'avez pas accès à ce module.")
+        return redirect('teacher:modules_list')
+    
+    # Import here to avoid circular imports
+    from student.models import Project
+    
+    # Get all projects from this module
+    projects = Project.objects.filter(
+        module=module
+    ).select_related('student__user').order_by('-updated_at')
+    
+    # Filter by status if requested
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        projects = projects.filter(status=status_filter)
+    
+    # Statistics
+    total_projects = projects.count()
+    submitted_projects = projects.filter(status='submitted').count()
+    validated_projects = projects.filter(status='validated').count()
+    rejected_projects = projects.filter(status='rejected').count()
+    
+    context = {
+        'teacher': teacher,
+        'module': module,
+        'projects': projects,
+        'total_projects': total_projects,
+        'submitted_projects': submitted_projects,
+        'validated_projects': validated_projects,
+        'rejected_projects': rejected_projects,
+        'status_filter': status_filter,
+    }
+    
+    return render(request, 'teacher/module_projects.html', context)
+
+# REPLACE the module_management function in teacher/views.py with this FIXED version:
+
+@login_required
+def module_management(request, module_id):
+    """Module management interface for teachers"""
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+    
+    # Verify teacher has access to this module
+    try:
+        assignment = ModuleAssignment.objects.get(
+            teacher=teacher,
+            module_id=module_id,
+            is_active=True
+        )
+        module = assignment.module
+    except ModuleAssignment.DoesNotExist:
+        messages.error(request, "Vous n'avez pas accès à ce module.")
+        return redirect('teacher:modules_list')
+    
+    # Get enrollments - Fixed query
+    try:
+        enrollments = ModuleEnrollment.objects.filter(
+            module=module,
+            is_active=True
+        ).select_related('student__user')
+        
+        # Add debug info
+        print(f"DEBUG: Found {enrollments.count()} enrollments for module {module.code}")
+        
+    except Exception as e:
+        print(f"DEBUG: Error getting enrollments: {e}")
+        enrollments = []
+    
+    context = {
+        'teacher': teacher,
+        'module': module,
+        'assignment': assignment,
+        'enrollments': enrollments,
+    }
+    
+    # Ensure we always return a response
+    try:
+        return render(request, 'teacher/module_management.html', context)
+    except Exception as e:
+        print(f"DEBUG: Template render error: {e}")
+        # Fallback response
+        return render(request, 'teacher/base.html', {
+            'error_message': f'Error loading module management for {module.code}. Template issue.'
+        })
+
+
+
 
 
 
