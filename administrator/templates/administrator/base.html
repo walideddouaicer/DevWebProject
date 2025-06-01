@@ -365,15 +365,7 @@ Base template for the administrator app - Admin Interface Layout
                 <a href="{% url 'administrator:assignments_management' %}" class="{% if 'assignment' in request.resolver_match.url_name %}active{% endif %}">
                     👥 Assignations
                 </a>
-                <a href="{% url 'administrator:users_overview' %}" class="{% if 'user' in request.resolver_match.url_name %}active{% endif %}">
-                    👤 Utilisateurs
-                </a>
-                <a href="{% url 'administrator:statistics' %}" class="{% if 'statistic' in request.resolver_match.url_name %}active{% endif %}">
-                    📈 Statistiques
-                </a>
-                <a href="{% url 'administrator:exports' %}" class="{% if 'export' in request.resolver_match.url_name %}active{% endif %}">
-                    📤 Exports
-                </a>
+                
                 <form method="post" action="{% url 'logout' %}" style="margin-left: auto; display: inline;">
                     {% csrf_token %}
                     <button type="submit" style="background: none; border: none; color: white; padding: 18px 24px; cursor: pointer; font-weight: 500; font-size: inherit; transition: all 0.3s ease;">

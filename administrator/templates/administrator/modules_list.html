@@ -374,16 +374,10 @@
         </div>
         <div class="quick-stat-card">
             <div class="quick-stat-value">
-                {{ modules|length|add:0 }}
-                {% comment %}Count active modules{% endcomment %}
-                {% for module in modules %}
-                    {% if module.is_active and forloop.first %}
-                        {% regroup modules by is_active as grouped_modules %}
-                        {% for group in grouped_modules %}
-                            {% if group.grouper %}
-                                {{ group.list|length }}
-                            {% endif %}
-                        {% endfor %}
+                {% regroup modules by is_active as grouped_modules %}
+                {% for group in grouped_modules %}
+                    {% if group.grouper %}
+                        {{ group.list|length }}
                     {% endif %}
                 {% endfor %}
             </div>
@@ -584,9 +578,7 @@
             <a href="{% url 'administrator:assignments_management' %}" class="btn btn-primary">
                 👥 Gérer Assignations
             </a>
-            <a href="{% url 'administrator:exports' %}?type=modules" class="btn btn-secondary">
-                📤 Exporter Modules
-            </a>
+            
         </div>
     </div>
     {% endif %}
