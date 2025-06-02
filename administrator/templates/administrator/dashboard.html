@@ -590,22 +590,7 @@
         {% endif %}
     </div>
 
-    <!-- Quick Links Section -->
-    <div class="quick-links-section">
-        <h3 style="margin: 0 0 15px 0; color: #495057;">🔗 Liens Rapides</h3>
-        <div class="quick-links-grid">
-            <a href="{% url 'administrator:statistics' %}" class="quick-link-card">
-                <div class="quick-link-icon">📊</div>
-                <h4 class="quick-link-title">Statistiques Avancées</h4>
-                <p class="quick-link-desc">Analyses détaillées et rapports</p>
-            </a>
-            <a href="{% url 'administrator:users_overview' %}" class="quick-link-card">
-                <div class="quick-link-icon">👤</div>
-                <h4 class="quick-link-title">Gestion Utilisateurs</h4>
-                <p class="quick-link-desc">Étudiants et enseignants</p>
-            </a>
-        </div>
-    </div>
+    
 {% endblock %}
 
 {% block extra_js %}
