@@ -18,6 +18,7 @@ urlpatterns = [
     path('modules/<int:module_id>/', views.module_detail, name='module_detail'),
     path('modules/<int:module_id>/edit/', views.module_edit, name='module_edit'),
     path('modules/<int:module_id>/delete/', views.module_delete, name='module_delete'),
+    path('modules/<int:module_id>/remove-student/<int:student_id>/', views.remove_student_from_module, name='remove_student_from_module'),
     
     # Teacher-Module Assignment Management
     path('assignments/', views.assignments_management, name='assignments_management'),

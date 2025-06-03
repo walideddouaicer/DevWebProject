@@ -545,48 +545,49 @@
             <a href="{% url 'administrator:modules_list' %}" class="btn">Voir Tous les Modules</a>
         </div>
         
+        <!-- Replace the module grid section in your dashboard.html template -->
         {% if modules_with_stats %}
-            <div class="module-grid">
-                {% for module in modules_with_stats %}
-                <div class="module-card">
-                    <div class="module-header">
-                        <div>
-                            <div class="module-code">{{ module.code }}</div>
-                            <div style="color: #6c757d; font-size: 0.9em;">{{ module.name|truncatechars:30 }}</div>
-                        </div>
-                        <div style="text-align: right; font-size: 0.8em; color: #6c757d;">
-                            {{ module.academic_year }}<br>{{ module.get_semester_display }}
-                        </div>
+        <div class="module-grid">
+            {% for module in modules_with_stats %}
+            <div class="module-card">
+                <div class="module-header">
+                    <div>
+                        <div class="module-code">{{ module.code }}</div>
+                        <div style="color: #6c757d; font-size: 0.9em;">{{ module.name|truncatechars:30 }}</div>
                     </div>
-                    <div class="module-stats">
-                        <div class="module-stat">
-                            <span class="module-stat-value">{{ module.student_count }}</span>
-                            <span class="module-stat-label">Étudiants</span>
-                        </div>
-                        <div class="module-stat">
-                            <span class="module-stat-value">{{ module.teacher_count }}</span>
-                            <span class="module-stat-label">Enseignants</span>
-                        </div>
-                        <div class="module-stat">
-                            <span class="module-stat-value">{{ module.project_count }}</span>
-                            <span class="module-stat-label">Projets</span>
-                        </div>
-                    </div>
-                    <div style="margin-top: 15px; text-align: center;">
-                        <a href="{% url 'administrator:module_detail' module.id %}" class="btn btn-sm">Voir Détails</a>
+                    <div style="text-align: right; font-size: 0.8em; color: #6c757d;">
+                        {{ module.academic_year }}<br>{{ module.get_semester_display }}
                     </div>
                 </div>
-                {% endfor %}
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <span class="module-stat-value">{{ module.student_count }}</span>
+                        <span class="module-stat-label">Étudiants</span>
+                    </div>
+                    <div class="module-stat">
+                        <span class="module-stat-value">{{ module.teacher_count }}</span>
+                        <span class="module-stat-label">Enseignants</span>
+                    </div>
+                    <div class="module-stat">
+                        <span class="module-stat-value">{{ module.project_count }}</span>
+                        <span class="module-stat-label">Projets</span>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <a href="{% url 'administrator:module_detail' module.id %}" class="btn btn-sm">Voir Détails</a>
+                </div>
             </div>
+            {% endfor %}
+        </div>
         {% else %}
-            <div class="admin-card">
-                <div class="no-data">
-                    <div>📚</div>
-                    <h3>Aucun Module Disponible</h3>
-                    <p>Commencez par créer des modules pour organiser les projets.</p>
-                    <a href="{% url 'administrator:module_create' %}" class="btn btn-primary">Créer un Module</a>
-                </div>
+        <div class="admin-card">
+            <div class="no-data">
+                <div>📚</div>
+                <h3>Aucun Module Disponible</h3>
+                <p>Commencez par créer des modules pour organiser les projets.</p>
+                <a href="{% url 'administrator:module_create' %}" class="btn btn-primary">Créer un Module</a>
             </div>
+        </div>
         {% endif %}
     </div>
 

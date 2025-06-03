@@ -30,8 +30,11 @@ def admin_required(view_func):
     return wrapper
 
 @admin_required
+# Replace the dashboard view in administrator/views.py with this debug version
+
+@admin_required
 def dashboard(request):
-    """Administrator dashboard with key statistics"""
+    """Administrator dashboard with key statistics - DEBUG VERSION"""
     admin = get_object_or_404(AdminProfile, user=request.user)
     
     # Basic statistics
@@ -51,17 +54,60 @@ def dashboard(request):
     recent_projects = Project.objects.filter(created_at__gte=thirty_days_ago).count()
     recent_enrollments = ModuleEnrollment.objects.filter(enrolled_at__gte=thirty_days_ago).count()
     
-    # Module statistics
-    modules_with_stats = Module.objects.filter(is_active=True).annotate(
-        student_count=Count('enrollments', filter=Q(enrollments__is_active=True)),
-        teacher_count=Count('assignments', filter=Q(assignments__is_active=True)),
-        project_count=Count('projects')
-    ).order_by('-student_count')[:5]  # Top 5 modules by enrollment
+    # DEBUG: Let's fix the module statistics with manual counting
+    modules_with_stats = []
+    
+    for module in Module.objects.filter(is_active=True).order_by('code'):
+        # Manual count for each module
+        student_count = ModuleEnrollment.objects.filter(
+            module=module, 
+            is_active=True
+        ).count()
+        
+        teacher_count = ModuleAssignment.objects.filter(
+            module=module, 
+            is_active=True
+        ).count()
+        
+        project_count = Project.objects.filter(module=module).count()
+        
+        # Create a module dict with stats
+        module_data = {
+            'id': module.id,
+            'code': module.code,
+            'name': module.name,
+            'academic_year': module.academic_year,
+            'semester': module.semester,
+            'get_semester_display': module.get_semester_display(),
+            'student_count': student_count,
+            'teacher_count': teacher_count,
+            'project_count': project_count,
+        }
+        
+        modules_with_stats.append(module_data)
+        
+        # DEBUG: Print to console
+        print(f"DEBUG - Module {module.code}:")
+        print(f"  Students: {student_count}")
+        print(f"  Teachers: {teacher_count}")
+        print(f"  Projects: {project_count}")
+    
+    # Sort by student count (descending) and take top 5
+    modules_with_stats.sort(key=lambda x: x['student_count'], reverse=True)
+    modules_with_stats = modules_with_stats[:5]
     
     # Recent projects for activity feed
     latest_projects = Project.objects.select_related(
         'student__user', 'module'
     ).order_by('-updated_at')[:10]
+    
+    # DEBUG: Print total counts
+    print(f"DEBUG - Total counts:")
+    print(f"  Total modules: {total_modules}")
+    print(f"  Total students: {total_students}")
+    print(f"  Total teachers: {total_teachers}")
+    print(f"  Total projects: {total_projects}")
+    print(f"  Modules with stats count: {len(modules_with_stats)}")
     
     context = {
         'admin': admin,
@@ -75,7 +121,7 @@ def dashboard(request):
         'projects_rejected': projects_rejected,
         'recent_projects': recent_projects,
         'recent_enrollments': recent_enrollments,
-        'modules_with_stats': modules_with_stats,
+        'modules_with_stats': modules_with_stats,  # Now using manual calculation
         'latest_projects': latest_projects,
     }
     
@@ -610,6 +656,63 @@ def statistics(request):
     }
     
     return render(request, 'administrator/statistics.html', context)
+
+
+
+@admin_required
+def remove_student_from_module(request, module_id, student_id):
+    """Remove a student from a module"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+    
+    try:
+        module = Module.objects.get(id=module_id)
+        student = StudentProfile.objects.get(id=student_id)
+        
+        # Find the enrollment
+        enrollment = ModuleEnrollment.objects.get(
+            module=module,
+            student=student,
+            is_active=True
+        )
+        
+        # Deactivate the enrollment (soft delete)
+        enrollment.is_active = False
+        enrollment.save()
+        
+        if request.method == 'POST':
+            # For AJAX requests
+            return JsonResponse({
+                'success': True, 
+                'message': f'{student.user.get_full_name() or student.user.username} a été désinscrit du module {module.code}.'
+            })
+        else:
+            # For regular requests
+            messages.success(request, f'{student.user.get_full_name() or student.user.username} a été désinscrit du module {module.code}.')
+            return redirect('administrator:module_detail', module_id=module.id)
+            
+    except ModuleEnrollment.DoesNotExist:
+        error_msg = "Cet étudiant n'est pas inscrit à ce module."
+        if request.method == 'POST':
+            return JsonResponse({'success': False, 'message': error_msg})
+        else:
+            messages.error(request, error_msg)
+            return redirect('administrator:module_detail', module_id=module_id)
+    except (Module.DoesNotExist, StudentProfile.DoesNotExist):
+        error_msg = "Module ou étudiant introuvable."
+        if request.method == 'POST':
+            return JsonResponse({'success': False, 'message': error_msg})
+        else:
+            messages.error(request, error_msg)
+            return redirect('administrator:modules_list')
+    except Exception as e:
+        error_msg = f"Erreur lors de la désinscription: {str(e)}"
+        if request.method == 'POST':
+            return JsonResponse({'success': False, 'message': error_msg})
+        else:
+            messages.error(request, error_msg)
+            return redirect('administrator:module_detail', module_id=module_id)
+
+
 
 @admin_required
 def exports(request):
