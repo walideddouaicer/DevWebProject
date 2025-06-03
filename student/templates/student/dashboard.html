@@ -556,19 +556,7 @@
     </div>
     {% endif %}
 
-    <!-- Module Join Section -->
-    <div class="module-join-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0; color: #3a6ea5;">📚 Rejoindre un Module</h3>
-            <div style="font-size: 2em; opacity: 0.3;">🔗</div>
-        </div>
-        <p style="margin: 0 0 15px 0; color: #6c757d;">Entrez le code du module fourni par votre enseignant pour vous inscrire automatiquement.</p>
-        <form method="post" action="{% url 'student:join_module' %}" class="join-form">
-            {% csrf_token %}
-            <input type="text" name="module_code" class="join-input" placeholder="Code du module (ex: UML1, CS101)" required>
-            <button type="submit" class="btn">Rejoindre le Module</button>
-        </form>
-    </div>
+    
 
     <!-- Filter Workspace -->
     <div class="filter-workspace">

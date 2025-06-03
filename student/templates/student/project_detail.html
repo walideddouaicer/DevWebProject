@@ -682,18 +682,13 @@
                                 🔄 Reprendre les Modifications
                             </button>
                         </form>
+                    
+                    {% elif project.status == 'submitted' %}
+                            <p>Votre projet a deja ete soumis, pas de modifications disponible</p>
+                            
                     {% endif %}
 
-                    {% if user.is_staff and project.status == 'submitted' %}
-                        <form method="post" action="{% url 'student:project_approve' project.id %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="action-btn success">✅ Valider</button>
-                        </form>
-                        <form method="post" action="{% url 'student:project_reject' project.id %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="action-btn danger">❌ Rejeter</button>
-                        </form>
-                    {% endif %}
+                    
                 </div>
             </div>
 

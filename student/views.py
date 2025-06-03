@@ -158,6 +158,8 @@ def complete_milestone(request, milestone_id):
     
     return redirect('student:project_detail', project_id=milestone.project.id)
 
+# Alternative approach using get_or_create for add_collaborator in student/views.py:
+
 @login_required
 def add_collaborator(request, project_id):
     student = get_object_or_404(StudentProfile, user=request.user)
@@ -168,7 +170,7 @@ def add_collaborator(request, project_id):
         messages.error(request, "Seul le propriétaire du projet peut ajouter des collaborateurs.")
         return redirect('student:project_detail', project_id=project.id)
 
-    # Only in_progress projects can have collaborators added (CHANGED FROM 'draft')
+    # Only in_progress projects can have collaborators added
     if project.status != 'in_progress':
         messages.warning(request, "Vous ne pouvez ajouter des collaborateurs qu'aux projets en cours.")
         return redirect('student:project_detail', project_id=project.id)
@@ -189,26 +191,22 @@ def add_collaborator(request, project_id):
                     messages.info(request, f"{recipient} est déjà un collaborateur de ce projet.")
                     return redirect('student:project_detail', project_id=project.id)
 
-                # Check for existing invitations
-                existing_invitation = CollaborationInvitation.objects.filter(
+                # Use get_or_create to handle existing invitations
+                invitation, created = CollaborationInvitation.objects.get_or_create(
                     project=project,
                     recipient=recipient,
-                    status='pending'
-                ).first()
+                    defaults={
+                        'sender': student,
+                        'status': 'pending',
+                        'message': ''
+                    }
+                )
 
-                if existing_invitation:
-                    messages.info(request, f"Une invitation a déjà été envoyée à {recipient}.")
-                else:
-                    # Create new invitation
-                    invitation = CollaborationInvitation(
-                        project=project,
-                        sender=student,
-                        recipient=recipient
-                    )
-                    invitation.save()
+                if created:
+                    # New invitation created
                     send_invitation_email(invitation)
                     messages.success(request, f"Invitation envoyée à {recipient}.")
-
+                    
                     # Create notification for the recipient
                     Notification.objects.create(
                         recipient=recipient,
@@ -216,9 +214,33 @@ def add_collaborator(request, project_id):
                         notification_type='invitation',
                         message=f"{student.user.get_full_name() or student.user.username} vous invite à collaborer sur le projet '{project.title}'"
                     )
+                else:
+                    # Invitation already exists - update it
+                    if invitation.status == 'pending':
+                        messages.info(request, f"Une invitation a déjà été envoyée à {recipient}.")
+                    else:
+                        # Reactivate the invitation
+                        invitation.status = 'pending'
+                        invitation.sender = student
+                        invitation.message = ''
+                        invitation.save()
+                        
+                        send_invitation_email(invitation)
+                        messages.success(request, f"Nouvelle invitation envoyée à {recipient}.")
+                        
+                        # Create notification for the recipient
+                        Notification.objects.create(
+                            recipient=recipient,
+                            project=project,
+                            notification_type='invitation',
+                            message=f"{student.user.get_full_name() or student.user.username} vous invite à collaborer sur le projet '{project.title}'"
+                        )
 
             except StudentProfile.DoesNotExist:
                 messages.error(request, "Étudiant non trouvé.")
+            except Exception as e:
+                # Handle any other unexpected errors
+                messages.error(request, f"Erreur lors de l'envoi de l'invitation: {str(e)}")
 
     return redirect('student:project_detail', project_id=project.id)
 
