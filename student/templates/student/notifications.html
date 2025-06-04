@@ -423,21 +423,7 @@
                 {% if notifications %}({{ notifications.count }}){% endif %}
             </h2>
             
-            <!-- Filter Tabs -->
-            <div class="filter-tabs">
-                <a href="?filter=all" class="filter-tab {% if not request.GET.filter or request.GET.filter == 'all' %}active{% endif %}">
-                    📋 Toutes
-                </a>
-                <a href="?filter=unread" class="filter-tab {% if request.GET.filter == 'unread' %}active{% endif %}">
-                    📬 Non Lues
-                </a>
-                <a href="?filter=invitation" class="filter-tab {% if request.GET.filter == 'invitation' %}active{% endif %}">
-                    👥 Invitations
-                </a>
-                <a href="?filter=project" class="filter-tab {% if request.GET.filter == 'project' %}active{% endif %}">
-                    📊 Projets
-                </a>
-            </div>
+            
         </div>
         
         {% if notifications %}
@@ -551,7 +537,7 @@
                 </div>
                 <div style="margin-top: 20px; padding: 15px; background: rgba(58, 110, 165, 0.1); border-radius: 6px;">
                     <p style="margin: 0; font-size: 0.9em; color: #3a6ea5;">
-                        <strong>💡 Astuce:</strong> Cliquez sur "Marquer tout comme lu" pour nettoyer rapidement vos notifications ou utilisez les filtres pour trouver des types spécifiques de notifications.
+                        <strong>💡 Astuce:</strong> Cliquez sur "Marquer tout comme lu" pour nettoyer rapidement vos notifications , revisionnez cette espace pour que vous soyez toujours au courant des nouvelles actions qui vous concerne.
                     </p>
                 </div>
             </div>
