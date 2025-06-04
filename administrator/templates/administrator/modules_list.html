@@ -406,44 +406,29 @@
     <div class="modules-header">
         <h1 style="margin: 0 0 10px 0; font-size: 2em;">📚 Gestion des Modules</h1>
         <p style="margin: 0; font-size: 1.1em; opacity: 0.9;">
-            Gérez vos {{ modules.count }} modules et organisez l'enseignement
+            Gérez vos {{ total_modules }} modules et organisez l'enseignement
         </p>
         <a href="{% url 'administrator:module_create' %}" class="create-module-btn">
             ➕ Créer un Module
         </a>
     </div>
 
-    <!-- Quick Statistics -->
+    <!-- FIXED: Quick Statistics using manual counts -->
     <div class="quick-stats">
         <div class="quick-stat-card">
-            <div class="quick-stat-value">{{ modules.count }}</div>
+            <div class="quick-stat-value">{{ total_modules }}</div>
             <div class="quick-stat-label">Modules Totaux</div>
         </div>
         <div class="quick-stat-card">
-            <div class="quick-stat-value">
-                {% regroup modules by is_active as grouped_modules %}
-                {% for group in grouped_modules %}
-                    {% if group.grouper %}
-                        {{ group.list|length }}
-                    {% endif %}
-                {% endfor %}
-            </div>
+            <div class="quick-stat-value">{{ active_modules }}</div>
             <div class="quick-stat-label">Modules Actifs</div>
         </div>
         <div class="quick-stat-card">
-            <div class="quick-stat-value">
-                {% for module in modules %}
-                    {% if forloop.first %}{{ modules.0.student_count|default:0 }}{% endif %}
-                {% empty %}0{% endfor %}
-            </div>
+            <div class="quick-stat-value">{{ total_students_enrolled }}</div>
             <div class="quick-stat-label">Étudiants Inscrits</div>
         </div>
         <div class="quick-stat-card">
-            <div class="quick-stat-value">
-                {% for module in modules %}
-                    {% if forloop.first %}{{ modules.0.teacher_count|default:0 }}{% endif %}
-                {% empty %}0{% endfor %}
-            </div>
+            <div class="quick-stat-value">{{ total_teachers_assigned }}</div>
             <div class="quick-stat-label">Enseignants Assignés</div>
         </div>
     </div>
@@ -540,17 +525,18 @@
                 </div>
                 {% endif %}
                 
+                <!-- FIXED: Using the manually calculated counts -->
                 <div class="module-stats">
                     <div class="stat-item">
-                        <span class="stat-value">{{ module.student_count|default:0 }}</span>
+                        <span class="stat-value">{{ module.student_count }}</span>
                         <span class="stat-label">Étudiants</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">{{ module.teacher_count|default:0 }}</span>
+                        <span class="stat-value">{{ module.teacher_count }}</span>
                         <span class="stat-label">Enseignants</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">{{ module.project_count|default:0 }}</span>
+                        <span class="stat-value">{{ module.project_count }}</span>
                         <span class="stat-label">Projets</span>
                     </div>
                 </div>

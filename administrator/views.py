@@ -30,20 +30,17 @@ def admin_required(view_func):
     return wrapper
 
 @admin_required
-# Replace the dashboard view in administrator/views.py with this debug version
-
-@admin_required
 def dashboard(request):
-    """Administrator dashboard with key statistics - DEBUG VERSION"""
+    """Administrator dashboard with key statistics - FIXED VERSION"""
     admin = get_object_or_404(AdminProfile, user=request.user)
     
-    # Basic statistics
+    # Basic statistics - these work correctly
     total_projects = Project.objects.count()
     total_students = StudentProfile.objects.count()
     total_teachers = TeacherProfile.objects.count()
     total_modules = Module.objects.filter(is_active=True).count()
     
-    # Project status breakdown
+    # Project status breakdown - calculate manually for accuracy
     projects_in_progress = Project.objects.filter(status='in_progress').count()
     projects_submitted = Project.objects.filter(status='submitted').count()
     projects_validated = Project.objects.filter(status='validated').count()
@@ -54,11 +51,11 @@ def dashboard(request):
     recent_projects = Project.objects.filter(created_at__gte=thirty_days_ago).count()
     recent_enrollments = ModuleEnrollment.objects.filter(enrolled_at__gte=thirty_days_ago).count()
     
-    # DEBUG: Let's fix the module statistics with manual counting
+    # FIXED: Module statistics with manual counting (this is what works!)
     modules_with_stats = []
     
     for module in Module.objects.filter(is_active=True).order_by('code'):
-        # Manual count for each module
+        # Manual count for each module - this is the pattern that works
         student_count = ModuleEnrollment.objects.filter(
             module=module, 
             is_active=True
@@ -85,12 +82,6 @@ def dashboard(request):
         }
         
         modules_with_stats.append(module_data)
-        
-        # DEBUG: Print to console
-        print(f"DEBUG - Module {module.code}:")
-        print(f"  Students: {student_count}")
-        print(f"  Teachers: {teacher_count}")
-        print(f"  Projects: {project_count}")
     
     # Sort by student count (descending) and take top 5
     modules_with_stats.sort(key=lambda x: x['student_count'], reverse=True)
@@ -100,14 +91,6 @@ def dashboard(request):
     latest_projects = Project.objects.select_related(
         'student__user', 'module'
     ).order_by('-updated_at')[:10]
-    
-    # DEBUG: Print total counts
-    print(f"DEBUG - Total counts:")
-    print(f"  Total modules: {total_modules}")
-    print(f"  Total students: {total_students}")
-    print(f"  Total teachers: {total_teachers}")
-    print(f"  Total projects: {total_projects}")
-    print(f"  Modules with stats count: {len(modules_with_stats)}")
     
     context = {
         'admin': admin,
@@ -121,7 +104,7 @@ def dashboard(request):
         'projects_rejected': projects_rejected,
         'recent_projects': recent_projects,
         'recent_enrollments': recent_enrollments,
-        'modules_with_stats': modules_with_stats,  # Now using manual calculation
+        'modules_with_stats': modules_with_stats,  # This works because of manual calculation
         'latest_projects': latest_projects,
     }
     
@@ -129,7 +112,7 @@ def dashboard(request):
 
 @admin_required
 def projects_list(request):
-    """List all projects with filtering capabilities"""
+    """List all projects with filtering capabilities - FIXED VERSION"""
     admin = get_object_or_404(AdminProfile, user=request.user)
     
     # Start with all projects
@@ -137,7 +120,7 @@ def projects_list(request):
         'student__user', 'module'
     ).prefetch_related('collaborators__user')
     
-    # Apply filters
+    # Apply filters (existing filter logic...)
     search_query = request.GET.get('search', '')
     if search_query:
         projects = projects.filter(
@@ -186,16 +169,21 @@ def projects_list(request):
     # Order by latest first
     projects = projects.order_by('-updated_at')
     
+    # FIXED: Calculate statistics manually
+    total_projects = projects.count()
+    submitted_count = projects.filter(status='submitted').count()
+    validated_count = projects.filter(status='validated').count()
+    rejected_count = projects.filter(status='rejected').count()
+    in_progress_count = projects.filter(status='in_progress').count()
+    
     # Pagination
-    paginator = Paginator(projects, 20)  # 20 projects per page
+    paginator = Paginator(projects, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Get filter options for the form
+    # Get filter options
     modules = Module.objects.filter(is_active=True).order_by('code')
     teachers = TeacherProfile.objects.select_related('user').order_by('user__first_name')
-    
-    # Get unique academic years
     academic_years = Module.objects.values_list('academic_year', flat=True).distinct().order_by('academic_year')
     
     context = {
@@ -205,6 +193,14 @@ def projects_list(request):
         'teachers': teachers,
         'academic_years': academic_years,
         'search_query': search_query,
+        'project_types': Project.PROJECT_TYPES,
+        'status_choices': Project.STATUS_CHOICES,
+        # FIXED: Add manually calculated counts
+        'total_projects': total_projects,
+        'submitted_count': submitted_count,
+        'validated_count': validated_count,
+        'rejected_count': rejected_count,
+        'in_progress_count': in_progress_count,
         'selected_module': module_id,
         'selected_teacher': teacher_id,
         'selected_status': status,
@@ -212,8 +208,6 @@ def projects_list(request):
         'selected_academic_year': academic_year,
         'date_from': date_from,
         'date_to': date_to,
-        'project_types': Project.PROJECT_TYPES,
-        'status_choices': Project.STATUS_CHOICES,
     }
     
     return render(request, 'administrator/projects_list.html', context)
@@ -259,14 +253,11 @@ def project_detail(request, project_id):
 
 @admin_required
 def modules_list(request):
-    """List all modules with management options"""
+    """List all modules with management options - FIXED VERSION"""
     admin = get_object_or_404(AdminProfile, user=request.user)
     
-    modules = Module.objects.annotate(
-        student_count=Count('enrollments', filter=Q(enrollments__is_active=True)),
-        teacher_count=Count('assignments', filter=Q(assignments__is_active=True)),
-        project_count=Count('projects')
-    ).order_by('-created_at')
+    # Get base queryset
+    modules = Module.objects.all().order_by('-created_at')
     
     # Apply filters
     search_query = request.GET.get('search', '')
@@ -284,17 +275,56 @@ def modules_list(request):
     if semester:
         modules = modules.filter(semester=semester)
     
+    # FIXED: Calculate totals manually for accuracy
+    total_modules = modules.count()
+    active_modules = modules.filter(is_active=True).count()
+    
+    # Calculate total students and teachers across all modules
+    total_students_enrolled = 0
+    total_teachers_assigned = 0
+    
+    for module in modules:
+        total_students_enrolled += ModuleEnrollment.objects.filter(
+            module=module, is_active=True
+        ).count()
+        total_teachers_assigned += ModuleAssignment.objects.filter(
+            module=module, is_active=True
+        ).count()
+    
+    # FIXED: Add manual counts to each module for template use
+    modules_with_counts = []
+    for module in modules:
+        student_count = ModuleEnrollment.objects.filter(
+            module=module, is_active=True
+        ).count()
+        teacher_count = ModuleAssignment.objects.filter(
+            module=module, is_active=True
+        ).count()
+        project_count = Project.objects.filter(module=module).count()
+        
+        # Add counts as attributes
+        module.student_count = student_count
+        module.teacher_count = teacher_count  
+        module.project_count = project_count
+        
+        modules_with_counts.append(module)
+    
     # Get filter options
     academic_years = Module.objects.values_list('academic_year', flat=True).distinct().order_by('academic_year')
     
     context = {
         'admin': admin,
-        'modules': modules,
+        'modules': modules_with_counts,  # Now has count attributes
         'academic_years': academic_years,
         'search_query': search_query,
         'selected_academic_year': academic_year,
         'selected_semester': semester,
         'semester_choices': Module._meta.get_field('semester').choices,
+        # FIXED: Add totals calculated manually
+        'total_modules': total_modules,
+        'active_modules': active_modules,
+        'total_students_enrolled': total_students_enrolled,
+        'total_teachers_assigned': total_teachers_assigned,
     }
     
     return render(request, 'administrator/modules_list.html', context)
@@ -437,7 +467,7 @@ def module_delete(request, module_id):
 
 @admin_required
 def assignments_management(request):
-    """Manage teacher-module assignments"""
+    """Manage teacher-module assignments - FIXED VERSION"""
     admin = get_object_or_404(AdminProfile, user=request.user)
     
     # Get all active assignments
@@ -445,21 +475,55 @@ def assignments_management(request):
         is_active=True
     ).select_related('teacher__user', 'module').order_by('module__code')
     
-    # Get unassigned modules and teachers for new assignments
-    assigned_module_ids = assignments.values_list('module_id', flat=True)
-    unassigned_modules = Module.objects.filter(
-        is_active=True
-    ).exclude(id__in=assigned_module_ids)
-    
+    # Get teachers and modules for new assignments
     teachers = TeacherProfile.objects.select_related('user').order_by('user__first_name')
     modules = Module.objects.filter(is_active=True).order_by('code')
+    
+    # FIXED: Calculate unassigned modules manually
+    assigned_module_ids = assignments.values_list('module_id', flat=True)
+    unassigned_modules = modules.exclude(id__in=assigned_module_ids)
+    
+    # FIXED: Calculate statistics manually for accuracy
+    total_assignments = assignments.count()
+    total_teachers = teachers.count()
+    total_modules = modules.count()
+    total_unassigned = unassigned_modules.count()
+    
+    # FIXED: Add workload counts to teachers for template
+    teachers_with_workload = []
+    for teacher in teachers:
+        teacher_assignments = ModuleAssignment.objects.filter(
+            teacher=teacher, is_active=True
+        ).count()
+        
+        # Calculate total students taught by this teacher
+        teacher_modules = ModuleAssignment.objects.filter(
+            teacher=teacher, is_active=True
+        ).values_list('module_id', flat=True)
+        
+        total_students = 0
+        for module_id in teacher_modules:
+            total_students += ModuleEnrollment.objects.filter(
+                module_id=module_id, is_active=True
+            ).count()
+        
+        # Add attributes for template
+        teacher.assignment_count = teacher_assignments
+        teacher.student_count = total_students
+        
+        teachers_with_workload.append(teacher)
     
     context = {
         'admin': admin,
         'assignments': assignments,
-        'unassigned_modules': unassigned_modules,
-        'teachers': teachers,
+        'teachers': teachers_with_workload,  # Now includes workload data
         'modules': modules,
+        'unassigned_modules': unassigned_modules,
+        # FIXED: Add manual counts
+        'total_assignments': total_assignments,
+        'total_teachers': total_teachers,
+        'total_modules': total_modules,
+        'total_unassigned': total_unassigned,
     }
     
     return render(request, 'administrator/assignments_management.html', context)
@@ -657,8 +721,6 @@ def statistics(request):
     
     return render(request, 'administrator/statistics.html', context)
 
-
-
 @admin_required
 def remove_student_from_module(request, module_id, student_id):
     """Remove a student from a module"""
@@ -711,8 +773,6 @@ def remove_student_from_module(request, module_id, student_id):
         else:
             messages.error(request, error_msg)
             return redirect('administrator:module_detail', module_id=module_id)
-
-
 
 @admin_required
 def exports(request):

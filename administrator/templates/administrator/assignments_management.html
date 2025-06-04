@@ -482,19 +482,19 @@
     <!-- Statistics Overview -->
     <div class="stats-overview">
         <div class="stat-card">
-            <div class="stat-value">{{ assignments.count }}</div>
+            <div class="stat-value">{{ total_assignments }}</div>
             <div class="stat-label">Assignations Actives</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{{ teachers.count }}</div>
+            <div class="stat-value">{{ total_teachers }}</div>
             <div class="stat-label">Enseignants Disponibles</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{{ modules.count }}</div>
+            <div class="stat-value">{{ total_modules }}</div>
             <div class="stat-label">Modules Totaux</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{{ unassigned_modules.count }}</div>
+            <div class="stat-value">{{ total_unassigned }}</div>
             <div class="stat-label">Modules Non Assignés</div>
         </div>
     </div>
@@ -663,23 +663,18 @@
                     
                     <div class="teacher-workload">
                         <div class="workload-item">
-                            <div class="workload-value">
-                                {{ teacher.module_assignments.count|default:0 }}
-                            </div>
+                            <div class="workload-value">{{ teacher.assignment_count }}</div>
                             <div class="workload-label">Modules</div>
                         </div>
                         <div class="workload-item">
-                            <div class="workload-value">
-                                <!-- Calculate total students across modules -->
-                                0
-                            </div>
+                            <div class="workload-value">{{ teacher.student_count }}</div>
                             <div class="workload-label">Étudiants</div>
                         </div>
                         <div class="workload-item">
                             <div class="workload-value">
-                                {% if teacher.module_assignments.count == 0 %}Libre
-                                {% elif teacher.module_assignments.count <= 2 %}Faible
-                                {% elif teacher.module_assignments.count <= 4 %}Moyen
+                                {% if teacher.assignment_count == 0 %}Libre
+                                {% elif teacher.assignment_count <= 2 %}Faible
+                                {% elif teacher.assignment_count <= 4 %}Moyen
                                 {% else %}Élevé{% endif %}
                             </div>
                             <div class="workload-label">Charge</div>

@@ -455,19 +455,19 @@
     <!-- Quick Statistics -->
     <div class="quick-stats">
         <div class="quick-stat-card">
-            <div class="quick-stat-value">{{ page_obj.paginator.count }}</div>
+            <div class="quick-stat-value">{{ total_projects }}</div>
             <div class="quick-stat-label">Total Projets</div>
         </div>
         <div class="quick-stat-card">
-            <div class="quick-stat-value">{{ submitted_count|default:0 }}</div>
+            <div class="quick-stat-value">{{ submitted_count }}</div>
             <div class="quick-stat-label">En Attente</div>
         </div>
         <div class="quick-stat-card">
-            <div class="quick-stat-value">{{ validated_count|default:0 }}</div>
+            <div class="quick-stat-value">{{ validated_count }}</div>
             <div class="quick-stat-label">Validés</div>
         </div>
         <div class="quick-stat-card">
-            <div class="quick-stat-value">{{ rejected_count|default:0 }}</div>
+            <div class="quick-stat-value">{{ rejected_count }}</div>
             <div class="quick-stat-label">Rejetés</div>
         </div>
     </div>
