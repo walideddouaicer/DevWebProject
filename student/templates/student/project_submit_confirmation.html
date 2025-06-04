@@ -1,0 +1,433 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}Confirmer la Soumission - {{ project.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .confirmation-container {
+        max-width: 800px;
+        margin: 30px auto;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    
+    .confirmation-header {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .confirmation-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20px;
+        width: 100px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+    }
+    
+    .warning-icon {
+        font-size: 4em;
+        margin-bottom: 15px;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .confirmation-content {
+        padding: 30px;
+    }
+    
+    .project-info {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .warning-section {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .warning-section h3 {
+        color: #856404;
+        margin: 0 0 15px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .warning-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .warning-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid #ffeaa7;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .warning-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .checklist-section {
+        background: #e8f4ff;
+        border: 2px solid #007bff;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .checklist-section h3 {
+        color: #004085;
+        margin: 0 0 15px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .checklist {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .checklist li {
+        padding: 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .checklist-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: white;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        border: 1px solid #c3e6ff;
+    }
+    
+    .status-indicator {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8em;
+    }
+    
+    .status-ok {
+        background: #28a745;
+        color: white;
+    }
+    
+    .status-warning {
+        background: #ffc107;
+        color: #856404;
+    }
+    
+    .status-error {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .submission-actions {
+        background: #f8f9fa;
+        padding: 25px;
+        text-align: center;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 12px 25px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        cursor: pointer;
+        font-size: 1em;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+        border-color: #dc3545;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        border-color: #c82333;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(220,53,69,0.3);
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+        border-color: #6c757d;
+    }
+    
+    .btn-secondary:hover {
+        background: #545b62;
+        border-color: #545b62;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+    
+    .final-warning {
+        background: #f8d7da;
+        border: 2px solid #dc3545;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 20px 0;
+        text-align: center;
+        color: #721c24;
+        font-weight: 600;
+    }
+    
+    @media (max-width: 768px) {
+        .confirmation-container {
+            margin: 10px;
+            border-radius: 8px;
+        }
+        
+        .confirmation-header, .confirmation-content {
+            padding: 20px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirmation-container">
+    <!-- Header -->
+    <div class="confirmation-header">
+        <div class="warning-icon">⚠️</div>
+        <h1 style="margin: 0 0 10px 0; font-size: 1.8em;">Confirmer la Soumission</h1>
+        <p style="margin: 0; opacity: 0.9; font-size: 1.1em;">
+            Vous êtes sur le point de soumettre votre projet pour évaluation
+        </p>
+    </div>
+
+    <div class="confirmation-content">
+        <!-- Project Information -->
+        <div class="project-info">
+            <h3 style="margin: 0 0 15px 0; color: #495057;">📋 Informations du Projet</h3>
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; align-items: center;">
+                <strong>Titre:</strong>
+                <span>{{ project.title }}</span>
+                
+                <strong>Type:</strong>
+                <span>{{ project.get_project_type_display }}</span>
+                
+                <strong>Propriétaire:</strong>
+                <span>{{ project.student.user.get_full_name|default:project.student.user.username }}</span>
+                
+                <strong>Collaborateurs:</strong>
+                <span>
+                    {% if project.collaborators.exists %}
+                        {{ project.collaborators.count }} collaborateur{{ project.collaborators.count|pluralize }}
+                    {% else %}
+                        Aucun collaborateur
+                    {% endif %}
+                </span>
+                
+                <strong>Dernière modification:</strong>
+                <span>{{ project.updated_at|date:"d/m/Y à H:i" }}</span>
+            </div>
+        </div>
+
+        <!-- Critical Warnings -->
+        <div class="warning-section">
+            <h3>🚨 ATTENTION - Actions Irréversibles</h3>
+            <ul class="warning-list">
+                <li>
+                    <span>🔒</span>
+                    <div>
+                        <strong>Modification impossible:</strong> Une fois soumis, vous ne pourrez plus modifier le projet, ajouter de collaborateurs, ni télécharger de nouveaux livrables.
+                    </div>
+                </li>
+                <li>
+                    <span>⏳</span>
+                    <div>
+                        <strong>Invitations en attente:</strong> Vous devrez annuler toutes les invitations en attente manuellement avant la soumission du projet pour éviter qu'un autre élève puisse rejoindre après la soumission du projet.
+                    </div>
+                </li>
+                <li>
+                    <span>👁️</span>
+                    <div>
+                        <strong>Évaluation finale:</strong> Votre projet sera évalué dans son état actuel. Assurez-vous qu'il est complet.
+                    </div>
+                </li>
+                <li>
+                    <span>🔄</span>
+                    <div>
+                        <strong>Seul retour possible:</strong> Si le projet est rejeté, vous pourrez le modifier et le resoumettre.
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Pre-submission Checklist -->
+        <div class="checklist-section">
+            <h3>✅ Liste de Vérification Pré-Soumission</h3>
+            
+            <!-- Deliverables Check -->
+            <div class="checklist-item">
+                <div class="status-indicator {% if deliverables_count > 0 %}status-ok{% else %}status-warning{% endif %}">
+                    {% if deliverables_count > 0 %}✓{% else %}!{% endif %}
+                </div>
+                <div style="flex: 1;">
+                    <strong>Livrables:</strong> 
+                    {% if deliverables_count > 0 %}
+                        {{ deliverables_count }} livrable{{ deliverables_count|pluralize }} téléchargé{{ deliverables_count|pluralize }}
+                    {% else %}
+                        <span style="color: #856404;">Aucun livrable téléchargé</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Milestones Check -->
+            <div class="checklist-item">
+                <div class="status-indicator {% if milestones_count > 0 %}status-ok{% else %}status-warning{% endif %}">
+                    {% if milestones_count > 0 %}✓{% else %}!{% endif %}
+                </div>
+                <div style="flex: 1;">
+                    <strong>Jalons:</strong> 
+                    {% if milestones_count > 0 %}
+                        {{ milestones_count }} jalon{{ milestones_count|pluralize }} défini{{ milestones_count|pluralize }}
+                        ({{ completed_milestones_count }} complété{{ completed_milestones_count|pluralize }})
+                    {% else %}
+                        <span style="color: #856404;">Aucun jalon défini</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Pending Invitations Check -->
+            <div class="checklist-item">
+                {% with pending_count=pending_invitations.count %}
+                <div class="status-indicator {% if pending_count == 0 %}status-ok{% else %}status-error{% endif %}">
+                    {% if pending_count == 0 %}✓{% else %}!{% endif %}
+                </div>
+                <div style="flex: 1;">
+                    <strong>Invitations en attente:</strong> 
+                    {% if pending_count == 0 %}
+                        <span style="color: #28a745;">Aucune invitation en attente</span>
+                    {% else %}
+                        <span style="color: #dc3545;">
+                            {{ pending_count }} invitation{{ pending_count|pluralize }} en attente 
+                            - <strong>Ces invitations seront automatiquement annulées !</strong>
+                        </span>
+                        <div style="margin-top: 8px; font-size: 0.9em;">
+                            {% for invitation in pending_invitations %}
+                                <div style="color: #6c757d;">
+                                    • {{ invitation.recipient.user.get_full_name|default:invitation.recipient.user.username }}
+                                    (envoyée {{ invitation.created_at|timesince }} ago)
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endwith %}
+            </div>
+            
+            <!-- Project Completeness -->
+            <div class="checklist-item">
+                <div class="status-indicator {% if project.description and project.technologies %}status-ok{% else %}status-warning{% endif %}">
+                    {% if project.description and project.technologies %}✓{% else %}!{% endif %}
+                </div>
+                <div style="flex: 1;">
+                    <strong>Informations du projet:</strong> 
+                    {% if project.description and project.technologies %}
+                        Description et technologies renseignées
+                    {% else %}
+                        <span style="color: #856404;">
+                            {% if not project.description %}Description manquante{% endif %}
+                            {% if not project.description and not project.technologies %} et {% endif %}
+                            {% if not project.technologies %}Technologies manquantes{% endif %}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Final Warning -->
+        <div class="final-warning">
+            🚨 <strong>DERNIÈRE CHANCE</strong> 🚨<br>
+            Une fois confirmé, votre projet sera définitivement soumis pour évaluation.<br>
+            Vous ne pourrez plus le modifier jusqu'à la décision de l'enseignant.
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="submission-actions">
+        <div class="action-buttons">
+            <a href="{% url 'student:project_detail' project.id %}" class="btn btn-secondary">
+                🔙 Retour au Projet
+            </a>
+            
+            <form method="post" action="{% url 'student:project_submit' project.id %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" 
+                        onclick="return confirm('🚨 CONFIRMATION FINALE 🚨\n\nÊtes-vous absolument certain(e) de vouloir soumettre ce projet ?\n\n⚠️ Cette action est IRRÉVERSIBLE ⚠️\n\n✅ Cliquez OK pour confirmer la soumission\n❌ Cliquez Annuler pour retourner au projet')">
+                    🚀 Confirmer la Soumission
+                </button>
+            </form>
+        </div>
+        
+        <div style="margin-top: 20px; font-size: 0.9em; color: #6c757d; text-align: center;">
+            💡 <strong>Conseil:</strong> Si vous avez des doutes, retournez au projet pour effectuer les dernières vérifications.
+        </div>
+    </div>
+</div>
+{% endblock %}

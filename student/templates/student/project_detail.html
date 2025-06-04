@@ -662,35 +662,79 @@
                             <a href="{% url 'student:project_delete' project.id %}" class="action-btn danger">
                                 🗑️ Supprimer le Projet
                             </a>
-                            <form method="post" action="{% url 'student:project_submit' project.id %}" style="display: inline;">
+                            
+                            <!-- UPDATED: Changed from direct form submission to confirmation page -->
+                            <a href="{% url 'student:project_submit_confirmation' project.id %}" class="action-btn success">
+                                🚀 Soumettre pour Validation
+                            </a>
+                        {% endif %}
+                        
+                        <!-- Other actions for collaborators -->
+                        <a href="{% url 'student:add_milestone' project.id %}" class="action-btn primary">
+                            📅 Ajouter un Jalon
+                        </a>
+                        <a href="{% url 'student:upload_deliverable' project.id %}" class="action-btn primary">
+                            📎 Ajouter un Livrable
+                        </a>
+                        
+                    {% elif project.status == 'submitted' %}
+                        <!-- Your existing submitted message code -->
+                        <div class="status-message submitted">
+                            <div class="status-icon">📋</div>
+                            <div class="status-content">
+                                <h4>Projet Soumis pour Validation</h4>
+                                <p>Votre projet a été soumis et est en attente d'évaluation par l'enseignant. Aucune modification n'est possible pour le moment.</p>
+                                {% if is_owner %}
+                                    <small style="color: #6c757d;">
+                                        💡 <strong>Astuce:</strong> Si votre projet est rejeté, vous pourrez le modifier et le resoumettre.
+                                    </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                    {% elif project.status == 'validated' %}
+                        <!-- Your existing validated message code -->
+                        <div class="status-message validated">
+                            <div class="status-icon">✅</div>
+                            <div class="status-content">
+                                <h4>Projet Validé</h4>
+                                <p>Félicitations ! Votre projet a été validé par l'enseignant. Aucune action supplémentaire n'est requise.</p>
+                            </div>
+                        </div>
+                        
+                    {% elif project.status == 'rejected' %}
+                        <!-- Your existing rejected message code -->
+                        <div class="status-message rejected">
+                            <div class="status-icon">❌</div>
+                            <div class="status-content">
+                                <h4>Projet Rejeté</h4>
+                                <p>Votre projet a été rejeté. Consultez les commentaires de l'enseignant ci-dessous pour les améliorations à apporter.</p>
+                            </div>
+                        </div>
+                        
+                        {% if is_owner %}
+                            <a href="{% url 'student:project_edit' project.id %}" class="action-btn primary">
+                                ✏️ Modifier le Projet
+                            </a>
+                            <form method="post" action="{% url 'student:project_change_status' project.id 'in_progress' %}" style="display: inline;">
                                 {% csrf_token %}
-                                <button type="submit" class="action-btn success" onclick="return confirm('Êtes-vous sûr de vouloir soumettre ce projet? Vous ne pourrez plus le modifier après soumission.')">
-                                    🚀 Soumettre pour Validation
+                                <button type="submit" class="action-btn warning">
+                                    🔄 Reprendre les Modifications
                                 </button>
                             </form>
                         {% endif %}
-                        <a href="{% url 'student:add_milestone' project.id %}" class="action-btn primary">
-                            🎯 Ajouter un Jalon
-                        </a>
-                        <a href="{% url 'student:upload_deliverable' project.id %}" class="action-btn primary">
-                            📎 Uploader un Livrable
-                        </a>
-                    {% elif project.status == 'rejected' and is_owner %}
-                        <form method="post" action="{% url 'student:project_change_status' project.id 'in_progress' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="action-btn warning">
-                                🔄 Reprendre les Modifications
-                            </button>
-                        </form>
-                    
-                    {% elif project.status == 'submitted' %}
-                            <p>Votre projet a deja ete soumis, pas de modifications disponible</p>
-                            
+                        
+                    {% else %}
+                        <!-- Fallback message -->
+                        <div class="status-message default">
+                            <div class="status-icon">ℹ️</div>
+                            <div class="status-content">
+                                <h4>Aucune Action Disponible</h4>
+                                <p>Aucune action n'est actuellement disponible pour ce projet.</p>
+                            </div>
+                        </div>
                     {% endif %}
-
-                    
                 </div>
-            </div>
 
             <!-- Project Description -->
             <div class="section-card">

@@ -1,3 +1,5 @@
+
+
 from django.urls import path
 from . import views
 
@@ -13,7 +15,13 @@ urlpatterns = [
     path('projects/<int:project_id>/upload/', views.upload_deliverable, name='upload_deliverable'),
     path('projects/<int:project_id>/milestone/add/', views.add_milestone, name='add_milestone'),
     path('milestone/<int:milestone_id>/toggle/', views.toggle_milestone, name='toggle_milestone'),
+    
+    # NEW: Confirmation page before submission
+    path('projects/<int:project_id>/submit-confirmation/', views.project_submit_confirmation, name='project_submit_confirmation'),
+    
+    # Existing submission URL (now used after confirmation)
     path('projects/<int:project_id>/submit/', views.project_submit, name='project_submit'),
+    
     path('projects/<int:project_id>/approve/', views.project_approve, name='project_approve'),
     path('projects/<int:project_id>/reject/', views.project_reject, name='project_reject'),
     path('milestone/<int:milestone_id>/complete/', views.complete_milestone, name='complete_milestone'),
@@ -30,8 +38,7 @@ urlpatterns = [
     path('notifications/<int:notification_id>/read/', views.mark_notification_read, name='mark_notification_read'),
     path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
 
-
-     # Module-related URLs - ADD THESE NEW LINES
+    # Module-related URLs
     path('modules/join/', views.join_module, name='join_module'),
     path('modules/', views.my_modules, name='my_modules'), 
     path('modules/<int:module_id>/leave/', views.leave_module, name='leave_module'),

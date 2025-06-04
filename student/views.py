@@ -640,22 +640,39 @@ def upload_deliverable(request, project_id):
 
 
 
+# Replace the project_delete view in student/views.py with this fixed version:
+
 @login_required
 def project_delete(request, project_id):
     """View to delete a project"""
     student = get_object_or_404(StudentProfile, user=request.user)
     project = get_object_or_404(Project, id=project_id, student=student)
     
-    # Don't allow deletion of projects that are not in draft status
-    if project.status != 'draft':
-        messages.warning(request, "Seuls les projets en brouillon peuvent être supprimés.")
+    # Only allow deletion of projects that are in progress (not submitted, validated, or rejected)
+    if project.status != 'in_progress':
+        messages.warning(request, "Seuls les projets en cours peuvent être supprimés.")
         return redirect('student:project_detail', project_id=project.id)
     
     if request.method == 'POST':
         # Delete any deliverables associated with this project
         ProjectDeliverable.objects.filter(project=project).delete()
         
-        # Delete the project
+        # Also delete any pending invitations for this project
+        CollaborationInvitation.objects.filter(project=project).delete()
+        
+        # Delete any milestones associated with this project
+        ProjectMilestone.objects.filter(project=project).delete()
+        
+        # Delete any comments associated with this project
+        ProjectComment.objects.filter(project=project).delete()
+        
+        # Delete any activities associated with this project
+        ProjectActivity.objects.filter(project=project).delete()
+        
+        # Delete any notifications associated with this project
+        Notification.objects.filter(project=project).delete()
+        
+        # Delete the project itself
         project.delete()
         
         messages.success(request, "Le projet a été supprimé avec succès.")
@@ -1039,3 +1056,49 @@ def leave_module(request, module_id):
         messages.error(request, "Module non trouvé ou vous n'êtes pas inscrit à ce module.")
     
     return redirect('student:my_modules')
+
+
+
+
+# the project needs confirmation before getting submitted
+
+@login_required
+def project_submit_confirmation(request, project_id):
+    """Show confirmation page before project submission"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_object_or_404(
+        Project,
+        Q(student=student) | Q(collaborators=student),
+        id=project_id
+    )
+
+    # Only the owner can submit
+    if project.student != student:
+        messages.error(request, "Seul le propriétaire du projet peut le soumettre.")
+        return redirect('student:project_detail', project_id=project.id)
+
+    if project.status != 'in_progress':
+        messages.warning(request, "Seuls les projets en cours peuvent être soumis.")
+        return redirect('student:project_detail', project_id=project.id)
+
+    # Get pending invitations to show in confirmation
+    pending_invitations = CollaborationInvitation.objects.filter(
+        project=project,
+        status='pending'
+    ).select_related('recipient__user')
+
+    # Get project statistics for the checklist
+    deliverables_count = project.deliverables.count()
+    milestones_count = project.milestones.count()
+    completed_milestones_count = project.milestones.filter(completed=True).count()
+    
+    context = {
+        'project': project,
+        'pending_invitations': pending_invitations,
+        'deliverables_count': deliverables_count,
+        'milestones_count': milestones_count,
+        'completed_milestones_count': completed_milestones_count,
+        'is_ready_to_submit': True,  # You can add more complex logic here
+    }
+    
+    return render(request, 'student/project_submit_confirmation.html', context)

@@ -375,22 +375,7 @@
                 </div>
             </div>
 
-            <!-- Alternative Actions -->
-            <div class="alternative-actions">
-                <h4 style="margin: 0 0 12px 0; color: #155724;">💡 Alternatives Recommandées</h4>
-                <p style="margin: 0 0 15px 0; color: #155724; font-size: 0.95em;">
-                    Avant de supprimer définitivement, considérez ces options moins radicales:
-                </p>
-                <a href="{% url 'student:project_edit' project.id %}" class="action-button">
-                    ✏️ Modifier le Projet
-                </a>
-                <a href="{% url 'student:project_detail' project.id %}" class="action-button">
-                    📂 Archiver Temporairement
-                </a>
-                <a href="{% url 'student:project_detail' project.id %}" class="action-button">
-                    👥 Retirer des Collaborateurs
-                </a>
-            </div>
+            
 
             <!-- Safety Notice -->
             <div class="safety-notice">
