@@ -23,15 +23,44 @@ class ProjectForm(forms.ModelForm):
         fields = ['title', 'description', 'project_type', 'module_or_company', 
                   'technologies', 'start_date', 'end_date', 'module', 'collaborators']
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
-            'description': forms.Textarea(attrs={'rows': 5}),
+            'title': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Entrez le titre de votre projet...'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-textarea',
+                'rows': 5,
+                'placeholder': 'Décrivez votre projet en détail...'
+            }),
+            'project_type': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'module_or_company': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Module ou entreprise...'
+            }),
+            'technologies': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Python, Django, React, PostgreSQL...'
+            }),
+            'start_date': forms.DateInput(attrs={
+                'class': 'form-input',
+                'type': 'date'
+            }),
+            'end_date': forms.DateInput(attrs={
+                'class': 'form-input',
+                'type': 'date'
+            }),
         }
     
     def __init__(self, *args, **kwargs):
         # Get the current student to exclude from collaborator choices
         current_student = kwargs.pop('current_student', None)
         super().__init__(*args, **kwargs)
+        
+        # Add CSS classes to fields that don't have widgets defined in Meta
+        self.fields['module'].widget.attrs.update({'class': 'form-select'})
+        self.fields['collaborators'].widget.attrs.update({'class': 'form-select'})
         
         if current_student:
             # Exclude the current student from collaborator choices
@@ -101,3 +130,5 @@ class MilestoneForm(forms.ModelForm):
             'due_date': forms.DateInput(attrs={'type': 'date'}),
             'description': forms.Textarea(attrs={'rows': 3}),
         }
+
+

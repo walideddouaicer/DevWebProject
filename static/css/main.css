@@ -1,0 +1,306 @@
+/* Universal Form Styling - Add to your main CSS file */
+
+
+
+/* Target ALL form inputs, selects, and textareas across the entire project */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="tel"],
+input[type="number"],
+input[type="search"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="week"],
+input[type="month"],
+input[type="color"],
+select,
+textarea {
+    width: 100% !important;
+    padding: var(--space-4, 12px) var(--space-5, 16px) !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: var(--radius-xl, 12px) !important;
+    font-size: var(--text-base, 16px) !important;
+    font-family: inherit !important;
+    transition: all var(--transition-fast, 0.2s ease) !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+    color: #ffffff !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+/* Placeholder styling */
+input::placeholder,
+textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Focus states */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="url"]:focus,
+input[type="tel"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="time"]:focus,
+input[type="week"]:focus,
+input[type="month"]:focus,
+input[type="color"]:focus,
+select:focus,
+textarea:focus {
+    outline: none !important;
+    border-color: #6366f1 !important;
+    background: rgba(15, 23, 42, 0.9) !important;
+    color: #ffffff !important;
+    box-shadow: 
+        inset 0 1px 3px rgba(0, 0, 0, 0.2),
+        0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Hover states */
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="password"]:hover,
+input[type="url"]:hover,
+input[type="tel"]:hover,
+input[type="number"]:hover,
+input[type="search"]:hover,
+input[type="date"]:hover,
+input[type="datetime-local"]:hover,
+input[type="time"]:hover,
+input[type="week"]:hover,
+input[type="month"]:hover,
+input[type="color"]:hover,
+select:hover,
+textarea:hover {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Disabled states */
+input:disabled,
+select:disabled,
+textarea:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    background: rgba(15, 23, 42, 0.4) !important;
+}
+
+/* Special styling for checkboxes and radio buttons */
+input[type="checkbox"],
+input[type="radio"] {
+    width: auto !important;
+    margin-right: 8px !important;
+    transform: none !important;
+    accent-color: #6366f1 !important;
+}
+
+/* File input styling */
+input[type="file"] {
+    padding: var(--space-3, 8px) !important;
+    background: rgba(15, 23, 42, 0.6) !important;
+    border-style: dashed !important;
+}
+
+/* Multiple select styling */
+select[multiple] {
+    min-height: 120px !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+}
+
+/* Textarea specific */
+textarea {
+    resize: vertical !important;
+    min-height: 120px !important;
+    line-height: 1.6 !important;
+}
+
+
+/* Add this to your main.css file for universal Select2 dark theme */
+
+/* Select2 Container */
+.select2-container--default .select2-selection--single {
+    height: 48px !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+    transition: all 0.2s ease !important;
+}
+
+.select2-container--default .select2-selection--multiple {
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+    min-height: 48px !important;
+}
+
+/* Selection Text */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 44px !important;
+    padding-left: 16px !important;
+    color: #ffffff !important;
+    font-size: 16px !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    padding: 8px 16px !important;
+}
+
+/* Placeholder */
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Arrow */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 44px !important;
+    right: 16px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: rgba(255, 255, 255, 0.5) transparent transparent transparent !important;
+    border-width: 6px 6px 0 6px !important;
+}
+
+/* Hover States */
+.select2-container--default .select2-selection--single:hover,
+.select2-container--default .select2-selection--multiple:hover {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+}
+
+/* Focus States */
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #6366f1 !important;
+    background: rgba(15, 23, 42, 0.9) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+}
+
+/* Dropdown */
+.select2-dropdown {
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    background: rgba(15, 23, 42, 0.95) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(20px) !important;
+    border-top: none !important;
+    margin-top: -2px !important;
+}
+
+/* Search Box in Dropdown */
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    margin: 8px !important;
+    width: calc(100% - 16px) !important;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field:focus {
+    border-color: #6366f1 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+
+/* Options */
+.select2-container--default .select2-results__option {
+    color: #ffffff !important;
+    padding: 12px 16px !important;
+    background: transparent !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background: rgba(99, 102, 241, 0.3) !important;
+    color: #ffffff !important;
+}
+
+.select2-container--default .select2-results__option[aria-selected=true] {
+    background: rgba(99, 102, 241, 0.6) !important;
+    color: #ffffff !important;
+}
+
+.select2-container--default .select2-results__option:hover {
+    background: rgba(99, 102, 241, 0.2) !important;
+}
+
+/* Multiple Selection Tags */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background: rgba(99, 102, 241, 0.8) !important;
+    border: 1px solid rgba(99, 102, 241, 0.4) !important;
+    color: #ffffff !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    margin: 4px !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: rgba(255, 255, 255, 0.8) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding-right: 8px !important;
+    margin-right: 8px !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+    color: #ffffff !important;
+    background: none !important;
+}
+
+/* Loading */
+.select2-container--default .select2-results__option--loading {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* No results */
+.select2-container--default .select2-results__option--disabled {
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Open dropdown styling */
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.select2-container--default.select2-container--open .select2-selection--multiple {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .select2-container--default .select2-selection--single {
+        height: 44px !important;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 40px !important;
+        padding-left: 12px !important;
+        font-size: 14px !important;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px !important;
+        right: 12px !important;
+    }
+}

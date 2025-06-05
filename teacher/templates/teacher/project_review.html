@@ -4,27 +4,27 @@
 {% block title %}{{ project.title }} - Évaluation{% endblock %}
 
 {% block breadcrumb_items %}
-<span class="breadcrumb-separator">></span>
-<a href="{% url 'teacher:student_projects' %}">Projets & Évaluations</a>
-<span class="breadcrumb-separator">></span>
-<span>{{ project.title|truncatewords:3 }}</span>
+<span style="margin: 0 8px; color: var(--text-muted);">></span>
+<a href="{% url 'teacher:student_projects' %}" style="color: var(--accent-primary); text-decoration: none;">Projets & Évaluations</a>
+<span style="margin: 0 8px; color: var(--text-muted);">></span>
+<span style="color: var(--text-primary);">{{ project.title|truncatewords:3 }}</span>
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
-<link rel="stylesheet" href="{% static 'teacher/css/teacher.css' %}">
 <style>
-    .project-review-header {
-        background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+    /* Project Review Specific Styles */
+    .project-hero {
+        background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
         color: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
+        padding: 40px;
+        border-radius: 16px;
+        margin-bottom: 32px;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 8px 32px rgba(79, 70, 229, 0.3);
     }
-    
-    .project-review-header::before {
+
+    .project-hero::before {
         content: '';
         position: absolute;
         top: -50%;
@@ -34,418 +34,828 @@
         background: rgba(255,255,255,0.1);
         transform: rotate(15deg);
     }
-    
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .hero-text {
+        flex: 1;
+    }
+
+    .hero-title {
+        font-size: 2.4em;
+        font-weight: 700;
+        margin-bottom: 16px;
+        line-height: 1.2;
+    }
+
+    .hero-status {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .status-large {
+        background: rgba(255,255,255,0.2);
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1em;
+        backdrop-filter: blur(10px);
+    }
+
+    .module-badge {
+        background: rgba(255,255,255,0.15);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     .project-meta-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-top: 20px;
+        gap: 16px;
     }
-    
+
     .meta-card {
         background: rgba(255,255,255,0.1);
-        padding: 15px;
-        border-radius: 8px;
+        padding: 16px;
+        border-radius: 12px;
         backdrop-filter: blur(10px);
     }
-    
+
     .meta-label {
         font-size: 0.9em;
         opacity: 0.8;
-        margin-bottom: 5px;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    
+
     .meta-value {
-        font-weight: bold;
+        font-weight: 700;
         font-size: 1.1em;
     }
-    
+
+    .hero-icon {
+        font-size: 5em;
+        opacity: 0.2;
+    }
+
+    /* Evaluation Panel */
     .evaluation-panel {
-        background: #fff3cd;
-        border: 2px solid #ffc107;
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 30px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+        border: 2px solid var(--warning);
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
     }
-    
-    .evaluation-urgent {
-        background: #f8d7da;
-        border-color: #dc3545;
+
+    .evaluation-panel.urgent {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+        border-color: var(--error);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
     }
-    
+
+    .eval-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .eval-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8em;
+        font-weight: 700;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .eval-icon.warning {
+        background: linear-gradient(135deg, var(--warning), #d97706);
+    }
+
+    .eval-icon.danger {
+        background: linear-gradient(135deg, var(--error), #dc2626);
+    }
+
+    .eval-content h3 {
+        margin: 0 0 8px 0;
+        font-size: 1.4em;
+        font-weight: 700;
+    }
+
+    .eval-content p {
+        margin: 0;
+        font-size: 1em;
+        opacity: 0.9;
+    }
+
     .evaluation-actions {
         display: flex;
-        gap: 15px;
-        margin-top: 20px;
+        gap: 16px;
+        margin-top: 24px;
         flex-wrap: wrap;
     }
-    
+
     .eval-btn {
-        padding: 12px 25px;
-        border-radius: 8px;
-        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 28px;
+        border-radius: 12px;
+        font-weight: 700;
         text-decoration: none;
         transition: all 0.3s ease;
         border: none;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
         font-size: 1em;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
-    
+
     .eval-btn.validate {
-        background: #28a745;
+        background: linear-gradient(135deg, var(--success), #059669);
         color: white;
     }
-    
+
     .eval-btn.validate:hover {
-        background: #1e7e34;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
     }
-    
+
     .eval-btn.reject {
-        background: #dc3545;
+        background: linear-gradient(135deg, var(--error), #dc2626);
         color: white;
     }
-    
+
     .eval-btn.reject:hover {
-        background: #c82333;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
     }
-    
+
+    /* Feedback Panel */
     .feedback-panel {
-        background: white;
-        border: 2px solid #2c5aa0;
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        background: var(--bg-card);
+        border: 2px solid var(--accent-primary);
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
     }
-    
-    .feedback-form textarea {
-        width: 100%;
-        padding: 15px;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        resize: vertical;
-        font-family: inherit;
-        font-size: 0.95em;
-        line-height: 1.5;
-        transition: border-color 0.3s ease;
-    }
-    
-    .feedback-form textarea:focus {
-        border-color: #2c5aa0;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
-    }
-    
-    .content-sections {
-        display: grid;
-        gap: 30px;
-    }
-    
-    .section-card {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-left: 4px solid #2c5aa0;
-    }
-    
-    .section-header {
+
+    .feedback-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #f1f3f4;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--border-primary);
     }
-    
-    .section-title {
-        color: #2c5aa0;
-        font-size: 1.3em;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .collaborators-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 15px;
-    }
-    
-    .collaborator-card {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid #2c5aa0;
+
+    .feedback-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
         display: flex;
         align-items: center;
         gap: 12px;
     }
-    
+
+    .feedback-icon {
+        font-size: 2em;
+        opacity: 0.3;
+        color: var(--accent-primary);
+    }
+
+    .feedback-form textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 20px;
+        border: 2px solid var(--border-primary);
+        border-radius: 12px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 0.95em;
+        line-height: 1.6;
+        resize: vertical;
+        transition: all 0.3s ease;
+    }
+
+    .feedback-form textarea:focus {
+        border-color: var(--accent-primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+
+    .feedback-form textarea::placeholder {
+        color: var(--text-muted);
+    }
+
+    .feedback-submit {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 16px;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .feedback-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+    }
+
+    /* Content Sections */
+    .content-sections {
+        display: grid;
+        gap: 32px;
+    }
+
+    .section-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-primary);
+        transition: all 0.3s ease;
+    }
+
+    .section-card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--border-primary);
+    }
+
+    .section-title {
+        color: var(--text-primary);
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .section-count {
+        background: var(--accent-primary);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: 600;
+    }
+
+    /* Project Description */
+    .description-card {
+        background: var(--bg-tertiary);
+        padding: 24px;
+        border-radius: 12px;
+        border-left: 4px solid var(--accent-primary);
+        line-height: 1.7;
+        font-size: 1em;
+        color: var(--text-secondary);
+    }
+
+    .company-info {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-primary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .company-info strong {
+        color: var(--text-primary);
+    }
+
+    /* Two Column Layout */
+    .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+    }
+
+    /* Collaborators */
+    .collaborators-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .collaborator-card {
+        background: var(--bg-tertiary);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border-primary);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .collaborator-card:hover {
+        background: var(--border-secondary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
     .collaborator-avatar {
-        width: 45px;
-        height: 45px;
+        width: 56px;
+        height: 56px;
         border-radius: 50%;
-        background: #2c5aa0;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        font-size: 1.2em;
+        font-weight: 700;
+        font-size: 1.4em;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
-    
+
+    .collaborator-info {
+        flex: 1;
+    }
+
+    .collaborator-name {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+        font-size: 1.1em;
+    }
+
+    .collaborator-details {
+        color: var(--text-muted);
+        font-size: 0.9em;
+        line-height: 1.4;
+    }
+
+    /* Deliverables */
     .deliverables-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 20px;
     }
-    
+
     .deliverable-card {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
+        background: var(--bg-tertiary);
+        padding: 24px;
+        border-radius: 12px;
+        border: 1px solid var(--border-primary);
         transition: all 0.3s ease;
     }
-    
+
     .deliverable-card:hover {
-        border-color: #2c5aa0;
-        background: #e8f4ff;
-        transform: translateY(-2px);
+        border-color: var(--accent-primary);
+        background: var(--border-secondary);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
-    
+
     .deliverable-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 10px;
+        margin-bottom: 16px;
     }
-    
+
+    .deliverable-info {
+        flex: 1;
+    }
+
+    .deliverable-title {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+        font-size: 1.1em;
+    }
+
+    .deliverable-meta {
+        color: var(--text-muted);
+        font-size: 0.9em;
+        line-height: 1.4;
+    }
+
     .deliverable-icon {
-        font-size: 2em;
+        font-size: 2.5em;
         opacity: 0.3;
+        color: var(--accent-primary);
     }
-    
+
+    .download-btn {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+    }
+
+    /* Milestones */
     .milestone-timeline {
         position: relative;
-        padding-left: 30px;
+        padding-left: 40px;
     }
-    
+
     .milestone-timeline::before {
         content: '';
         position: absolute;
-        left: 15px;
+        left: 20px;
         top: 0;
         bottom: 0;
-        width: 2px;
-        background: #e9ecef;
+        width: 3px;
+        background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
+        border-radius: 2px;
     }
-    
+
     .milestone-item {
         position: relative;
-        padding: 20px 0;
-        border-bottom: 1px solid #f1f3f4;
+        padding: 24px 0;
+        border-bottom: 1px solid var(--border-primary);
     }
-    
+
     .milestone-item:last-child {
         border-bottom: none;
     }
-    
+
     .milestone-marker {
         position: absolute;
-        left: -22px;
-        top: 25px;
-        width: 20px;
-        height: 20px;
+        left: -32px;
+        top: 32px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 0.8em;
-        font-weight: bold;
-        border: 3px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        font-weight: 700;
+        border: 3px solid var(--bg-card);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
-    
+
     .milestone-completed {
-        background: #28a745;
+        background: linear-gradient(135deg, var(--success), #059669);
         color: white;
     }
-    
+
     .milestone-pending {
-        background: #6c757d;
+        background: linear-gradient(135deg, var(--text-muted), #6b7280);
         color: white;
     }
-    
+
     .milestone-overdue {
-        background: #dc3545;
+        background: linear-gradient(135deg, var(--error), #dc2626);
         color: white;
     }
-    
+
+    .milestone-content {
+        margin-left: 8px;
+    }
+
+    .milestone-title {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+        font-size: 1.1em;
+    }
+
+    .milestone-meta {
+        color: var(--text-muted);
+        font-size: 0.9em;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .milestone-description {
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    /* Comments */
     .comments-section {
-        max-height: 600px;
+        max-height: 700px;
         overflow-y: auto;
     }
-    
+
     .comment-item {
-        padding: 20px;
-        margin-bottom: 15px;
-        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 16px;
+        border-radius: 12px;
         position: relative;
+        border: 1px solid var(--border-primary);
     }
-    
+
     .teacher-comment {
-        background: #e8f4ff;
-        border-left: 4px solid #2c5aa0;
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(99, 102, 241, 0.05));
+        border-left: 4px solid var(--accent-primary);
     }
-    
+
     .student-comment {
-        background: #f8f9fa;
-        border-left: 4px solid #6c757d;
+        background: var(--bg-tertiary);
+        border-left: 4px solid var(--text-muted);
     }
-    
+
     .comment-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 16px;
     }
-    
+
     .comment-author {
-        font-weight: bold;
-        color: #2c5aa0;
+        font-weight: 700;
+        color: var(--text-primary);
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
+        font-size: 1em;
     }
-    
+
+    .author-badge {
+        background: var(--accent-primary);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.8em;
+        font-weight: 600;
+    }
+
     .comment-date {
         font-size: 0.9em;
-        color: #6c757d;
-    }
-    
-    .comment-content {
-        line-height: 1.6;
-        color: #333;
-    }
-    
-    .project-description-card {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        border-left: 4px solid #2c5aa0;
-        margin-bottom: 20px;
-    }
-    
-    .tech-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 15px;
-    }
-    
-    .tech-tag {
-        background: #e8f4ff;
-        color: #2c5aa0;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.85em;
+        color: var(--text-muted);
         font-weight: 500;
     }
-    
-    .navigation-bar {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 12px;
-        text-align: center;
-        margin-top: 30px;
+
+    .comment-content {
+        line-height: 1.7;
+        color: var(--text-secondary);
+        font-size: 1em;
     }
-    
+
+    /* Empty States */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-icon {
+        font-size: 4em;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    .empty-title {
+        font-size: 1.4em;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: var(--text-secondary);
+    }
+
+    .empty-description {
+        font-size: 1em;
+        line-height: 1.6;
+    }
+
+    /* Navigation */
+    .navigation-footer {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 32px;
+        text-align: center;
+        margin-top: 32px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
     .nav-buttons {
         display: flex;
-        gap: 15px;
+        gap: 16px;
         justify-content: center;
         flex-wrap: wrap;
     }
-    
-    .empty-state {
-        text-align: center;
-        padding: 40px;
-        color: #6c757d;
+
+    .nav-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 24px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        font-size: 0.95em;
+    }
+
+    .nav-btn.primary {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .nav-btn.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+    }
+
+    .nav-btn.secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-secondary);
+    }
+
+    .nav-btn.secondary:hover {
+        background: var(--border-secondary);
+        color: var(--text-primary);
+        transform: translateY(-1px);
+    }
+
+    .nav-btn.warning {
+        background: linear-gradient(135deg, var(--warning), #d97706);
+        color: white;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .nav-btn.warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-content {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .hero-title {
+            font-size: 2em;
+        }
+
+        .project-meta-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .two-column {
+            grid-template-columns: 1fr;
+        }
+
+        .evaluation-actions {
+            flex-direction: column;
+        }
+
+        .collaborators-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .deliverables-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .nav-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .milestone-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-    <!-- Project Header -->
-    <div class="project-review-header">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div style="flex: 1;">
-                <h1 style="margin: 0 0 15px 0; font-size: 2.2em;">{{ project.title }}</h1>
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-                    <span class="status-badge status-{{ project.status|lower }}" style="font-size: 1em; padding: 8px 16px;">
+    <!-- Project Hero -->
+    <div class="project-hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">{{ project.title }}</h1>
+                <div class="hero-status">
+                    <span class="status-large">
+                        {% if project.status == 'submitted' %}⏳
+                        {% elif project.status == 'validated' %}✅
+                        {% elif project.status == 'rejected' %}❌
+                        {% else %}📝{% endif %}
                         {{ project.get_status_display }}
                     </span>
                     {% if project.module %}
-                    <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px;">
-                        📚 {{ project.module.code }}
+                    <span class="module-badge">
+                        <i class="fas fa-book"></i>
+                        {{ project.module.code }}
                     </span>
                     {% endif %}
                 </div>
                 
                 <div class="project-meta-grid">
                     <div class="meta-card">
-                        <div class="meta-label">👤 Étudiant</div>
+                        <div class="meta-label">
+                            <i class="fas fa-user"></i>
+                            Étudiant
+                        </div>
                         <div class="meta-value">{{ project.student.user.get_full_name|default:project.student.user.username }}</div>
                     </div>
                     <div class="meta-card">
-                        <div class="meta-label">📂 Type de Projet</div>
+                        <div class="meta-label">
+                            <i class="fas fa-tag"></i>
+                            Type de Projet
+                        </div>
                         <div class="meta-value">{{ project.get_project_type_display }}</div>
                     </div>
                     <div class="meta-card">
-                        <div class="meta-label">📅 Créé le</div>
+                        <div class="meta-label">
+                            <i class="fas fa-calendar-plus"></i>
+                            Créé le
+                        </div>
                         <div class="meta-value">{{ project.created_at|date:"d/m/Y" }}</div>
                     </div>
                     <div class="meta-card">
-                        <div class="meta-label">⏰ Dernière MAJ</div>
+                        <div class="meta-label">
+                            <i class="fas fa-clock"></i>
+                            Dernière MAJ
+                        </div>
                         <div class="meta-value">{{ project.updated_at|date:"d/m/Y H:i" }}</div>
                     </div>
                 </div>
             </div>
-            <div style="font-size: 4em; opacity: 0.2;">📋</div>
+            <div class="hero-icon">📋</div>
         </div>
     </div>
 
     <!-- Evaluation Panel -->
     {% if project.status == 'submitted' %}
-    <div class="evaluation-panel">
-        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-            <div style="background: #ffc107; color: #212529; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; font-weight: bold;">!</div>
-            <div>
-                <h3 style="margin: 0 0 5px 0; color: #856404;">⚠️ Évaluation Requise</h3>
-                <p style="margin: 0; color: #856404;">Ce projet a été soumis et attend votre évaluation.</p>
+    <div class="evaluation-panel urgent">
+        <div class="eval-header">
+            <div class="eval-icon danger">!</div>
+            <div class="eval-content">
+                <h3 style="color: var(--error);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Évaluation Urgente Requise
+                </h3>
+                <p style="color: var(--error);">Ce projet a été soumis par l'étudiant et attend votre évaluation immédiate.</p>
             </div>
         </div>
         <div class="evaluation-actions">
             <form method="post" action="{% url 'teacher:approve_project' project.id %}" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="eval-btn validate" onclick="return confirm('Êtes-vous sûr de vouloir valider ce projet?')">
-                    ✓ Valider le Projet
+                    <i class="fas fa-check"></i>
+                    Valider le Projet
                 </button>
             </form>
             <form method="post" action="{% url 'teacher:reject_project' project.id %}" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="eval-btn reject" onclick="return confirm('Êtes-vous sûr de vouloir rejeter ce projet?')">
-                    ✗ Rejeter le Projet
+                    <i class="fas fa-times"></i>
+                    Rejeter le Projet
                 </button>
             </form>
         </div>
@@ -454,18 +864,22 @@
 
     <!-- Feedback Panel -->
     <div class="feedback-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 style="margin: 0; color: #2c5aa0;">💬 Ajouter un Feedback</h3>
-            <div style="font-size: 2em; opacity: 0.3;">💬</div>
+        <div class="feedback-header">
+            <h3 class="feedback-title">
+                <i class="fas fa-comment-dots"></i>
+                Ajouter un Feedback Enseignant
+            </h3>
+            <div class="feedback-icon">
+                <i class="fas fa-comment-dots"></i>
+            </div>
         </div>
         <form method="post" action="{% url 'teacher:add_teacher_comment' project.id %}" class="feedback-form">
             {% csrf_token %}
-            <textarea name="content" rows="4" placeholder="Rédigez votre commentaire ou feedback détaillé pour l'étudiant..." required></textarea>
-            <div style="margin-top: 15px;">
-                <button type="submit" class="btn" style="background: #2c5aa0; color: white; padding: 12px 25px; font-weight: 500;">
-                    📤 Envoyer le Feedback
-                </button>
-            </div>
+            <textarea name="content" rows="4" placeholder="Rédigez votre commentaire détaillé, suggestions d'amélioration, points forts du projet, ou feedback constructif pour guider l'étudiant..." required></textarea>
+            <button type="submit" class="feedback-submit">
+                <i class="fas fa-paper-plane"></i>
+                Envoyer le Feedback
+            </button>
         </form>
     </div>
 
@@ -475,29 +889,35 @@
         <!-- Project Description -->
         <div class="section-card">
             <div class="section-header">
-                <h2 class="section-title">📝 Description du Projet</h2>
+                <h2 class="section-title">
+                    <i class="fas fa-file-alt"></i>
+                    Description du Projet
+                </h2>
             </div>
-            <div class="project-description-card">
-                <div style="line-height: 1.6;">{{ project.description|linebreaks }}</div>
-                
-                
+            <div class="description-card">
+                {{ project.description|linebreaks }}
                 
                 {% if project.module_or_company %}
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">
-                    <strong style="color: #2c5aa0;">🏢 Module/Entreprise:</strong> {{ project.module_or_company }}
+                <div class="company-info">
+                    <i class="fas fa-building" style="color: var(--accent-primary);"></i>
+                    <strong>Module/Entreprise:</strong> {{ project.module_or_company }}
                 </div>
                 {% endif %}
             </div>
         </div>
 
         <!-- Two Column Layout -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div class="two-column">
             
             <!-- Collaborators -->
             {% if project.collaborators.exists %}
             <div class="section-card">
                 <div class="section-header">
-                    <h2 class="section-title">👥 Collaborateurs ({{ project.collaborators.count }})</h2>
+                    <h2 class="section-title">
+                        <i class="fas fa-users"></i>
+                        Collaborateurs
+                    </h2>
+                    <span class="section-count">{{ project.collaborators.count }}</span>
                 </div>
                 <div class="collaborators-grid">
                     {% for collaborator in project.collaborators.all %}
@@ -505,9 +925,14 @@
                         <div class="collaborator-avatar">
                             {{ collaborator.user.first_name|first|default:collaborator.user.username|first|upper }}
                         </div>
-                        <div style="flex: 1;">
-                            <strong>{{ collaborator.user.get_full_name|default:collaborator.user.username }}</strong><br>
-                            <small style="color: #6c757d;">{{ collaborator.student_id }} • {{ collaborator.department }}</small>
+                        <div class="collaborator-info">
+                            <div class="collaborator-name">
+                                {{ collaborator.user.get_full_name|default:collaborator.user.username }}
+                            </div>
+                            <div class="collaborator-details">
+                                <strong>ID:</strong> {{ collaborator.student_id }}<br>
+                                <strong>Département:</strong> {{ collaborator.department }}
+                            </div>
                         </div>
                     </div>
                     {% endfor %}
@@ -518,34 +943,38 @@
             <!-- Deliverables -->
             <div class="section-card">
                 <div class="section-header">
-                    <h2 class="section-title">📎 Livrables ({{ deliverables.count }})</h2>
+                    <h2 class="section-title">
+                        <i class="fas fa-paperclip"></i>
+                        Livrables
+                    </h2>
+                    <span class="section-count">{{ deliverables.count }}</span>
                 </div>
                 {% if deliverables %}
                     <div class="deliverables-grid">
                         {% for deliverable in deliverables %}
                         <div class="deliverable-card">
                             <div class="deliverable-header">
-                                <div>
-                                    <h4 style="margin: 0 0 8px 0; color: #2c5aa0;">{{ deliverable.name }}</h4>
-                                    <div style="font-size: 0.9em; color: #6c757d;">
+                                <div class="deliverable-info">
+                                    <h4 class="deliverable-title">{{ deliverable.name }}</h4>
+                                    <div class="deliverable-meta">
                                         <strong>Type:</strong> {{ deliverable.get_file_type_display }}<br>
                                         <strong>Uploadé le:</strong> {{ deliverable.upload_date|date:"d/m/Y H:i" }}
                                     </div>
                                 </div>
                                 <div class="deliverable-icon">📄</div>
                             </div>
-                            <div style="margin-top: 15px;">
-                                <a href="{{ deliverable.file.url }}" class="btn btn-sm" target="_blank" style="background: #2c5aa0; color: white;">
-                                    📥 Télécharger
-                                </a>
-                            </div>
+                            <a href="{{ deliverable.file.url }}" class="download-btn" target="_blank">
+                                <i class="fas fa-download"></i>
+                                Télécharger
+                            </a>
                         </div>
                         {% endfor %}
                     </div>
                 {% else %}
                     <div class="empty-state">
-                        <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">📎</div>
-                        <p>Aucun livrable disponible pour ce projet.</p>
+                        <div class="empty-icon">📎</div>
+                        <div class="empty-title">Aucun livrable</div>
+                        <div class="empty-description">L'étudiant n'a pas encore téléchargé de fichiers pour ce projet.</div>
                     </div>
                 {% endif %}
             </div>
@@ -554,7 +983,11 @@
         <!-- Milestones -->
         <div class="section-card">
             <div class="section-header">
-                <h2 class="section-title">🎯 Jalons du Projet ({{ milestones.count }})</h2>
+                <h2 class="section-title">
+                    <i class="fas fa-tasks"></i>
+                    Jalons du Projet
+                </h2>
+                <span class="section-count">{{ milestones.count }}</span>
             </div>
             {% if milestones %}
                 <div class="milestone-timeline">
@@ -563,18 +996,27 @@
                         <div class="milestone-marker {% if milestone.completed %}milestone-completed{% elif milestone.is_overdue %}milestone-overdue{% else %}milestone-pending{% endif %}">
                             {% if milestone.completed %}✓{% else %}•{% endif %}
                         </div>
-                        <div>
-                            <h4 style="margin: 0 0 8px 0; color: #2c5aa0;">{{ milestone.title }}</h4>
-                            <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 8px;">
-                                <strong>Échéance:</strong> {{ milestone.due_date|date:"d/m/Y" }}
+                        <div class="milestone-content">
+                            <h4 class="milestone-title">{{ milestone.title }}</h4>
+                            <div class="milestone-meta">
+                                <span>
+                                    <i class="fas fa-calendar"></i>
+                                    <strong>Échéance:</strong> {{ milestone.due_date|date:"d/m/Y" }}
+                                </span>
                                 {% if milestone.completed %}
-                                    • <span style="color: #28a745;">Complété le {{ milestone.completed_at|date:"d/m/Y" }}</span>
+                                    <span style="color: var(--success);">
+                                        <i class="fas fa-check-circle"></i>
+                                        Complété le {{ milestone.completed_at|date:"d/m/Y" }}
+                                    </span>
                                 {% elif milestone.is_overdue %}
-                                    • <span style="color: #dc3545;">En retard</span>
+                                    <span style="color: var(--error);">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        En retard
+                                    </span>
                                 {% endif %}
                             </div>
                             {% if milestone.description %}
-                            <p style="margin: 0; color: #6c757d;">{{ milestone.description }}</p>
+                            <div class="milestone-description">{{ milestone.description }}</div>
                             {% endif %}
                         </div>
                     </div>
@@ -582,8 +1024,9 @@
                 </div>
             {% else %}
                 <div class="empty-state">
-                    <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">🎯</div>
-                    <p>Aucun jalon défini pour ce projet.</p>
+                    <div class="empty-icon">🎯</div>
+                    <div class="empty-title">Aucun jalon défini</div>
+                    <div class="empty-description">L'étudiant n'a pas encore défini de jalons pour ce projet.</div>
                 </div>
             {% endif %}
         </div>
@@ -591,8 +1034,11 @@
         <!-- Comments and Discussion -->
         <div class="section-card">
             <div class="section-header">
-                <h2 class="section-title">💬 Discussion et Historique</h2>
-                <span style="font-size: 0.9em; color: #6c757d;">{{ comments.count }} commentaire{{ comments.count|pluralize }}</span>
+                <h2 class="section-title">
+                    <i class="fas fa-comments"></i>
+                    Discussion et Historique
+                </h2>
+                <span class="section-count">{{ comments.count }}</span>
             </div>
             {% if comments %}
                 <div class="comments-section">
@@ -601,9 +1047,13 @@
                         <div class="comment-header">
                             <div class="comment-author">
                                 {% if comment.is_teacher_comment %}
-                                    🎓 {{ comment.author.get_full_name|default:comment.author.username }} (Enseignant)
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                    {{ comment.author.get_full_name|default:comment.author.username }}
+                                    <span class="author-badge">Enseignant</span>
                                 {% else %}
-                                    👤 {{ comment.author.get_full_name|default:comment.author.username }} (Étudiant)
+                                    <i class="fas fa-user-graduate"></i>
+                                    {{ comment.author.get_full_name|default:comment.author.username }}
+                                    <span class="author-badge" style="background: var(--text-muted);">Étudiant</span>
                                 {% endif %}
                             </div>
                             <div class="comment-date">{{ comment.created_at|date:"d/m/Y H:i" }}</div>
@@ -616,26 +1066,30 @@
                 </div>
             {% else %}
                 <div class="empty-state">
-                    <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">💬</div>
-                    <p>Aucun commentaire pour le moment. Soyez le premier à laisser un feedback!</p>
+                    <div class="empty-icon">💬</div>
+                    <div class="empty-title">Aucun commentaire</div>
+                    <div class="empty-description">Soyez le premier à laisser un feedback détaillé sur ce projet!</div>
                 </div>
             {% endif %}
         </div>
     </div>
 
-    <!-- Navigation -->
-    <div class="navigation-bar">
+    <!-- Navigation Footer -->
+    <div class="navigation-footer">
         <div class="nav-buttons">
-            <a href="{% url 'teacher:student_projects' %}" class="btn btn-secondary">
-                ← Retour à la Liste
+            <a href="{% url 'teacher:student_projects' %}" class="nav-btn secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la Liste
             </a>
             {% if project.module %}
-            <a href="{% url 'teacher:module_projects' project.module.id %}" class="btn btn-secondary">
-                📚 Autres Projets du Module
+            <a href="{% url 'teacher:module_projects' project.module.id %}" class="nav-btn secondary">
+                <i class="fas fa-book"></i>
+                Autres Projets du Module
             </a>
             {% endif %}
-            <a href="{% url 'teacher:student_projects' %}?status=submitted" class="btn" style="background: #ffc107; color: #212529;">
-                ⏳ Projets en Attente
+            <a href="{% url 'teacher:student_projects' %}?status=submitted" class="nav-btn warning">
+                <i class="fas fa-clock"></i>
+                Projets en Attente
             </a>
         </div>
     </div>

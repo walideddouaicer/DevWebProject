@@ -9,377 +9,56 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
-<style>
-    .modules-header {
-        background: linear-gradient(135deg, #3a6ea5 0%, #2c5aa0 100%);
-        color: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .modules-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50px;
-        width: 150px;
-        height: 200%;
-        background: rgba(255,255,255,0.1);
-        transform: rotate(15deg);
-    }
-    
-    .join-module-panel {
-        background: white;
-        border: 2px solid #3a6ea5;
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .join-form-container {
-        display: flex;
-        gap: 15px;
-        align-items: end;
-        margin-top: 15px;
-        flex-wrap: wrap;
-    }
-    
-    .join-input {
-        flex: 1;
-        min-width: 300px;
-        padding: 12px 16px;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        font-size: 1em;
-        transition: border-color 0.3s ease;
-    }
-    
-    .join-input:focus {
-        outline: none;
-        border-color: #3a6ea5;
-        box-shadow: 0 0 0 3px rgba(58, 110, 165, 0.1);
-    }
-    
-    .modules-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-        gap: 25px;
-    }
-    
-    .module-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        overflow: hidden;
-        border: 1px solid #e9ecef;
-        transition: all 0.3s ease;
-    }
-    
-    .module-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-    
-    .module-header {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 20px;
-        border-bottom: 3px solid #3a6ea5;
-        position: relative;
-    }
-    
-    .module-title {
-        margin: 0 0 10px 0;
-        color: #3a6ea5;
-        font-size: 1.3em;
-        font-weight: bold;
-    }
-    
-    .module-code {
-        background: #3a6ea5;
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 0.9em;
-        font-weight: bold;
-        font-family: monospace;
-        display: inline-block;
-    }
-    
-    .enrollment-date {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        font-size: 0.8em;
-        color: #6c757d;
-        background: rgba(255,255,255,0.8);
-        padding: 4px 8px;
-        border-radius: 4px;
-    }
-    
-    .module-body {
-        padding: 20px;
-    }
-    
-    .module-info {
-        margin-bottom: 20px;
-    }
-    
-    .info-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid #f1f3f4;
-        font-size: 0.9em;
-    }
-    
-    .info-item:last-child {
-        border-bottom: none;
-    }
-    
-    .info-label {
-        font-weight: 500;
-        color: #3a6ea5;
-    }
-    
-    .info-value {
-        color: #6c757d;
-    }
-    
-    .description-preview {
-        background: #f8f9fa;
-        padding: 12px;
-        border-radius: 6px;
-        margin: 15px 0;
-        font-size: 0.9em;
-        color: #6c757d;
-        border-left: 3px solid #3a6ea5;
-    }
-    
-    .teachers-section {
-        background: #e8f4ff;
-        padding: 15px;
-        border-radius: 8px;
-        margin: 15px 0;
-        border: 1px solid #b3d9ff;
-    }
-    
-    .teachers-title {
-        margin: 0 0 12px 0;
-        color: #3a6ea5;
-        font-size: 1em;
-        font-weight: 600;
-    }
-    
-    .teacher-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .teacher-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 0;
-        border-bottom: 1px solid rgba(58, 110, 165, 0.1);
-    }
-    
-    .teacher-item:last-child {
-        border-bottom: none;
-    }
-    
-    .teacher-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #3a6ea5;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 1.1em;
-    }
-    
-    .teacher-info {
-        flex: 1;
-    }
-    
-    .teacher-name {
-        font-weight: bold;
-        color: #3a6ea5;
-        margin-bottom: 2px;
-    }
-    
-    .teacher-details {
-        font-size: 0.8em;
-        color: #6c757d;
-    }
-    
-    .module-actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 20px;
-        padding-top: 15px;
-        border-top: 1px solid #f1f3f4;
-        flex-wrap: wrap;
-    }
-    
-    .action-btn {
-        padding: 8px 16px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-size: 0.9em;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
-    .action-btn.primary {
-        background: #3a6ea5;
-        color: white;
-    }
-    
-    .action-btn.primary:hover {
-        background: #2c5aa0;
-        transform: translateY(-1px);
-    }
-    
-    .action-btn.secondary {
-        background: #6c757d;
-        color: white;
-    }
-    
-    .action-btn.secondary:hover {
-        background: #5a6268;
-        transform: translateY(-1px);
-    }
-    
-    .action-btn.danger {
-        background: #dc3545;
-        color: white;
-    }
-    
-    .action-btn.danger:hover {
-        background: #c82333;
-        transform: translateY(-1px);
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: 80px 40px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .info-panel {
-        background: #e8f4ff;
-        border: 1px solid #b3d9ff;
-        border-radius: 12px;
-        padding: 25px;
-        margin-top: 30px;
-    }
-    
-    .info-grid {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 20px;
-        align-items: center;
-    }
-    
-    .instruction-list {
-        list-style: none;
-        padding: 0;
-        margin: 15px 0;
-    }
-    
-    .instruction-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 8px 0;
-        font-size: 0.95em;
-    }
-    
-    .step-number {
-        background: #3a6ea5;
-        color: white;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8em;
-        font-weight: bold;
-    }
-    
-    .btn {
-        background: #3a6ea5;
-        color: white;
-        padding: 12px 20px;
-        border: none;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        display: inline-block;
-        cursor: pointer;
-    }
-    
-    .btn:hover {
-        background: #2c5aa0;
-        transform: translateY(-1px);
-    }
-</style>
+<link rel="stylesheet" href="{% static 'student/css/my_modules.css' %}">
 {% endblock %}
 
 {% block content %}
-    <!-- Modules Header -->
-    <div class="modules-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1 style="margin: 0 0 10px 0; font-size: 2.2em;">📚 Mes Modules</h1>
-                <p style="margin: 0; opacity: 0.9; font-size: 1.1em;">
-                    Gérez vos {{ enrollments.count }} inscription{{ enrollments.count|pluralize }} aux modules d'enseignement
-                </p>
+    <!-- Hero Section -->
+    <div class="modules-hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>📚 Mes Modules</h1>
+                <p>Gérez vos {{ enrollments.count }} inscription{{ enrollments.count|pluralize }} aux modules d'enseignement et explorez de nouvelles opportunités d'apprentissage</p>
             </div>
-            <div style="text-align: right; opacity: 0.2;">
-                <div style="font-size: 4em;">📚</div>
-            </div>
+            <div class="hero-illustration">📚</div>
         </div>
     </div>
 
-    <!-- Join Module Panel -->
-    <div class="join-module-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0; color: #3a6ea5;">🔗 Rejoindre un Nouveau Module</h3>
-            <div style="font-size: 2em; opacity: 0.3;">➕</div>
+    <!-- Join Module Section -->
+    <div class="join-module-section">
+        <div class="join-header">
+            <div class="join-info">
+                <h3>🔗 Rejoindre un Nouveau Module</h3>
+                <p>Entrez le code du module fourni par votre enseignant pour vous inscrire automatiquement au cours et accéder aux projets associés.</p>
+            </div>
+            <div class="join-illustration">➕</div>
         </div>
-        <p style="margin: 0 0 15px 0; color: #6c757d;">
-            Entrez le code du module fourni par votre enseignant pour vous inscrire automatiquement au cours.
-        </p>
-        <form method="post" action="{% url 'student:join_module' %}" class="join-form-container">
+        
+        <form method="post" action="{% url 'student:join_module' %}" class="join-form">
             {% csrf_token %}
-            <input type="text" name="module_code" class="join-input" placeholder="Code du module (ex: UML1, CS101, MATH202)" required>
-            <button type="submit" class="btn">🚀 Rejoindre le Module</button>
+            <div class="join-input-group">
+                <label for="module_code" class="join-input-label">Code du Module</label>
+                <input type="text" name="module_code" id="module_code" class="join-input" 
+                       placeholder="Saisissez le code du module..." required 
+                       pattern="[A-Za-z0-9]+" title="Code alphanumérique uniquement">
+                <div class="join-examples">
+                    💡 Exemples: UML1, CS101, MATH202, INFO205
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                🚀 Rejoindre le Module
+            </button>
         </form>
     </div>
 
     <!-- Enrolled Modules -->
-    <div style="margin-bottom: 20px;">
-        <h2 style="color: #3a6ea5; margin-bottom: 20px;">📋 Modules Inscrits ({{ enrollments.count }})</h2>
+    <div class="modules-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                📋 Modules Inscrits
+            </h2>
+            <span class="modules-count">{{ enrollments.count }}</span>
+        </div>
         
         {% if enrollments %}
             <div class="modules-grid">
@@ -387,7 +66,7 @@
                 <div class="module-card">
                     <!-- Module Header -->
                     <div class="module-header">
-                        <div class="enrollment-date">
+                        <div class="enrollment-badge">
                             📅 {{ enrollment.enrolled_at|date:"d/m/Y" }}
                         </div>
                         <h3 class="module-title">{{ enrollment.module.name }}</h3>
@@ -398,38 +77,46 @@
                     <div class="module-body">
                         <!-- Module Information -->
                         <div class="module-info">
-                            <div class="info-item">
-                                <span class="info-label">📅 Semestre</span>
-                                <span class="info-value">{{ enrollment.module.get_semester_display }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">🗓️ Année académique</span>
-                                <span class="info-value">{{ enrollment.module.academic_year }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">📊 Statut</span>
-                                <span class="info-value">
-                                    {% if enrollment.module.is_active %}✅ Actif{% else %}❌ Inactif{% endif %}
-                                </span>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">📅 Semestre</span>
+                                    <span class="info-value">{{ enrollment.module.get_semester_display }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">🗓️ Année académique</span>
+                                    <span class="info-value">{{ enrollment.module.academic_year }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">📊 Statut</span>
+                                    <span class="info-value">
+                                        <span class="status-indicator {% if enrollment.module.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                            {% if enrollment.module.is_active %}✅ Actif{% else %}❌ Inactif{% endif %}
+                                        </span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Module Description -->
                         {% if enrollment.module.description %}
                         <div class="description-preview">
-                            <strong>📝 Description:</strong><br>
-                            {{ enrollment.module.description|truncatewords:20 }}
+                            <div class="description-text">
+                                <strong>Description:</strong><br>
+                                {{ enrollment.module.description|truncatewords:25 }}
+                            </div>
                         </div>
                         {% endif %}
 
                         <!-- Teachers Section -->
                         {% if enrollment.module.assignments.all %}
                         <div class="teachers-section">
-                            <h4 class="teachers-title">👨‍🏫 Enseignants du Module</h4>
-                            <ul class="teacher-list">
+                            <h4 class="teachers-title">
+                                👨‍🏫 Enseignants du Module
+                            </h4>
+                            <div class="teachers-list">
                                 {% for assignment in enrollment.module.assignments.all %}
                                 {% if assignment.is_active %}
-                                <li class="teacher-item">
+                                <div class="teacher-item">
                                     <div class="teacher-avatar">
                                         {{ assignment.teacher.user.first_name|first|default:assignment.teacher.user.username|first|upper }}
                                     </div>
@@ -438,23 +125,23 @@
                                             {{ assignment.teacher.user.get_full_name|default:assignment.teacher.user.username }}
                                         </div>
                                         <div class="teacher-details">
-                                            🆔 {{ assignment.teacher.teacher_id }} • 🏢 {{ assignment.teacher.department }}
+                                            <span>🆔 {{ assignment.teacher.teacher_id }}</span>
+                                            <span>🏢 {{ assignment.teacher.department }}</span>
                                         </div>
                                     </div>
-                                </li>
+                                </div>
                                 {% endif %}
                                 {% endfor %}
-                            </ul>
+                            </div>
                         </div>
                         {% endif %}
 
                         <!-- Module Actions -->
                         <div class="module-actions">
-                           
-                            <form method="post" action="{% url 'student:leave_module' enrollment.module.id %}" style="display: inline;">
+                            <form method="post" action="{% url 'student:leave_module' enrollment.module.id %}" 
+                                  onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir quitter le module {{ enrollment.module.name }}?\n\nCette action est irréversible et vous perdrez l\'accès à tous les projets associés à ce module.')">
                                 {% csrf_token %}
-                                <button type="submit" class="action-btn danger" 
-                                        onclick="return confirm('Êtes-vous sûr de vouloir quitter le module {{ enrollment.module.name }}? Cette action est irréversible.')">
+                                <button type="submit" class="btn btn-danger">
                                     🚪 Quitter le Module
                                 </button>
                             </form>
@@ -466,52 +153,114 @@
         {% else %}
             <!-- Empty State -->
             <div class="empty-state">
-                <div style="font-size: 5em; margin-bottom: 30px; opacity: 0.3;">📚</div>
-                <h3 style="color: #6c757d; margin-bottom: 15px;">Aucun Module Inscrit</h3>
-                <p style="color: #6c757d; margin-bottom: 30px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                <div class="empty-state-icon">📚</div>
+                <h3>Aucun Module Inscrit</h3>
+                <p>
                     Vous n'êtes inscrit à aucun module pour le moment. Utilisez le formulaire ci-dessus pour rejoindre un module 
-                    avec le code fourni par votre enseignant.
+                    avec le code fourni par votre enseignant et commencer votre parcours d'apprentissage.
                 </p>
-                <div style="margin-top: 25px;">
-                    <a href="{% url 'student:dashboard' %}" class="btn">← Retour au Tableau de Bord</a>
-                </div>
+                <a href="{% url 'student:dashboard' %}" class="btn btn-primary">
+                    ← Retour au Tableau de Bord
+                </a>
             </div>
         {% endif %}
     </div>
 
-    <!-- Information Panel -->
-    <div class="info-panel">
-        <div class="info-grid">
-            <div style="font-size: 4em; opacity: 0.5;">💡</div>
-            <div>
-                <h3 style="margin: 0 0 15px 0; color: #3a6ea5;">📖 Guide d'Inscription aux Modules</h3>
-                <p style="margin: 0 0 15px 0; color: #6c757d;">
-                    Pour rejoindre un module et accéder aux projets associés, suivez ces étapes simples :
-                </p>
-                <ol class="instruction-list">
-                    <li class="instruction-item">
-                        <span class="step-number">1</span>
-                        <span>Demandez le <strong>code du module</strong> à votre enseignant</span>
-                    </li>
-                    <li class="instruction-item">
-                        <span class="step-number">2</span>
-                        <span>Entrez le code dans le formulaire de cette page</span>
-                    </li>
-                    <li class="instruction-item">
-                        <span class="step-number">3</span>
-                        <span>Cliquez sur "Rejoindre le Module" pour vous inscrire</span>
-                    </li>
-                    <li class="instruction-item">
-                        <span class="step-number">4</span>
-                        <span>Accédez aux projets et interagissez avec vos enseignants</span>
-                    </li>
-                </ol>
-                <div style="margin-top: 20px; padding: 15px; background: rgba(58, 110, 165, 0.1); border-radius: 6px;">
-                    <p style="margin: 0; font-size: 0.9em; color: #3a6ea5;">
-                        <strong>💡 Conseil:</strong> Gardez les codes de modules en sécurité et ne les partagez qu'avec vos camarades de classe autorisés.
-                    </p>
+    <!-- Guide Section -->
+    <div class="guide-section">
+        <div class="guide-header">
+            <div class="guide-icon">💡</div>
+            <div class="guide-content">
+                <h3>Guide d'Inscription aux Modules</h3>
+                <p>Suivez ces étapes simples pour rejoindre un module et accéder aux projets associés</p>
+            </div>
+        </div>
+        
+        <ol class="steps-list">
+            <li class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <strong>Obtenez le code du module</strong> auprès de votre enseignant ou coordinateur pédagogique
                 </div>
+            </li>
+            
+            <li class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <strong>Saisissez le code</strong> dans le formulaire en haut de cette page en respectant la casse
+                </div>
+            </li>
+            
+            <li class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <strong>Cliquez sur "Rejoindre"</strong> pour vous inscrire automatiquement au module
+                </div>
+            </li>
+            
+            <li class="step-item">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <strong>Accédez aux projets</strong> et interagissez avec vos enseignants et camarades de classe
+                </div>
+            </li>
+        </ol>
+        
+        <div class="security-notice">
+            <div class="security-icon">🔐</div>
+            <div class="security-text">
+                <strong>Sécurité:</strong> Gardez les codes de modules confidentiels et ne les partagez qu'avec vos camarades de classe autorisés par l'enseignant.
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const moduleCodeInput = document.getElementById('module_code');
+            const joinForm = moduleCodeInput.closest('form');
+            
+            // Format input in uppercase as user types
+            moduleCodeInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            });
+            
+            // Add loading state to join button
+            joinForm.addEventListener('submit', function() {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.textContent = '⏳ Inscription en cours...';
+                submitBtn.disabled = true;
+            });
+            
+            // Add hover effects to module cards
+            const moduleCards = document.querySelectorAll('.module-card');
+            moduleCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                });
+            });
+            
+            // Enhanced leave module confirmation
+            const leaveButtons = document.querySelectorAll('form[action*="leave_module"] button');
+            leaveButtons.forEach(button => {
+                const form = button.closest('form');
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Create custom confirmation modal
+                    const moduleName = this.action.match(/leave_module\/(\d+)/)[1];
+                    const confirmed = confirm(`⚠️ ATTENTION ⚠️\n\nVous êtes sur le point de quitter ce module.\n\n🚫 Conséquences:\n• Perte d'accès aux projets du module\n• Suppression de votre progression\n• Impossible de rejoindre automatiquement\n\n❓ Voulez-vous vraiment continuer?`);
+                    
+                    if (confirmed) {
+                        button.textContent = '⏳ Traitement...';
+                        button.disabled = true;
+                        this.submit();
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}

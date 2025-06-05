@@ -5,396 +5,120 @@
 
 {% block breadcrumb_items %}
 <span class="breadcrumb-separator">></span>
-<a href="{% url 'student:dashboard' %}">Projets</a>
+<a href="{% url 'student:dashboard' %}" class="breadcrumb-link">Projets</a>
 <span class="breadcrumb-separator">></span>
-<a href="{% url 'student:project_detail' project.id %}">{{ project.title|truncatewords:3 }}</a>
+<a href="{% url 'student:project_detail' project.id %}" class="breadcrumb-link">{{ project.title|truncatewords:3 }}</a>
 <span class="breadcrumb-separator">></span>
 <span>{{ title }}</span>
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/project_form.css' %}">
-<style>
-    .milestone-workspace {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 30px;
-        max-width: 1000px;
-        margin: 0 auto;
-    }
-    
-    .milestone-header {
-        background: linear-gradient(135deg, #3a6ea5 0%, #2c5aa0 100%);
-        color: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
-        position: relative;
-        overflow: hidden;
-        grid-column: 1 / -1;
-    }
-    
-    .milestone-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50px;
-        width: 150px;
-        height: 200%;
-        background: rgba(255,255,255,0.1);
-        transform: rotate(15deg);
-    }
-    
-    .project-context {
-        background: rgba(255,255,255,0.1);
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 15px;
-    }
-    
-    .form-main {
-        background: white;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        border-left: 4px solid #3a6ea5;
-        height: fit-content;
-    }
-    
-    .form-sidebar {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    
-    .sidebar-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        border-left: 4px solid #3a6ea5;
-    }
-    
-    .form-group {
-        margin-bottom: 25px;
-    }
-    
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #3a6ea5;
-        font-size: 1em;
-    }
-    
-    .form-group input,
-    .form-group textarea {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        font-size: 1em;
-        transition: all 0.3s ease;
-        box-sizing: border-box;
-        font-family: inherit;
-    }
-    
-    .form-group input:focus,
-    .form-group textarea:focus {
-        outline: none;
-        border-color: #3a6ea5;
-        box-shadow: 0 0 0 3px rgba(58, 110, 165, 0.1);
-        transform: translateY(-1px);
-    }
-    
-    .form-group textarea {
-        resize: vertical;
-        min-height: 100px;
-        line-height: 1.5;
-    }
-    
-    .form-error {
-        background: #f8d7da;
-        color: #721c24;
-        padding: 8px 12px;
-        border-radius: 6px;
-        margin-top: 8px;
-        font-size: 0.9em;
-        border-left: 4px solid #dc3545;
-    }
-    
-    .checkbox-group {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border: 2px solid #e9ecef;
-        transition: all 0.3s ease;
-    }
-    
-    .checkbox-group:hover {
-        border-color: #3a6ea5;
-        background: #e8f4ff;
-    }
-    
-    .checkbox-group input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-        margin: 0;
-        accent-color: #3a6ea5;
-    }
-    
-    .checkbox-group label {
-        margin: 0;
-        font-weight: 500;
-        color: #333;
-        cursor: pointer;
-        flex: 1;
-    }
-    
-    .form-actions {
-        display: flex;
-        gap: 15px;
-        justify-content: flex-end;
-        margin-top: 30px;
-        padding-top: 25px;
-        border-top: 2px solid #f1f3f4;
-    }
-    
-    .btn {
-        padding: 12px 25px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        border: none;
-        cursor: pointer;
-        font-size: 1em;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .btn-primary {
-        background: #3a6ea5;
-        color: white;
-        box-shadow: 0 4px 12px rgba(58, 110, 165, 0.3);
-    }
-    
-    .btn-primary:hover {
-        background: #2c5aa0;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(58, 110, 165, 0.4);
-    }
-    
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-    }
-    
-    .btn-secondary:hover {
-        background: #5a6268;
-        transform: translateY(-1px);
-    }
-    
-    .date-helper {
-        background: #e8f4ff;
-        padding: 12px;
-        border-radius: 6px;
-        margin-top: 8px;
-        font-size: 0.9em;
-        color: #3a6ea5;
-        border: 1px solid #b3d9ff;
-    }
-    
-    .milestone-tips {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid #28a745;
-    }
-    
-    .tip-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        margin-bottom: 10px;
-        font-size: 0.9em;
-    }
-    
-    .tip-item:last-child {
-        margin-bottom: 0;
-    }
-    
-    .tip-icon {
-        background: #28a745;
-        color: white;
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7em;
-        font-weight: bold;
-        flex-shrink: 0;
-        margin-top: 1px;
-    }
-    
-    .project-info-card {
-        background: #e8f4ff;
-        border: 1px solid #b3d9ff;
-        border-radius: 12px;
-        padding: 20px;
-    }
-    
-    .info-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid rgba(58, 110, 165, 0.2);
-        font-size: 0.9em;
-    }
-    
-    .info-item:last-child {
-        border-bottom: none;
-    }
-    
-    .info-label {
-        font-weight: 500;
-        color: #3a6ea5;
-    }
-    
-    .info-value {
-        color: #6c757d;
-    }
-    
-    .examples-card {
-        background: #fff3cd;
-        border: 1px solid #ffc107;
-        border-radius: 12px;
-        padding: 20px;
-    }
-    
-    .example-item {
-        background: white;
-        padding: 12px;
-        border-radius: 6px;
-        margin-bottom: 10px;
-        border-left: 3px solid #ffc107;
-    }
-    
-    .example-item:last-child {
-        margin-bottom: 0;
-    }
-    
-    .example-title {
-        font-weight: bold;
-        color: #856404;
-        margin-bottom: 4px;
-    }
-    
-    .example-desc {
-        font-size: 0.85em;
-        color: #6c757d;
-    }
-    
-    .required-field {
-        color: #dc3545;
-        margin-left: 3px;
-    }
-
-    @media (max-width: 768px) {
-        .milestone-workspace {
-            grid-template-columns: 1fr;
-        }
-        
-        .form-actions {
-            flex-direction: column;
-        }
-        
-        .btn {
-            justify-content: center;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{% static 'student/css/milestone_form.css' %}">
 {% endblock %}
 
 {% block content %}
     <div class="milestone-workspace">
-        <!-- Milestone Header -->
-        <div class="milestone-header">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="flex: 1;">
-                    <h1 style="margin: 0 0 10px 0; font-size: 2.2em;">🎯 {{ title }}</h1>
-                    <p style="margin: 0; opacity: 0.9; font-size: 1.1em;">
-                        Définissez une étape importante pour suivre la progression de votre projet
-                    </p>
+        <!-- Hero Section -->
+        <div class="milestone-hero">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>🎯 {{ title }}</h1>
+                    <p>Définissez une étape importante pour structurer et suivre la progression de votre projet</p>
                     
                     <div class="project-context">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <strong>Projet:</strong> {{ project.title }}
+                        <div class="context-grid">
+                            <div class="project-info">
+                                <div class="project-title">{{ project.title }}</div>
+                                <div class="project-meta">{{ project.get_project_type_display }}</div>
                             </div>
-                            <div style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; font-size: 0.9em;">
+                            <div class="status-badge">
                                 {{ project.get_status_display }}
                             </div>
                         </div>
                     </div>
                 </div>
-                <div style="font-size: 4em; opacity: 0.2;">🎯</div>
+                <div class="hero-illustration">🎯</div>
             </div>
         </div>
 
         <!-- Main Form -->
         <div class="form-main">
-            <form method="post">
+            <form method="post" id="milestoneForm">
                 {% csrf_token %}
                 
-                <div class="form-group">
-                    <label for="id_title">Titre du Jalon <span class="required-field">*</span></label>
-                    {{ form.title }}
-                    {% if form.title.errors %}
-                        <div class="form-error">{{ form.title.errors|join:", " }}</div>
-                    {% endif %}
-                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 8px; font-size: 0.9em; color: #6c757d;">
-                        💡 Choisissez un titre court et descriptif (ex: "Finalisation du prototype", "Tests unitaires")
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        📝 Informations du Jalon
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="id_title">
+                            🎯 Titre du Jalon <span class="required-indicator">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="form-error">
+                                ⚠️ {{ form.title.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                        <div class="form-help">
+                            <span class="help-icon">💡</span>
+                            <span>Choisissez un titre court et descriptif qui résume clairement l'objectif à atteindre (ex: "Finalisation du prototype", "Tests unitaires", "Documentation utilisateur")</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="id_description">
+                            📋 Description Détaillée
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="form-error">
+                                ⚠️ {{ form.description.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                        <div class="form-help">
+                            <span class="help-icon">📝</span>
+                            <span>Décrivez précisément ce qui doit être accompli, les livrables attendus, les critères de réussite et les étapes nécessaires pour atteindre ce jalon.</span>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="id_description">Description Détaillée</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                        <div class="form-error">{{ form.description.errors|join:", " }}</div>
-                    {% endif %}
-                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 8px; font-size: 0.9em; color: #6c757d;">
-                        📝 Décrivez ce qui doit être accompli, les livrables attendus et les critères de réussite.
+                <!-- Timeline -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        📅 Planification Temporelle
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="id_due_date">
+                            ⏰ Date d'Échéance <span class="required-indicator">*</span>
+                        </label>
+                        <div class="date-input-container">
+                            {{ form.due_date }}
+                        </div>
+                        {% if form.due_date.errors %}
+                            <div class="form-error">
+                                ⚠️ {{ form.due_date.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                        <div class="date-helper">
+                            <div class="date-tips">
+                                <span>📅</span>
+                                <span>Définissez une date réaliste en tenant compte de la complexité de la tâche, de votre planning personnel et des autres jalons du projet.</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="id_due_date">Date d'Échéance <span class="required-field">*</span></label>
-                    {{ form.due_date }}
-                    {% if form.due_date.errors %}
-                        <div class="form-error">{{ form.due_date.errors|join:", " }}</div>
-                    {% endif %}
-                    <div class="date-helper">
-                        📅 Définissez une date réaliste en tenant compte de la complexité de la tâche et de votre planning.
-                    </div>
-                </div>
-                
-               
-                
+                <!-- Form Actions -->
                 <div class="form-actions">
                     <a href="{% url 'student:project_detail' project.id %}" class="btn btn-secondary">
                         ❌ Annuler
                     </a>
                     <button type="submit" class="btn btn-primary">
-                        🎯 Ajouter le Jalon
+                        🎯 Créer le Jalon
                     </button>
                 </div>
             </form>
@@ -403,110 +127,221 @@
         <!-- Sidebar -->
         <div class="form-sidebar">
             <!-- Project Information -->
-            <div class="project-info-card">
-                <h4 style="margin: 0 0 15px 0; color: #3a6ea5;">📊 Informations du Projet</h4>
+            <div class="sidebar-card">
+                <h4 class="sidebar-title">
+                    📊 Informations du Projet
+                </h4>
                 
-                <div class="info-item">
-                    <span class="info-label">📝 Titre</span>
-                    <span class="info-value">{{ project.title|truncatewords:3 }}</span>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">📝</span>
+                        <span class="info-value">{{ project.title|truncatewords:4 }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">📂</span>
+                        <span class="info-value">{{ project.get_project_type_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">📅</span>
+                        <span class="info-value">{{ project.created_at|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">📊</span>
+                        <span class="info-value">{{ project.get_status_display }}</span>
+                    </div>
+                    {% if project.module %}
+                    <div class="info-item">
+                        <span class="info-label">📚</span>
+                        <span class="info-value">{{ project.module.code }}</span>
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="info-item">
-                    <span class="info-label">📂 Type</span>
-                    <span class="info-value">{{ project.get_project_type_display }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">📅 Créé le</span>
-                    <span class="info-value">{{ project.created_at|date:"d/m/Y" }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">📊 Statut</span>
-                    <span class="info-value">{{ project.get_status_display }}</span>
-                </div>
-                {% if project.module %}
-                <div class="info-item">
-                    <span class="info-label">📚 Module</span>
-                    <span class="info-value">{{ project.module.code }}</span>
-                </div>
-                {% endif %}
                 
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(58, 110, 165, 0.2);">
-                    <a href="{% url 'student:project_detail' project.id %}" style="color: #3a6ea5; text-decoration: none; font-size: 0.9em;">
-                        👁️ Voir les détails complets du projet →
+                <div class="project-link">
+                    <a href="{% url 'student:project_detail' project.id %}">
+                        👁️ Voir les détails complets →
                     </a>
                 </div>
             </div>
 
             <!-- Milestone Tips -->
             <div class="sidebar-card">
-                <h4 style="margin: 0 0 15px 0; color: #3a6ea5;">💡 Conseils pour les Jalons</h4>
-                <div class="milestone-tips">
+                <h4 class="sidebar-title">
+                    💡 Conseils pour les Jalons
+                </h4>
+                
+                <div class="tips-list">
                     <div class="tip-item">
-                        <div class="tip-icon">1</div>
-                        <div>
-                            <strong>Spécifique:</strong> Définissez clairement ce qui doit être accompli.
+                        <div class="tip-number">1</div>
+                        <div class="tip-content">
+                            <div class="tip-title">Spécifique</div>
+                            Définissez clairement ce qui doit être accompli, avec des objectifs mesurables et vérifiables.
                         </div>
                     </div>
+                    
                     <div class="tip-item">
-                        <div class="tip-icon">2</div>
-                        <div>
-                            <strong>Mesurable:</strong> Incluez des critères de réussite vérifiables.
+                        <div class="tip-number">2</div>
+                        <div class="tip-content">
+                            <div class="tip-title">Mesurable</div>
+                            Incluez des critères de réussite concrets qui permettront de valider l'achèvement du jalon.
                         </div>
                     </div>
+                    
                     <div class="tip-item">
-                        <div class="tip-icon">3</div>
-                        <div>
-                            <strong>Réalisable:</strong> Assurez-vous que l'objectif est atteignable.
+                        <div class="tip-number">3</div>
+                        <div class="tip-content">
+                            <div class="tip-title">Atteignable</div>
+                            Assurez-vous que l'objectif est réalisable avec les ressources et le temps disponibles.
                         </div>
                     </div>
+                    
                     <div class="tip-item">
-                        <div class="tip-icon">4</div>
-                        <div>
-                            <strong>Temporel:</strong> Fixez une échéance réaliste et respectez-la.
+                        <div class="tip-number">4</div>
+                        <div class="tip-content">
+                            <div class="tip-title">Temporellement défini</div>
+                            Fixez une échéance réaliste et respectez-la pour maintenir l'élan du projet.
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Examples -->
-            <div class="examples-card">
-                <h4 style="margin: 0 0 15px 0; color: #856404;">📋 Exemples de Jalons</h4>
+            <div class="sidebar-card">
+                <h4 class="sidebar-title">
+                    📋 Exemples de Jalons
+                </h4>
                 
-                <div class="example-item">
-                    <div class="example-title">Phase de Recherche</div>
-                    <div class="example-desc">Finaliser l'étude de l'existant et rédiger le cahier des charges</div>
-                </div>
-                
-                <div class="example-item">
-                    <div class="example-title">Prototype Initial</div>
-                    <div class="example-desc">Développer et tester la première version fonctionnelle</div>
-                </div>
-                
-                <div class="example-item">
-                    <div class="example-title">Tests et Validation</div>
-                    <div class="example-desc">Effectuer les tests utilisateurs et corriger les bugs identifiés</div>
-                </div>
-                
-                <div class="example-item">
-                    <div class="example-title">Documentation</div>
-                    <div class="example-desc">Rédiger la documentation technique et utilisateur complète</div>
+                <div class="examples-grid">
+                    <div class="example-item">
+                        <div class="example-title">Phase de Recherche</div>
+                        <p class="example-description">Finaliser l'étude de l'existant, analyser les besoins et rédiger le cahier des charges détaillé</p>
+                    </div>
+                    
+                    <div class="example-item">
+                        <div class="example-title">Prototype Initial</div>
+                        <p class="example-description">Développer et tester la première version fonctionnelle avec les fonctionnalités de base</p>
+                    </div>
+                    
+                    <div class="example-item">
+                        <div class="example-title">Tests et Validation</div>
+                        <p class="example-description">Effectuer les tests utilisateurs, corriger les bugs identifiés et valider les performances</p>
+                    </div>
+                    
+                    <div class="example-item">
+                        <div class="example-title">Documentation Finale</div>
+                        <p class="example-description">Rédiger la documentation technique complète et le guide utilisateur</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Next Steps -->
-            <div class="sidebar-card">
-                <h4 style="margin: 0 0 15px 0; color: #3a6ea5;">🔄 Après Création</h4>
-                <div style="font-size: 0.9em; color: #6c757d; line-height: 1.6;">
-                    <p style="margin-bottom: 12px;">
-                        Une fois votre jalon créé, vous pourrez le marquer comme complété depuis la page du projet.
-                    </p>
-                    <p style="margin-bottom: 12px;">
-                        Les jalons en retard seront mis en évidence pour vous aider à maintenir le cap.
-                    </p>
-                    <p style="margin: 0;">
-                        Créez plusieurs jalons pour décomposer votre projet en étapes gérables.
-                    </p>
+            <div class="sidebar-card next-steps">
+                <h4 class="sidebar-title">
+                    🔄 Après Création
+                </h4>
+                
+                <div class="steps-list">
+                    <div class="step-item">
+                        <div class="step-icon">✓</div>
+                        <span>Marquez le jalon comme complété depuis la page du projet une fois l'objectif atteint</span>
+                    </div>
+                    
+                    <div class="step-item">
+                        <div class="step-icon">⚠</div>
+                        <span>Les jalons en retard seront mis en évidence pour vous aider à maintenir le cap</span>
+                    </div>
+                    
+                    <div class="step-item">
+                        <div class="step-icon">📈</div>
+                        <span>Créez plusieurs jalons pour décomposer votre projet en étapes gérables</span>
+                    </div>
+                    
+                    <div class="step-item">
+                        <div class="step-icon">🤝</div>
+                        <span>Partagez vos jalons avec vos collaborateurs pour coordonner les efforts</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('milestoneForm');
+            const titleInput = document.getElementById('id_title');
+            const descriptionInput = document.getElementById('id_description');
+            const dueDateInput = document.getElementById('id_due_date');
+            
+            // Add proper classes to form elements
+            if (titleInput) titleInput.classList.add('form-input');
+            if (descriptionInput) descriptionInput.classList.add('form-textarea');
+            if (dueDateInput) dueDateInput.classList.add('form-input');
+            
+            // Form validation and enhancement
+            form.addEventListener('submit', function(e) {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.textContent = '⏳ Création en cours...';
+                submitBtn.disabled = true;
+            });
+            
+            // Auto-resize textarea
+            if (descriptionInput) {
+                descriptionInput.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+            }
+            
+            // Date validation
+            if (dueDateInput) {
+                dueDateInput.addEventListener('change', function() {
+                    const selectedDate = new Date(this.value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    if (selectedDate < today) {
+                        alert('⚠️ La date d\'échéance ne peut pas être dans le passé.');
+                        this.value = '';
+                    }
+                });
+                
+                // Set minimum date to today
+                const today = new Date().toISOString().split('T')[0];
+                dueDateInput.setAttribute('min', today);
+            }
+            
+            // Character counter for title
+            if (titleInput) {
+                const maxLength = 100; // Adjust based on your model field
+                titleInput.addEventListener('input', function() {
+                    const length = this.value.length;
+                    const remaining = maxLength - length;
+                    
+                    // Create or update counter
+                    let counter = this.parentElement.querySelector('.char-counter');
+                    if (!counter) {
+                        counter = document.createElement('div');
+                        counter.className = 'char-counter';
+                        counter.style.cssText = `
+                            font-size: var(--text-xs);
+                            color: var(--text-muted);
+                            text-align: right;
+                            margin-top: var(--space-1);
+                        `;
+                        this.parentElement.appendChild(counter);
+                    }
+                    
+                    counter.textContent = `${length}/${maxLength} caractères`;
+                    
+                    if (remaining < 10) {
+                        counter.style.color = 'var(--error)';
+                    } else if (remaining < 20) {
+                        counter.style.color = 'var(--warning)';
+                    } else {
+                        counter.style.color = 'var(--text-muted)';
+                    }
+                });
+            }
+        });
+    </script>
 {% endblock %}

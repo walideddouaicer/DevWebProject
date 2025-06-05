@@ -4,194 +4,450 @@
 {% block title %}Mes Modules - ENSA Project Manager{% endblock %}
 
 {% block breadcrumb_items %}
-<span class="breadcrumb-separator">></span>
-<span>Mes Modules</span>
+<span style="margin: 0 8px; color: var(--text-muted);">></span>
+<span style="color: var(--text-primary);">Mes Modules</span>
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
-<link rel="stylesheet" href="{% static 'teacher/css/teacher.css' %}">
 <style>
-    .modules-header {
-        background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+    /* Modules List Specific Styles */
+    .modules-hero {
+        background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
         color: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
+        padding: 40px;
+        border-radius: 16px;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(79, 70, 229, 0.3);
     }
-    
+
+    .modules-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50px;
+        width: 150px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .hero-text h1 {
+        font-size: 2.2em;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .hero-text p {
+        font-size: 1.1em;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .hero-icon {
+        font-size: 4em;
+        opacity: 0.2;
+    }
+
     .modules-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        gap: 28px;
+        margin-bottom: 32px;
     }
-    
+
     .module-card {
-        background: white;
-        border-radius: 12px;
+        background: var(--bg-card);
+        border-radius: 16px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         overflow: hidden;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-primary);
+        position: relative;
     }
-    
+
     .module-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        border-color: var(--accent-primary);
     }
-    
+
+    .module-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    }
+
     .module-header {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 20px;
-        border-bottom: 3px solid #2c5aa0;
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(99, 102, 241, 0.02));
+        padding: 24px;
+        border-bottom: 1px solid var(--border-primary);
     }
-    
+
     .module-title {
-        margin: 0 0 10px 0;
-        color: #2c5aa0;
-        font-size: 1.3em;
-        font-weight: bold;
+        margin: 0 0 12px 0;
+        color: var(--text-primary);
+        font-size: 1.4em;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
-    
+
     .module-meta {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 10px;
+        gap: 12px;
         font-size: 0.9em;
-        color: #6c757d;
+        color: var(--text-muted);
     }
-    
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .meta-item strong {
+        color: var(--text-secondary);
+    }
+
     .module-body {
-        padding: 20px;
+        padding: 24px;
     }
-    
+
     .stats-row {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 15px;
-        margin: 15px 0;
+        gap: 16px;
+        margin-bottom: 20px;
     }
-    
+
     .stat-item {
         text-align: center;
-        padding: 12px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
+        padding: 16px;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        border: 1px solid var(--border-primary);
+        transition: all 0.3s ease;
     }
-    
+
+    .stat-item:hover {
+        background: var(--border-secondary);
+        transform: translateY(-2px);
+    }
+
     .stat-number {
-        font-size: 1.5em;
-        font-weight: bold;
-        color: #2c5aa0;
+        font-size: 1.8em;
+        font-weight: 800;
+        color: var(--accent-primary);
         margin-bottom: 4px;
+        line-height: 1;
     }
-    
+
     .stat-label {
         font-size: 0.8em;
-        color: #6c757d;
+        color: var(--text-muted);
+        font-weight: 500;
     }
-    
+
+    .code-display {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        font-size: 0.9em;
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+    }
+
     .students-preview {
-        margin: 15px 0;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border-left: 4px solid #2c5aa0;
+        margin: 20px 0;
+        padding: 20px;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        border-left: 4px solid var(--accent-primary);
     }
-    
+
+    .students-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .students-title {
+        font-size: 1em;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .students-count {
+        background: var(--accent-primary);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: 600;
+    }
+
     .students-list {
-        max-height: 120px;
+        max-height: 140px;
         overflow-y: auto;
     }
-    
+
     .student-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid #e9ecef;
-        font-size: 0.9em;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-primary);
+        transition: all 0.3s ease;
     }
-    
+
+    .student-item:hover {
+        background: var(--bg-secondary);
+        margin: 0 -20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+    }
+
     .student-item:last-child {
         border-bottom: none;
     }
-    
+
+    .student-info {
+        flex: 1;
+    }
+
+    .student-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+    }
+
+    .student-details {
+        font-size: 0.8em;
+        color: var(--text-muted);
+    }
+
+    .student-date {
+        font-size: 0.8em;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .module-description {
+        margin: 16px 0;
+        padding: 16px;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        font-size: 0.9em;
+        color: var(--text-secondary);
+        border-left: 3px solid var(--border-secondary);
+    }
+
     .action-bar {
         display: flex;
-        gap: 10px;
-        margin-top: 20px;
-        padding-top: 15px;
-        border-top: 1px solid #e9ecef;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-primary);
     }
-    
-    .primary-btn {
-        background: #2c5aa0;
-        color: white;
-        padding: 10px 16px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.3s ease;
+
+    .action-btn {
         flex: 1;
-        text-align: center;
-    }
-    
-    .primary-btn:hover {
-        background: #1e3d72;
-        transform: translateY(-1px);
-    }
-    
-    .secondary-btn {
-        background: #6c757d;
-        color: white;
-        padding: 10px 16px;
-        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 20px;
+        border-radius: 10px;
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.3s ease;
-        text-align: center;
-    }
-    
-    .secondary-btn:hover {
-        background: #5a6268;
-        transform: translateY(-1px);
-    }
-    
-    .code-display {
-        background: #2c5aa0;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-family: monospace;
-        font-weight: bold;
         font-size: 0.9em;
     }
-    
+
+    .action-btn.primary {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .action-btn.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+    }
+
+    .action-btn.secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-secondary);
+    }
+
+    .action-btn.secondary:hover {
+        background: var(--border-secondary);
+        color: var(--text-primary);
+        transform: translateY(-1px);
+    }
+
     .empty-state {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 80px 40px;
         text-align: center;
-        padding: 60px;
-        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-primary);
+    }
+
+    .empty-icon {
+        font-size: 5em;
+        margin-bottom: 24px;
+        opacity: 0.3;
+    }
+
+    .empty-title {
+        font-size: 1.8em;
+        font-weight: 700;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+    }
+
+    .empty-description {
+        color: var(--text-muted);
+        font-size: 1.1em;
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto 32px;
+    }
+
+    .empty-note {
+        font-size: 0.9em;
+        color: var(--text-muted);
+        font-style: italic;
+        margin-top: 24px;
+    }
+
+    .info-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 28px;
+        margin-top: 32px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .info-icon {
+        font-size: 3em;
+        opacity: 0.3;
+        color: var(--accent-primary);
+    }
+
+    .info-content h3 {
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+        font-size: 1.4em;
+        font-weight: 700;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .info-item {
+        background: var(--bg-tertiary);
+        padding: 16px;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid var(--accent-primary);
+    }
+
+    .info-item strong {
+        color: var(--text-primary);
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .info-item p {
+        margin: 0;
+        font-size: 0.9em;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modules-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .hero-text h1 {
+            font-size: 1.8em;
+        }
+
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+
+        .action-bar {
+            flex-direction: column;
+        }
+
+        .module-meta {
+            grid-template-columns: 1fr;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-    <!-- Header Section -->
-    <div class="modules-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1 style="margin: 0 0 10px 0; font-size: 2em;">📚 Mes Modules</h1>
-                <p style="margin: 0; opacity: 0.9; font-size: 1.1em;">
-                    Gérez vos {{ assigned_modules.count }} modules et {{ total_students }} étudiants
+    <!-- Modules Hero Section -->
+    <div class="modules-hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1><i class="fas fa-book"></i> Mes Modules</h1>
+                <p>
+                    Gérez vos {{ assigned_modules.count }} modules d'enseignement et {{ total_students }} étudiants inscrits
                 </p>
             </div>
-            <div style="text-align: right;">
-                <div style="font-size: 2.5em; opacity: 0.3;">📚</div>
-            </div>
+            <div class="hero-icon">📚</div>
         </div>
     </div>
 
@@ -202,12 +458,27 @@
         <div class="module-card">
             <!-- Module Header -->
             <div class="module-header">
-                <h2 class="module-title">{{ assignment.module.code }} - {{ assignment.module.name }}</h2>
+                <h2 class="module-title">
+                    <i class="fas fa-book"></i>
+                    {{ assignment.module.code }} - {{ assignment.module.name }}
+                </h2>
                 <div class="module-meta">
-                    <div><strong>Semestre:</strong> {{ assignment.module.get_semester_display }}</div>
-                    <div><strong>Année:</strong> {{ assignment.module.academic_year }}</div>
-                    <div><strong>Assigné le:</strong> {{ assignment.assigned_at|date:"d/m/Y" }}</div>
-                    <div><strong>Code d'inscription:</strong> <span class="code-display">{{ assignment.module.code }}</span></div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <strong>Semestre:</strong> {{ assignment.module.get_semester_display }}
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <strong>Année:</strong> {{ assignment.module.academic_year }}
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-user-tie"></i>
+                        <strong>Assigné le:</strong> {{ assignment.assigned_at|date:"d/m/Y" }}
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-key"></i>
+                        <strong>Code:</strong> <span class="code-display">{{ assignment.module.code }}</span>
+                    </div>
                 </div>
             </div>
 
@@ -230,51 +501,62 @@
                 </div>
 
                 <!-- Students Preview -->
-                {% if assignment.module.enrollments.all %}
                 <div class="students-preview">
-                    <h4 style="margin: 0 0 10px 0; color: #2c5aa0; font-size: 0.95em;">
-                        👥 Étudiants Inscrits ({{ assignment.module.get_enrolled_students_count }})
-                    </h4>
-                    <div class="students-list">
-                        {% for enrollment in assignment.module.enrollments.all %}
-                        {% if enrollment.is_active %}
-                        <div class="student-item">
-                            <div>
-                                <strong>{{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}</strong>
-                                <div style="font-size: 0.8em; color: #6c757d;">
-                                    {{ enrollment.student.student_id }} • {{ enrollment.student.department }}
+                    <div class="students-header">
+                        <h4 class="students-title">
+                            <i class="fas fa-users"></i>
+                            Étudiants Inscrits
+                        </h4>
+                        <span class="students-count">{{ assignment.module.get_enrolled_students_count }}</span>
+                    </div>
+                    
+                    {% if assignment.module.enrollments.all %}
+                        <div class="students-list">
+                            {% for enrollment in assignment.module.enrollments.all %}
+                            {% if enrollment.is_active %}
+                            <div class="student-item">
+                                <div class="student-info">
+                                    <div class="student-name">
+                                        {{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}
+                                    </div>
+                                    <div class="student-details">
+                                        {{ enrollment.student.student_id }} • {{ enrollment.student.department }}
+                                    </div>
+                                </div>
+                                <div class="student-date">
+                                    {{ enrollment.enrolled_at|date:"d/m" }}
                                 </div>
                             </div>
-                            <div style="font-size: 0.8em; color: #6c757d;">
-                                {{ enrollment.enrolled_at|date:"d/m" }}
-                            </div>
+                            {% endif %}
+                            {% endfor %}
                         </div>
-                        {% endif %}
-                        {% endfor %}
-                    </div>
+                    {% else %}
+                        <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                            <i class="fas fa-user-plus" style="font-size: 2em; margin-bottom: 12px; opacity: 0.3;"></i>
+                            <p style="margin: 0; font-size: 0.9em;">Aucun étudiant inscrit</p>
+                            <p style="margin: 8px 0 0 0; font-size: 0.8em; opacity: 0.8;">
+                                Code d'inscription: <strong>{{ assignment.module.code }}</strong>
+                            </p>
+                        </div>
+                    {% endif %}
                 </div>
-                {% else %}
-                <div class="students-preview">
-                    <h4 style="margin: 0 0 10px 0; color: #6c757d; font-size: 0.95em;">👥 Aucun étudiant inscrit</h4>
-                    <p style="margin: 0; font-size: 0.9em; color: #6c757d; font-style: italic;">
-                        Les étudiants peuvent rejoindre avec le code: <strong>{{ assignment.module.code }}</strong>
-                    </p>
-                </div>
-                {% endif %}
 
                 {% if assignment.module.description %}
-                <div style="margin: 15px 0; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 0.9em; color: #6c757d;">
-                    {{ assignment.module.description|truncatewords:20 }}
+                <div class="module-description">
+                    <i class="fas fa-info-circle" style="margin-right: 8px; color: var(--accent-primary);"></i>
+                    {{ assignment.module.description|truncatewords:25 }}
                 </div>
                 {% endif %}
 
                 <!-- Action Buttons -->
                 <div class="action-bar">
-                    <a href="{% url 'teacher:module_projects' assignment.module.id %}" class="primary-btn">
-                        📋 Voir Projets
+                    <a href="{% url 'teacher:module_projects' assignment.module.id %}" class="action-btn primary">
+                        <i class="fas fa-project-diagram"></i>
+                        Voir Projets
                     </a>
-                    <a href="{% url 'teacher:module_detail' assignment.module.id %}" class="secondary-btn">
-                        ⚙️ Gérer
+                    <a href="{% url 'teacher:module_detail' assignment.module.id %}" class="action-btn secondary">
+                        <i class="fas fa-cog"></i>
+                        Gérer
                     </a>
                 </div>
             </div>
@@ -282,22 +564,30 @@
         {% endfor %}
     </div>
 
-    <!-- Information Card -->
-    <div class="card" style="margin-top: 40px; background: #f8f9fa; border-left: 4px solid #2c5aa0;">
-        <div style="display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center;">
-            <div style="font-size: 3em; opacity: 0.3;">💡</div>
-            <div>
-                <h3 style="margin: 0 0 10px 0; color: #2c5aa0;">Information</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                    <div>
-                        <p style="margin: 0; font-size: 0.9em;">
-                            <strong>Code d'inscription:</strong> Les étudiants utilisent le code du module pour s'inscrire.
-                        </p>
+    <!-- Information Panel -->
+    <div class="info-panel">
+        <div class="info-header">
+            <div class="info-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="info-content">
+                <h3>Informations sur la Gestion des Modules</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Code d'inscription</strong>
+                        <p>Les étudiants utilisent le code du module pour s'inscrire automatiquement à vos cours.</p>
                     </div>
-                    <div>
-                        <p style="margin: 0; font-size: 0.9em;">
-                            <strong>Nouveaux modules:</strong> Contactez l'administration pour obtenir de nouveaux modules.
-                        </p>
+                    <div class="info-item">
+                        <strong>Nouveaux modules</strong>
+                        <p>Contactez l'administration pour obtenir l'assignation de nouveaux modules d'enseignement.</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Gestion des étudiants</strong>
+                        <p>Suivez les inscriptions et gérez les projets de vos étudiants depuis chaque module.</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Évaluations</strong>
+                        <p>Accédez rapidement aux projets nécessitant une évaluation depuis le centre d'évaluation.</p>
                     </div>
                 </div>
             </div>
@@ -307,17 +597,21 @@
     {% else %}
     <!-- Empty State -->
     <div class="empty-state">
-        <div style="font-size: 4em; margin-bottom: 20px; opacity: 0.3;">📚</div>
-        <h2 style="color: #6c757d; margin-bottom: 15px;">Aucun Module Assigné</h2>
-        <p style="color: #6c757d; margin-bottom: 25px; max-width: 500px; margin-left: auto; margin-right: auto;">
-            Vous n'avez actuellement aucun module assigné. Une fois que l'administration vous assignera des modules, 
-            ils apparaîtront ici avec la liste des étudiants inscrits.
-        </p>
-        <div style="margin-top: 30px;">
-            <a href="{% url 'teacher:dashboard' %}" class="btn">← Retour au tableau de bord</a>
+        <div class="empty-icon">📚</div>
+        <h2 class="empty-title">Aucun Module Assigné</h2>
+        <div class="empty-description">
+            Vous n'avez actuellement aucun module assigné. Une fois que l'administration vous assignera des modules d'enseignement, 
+            ils apparaîtront ici avec la liste des étudiants inscrits et leurs projets.
         </div>
-        <div style="margin-top: 20px; font-size: 0.9em; color: #6c757d;">
-            <em>Les modules sont assignés par l'administrateur via l'interface d'administration.</em>
+        <div style="margin-top: 32px;">
+            <a href="{% url 'teacher:dashboard' %}" class="action-btn primary" style="max-width: 200px;">
+                <i class="fas fa-arrow-left"></i>
+                Retour au tableau de bord
+            </a>
+        </div>
+        <div class="empty-note">
+            <i class="fas fa-info-circle"></i>
+            Les modules sont assignés par l'administrateur via l'interface d'administration.
         </div>
     </div>
     {% endif %}

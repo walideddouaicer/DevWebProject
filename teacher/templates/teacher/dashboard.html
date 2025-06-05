@@ -4,26 +4,41 @@
 {% block title %}ENSA Project Manager - Tableau de Bord{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
-<link rel="stylesheet" href="{% static 'teacher/css/teacher.css' %}">
 <style>
-    .control-center {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 30px;
-        margin-bottom: 30px;
+    /* Dashboard Specific Styles */
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 32px;
     }
-    
-    .welcome-section {
-        background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .page-title i {
+        color: var(--accent-primary);
+    }
+
+    /* Welcome Hero Section */
+    .welcome-hero {
+        background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
         color: white;
-        padding: 30px;
-        border-radius: 12px;
+        padding: 40px;
+        border-radius: 16px;
+        margin-bottom: 32px;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 8px 32px rgba(79, 70, 229, 0.3);
     }
-    
-    .welcome-section::before {
+
+    .welcome-hero::before {
         content: '';
         position: absolute;
         top: -50%;
@@ -33,161 +48,457 @@
         background: rgba(255,255,255,0.1);
         transform: rotate(15deg);
     }
-    
-    .quick-actions {
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        border: 1px solid #e9ecef;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
+    .welcome-content {
+        position: relative;
+        z-index: 2;
     }
-    
-    .action-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 15px;
-        margin-top: 15px;
+
+    .welcome-title {
+        font-size: 2.2em;
+        font-weight: 700;
+        margin-bottom: 16px;
     }
-    
-    .action-btn {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 15px 20px;
-        background: #f8f9fa;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        text-decoration: none;
-        color: #2c5aa0;
-        font-weight: 500;
-        transition: all 0.3s ease;
+
+    .welcome-subtitle {
+        font-size: 1.1em;
+        opacity: 0.9;
+        margin-bottom: 24px;
     }
-    
-    .action-btn:hover {
-        background: #e9ecef;
-        border-color: #2c5aa0;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    
-    .action-btn.urgent {
-        background: #fff3cd;
-        border-color: #ffc107;
-        color: #856404;
-    }
-    
-    .action-btn.urgent:hover {
-        background: #ffeaa7;
-        border-color: #f39c12;
-    }
-    
-    .action-count {
-        background: #2c5aa0;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.9em;
-        font-weight: bold;
-    }
-    
-    .urgent .action-count {
-        background: #dc3545;
-    }
-    
-    .stats-overview {
+
+    .welcome-meta {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 20px;
-        margin-bottom: 30px;
+        margin-top: 24px;
     }
-    
-    .stat-card {
-        background: white;
-        padding: 25px;
+
+    .meta-item {
+        background: rgba(255,255,255,0.1);
+        padding: 16px;
         border-radius: 12px;
-        border-left: 4px solid #2c5aa0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        text-align: center;
-        transition: transform 0.3s ease;
+        backdrop-filter: blur(10px);
     }
-    
-    .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-    }
-    
-    .stat-value {
-        font-size: 2.5em;
-        font-weight: bold;
-        color: #2c5aa0;
-        margin: 0;
-    }
-    
-    .stat-label {
-        color: #6c757d;
+
+    .meta-label {
         font-size: 0.9em;
-        margin-top: 8px;
+        opacity: 0.8;
+        margin-bottom: 4px;
     }
-    
-    .recent-activity {
-        background: white;
+
+    .meta-value {
+        font-weight: 700;
+        font-size: 1.1em;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 28px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--card-accent, var(--accent-primary));
+    }
+
+    .stat-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        border-color: var(--border-secondary);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .stat-content h3 {
+        color: var(--text-muted);
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 12px;
+    }
+
+    .stat-change {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .stat-change.positive {
+        color: var(--success);
+    }
+
+    .stat-change.negative {
+        color: var(--error);
+    }
+
+    /* Quick Actions */
+    .quick-actions-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 28px;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .quick-actions-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--border-primary);
+    }
+
+    .quick-actions-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+    }
+
+    .action-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px;
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border-primary);
         border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        text-decoration: none;
+        color: var(--text-primary);
+        font-weight: 500;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
-    
+
+    .action-card:hover {
+        background: var(--border-secondary);
+        border-color: var(--accent-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        color: var(--text-primary);
+    }
+
+    .action-card.urgent {
+        background: rgba(245, 158, 11, 0.1);
+        border-color: var(--warning);
+        color: var(--warning);
+    }
+
+    .action-card.urgent:hover {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: var(--warning);
+        color: var(--warning);
+    }
+
+    .action-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .action-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .action-text h4 {
+        margin: 0 0 4px 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .action-text p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.8;
+    }
+
+    .action-count {
+        background: var(--accent-primary);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 700;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .urgent .action-count {
+        background: var(--warning);
+        color: white;
+    }
+
+    /* Content Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 32px;
+        margin-bottom: 32px;
+    }
+
+    .content-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .content-card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+
+    .card-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(99, 102, 241, 0.02));
+    }
+
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .card-action {
+        color: var(--accent-primary);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        padding: 8px 16px;
+        border-radius: 8px;
+    }
+
+    .card-action:hover {
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--accent-secondary);
+    }
+
+    .card-content {
+        padding: 24px;
+    }
+
+    /* Activity Lists */
     .activity-list {
         list-style: none;
         padding: 0;
         margin: 0;
     }
-    
+
     .activity-item {
         display: flex;
         align-items: center;
-        padding: 15px 0;
-        border-bottom: 1px solid #f1f3f4;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border-primary);
+        transition: all 0.3s ease;
     }
-    
+
+    .activity-item:hover {
+        background: var(--bg-tertiary);
+        margin: 0 -24px;
+        padding: 16px 24px;
+        border-radius: 8px;
+    }
+
     .activity-item:last-child {
         border-bottom: none;
     }
-    
+
     .activity-icon {
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
-        background: #e8f4ff;
+        background: var(--bg-tertiary);
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 15px;
-        font-size: 1.2em;
+        margin-right: 16px;
+        font-size: 20px;
+        color: var(--accent-primary);
     }
-    
+
     .activity-content {
         flex: 1;
     }
-    
+
     .activity-title {
-        font-weight: 500;
-        color: #2c5aa0;
+        font-weight: 600;
+        color: var(--text-primary);
         margin-bottom: 4px;
+        font-size: 15px;
     }
-    
+
+    .activity-title a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .activity-title a:hover {
+        color: var(--accent-primary);
+    }
+
     .activity-meta {
-        font-size: 0.85em;
-        color: #6c757d;
+        color: var(--text-muted);
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .activity-action {
+        margin-left: 16px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-icon {
+        font-size: 4em;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    .empty-title {
+        font-size: 1.5em;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: var(--text-secondary);
+    }
+
+    .empty-description {
+        font-size: 1em;
+        line-height: 1.6;
+        max-width: 400px;
+        margin: 0 auto 24px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .welcome-meta {
+            grid-template-columns: 1fr;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .welcome-title {
+            font-size: 1.8em;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-    <!-- Control Center Layout -->
-    <div class="control-center">
-        <!-- Welcome & Overview -->
-        <div class="welcome-section">
-            <h2 style="margin: 0 0 15px 0; font-size: 1.8em;">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-chart-pie"></i>
+            Tableau de Bord Enseignant
+        </h1>
+        <div class="top-actions">
+            <a href="{% url 'teacher:student_projects' %}?status=submitted" class="action-btn {% if pending_projects > 0 %}primary{% endif %}">
+                <i class="fas fa-clock"></i>
+                {% if pending_projects > 0 %}À Évaluer ({{ pending_projects }}){% else %}Évaluations{% endif %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Welcome Hero -->
+    <div class="welcome-hero">
+        <div class="welcome-content">
+            <h2 class="welcome-title">
                 Bienvenue, 
                 {% if teacher.user.first_name or teacher.user.last_name %}
                     {{ teacher.user.first_name }} {{ teacher.user.last_name }}
@@ -195,151 +506,283 @@
                     {{ teacher.user.username }}
                 {% endif %}
             </h2>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px;">
-                <div>
-                    <div style="font-size: 0.9em; opacity: 0.9;">ID Enseignant</div>
-                    <div style="font-weight: bold;">{{ teacher.teacher_id|default:"Non défini" }}</div>
+            <p class="welcome-subtitle">
+                Gérez vos modules, évaluez les projets de vos étudiants et suivez leurs progrès depuis votre tableau de bord centralisé.
+            </p>
+            
+            <div class="welcome-meta">
+                <div class="meta-item">
+                    <div class="meta-label">ID Enseignant</div>
+                    <div class="meta-value">{{ teacher.teacher_id|default:"Non défini" }}</div>
                 </div>
-                <div>
-                    <div style="font-size: 0.9em; opacity: 0.9;">Département</div>
-                    <div style="font-weight: bold;">{{ teacher.department }}</div>
+                <div class="meta-item">
+                    <div class="meta-label">Département</div>
+                    <div class="meta-value">{{ teacher.department }}</div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Quick Actions Panel -->
-        <div class="quick-actions">
-            <h3 style="margin: 0 0 15px 0; color: #2c5aa0;">🚀 Actions Rapides</h3>
-            <div class="action-grid">
-                {% if pending_projects > 0 %}
-                <a href="{% url 'teacher:student_projects' %}?status=submitted" class="action-btn urgent">
-                    <span>⏳ Projets à évaluer</span>
-                    <span class="action-count">{{ pending_projects }}</span>
-                </a>
-                {% endif %}
-                
-                <a href="{% url 'teacher:student_projects' %}" class="action-btn">
-                    <span>📋 Tous les projets</span>
-                    <span class="action-count">{{ total_projects }}</span>
-                </a>
-                
-                <a href="{% url 'teacher:modules_list' %}" class="action-btn">
-                    <span>📚 Gérer mes modules</span>
-                    <span class="action-count">{{ total_modules }}</span>
-                </a>
-                
-                {% if validated_projects > 0 %}
-                <a href="{% url 'teacher:student_projects' %}?status=validated" class="action-btn">
-                    <span>✅ Projets validés</span>
-                    <span class="action-count">{{ validated_projects }}</span>
-                </a>
-                {% endif %}
+                <div class="meta-item">
+                    <div class="meta-label">Modules Assignés</div>
+                    <div class="meta-value">{{ total_modules }}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Étudiants Supervisés</div>
+                    <div class="meta-value">{{ total_students }}</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Statistics Overview -->
-    <div class="stats-overview">
-        <div class="stat-card">
-            <div class="stat-value">{{ total_modules }}</div>
-            <div class="stat-label">Modules assignés</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ total_students }}</div>
-            <div class="stat-label">Étudiants supervisés</div>
+    <!-- Quick Actions Panel -->
+    {% if pending_projects > 0 or total_projects > 0 or total_modules > 0 %}
+    <div class="quick-actions-panel">
+        <div class="quick-actions-header">
+            <h3 class="quick-actions-title">
+                <i class="fas fa-bolt"></i>
+                Actions Rapides
+            </h3>
+            <span style="font-size: 0.9em; color: var(--text-muted);">Gérez rapidement vos tâches importantes</span>
         </div>
         
-        <div class="stat-card">
-            <div class="stat-value">{{ pending_projects }}</div>
-            <div class="stat-label">En attente d'évaluation</div>
+        <div class="action-grid">
+            {% if pending_projects > 0 %}
+            <a href="{% url 'teacher:student_projects' %}?status=submitted" class="action-card urgent">
+                <div class="action-info">
+                    <div class="action-icon" style="background: linear-gradient(135deg, var(--warning), #d97706);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="action-text">
+                        <h4>Projets à évaluer</h4>
+                        <p>Projets en attente de votre validation</p>
+                    </div>
+                </div>
+                <span class="action-count">{{ pending_projects }}</span>
+            </a>
+            {% endif %}
+            
+            <a href="{% url 'teacher:student_projects' %}" class="action-card">
+                <div class="action-info">
+                    <div class="action-icon" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <div class="action-text">
+                        <h4>Tous les projets</h4>
+                        <p>Centre d'évaluation complet</p>
+                    </div>
+                </div>
+                <span class="action-count">{{ total_projects }}</span>
+            </a>
+            
+            <a href="{% url 'teacher:modules_list' %}" class="action-card">
+                <div class="action-info">
+                    <div class="action-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="action-text">
+                        <h4>Gérer mes modules</h4>
+                        <p>Administrer vos modules d'enseignement</p>
+                    </div>
+                </div>
+                <span class="action-count">{{ total_modules }}</span>
+            </a>
+            
+            {% if validated_projects > 0 %}
+            <a href="{% url 'teacher:student_projects' %}?status=validated" class="action-card">
+                <div class="action-info">
+                    <div class="action-icon" style="background: linear-gradient(135deg, var(--success), #059669);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="action-text">
+                        <h4>Projets validés</h4>
+                        <p>Projets approuvés avec succès</p>
+                    </div>
+                </div>
+                <span class="action-count">{{ validated_projects }}</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statistics Overview -->
+    <div class="stats-grid">
+        <div class="stat-card" style="--card-accent: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <h3>Modules Assignés</h3>
+                    <div class="stat-value">{{ total_modules }}</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-book"></i>
+                        Modules actifs
+                    </div>
+                </div>
+                <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                    <i class="fas fa-book"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card" style="--card-accent: linear-gradient(135deg, #10b981, #059669);">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <h3>Étudiants Supervisés</h3>
+                    <div class="stat-value">{{ total_students }}</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        Inscrits dans vos modules
+                    </div>
+                </div>
+                <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card" style="--card-accent: linear-gradient(135deg, #f59e0b, #d97706);">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <h3>En Attente d'Évaluation</h3>
+                    <div class="stat-value">{{ pending_projects }}</div>
+                    <div class="stat-change {% if pending_projects > 0 %}negative{% else %}positive{% endif %}">
+                        <i class="fas fa-{% if pending_projects > 0 %}exclamation-triangle{% else %}check{% endif %}"></i>
+                        {% if pending_projects > 0 %}Action requise{% else %}À jour{% endif %}
+                    </div>
+                </div>
+                <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card" style="--card-accent: linear-gradient(135deg, #667eea, #764ba2);">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <h3>Projets Totaux</h3>
+                    <div class="stat-value">{{ total_projects }}</div>
+                    <div class="stat-change positive">
+                        <i class="fas fa-project-diagram"></i>
+                        Tous vos projets
+                    </div>
+                </div>
+                <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Two Column Layout for Recent Activity -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+    <div class="content-grid">
         <!-- Recent Modules -->
-        {% if assigned_modules %}
-        <div class="recent-activity">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0; color: #2c5aa0;">📚 Modules Récents</h3>
-                <a href="{% url 'teacher:modules_list' %}" class="btn btn-sm">Voir tous</a>
+        <div class="content-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-book"></i>
+                    Modules Récents
+                </h2>
+                <a href="{% url 'teacher:modules_list' %}" class="card-action">Voir tous</a>
             </div>
-            
-            <ul class="activity-list">
-                {% for assignment in recent_modules %}
-                <li class="activity-item">
-                    <div class="activity-icon">📚</div>
-                    <div class="activity-content">
-                        <div class="activity-title">
-                            <a href="{% url 'teacher:module_detail' assignment.module.id %}" style="text-decoration: none; color: inherit;">
-                                {{ assignment.module.code }} - {{ assignment.module.name|truncatewords:4 }}
-                            </a>
-                        </div>
-                        <div class="activity-meta">
-                            {{ assignment.module.get_enrolled_students_count }} étudiants • {{ assignment.module.get_semester_display }}
-                        </div>
-                    </div>
-                    <a href="{% url 'teacher:module_projects' assignment.module.id %}" class="btn btn-sm">Projets</a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-
-        <!-- Recent Project Activity -->
-        <div class="recent-activity">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0; color: #2c5aa0;">🔄 Activité Récente</h3>
-                <a href="{% url 'teacher:student_projects' %}" class="btn btn-sm">Voir tous</a>
-            </div>
-            
-            <ul class="activity-list">
-                {% if recent_projects %}
-                    {% for project in recent_projects %}
-                    <li class="activity-item">
-                        <div class="activity-icon">
-                            {% if project.status == 'submitted' %}⏳
-                            {% elif project.status == 'validated' %}✅
-                            {% elif project.status == 'rejected' %}❌
-                            {% else %}📝{% endif %}
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">
-                                <a href="{% url 'teacher:project_review' project.id %}" style="text-decoration: none; color: inherit;">
-                                    {{ project.title|truncatewords:5 }}
+            <div class="card-content">
+                {% if assigned_modules %}
+                    <ul class="activity-list">
+                        {% for assignment in recent_modules %}
+                        <li class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">
+                                    <a href="{% url 'teacher:module_detail' assignment.module.id %}">
+                                        {{ assignment.module.code }} - {{ assignment.module.name|truncatewords:4 }}
+                                    </a>
+                                </div>
+                                <div class="activity-meta">
+                                    {{ assignment.module.get_enrolled_students_count }} étudiants • {{ assignment.module.get_semester_display }}
+                                </div>
+                            </div>
+                            <div class="activity-action">
+                                <a href="{% url 'teacher:module_projects' assignment.module.id %}" class="btn btn-sm">
+                                    <i class="fas fa-project-diagram"></i> Projets
                                 </a>
                             </div>
-                            <div class="activity-meta">
-                                {{ project.student.user.get_full_name|default:project.student.user.username }} • {{ project.updated_at|timesince }}
-                            </div>
-                        </div>
-                        <span class="status-badge status-{{ project.status|lower }}">
-                            {{ project.get_status_display }}
-                        </span>
-                    </li>
-                    {% endfor %}
+                        </li>
+                        {% endfor %}
+                    </ul>
                 {% else %}
-                    <li class="activity-item">
-                        <div class="activity-icon">📭</div>
-                        <div class="activity-content">
-                            <div class="activity-title">Aucune activité récente</div>
-                            <div class="activity-meta">Les projets apparaîtront ici une fois soumis</div>
+                    <div class="empty-state">
+                        <div class="empty-icon">📚</div>
+                        <div class="empty-title">Aucun module assigné</div>
+                        <div class="empty-description">
+                            Contactez l'administration pour obtenir des assignations de modules.
                         </div>
-                    </li>
+                    </div>
                 {% endif %}
-            </ul>
+            </div>
+        </div>
+
+        <!-- Recent Project Activity -->
+        <div class="content-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-history"></i>
+                    Activité Récente
+                </h2>
+                <a href="{% url 'teacher:student_projects' %}" class="card-action">Voir tous</a>
+            </div>
+            <div class="card-content">
+                {% if recent_projects %}
+                    <ul class="activity-list">
+                        {% for project in recent_projects %}
+                        <li class="activity-item">
+                            <div class="activity-icon">
+                                {% if project.status == 'submitted' %}
+                                    <i class="fas fa-clock" style="color: var(--warning);"></i>
+                                {% elif project.status == 'validated' %}
+                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                {% elif project.status == 'rejected' %}
+                                    <i class="fas fa-times-circle" style="color: var(--error);"></i>
+                                {% else %}
+                                    <i class="fas fa-file-alt"></i>
+                                {% endif %}
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">
+                                    <a href="{% url 'teacher:project_review' project.id %}">
+                                        {{ project.title|truncatewords:5 }}
+                                    </a>
+                                </div>
+                                <div class="activity-meta">
+                                    {{ project.student.user.get_full_name|default:project.student.user.username }} • {{ project.updated_at|timesince }}
+                                </div>
+                            </div>
+                            <div class="activity-action">
+                                <span class="status-badge status-{{ project.status|lower }}">
+                                    {{ project.get_status_display }}
+                                </span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <div class="empty-title">Aucune activité récente</div>
+                        <div class="empty-description">
+                            Les projets apparaîtront ici une fois soumis par vos étudiants.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 
     {% if not assigned_modules %}
     <!-- No Modules State -->
-    <div class="card" style="text-align: center; padding: 60px; margin-top: 30px;">
-        <div style="font-size: 4em; margin-bottom: 20px; opacity: 0.3;">📚</div>
-        <h2 style="color: #6c757d; margin-bottom: 15px;">Aucun Module Assigné</h2>
-        <p style="color: #6c757d; margin-bottom: 25px;">
-            Vous n'avez actuellement aucun module assigné. Contactez l'administration pour obtenir des assignations de modules.
-        </p>
-        <p style="font-size: 0.9em; color: #6c757d;">
+    <div class="content-card" style="text-align: center; padding: 60px;">
+        <div class="empty-icon">📚</div>
+        <h2 class="empty-title">Aucun Module Assigné</h2>
+        <div class="empty-description" style="max-width: 500px; margin: 0 auto 25px;">
+            Vous n'avez actuellement aucun module assigné. Contactez l'administration pour obtenir des assignations de modules et commencer à superviser des étudiants.
+        </div>
+        <p style="font-size: 0.9em; color: var(--text-muted);">
             <em>Note:</em> Les modules sont assignés par l'administrateur via l'interface d'administration.
         </p>
     </div>
