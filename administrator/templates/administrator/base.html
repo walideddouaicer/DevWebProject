@@ -15,593 +15,9 @@ Base template for the administrator app - Modern Design Update with Dark/Light T
     
     <!-- Page-specific CSS -->
     {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'administrator/css/base.css' %}">
     
-    <style>
-        :root {
-            /* Light Theme Colors */
-            --light-bg-primary: #ffffff;
-            --light-bg-secondary: #f8fafc;
-            --light-bg-tertiary: #f1f5f9;
-            --light-bg-card: #ffffff;
-            --light-border-primary: #e2e8f0;
-            --light-border-secondary: #cbd5e1;
-            --light-text-primary: #1e293b;
-            --light-text-secondary: #475569;
-            --light-text-muted: #64748b;
-            
-            /* Dark Theme Colors */
-            --dark-bg-primary: #0f172a;
-            --dark-bg-secondary: #1e293b;
-            --dark-bg-tertiary: #334155;
-            --dark-bg-card: #1e293b;
-            --dark-border-primary: #334155;
-            --dark-border-secondary: #475569;
-            --dark-text-primary: #f8fafc;
-            --dark-text-secondary: #cbd5e1;
-            --dark-text-muted: #94a3b8;
-            
-            /* Accent Colors (consistent across themes) */
-            --accent-primary: #4F46E5;
-            --accent-secondary: #6366f1;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --error: #EF4444;
-            --info: #3B82F6;
-            
-            /* Active Theme Variables */
-            --bg-primary: var(--dark-bg-primary);
-            --bg-secondary: var(--dark-bg-secondary);
-            --bg-tertiary: var(--dark-bg-tertiary);
-            --bg-card: var(--dark-bg-card);
-            --border-primary: var(--dark-border-primary);
-            --border-secondary: var(--dark-border-secondary);
-            --text-primary: var(--dark-text-primary);
-            --text-secondary: var(--dark-text-secondary);
-            --text-muted: var(--dark-text-muted);
-        }
-
-        [data-theme="light"] {
-            --bg-primary: var(--light-bg-primary);
-            --bg-secondary: var(--light-bg-secondary);
-            --bg-tertiary: var(--light-bg-tertiary);
-            --bg-card: var(--light-bg-card);
-            --border-primary: var(--light-border-primary);
-            --border-secondary: var(--light-border-secondary);
-            --text-primary: var(--light-text-primary);
-            --text-secondary: var(--light-text-secondary);
-            --text-muted: var(--light-text-muted);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            min-height: 100vh;
-            transition: all 0.3s ease;
-        }
-
-        .app-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-            border-right: 1px solid var(--border-primary);
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
-            z-index: 1000;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 32px 24px;
-            border-bottom: 1px solid var(--border-primary);
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-
-        .logo-text {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .nav-menu {
-            padding: 24px 0;
-        }
-
-        .nav-section {
-            margin-bottom: 32px;
-        }
-
-        .nav-section-title {
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 0 24px;
-            margin-bottom: 12px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 24px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            position: relative;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: rgba(79, 70, 229, 0.1);
-            color: var(--text-primary);
-            border-left-color: var(--accent-primary);
-            transform: translateX(4px);
-        }
-
-        .nav-item.active {
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(99, 102, 241, 0.1));
-            color: var(--text-primary);
-            border-left-color: var(--accent-primary);
-        }
-
-        .nav-item.active::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        }
-
-        .nav-item i {
-            width: 20px;
-            font-size: 16px;
-            text-align: center;
-        }
-
-        .nav-badge {
-            background: linear-gradient(135deg, var(--error), #dc2626);
-            color: white;
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            margin-left: auto;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-        }
-
-        /* Theme Toggle */
-        .theme-toggle {
-            margin: 0 24px 24px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-primary);
-            padding: 12px 16px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .theme-toggle:hover {
-            background: var(--border-secondary);
-            transform: translateY(-1px);
-        }
-
-        .theme-toggle i {
-            color: var(--accent-primary);
-        }
-
-        .theme-text {
-            color: var(--text-secondary);
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            margin-left: 280px;
-            background: var(--bg-primary);
-            min-height: 100vh;
-        }
-
-        .top-bar {
-            background: var(--bg-card);
-            padding: 20px 32px;
-            border-bottom: 1px solid var(--border-primary);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .page-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .page-title i {
-            color: var(--accent-primary);
-        }
-
-        .top-actions {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .logout-btn {
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-secondary);
-            color: var(--text-secondary);
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-
-        .logout-btn:hover {
-            background: var(--error);
-            border-color: var(--error);
-            color: white;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-        }
-
-        /* Breadcrumb */
-        .breadcrumb {
-            background: var(--bg-secondary);
-            padding: 16px 32px;
-            border-bottom: 1px solid var(--border-primary);
-        }
-
-        .breadcrumb-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-
-        .breadcrumb a {
-            color: var(--accent-primary);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .breadcrumb a:hover {
-            color: var(--accent-secondary);
-        }
-
-        .breadcrumb-separator {
-            color: var(--text-muted);
-        }
-
-        /* Content Container */
-        .container {
-            padding: 32px;
-            max-width: none;
-        }
-
-        /* Card Components */
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-primary);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            margin-bottom: 24px;
-        }
-
-        .card:hover {
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            transform: translateY(-2px);
-        }
-
-        .card-header {
-            padding: 24px;
-            border-bottom: 1px solid var(--border-primary);
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(99, 102, 241, 0.02));
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0;
-        }
-
-        .card-content {
-            padding: 24px;
-        }
-
-        /* Button Styles */
-        .btn {
-            background: var(--accent-primary);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-
-        .btn:hover {
-            background: var(--accent-secondary);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
-            color: white;
-            text-decoration: none;
-        }
-
-        .btn-secondary {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            border: 2px solid var(--border-secondary);
-            box-shadow: none;
-        }
-
-        .btn-secondary:hover {
-            background: var(--border-secondary);
-            color: var(--text-primary);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success), #059669);
-        }
-
-        .btn-success:hover {
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, var(--warning), #d97706);
-            color: white;
-        }
-
-        .btn-warning:hover {
-            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, var(--error), #dc2626);
-        }
-
-        .btn-danger:hover {
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-        }
-
-        /* Form Elements */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-
-        .form-control, .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            background: var(--bg-tertiary);
-            border: 2px solid var(--border-secondary);
-            border-radius: 10px;
-            padding: 12px 16px;
-            color: var(--text-primary);
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus, .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-            background: var(--bg-card);
-        }
-
-        .form-control::placeholder {
-            color: var(--text-muted);
-        }
-
-        /* Status Badges */
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .status-active {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .status-inactive {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
-            color: var(--error);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .status-pending, .status-submitted {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
-            color: var(--warning);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .status-validated {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .status-rejected {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
-            color: var(--error);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .status-in_progress {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
-            color: var(--info);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        /* Messages */
-        .messages {
-            margin-bottom: 24px;
-        }
-
-        .alert {
-            padding: 16px 20px;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            border-left: 4px solid;
-            font-weight: 500;
-            backdrop-filter: blur(10px);
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
-            color: var(--success);
-            border-left-color: var(--success);
-        }
-
-        .alert-error, .alert-danger {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
-            color: var(--error);
-            border-left-color: var(--error);
-        }
-
-        .alert-warning {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
-            color: var(--warning);
-            border-left-color: var(--warning);
-        }
-
-        .alert-info {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
-            color: var(--info);
-            border-left-color: var(--info);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .container {
-                padding: 16px;
-            }
-
-            .top-bar {
-                padding: 16px;
-            }
-
-            .mobile-menu-btn {
-                display: block;
-                background: var(--bg-tertiary);
-                border: 2px solid var(--border-secondary);
-                color: var(--text-secondary);
-                padding: 10px;
-                border-radius: 8px;
-                cursor: pointer;
-                margin-right: 16px;
-            }
-        }
-
-        .mobile-menu-btn {
-            display: none;
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-secondary);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
-    </style>
+    
 </head>
 <body>
     <div class="app-container">
@@ -642,13 +58,19 @@ Base template for the administrator app - Modern Design Update with Dark/Light T
                         <span>Nouveau Module</span>
                     </a>
                 </div>
-            </nav>
 
-            <!-- Theme Toggle -->
-            <div class="theme-toggle" onclick="toggleTheme()">
-                <i class="fas fa-moon" id="theme-icon"></i>
-                <span class="theme-text" id="theme-text">Mode Sombre</span>
-            </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Système</div>
+                    <a href="#" class="nav-item" onclick="showComingSoon('Paramètres')">
+                        <i class="fas fa-cog"></i>
+                        <span>Paramètres</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="showComingSoon('Support')">
+                        <i class="fas fa-life-ring"></i>
+                        <span>Support</span>
+                    </a>
+                </div>
+            </nav>
         </aside>
 
         <!-- Main Content -->
@@ -665,6 +87,24 @@ Base template for the administrator app - Modern Design Update with Dark/Light T
                 </h1>
                 
                 <div class="top-actions">
+                    <!-- Top Navigation Buttons -->
+                    <div class="top-nav-buttons">
+                        <a href="{% url 'administrator:projects_list' %}" class="top-nav-btn {% if 'project' in request.resolver_match.url_name %}active{% endif %}">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>Projets</span>
+                        </a>
+                        <a href="{% url 'administrator:modules_list' %}" class="top-nav-btn {% if 'module' in request.resolver_match.url_name %}active{% endif %}">
+                            <i class="fas fa-book"></i>
+                            <span>Modules</span>
+                        </a>
+                    </div>
+
+                    <!-- Theme Toggle Button -->
+                    <button class="theme-toggle-top" onclick="toggleTheme()" title="Changer le thème">
+                        <i class="fas fa-moon" id="theme-icon-top"></i>
+                    </button>
+
+                    <!-- Logout Button -->
                     <form method="post" action="{% url 'logout' %}" style="display: inline;">
                         {% csrf_token %}
                         <button type="submit" class="logout-btn">
@@ -713,19 +153,16 @@ Base template for the administrator app - Modern Design Update with Dark/Light T
         // Theme Management
         function toggleTheme() {
             const html = document.documentElement;
-            const themeIcon = document.getElementById('theme-icon');
-            const themeText = document.getElementById('theme-text');
+            const themeIcon = document.getElementById('theme-icon-top');
             const currentTheme = html.getAttribute('data-theme');
             
             if (currentTheme === 'dark') {
                 html.setAttribute('data-theme', 'light');
                 themeIcon.className = 'fas fa-sun';
-                themeText.textContent = 'Mode Clair';
                 localStorage.setItem('theme', 'light');
             } else {
                 html.setAttribute('data-theme', 'dark');
                 themeIcon.className = 'fas fa-moon';
-                themeText.textContent = 'Mode Sombre';
                 localStorage.setItem('theme', 'dark');
             }
         }
@@ -734,17 +171,14 @@ Base template for the administrator app - Modern Design Update with Dark/Light T
         document.addEventListener('DOMContentLoaded', function() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
             const html = document.documentElement;
-            const themeIcon = document.getElementById('theme-icon');
-            const themeText = document.getElementById('theme-text');
+            const themeIcon = document.getElementById('theme-icon-top');
             
             html.setAttribute('data-theme', savedTheme);
             
             if (savedTheme === 'light') {
                 themeIcon.className = 'fas fa-sun';
-                themeText.textContent = 'Mode Clair';
             } else {
                 themeIcon.className = 'fas fa-moon';
-                themeText.textContent = 'Mode Sombre';
             }
         });
 
@@ -764,6 +198,98 @@ Base template for the administrator app - Modern Design Update with Dark/Light T
                 !menuBtn.contains(event.target)) {
                 sidebar.classList.remove('open');
             }
+        });
+
+        // Coming Soon functionality for system features
+        function showComingSoon(feature) {
+            // Create a beautiful modal for coming soon
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                backdrop-filter: blur(5px);
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: var(--bg-card);
+                border: 1px solid var(--border-primary);
+                border-radius: 16px;
+                padding: 40px;
+                text-align: center;
+                max-width: 400px;
+                width: 90%;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                color: var(--text-primary);
+            `;
+            
+            content.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 20px; color: var(--accent-primary);">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h3 style="margin-bottom: 16px; font-size: 24px; font-weight: 700;">
+                    ${feature} - Bientôt Disponible
+                </h3>
+                <p style="color: var(--text-muted); margin-bottom: 24px; line-height: 1.5;">
+                    Cette fonctionnalité est en cours de développement et sera disponible dans une prochaine mise à jour.
+                </p>
+                <button onclick="this.closest('.modal').remove()" style="
+                    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 10px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+                ">
+                    <i class="fas fa-check"></i> Compris
+                </button>
+            `;
+            
+            modal.className = 'modal';
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+            
+            // Close on click outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
+            // Close on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    modal.remove();
+                }
+            }, { once: true });
+        }
+
+        // Add smooth animations to top nav buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const topNavButtons = document.querySelectorAll('.top-nav-btn');
+            
+            topNavButtons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px) scale(1.02)';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    if (!this.classList.contains('active')) {
+                        this.style.transform = 'translateY(0) scale(1)';
+                    }
+                });
+            });
         });
     </script>
     
