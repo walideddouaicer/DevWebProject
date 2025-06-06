@@ -1,0 +1,619 @@
+<!-- public/templates/public/about.html -->
+{% extends 'public/base_public.html' %}
+
+{% block title %}À propos - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+    .about-hero {
+        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+        color: white;
+        padding: 6rem 0;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .about-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.1;
+    }
+    
+    .about-hero .container {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .about-hero h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #ffffff, #e2e8f0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .about-hero p {
+        font-size: 1.3rem;
+        opacity: 0.9;
+        max-width: 700px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+    
+    .mission-section {
+        padding: 5rem 0;
+        background: white;
+    }
+    
+    .mission-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+    }
+    
+    .mission-text h2 {
+        font-size: 2.5rem;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .mission-text p {
+        font-size: 1.1rem;
+        color: #4a5568;
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+    }
+    
+    .mission-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1.5rem;
+        background: #f7fafc;
+        border-radius: 1rem;
+        border-left: 4px solid #4F46E5;
+    }
+    
+    .stat-item h3 {
+        font-size: 2rem;
+        color: #4F46E5;
+        margin-bottom: 0.5rem;
+        font-weight: 800;
+    }
+    
+    .stat-item p {
+        color: #718096;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .mission-visual {
+        position: relative;
+    }
+    
+    .mission-image {
+        width: 100%;
+        height: 400px;
+        background: linear-gradient(135deg, #4F46E5, #7C3AED);
+        border-radius: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 4rem;
+        box-shadow: 0 20px 40px rgba(79, 70, 229, 0.3);
+    }
+    
+    .values-section {
+        padding: 5rem 0;
+        background: #f8fafc;
+    }
+    
+    .section-header {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    
+    .section-header h2 {
+        font-size: 2.5rem;
+        color: #2d3748;
+        margin-bottom: 1rem;
+        font-weight: 700;
+    }
+    
+    .section-header p {
+        font-size: 1.1rem;
+        color: #718096;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .values-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    
+    .value-card {
+        background: white;
+        padding: 3rem 2rem;
+        border-radius: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .value-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    }
+    
+    .value-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .value-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #4F46E5, #7C3AED);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        color: white;
+        font-size: 2rem;
+    }
+    
+    .value-card h3 {
+        font-size: 1.5rem;
+        color: #2d3748;
+        margin-bottom: 1rem;
+        font-weight: 700;
+    }
+    
+    .value-card p {
+        color: #718096;
+        line-height: 1.6;
+    }
+    
+    .story-section {
+        padding: 5rem 0;
+        background: white;
+    }
+    
+    .story-content {
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+    }
+    
+    .story-content h2 {
+        font-size: 2.5rem;
+        color: #2d3748;
+        margin-bottom: 2rem;
+        font-weight: 700;
+    }
+    
+    .story-text {
+        font-size: 1.1rem;
+        color: #4a5568;
+        line-height: 1.8;
+        margin-bottom: 2rem;
+    }
+    
+    .impact-section {
+        padding: 5rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-align: center;
+    }
+    
+    .impact-content h2 {
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+        font-weight: 700;
+    }
+    
+    .impact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 3rem;
+        margin-top: 3rem;
+    }
+    
+    .impact-item {
+        text-align: center;
+    }
+    
+    .impact-number {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        background: rgba(255,255,255,0.2);
+        border-radius: 1rem;
+        padding: 1rem;
+        display: inline-block;
+        min-width: 100px;
+    }
+    
+    .impact-label {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+    
+    .team-section {
+        padding: 5rem 0;
+        background: #f8fafc;
+    }
+    
+    .team-content {
+        text-align: center;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .team-content h2 {
+        font-size: 2.5rem;
+        color: #2d3748;
+        margin-bottom: 2rem;
+        font-weight: 700;
+    }
+    
+    .team-content p {
+        font-size: 1.1rem;
+        color: #4a5568;
+        line-height: 1.8;
+        margin-bottom: 2rem;
+    }
+    
+    .contact-section {
+        padding: 5rem 0;
+        background: white;
+    }
+    
+    .contact-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+    }
+    
+    .contact-info h2 {
+        font-size: 2.5rem;
+        color: #2d3748;
+        margin-bottom: 2rem;
+        font-weight: 700;
+    }
+    
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: #f7fafc;
+        border-radius: 0.5rem;
+    }
+    
+    .contact-item i {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #4F46E5, #7C3AED);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .contact-item div h4 {
+        color: #2d3748;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+    
+    .contact-item div p {
+        color: #718096;
+        margin: 0;
+    }
+    
+    .contact-form {
+        background: #f7fafc;
+        padding: 2rem;
+        border-radius: 1rem;
+    }
+    
+    .contact-form h3 {
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .contact-form p {
+        color: #718096;
+        margin-bottom: 2rem;
+    }
+    
+    .contact-btn {
+        background: linear-gradient(135deg, #4F46E5, #7C3AED);
+        color: white;
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .contact-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .mission-content,
+        .contact-content {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        .about-hero h1 {
+            font-size: 2.5rem;
+        }
+        
+        .mission-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="about-hero">
+    <div class="container">
+        <h1>À propos d'ENSA Project Manager</h1>
+        <p>Une plateforme innovante née de la passion pour l'excellence académique et l'innovation technologique au service de l'École Nationale des Sciences Appliquées</p>
+    </div>
+</section>
+
+<!-- Mission Section -->
+<section class="mission-section">
+    <div class="container">
+        <div class="mission-content">
+            <div class="mission-text">
+                <h2>Notre Mission</h2>
+                <p>
+                    ENSA Project Manager a été conçu pour révolutionner la gestion des projets académiques au sein de l'École Nationale des Sciences Appliquées. Notre mission est de fournir aux étudiants, enseignants et administrateurs les outils nécessaires pour exceller dans leurs projets académiques.
+                </p>
+                <p>
+                    Nous croyons que la technologie peut transformer l'expérience éducative en facilitant la collaboration, en améliorant le suivi des projets et en permettant une évaluation plus précise et constructive.
+                </p>
+                
+                <div class="mission-stats">
+                    <div class="stat-item">
+                        <h3>100%</h3>
+                        <p>Gratuit pour ENSA</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>24/7</h3>
+                        <p>Disponibilité</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mission-visual">
+                <div class="mission-image">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Values Section -->
+<section class="values-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Nos Valeurs</h2>
+            <p>Les principes qui guident le développement et l'évolution de notre plateforme</p>
+        </div>
+        
+        <div class="values-grid">
+            <div class="value-card">
+                <div class="value-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <h3>Innovation</h3>
+                <p>Nous repoussons constamment les limites de la technologie éducative pour offrir des solutions toujours plus performantes et intuitives.</p>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Collaboration</h3>
+                <p>Nous facilitons le travail d'équipe et la communication entre tous les acteurs de l'écosystème académique.</p>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Sécurité</h3>
+                <p>La protection des données et la confidentialité des projets sont au cœur de nos préoccupations.</p>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Excellence</h3>
+                <p>Nous visons l'excellence dans chaque fonctionnalité pour accompagner la réussite académique.</p>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <h3>Accessibilité</h3>
+                <p>Notre plateforme est conçue pour être accessible à tous, indépendamment du niveau technique.</p>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <h3>Performance</h3>
+                <p>Nous optimisons continuellement notre plateforme pour garantir une expérience utilisateur fluide et rapide.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Story Section -->
+<section class="story-section">
+    <div class="container">
+        <div class="story-content">
+            <h2>Notre Histoire</h2>
+            <div class="story-text">
+                <p>
+                    ENSA Project Manager est né de l'observation des défis rencontrés par les étudiants et enseignants dans la gestion des projets académiques. Trop souvent, les outils existants étaient soit trop complexes, soit inadaptés aux spécificités de l'environnement académique.
+                </p>
+                <p>
+                    Notre équipe de développement, composée d'un seul étudiant passionnés par l'éducation et la technologie, a décidé de créer une solution sur mesure pour l'ENSA. Une plateforme qui comprend les besoins spécifiques des projets de fin d'études, des stages et des projets de modules.
+                </p>
+                <p>
+                    Aujourd'hui, ENSA Project Manager continue d'évoluer grâce aux retours de sa communauté d'utilisateurs, toujours dans l'objectif d'améliorer l'expérience académique.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Impact Section -->
+<section class="impact-section">
+    <div class="container">
+        <div class="impact-content">
+            <h2>Notre Impact</h2>
+            <p>Des chiffres qui témoignent de notre engagement envers l'excellence académique</p>
+            
+            <div class="impact-grid">
+                <div class="impact-item">
+                    <div class="impact-number">{{ total_projects|default:"500+" }}</div>
+                    <div class="impact-label">Projets Gérés</div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-number">{{ total_students|default:"1000+" }}</div>
+                    <div class="impact-label">Étudiants Actifs</div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-number">{{ total_teachers|default:"50+" }}</div>
+                    <div class="impact-label">Enseignants</div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-number">99%</div>
+                    <div class="impact-label">Satisfaction</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Team Section -->
+<section class="team-section">
+    <div class="container">
+        <div class="team-content">
+            <h2>Notre Équipe</h2>
+            <p>
+                ENSA Project Manager est développé par une équipe passionnée de développeurs, designers et experts en éducation. Nous travaillons en étroite collaboration avec le corps enseignant et l'administration de l'ENSA pour garantir que notre plateforme répond parfaitement aux besoins académiques.
+            </p>
+            <p>
+                Notre équipe multidisciplinaire combine expertise technique et compréhension profonde de l'environnement éducatif pour créer des solutions innovantes et pratiques.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="contact-section">
+    <div class="container">
+        <div class="contact-content">
+            <div class="contact-info">
+                <h2>Contactez-nous</h2>
+                
+                <div class="contact-item">
+                    <i class="fas fa-university"></i>
+                    <div>
+                        <h4>École Nationale des Sciences Appliquées</h4>
+                        <p>Route de Sidi Bouzid, Fès, Maroc</p>
+                    </div>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <h4>Email</h4>
+                        <p>support@ensaprojectmanager.com</p>
+                    </div>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <div>
+                        <h4>Téléphone</h4>
+                        <p>+212 5 35 60 29 53</p>
+                    </div>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <h4>Horaires de Support</h4>
+                        <p>Lundi - Vendredi: 8h00 - 18h00</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="contact-form">
+                <h3>Besoin d'Aide ?</h3>
+                <p>
+                    Notre équipe de support est là pour vous aider. Que vous soyez étudiant, enseignant ou administrateur, nous sommes à votre disposition pour répondre à vos questions et résoudre vos problèmes.
+                </p>
+                <a href="mailto:support@ensaprojectmanager.com" class="contact-btn">
+                    <i class="fas fa-paper-plane"></i>
+                    Nous Contacter
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
