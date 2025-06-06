@@ -1,282 +1,11 @@
 <!-- public/templates/public/features.html -->
 {% extends 'public/base_public.html' %}
+{% load static %}
 
 {% block title %}Fonctionnalités - ENSA Project Manager{% endblock %}
 
 {% block extra_css %}
-<style>
-    .features-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 5rem 0;
-        text-align: center;
-    }
-    
-    .features-hero h1 {
-        font-size: 3rem;
-        font-weight: 800;
-        margin-bottom: 1rem;
-    }
-    
-    .features-hero p {
-        font-size: 1.25rem;
-        opacity: 0.9;
-        max-width: 600px;
-        margin: 0 auto;
-    }
-    
-    .features-section {
-        padding: 5rem 0;
-    }
-    
-    .features-section:nth-child(even) {
-        background: #f8fafc;
-    }
-    
-    .section-header {
-        text-align: center;
-        margin-bottom: 4rem;
-    }
-    
-    .section-header h2 {
-        font-size: 2.5rem;
-        color: #2d3748;
-        margin-bottom: 1rem;
-    }
-    
-    .section-header p {
-        font-size: 1.1rem;
-        color: #718096;
-        max-width: 600px;
-        margin: 0 auto;
-    }
-    
-    .features-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 2rem;
-        margin-top: 3rem;
-    }
-    
-    .feature-card {
-        background: white;
-        padding: 2.5rem;
-        border-radius: 1rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border-left: 4px solid #4F46E5;
-    }
-    
-    .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    }
-    
-    .feature-icon {
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, #4F46E5, #7C3AED);
-        border-radius: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1.5rem;
-    }
-    
-    .feature-icon i {
-        font-size: 1.5rem;
-        color: white;
-    }
-    
-    .feature-card h3 {
-        font-size: 1.5rem;
-        color: #2d3748;
-        margin-bottom: 1rem;
-        font-weight: 700;
-    }
-    
-    .feature-card p {
-        color: #718096;
-        line-height: 1.6;
-        margin-bottom: 1.5rem;
-    }
-    
-    .feature-list {
-        list-style: none;
-        padding: 0;
-    }
-    
-    .feature-list li {
-        color: #4a5568;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .feature-list li::before {
-        content: '✓';
-        color: #48bb78;
-        font-weight: bold;
-        font-size: 1.1rem;
-    }
-    
-    .role-section {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 3rem;
-        margin-top: 3rem;
-    }
-    
-    .role-card {
-        background: white;
-        padding: 3rem 2rem;
-        border-radius: 1.5rem;
-        box-shadow: 0 6px 25px rgba(0,0,0,0.1);
-        text-align: center;
-        transition: transform 0.3s ease;
-    }
-    
-    .role-card:hover {
-        transform: translateY(-10px);
-    }
-    
-    .role-card.student {
-        border-top: 5px solid #4299e1;
-    }
-    
-    .role-card.teacher {
-        border-top: 5px solid #48bb78;
-    }
-    
-    .role-card.admin {
-        border-top: 5px solid #ed8936;
-    }
-    
-    .role-icon {
-        width: 80px;
-        height: 80px;
-        margin: 0 auto 2rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        color: white;
-    }
-    
-    .role-card.student .role-icon {
-        background: linear-gradient(135deg, #4299e1, #3182ce);
-    }
-    
-    .role-card.teacher .role-icon {
-        background: linear-gradient(135deg, #48bb78, #38a169);
-    }
-    
-    .role-card.admin .role-icon {
-        background: linear-gradient(135deg, #ed8936, #dd6b20);
-    }
-    
-    .role-card h3 {
-        font-size: 1.8rem;
-        margin-bottom: 1rem;
-        color: #2d3748;
-    }
-    
-    .tech-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 2rem;
-        margin-top: 3rem;
-    }
-    
-    .tech-item {
-        background: white;
-        padding: 2rem;
-        border-radius: 1rem;
-        text-align: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
-    }
-    
-    .tech-item:hover {
-        transform: translateY(-3px);
-    }
-    
-    .tech-item i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        color: #4F46E5;
-    }
-    
-    .tech-item h4 {
-        font-size: 1.2rem;
-        color: #2d3748;
-        margin-bottom: 0.5rem;
-    }
-    
-    .tech-item p {
-        color: #718096;
-        font-size: 0.9rem;
-    }
-    
-    .cta-section {
-        background: linear-gradient(135deg, #2d3748, #4a5568);
-        color: white;
-        padding: 5rem 0;
-        text-align: center;
-    }
-    
-    .cta-section h2 {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .cta-section p {
-        font-size: 1.2rem;
-        margin-bottom: 2rem;
-        opacity: 0.9;
-    }
-    
-    .cta-buttons {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    .cta-btn {
-        padding: 1rem 2rem;
-        border-radius: 0.5rem;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .cta-btn.primary {
-        background: #4F46E5;
-        color: white;
-    }
-    
-    .cta-btn.primary:hover {
-        background: #4338CA;
-        transform: translateY(-2px);
-    }
-    
-    .cta-btn.secondary {
-        background: transparent;
-        color: white;
-        border: 2px solid white;
-    }
-    
-    .cta-btn.secondary:hover {
-        background: white;
-        color: #2d3748;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'public/css/features.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -308,6 +37,7 @@
                     <li>Suivi des jalons et échéances</li>
                     <li>Gestion des livrables</li>
                     <li>Calcul automatique du progrès</li>
+                    <li>Interface moderne et intuitive</li>
                 </ul>
             </div>
             
@@ -316,12 +46,13 @@
                     <i class="fas fa-users"></i>
                 </div>
                 <h3>Collaboration en Équipe</h3>
-                <p>Travaillez en équipe sur vos projets avec des outils de collaboration avancés.</p>
+                <p>Travaillez en équipe sur vos projets avec des outils de collaboration avancés et en temps réel.</p>
                 <ul class="feature-list">
                     <li>Invitations de collaborateurs</li>
                     <li>Partage de fichiers sécurisé</li>
                     <li>Commentaires et discussions</li>
                     <li>Notifications en temps réel</li>
+                    <li>Gestion des permissions</li>
                 </ul>
             </div>
             
@@ -336,6 +67,7 @@
                     <li>Métriques de progression</li>
                     <li>Historique des activités</li>
                     <li>Rapports de performance</li>
+                    <li>Analyses prédictives</li>
                 </ul>
             </div>
             
@@ -344,12 +76,13 @@
                     <i class="fas fa-book-open"></i>
                 </div>
                 <h3>Intégration Modules</h3>
-                <p>Connectez vos projets aux modules de cours pour une organisation optimale.</p>
+                <p>Connectez vos projets aux modules de cours pour une organisation optimale et un suivi académique complet.</p>
                 <ul class="feature-list">
                     <li>Association projet-module</li>
                     <li>Accès aux ressources du cours</li>
                     <li>Calendrier académique intégré</li>
                     <li>Communication avec enseignants</li>
+                    <li>Synchronisation des échéances</li>
                 </ul>
             </div>
         </div>
@@ -370,12 +103,13 @@
                     <i class="fas fa-clipboard-check"></i>
                 </div>
                 <h3>Évaluation de Projets</h3>
-                <p>Examinez et évaluez les projets étudiants avec des outils d'évaluation structurés.</p>
+                <p>Examinez et évaluez les projets étudiants avec des outils d'évaluation structurés et efficaces.</p>
                 <ul class="feature-list">
                     <li>Interface de révision intuitive</li>
                     <li>Système d'approbation/rejet</li>
                     <li>Commentaires détaillés</li>
-                    <li>Grilles d'évaluation</li>
+                    <li>Grilles d'évaluation personnalisées</li>
+                    <li>Historique des évaluations</li>
                 </ul>
             </div>
             
@@ -384,12 +118,13 @@
                     <i class="fas fa-chalkboard-teacher"></i>
                 </div>
                 <h3>Gestion de Modules</h3>
-                <p>Organisez vos cours et modules avec des outils de gestion académique complets.</p>
+                <p>Organisez vos cours et modules avec des outils de gestion académique complets et intégrés.</p>
                 <ul class="feature-list">
                     <li>Création et gestion de modules</li>
                     <li>Inscription d'étudiants</li>
                     <li>Suivi des projets par module</li>
                     <li>Rapports de progression</li>
+                    <li>Planification des sessions</li>
                 </ul>
             </div>
             
@@ -398,12 +133,13 @@
                     <i class="fas fa-comments"></i>
                 </div>
                 <h3>Communication</h3>
-                <p>Communiquez efficacement avec vos étudiants et fournissez des retours constructifs.</p>
+                <p>Communiquez efficacement avec vos étudiants et fournissez des retours constructifs en temps réel.</p>
                 <ul class="feature-list">
-                    <li>Système de commentaires</li>
+                    <li>Système de commentaires avancé</li>
                     <li>Notifications automatiques</li>
                     <li>Feedback en temps réel</li>
                     <li>Messages personnalisés</li>
+                    <li>Forum de discussion intégré</li>
                 </ul>
             </div>
             
@@ -412,12 +148,13 @@
                     <i class="fas fa-analytics"></i>
                 </div>
                 <h3>Analyses et Rapports</h3>
-                <p>Accédez à des analyses détaillées sur les performances de vos étudiants et modules.</p>
+                <p>Accédez à des analyses détaillées sur les performances de vos étudiants et la progression des modules.</p>
                 <ul class="feature-list">
-                    <li>Statistiques de performance</li>
-                    <li>Rapports de progression</li>
-                    <li>Analyses comparative</li>
-                    <li>Export de données</li>
+                    <li>Statistiques de performance détaillées</li>
+                    <li>Rapports de progression automatiques</li>
+                    <li>Analyses comparative multi-projets</li>
+                    <li>Export de données personnalisé</li>
+                    <li>Tableaux de bord interactifs</li>
                 </ul>
             </div>
         </div>
@@ -429,7 +166,7 @@
     <div class="container">
         <div class="section-header">
             <h2>Pour les Administrateurs</h2>
-            <p>Gérez l'ensemble de la plateforme avec des outils d'administration puissants</p>
+            <p>Gérez l'ensemble de la plateforme avec des outils d'administration puissants et sécurisés</p>
         </div>
         
         <div class="features-grid">
@@ -438,12 +175,13 @@
                     <i class="fas fa-user-shield"></i>
                 </div>
                 <h3>Gestion d'Utilisateurs</h3>
-                <p>Administrez les comptes utilisateurs avec un système d'approbation sécurisé.</p>
+                <p>Administrez les comptes utilisateurs avec un système d'approbation sécurisé et des contrôles avancés.</p>
                 <ul class="feature-list">
                     <li>Validation des inscriptions</li>
-                    <li>Gestion des rôles</li>
-                    <li>Contrôle d'accès</li>
-                    <li>Audit des activités</li>
+                    <li>Gestion des rôles et permissions</li>
+                    <li>Contrôle d'accès granulaire</li>
+                    <li>Audit des activités utilisateurs</li>
+                    <li>Système de sécurité multicouche</li>
                 </ul>
             </div>
             
@@ -452,12 +190,13 @@
                     <i class="fas fa-cogs"></i>
                 </div>
                 <h3>Configuration Système</h3>
-                <p>Configurez et personnalisez la plateforme selon les besoins de votre institution.</p>
+                <p>Configurez et personnalisez la plateforme selon les besoins spécifiques de votre institution.</p>
                 <ul class="feature-list">
-                    <li>Paramètres globaux</li>
-                    <li>Personnalisation interface</li>
-                    <li>Configuration modules</li>
-                    <li>Gestion des permissions</li>
+                    <li>Paramètres globaux avancés</li>
+                    <li>Personnalisation interface complète</li>
+                    <li>Configuration modules académiques</li>
+                    <li>Gestion des permissions système</li>
+                    <li>Intégrations tierces</li>
                 </ul>
             </div>
             
@@ -466,12 +205,13 @@
                     <i class="fas fa-chart-bar"></i>
                 </div>
                 <h3>Tableau de Bord Analytique</h3>
-                <p>Surveillez les performances globales avec des tableaux de bord complets.</p>
+                <p>Surveillez les performances globales avec des tableaux de bord complets et des métriques avancées.</p>
                 <ul class="feature-list">
                     <li>Métriques en temps réel</li>
-                    <li>Rapports détaillés</li>
-                    <li>Alertes automatiques</li>
-                    <li>Analyses prédictives</li>
+                    <li>Rapports détaillés multi-niveaux</li>
+                    <li>Alertes automatiques intelligentes</li>
+                    <li>Analyses prédictives avancées</li>
+                    <li>Visualisations interactives</li>
                 </ul>
             </div>
             
@@ -480,12 +220,13 @@
                     <i class="fas fa-database"></i>
                 </div>
                 <h3>Gestion des Données</h3>
-                <p>Gérez les données institutionnelles avec des outils d'export et de sauvegarde.</p>
+                <p>Gérez les données institutionnelles avec des outils professionnels d'export, sauvegarde et archivage.</p>
                 <ul class="feature-list">
-                    <li>Sauvegarde automatique</li>
-                    <li>Export de données</li>
-                    <li>Archivage intelligent</li>
-                    <li>Conformité RGPD</li>
+                    <li>Sauvegarde automatique sécurisée</li>
+                    <li>Export de données multi-format</li>
+                    <li>Archivage intelligent automatisé</li>
+                    <li>Conformité RGPD complète</li>
+                    <li>Récupération de données avancée</li>
                 </ul>
             </div>
         </div>
@@ -497,39 +238,39 @@
     <div class="container">
         <div class="section-header">
             <h2>Technologies et Sécurité</h2>
-            <p>Une plateforme moderne, sécurisée et performante construite avec les dernières technologies</p>
+            <p>Une plateforme moderne, sécurisée et performante construite avec les dernières technologies de pointe</p>
         </div>
         
         <div class="tech-grid">
             <div class="tech-item">
                 <i class="fab fa-python"></i>
-                <h4>Django</h4>
-                <p>Framework Python robuste et sécurisé</p>
+                <h4>Django Framework</h4>
+                <p>Framework Python robuste, sécurisé et scalable pour applications web d'entreprise</p>
             </div>
             <div class="tech-item">
                 <i class="fas fa-shield-alt"></i>
-                <h4>Sécurité</h4>
-                <p>Chiffrement et protection des données</p>
+                <h4>Sécurité Avancée</h4>
+                <p>Chiffrement end-to-end, authentification multicouche et protection des données</p>
             </div>
             <div class="tech-item">
                 <i class="fas fa-mobile-alt"></i>
-                <h4>Responsive</h4>
-                <p>Interface adaptée à tous les appareils</p>
+                <h4>Design Responsive</h4>
+                <p>Interface adaptée à tous les appareils avec expérience utilisateur optimisée</p>
             </div>
             <div class="tech-item">
                 <i class="fas fa-cloud"></i>
-                <h4>Cloud Ready</h4>
-                <p>Déploiement cloud et haute disponibilité</p>
+                <h4>Cloud Native</h4>
+                <p>Architecture cloud moderne avec haute disponibilité et scalabilité automatique</p>
             </div>
             <div class="tech-item">
                 <i class="fas fa-rocket"></i>
-                <h4>Performance</h4>
-                <p>Optimisé pour une expérience fluide</p>
+                <h4>Performance Optimale</h4>
+                <p>Optimisations avancées pour une expérience fluide et temps de réponse minimal</p>
             </div>
             <div class="tech-item">
                 <i class="fas fa-users-cog"></i>
-                <h4>Scalable</h4>
-                <p>Capable de gérer des milliers d'utilisateurs</p>
+                <h4>Hautement Scalable</h4>
+                <p>Architecture capable de gérer des milliers d'utilisateurs simultanés</p>
             </div>
         </div>
     </div>
@@ -539,12 +280,12 @@
 <section class="cta-section">
     <div class="container">
         <h2>Prêt à Révolutionner Votre Gestion de Projets ?</h2>
-        <p>Rejoignez des milliers d'étudiants et d'enseignants qui utilisent déjà ENSA Project Manager</p>
+        <p>Rejoignez des milliers d'étudiants et d'enseignants qui utilisent déjà ENSA Project Manager pour transformer leur expérience académique</p>
         <div class="cta-buttons">
             {% if not user.is_authenticated %}
                 <a href="{% url 'accounts:signup_choice' %}" class="cta-btn primary">
                     <i class="fas fa-user-plus"></i>
-                    Créer un Compte
+                    Créer un Compte Gratuit
                 </a>
                 <a href="{% url 'login' %}" class="cta-btn secondary">
                     <i class="fas fa-sign-in-alt"></i>
@@ -555,8 +296,112 @@
                     <i class="fas fa-tachometer-alt"></i>
                     Accéder à Mon Espace
                 </a>
+                <a href="{% url 'public:about' %}" class="cta-btn secondary">
+                    <i class="fas fa-info-circle"></i>
+                    En Savoir Plus
+                </a>
             {% endif %}
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Features page specific JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add staggered animation to feature cards
+        const featureCards = document.querySelectorAll('.feature-card');
+        const techItems = document.querySelectorAll('.tech-item');
+        
+        // Intersection Observer for feature cards
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const index = Array.from(entry.target.parentNode.children).indexOf(entry.target);
+                    
+                    setTimeout(() => {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                        
+                        // Add special effects for icons
+                        const icon = entry.target.querySelector('.feature-icon');
+                        if (icon) {
+                            setTimeout(() => {
+                                icon.style.transform = 'scale(1.1) rotate(5deg)';
+                                setTimeout(() => {
+                                    icon.style.transform = 'scale(1) rotate(0deg)';
+                                }, 300);
+                            }, 200);
+                        }
+                    }, index * 100);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all feature cards and tech items
+        [...featureCards, ...techItems].forEach(card => {
+            observer.observe(card);
+        });
+
+        // Add hover effects to feature lists
+        document.querySelectorAll('.feature-list li').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.paddingLeft = '2rem';
+                this.style.background = 'rgba(102, 126, 234, 0.1)';
+                this.style.borderRadius = '8px';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.paddingLeft = '0';
+                this.style.background = 'transparent';
+                this.style.borderRadius = '0';
+            });
+        });
+
+        // Add parallax effect to section headers
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const headers = document.querySelectorAll('.section-header');
+            
+            headers.forEach(header => {
+                const rate = scrolled * 0.1;
+                header.style.transform = `translateY(${rate}px)`;
+            });
+        });
+
+        // Add interactive effects to tech items
+        document.querySelectorAll('.tech-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                const icon = this.querySelector('i');
+                icon.style.transform = 'scale(1.2) rotate(10deg)';
+                this.style.background = 'rgba(102, 126, 234, 0.1)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                const icon = this.querySelector('i');
+                icon.style.transform = 'scale(1) rotate(0deg)';
+                this.style.background = 'var(--card-bg)';
+            });
+        });
+
+        // Smooth reveal animation for sections
+        const sections = document.querySelectorAll('.features-section');
+        sections.forEach((section, index) => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(50px)';
+            
+            setTimeout(() => {
+                section.style.transition = 'all 1s ease';
+                section.style.opacity = '1';
+                section.style.transform = 'translateY(0)';
+            }, index * 300);
+        });
+    });
+</script>
 {% endblock %}

@@ -1,111 +1,11 @@
 <!-- public/templates/public/explore_projects.html -->
 {% extends 'public/base_public.html' %}
+{% load static %}
 
 {% block title %}Explorer les Projets - ENSA Project Manager{% endblock %}
 
 {% block extra_css %}
-<style>
-    .coming-soon {
-        padding: 6rem 0;
-        text-align: center;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        min-height: 60vh;
-        display: flex;
-        align-items: center;
-    }
-    
-    .coming-soon-content {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-    
-    .coming-soon h1 {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        font-weight: 800;
-    }
-    
-    .coming-soon p {
-        font-size: 1.2rem;
-        margin-bottom: 2rem;
-        opacity: 0.9;
-        line-height: 1.6;
-    }
-    
-    .feature-preview {
-        background: rgba(255,255,255,0.1);
-        border-radius: 1rem;
-        padding: 2rem;
-        margin: 2rem 0;
-        backdrop-filter: blur(10px);
-    }
-    
-    .feature-list {
-        list-style: none;
-        padding: 0;
-        text-align: left;
-        max-width: 400px;
-        margin: 0 auto;
-    }
-    
-    .feature-list li {
-        padding: 0.5rem 0;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .feature-list li::before {
-        content: '🚀';
-        font-size: 1.2rem;
-    }
-    
-    .cta-buttons {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    .btn-back {
-        background: rgba(255,255,255,0.2);
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 0.5rem;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        border: 2px solid rgba(255,255,255,0.3);
-    }
-    
-    .btn-back:hover {
-        background: white;
-        color: #667eea;
-        transform: translateY(-2px);
-    }
-    
-    .btn-primary {
-        background: white;
-        color: #667eea;
-        padding: 1rem 2rem;
-        border-radius: 0.5rem;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(255,255,255,0.3);
-    }
-</style>
+<link rel="stylesheet" href="{% static 'public/css/explore_projects.css' %}">
 {% endblock %}
 
 {% block content %}
