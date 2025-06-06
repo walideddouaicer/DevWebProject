@@ -6,12 +6,14 @@ from django.db.models import Q, Count
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 from django.utils import timezone
+from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 
 # Import models from other apps
 from .models import AdminProfile
 from teacher.models import TeacherProfile, Module, ModuleAssignment, ModuleEnrollment
 from student.models import StudentProfile, Project, ProjectActivity
+from accounts.models import PendingRegistration
 
 # Authentication decorator for administrators
 def admin_required(view_func):
@@ -92,6 +94,9 @@ def dashboard(request):
         'student__user', 'module'
     ).order_by('-updated_at')[:10]
     
+    # Pending registrations count
+    pending_registrations_count = PendingRegistration.objects.filter(is_approved=False).count()
+    
     context = {
         'admin': admin,
         'total_projects': total_projects,
@@ -104,8 +109,9 @@ def dashboard(request):
         'projects_rejected': projects_rejected,
         'recent_projects': recent_projects,
         'recent_enrollments': recent_enrollments,
-        'modules_with_stats': modules_with_stats,  # This works because of manual calculation
+        'modules_with_stats': modules_with_stats,
         'latest_projects': latest_projects,
+        'pending_registrations_count': pending_registrations_count,
     }
     
     return render(request, 'administrator/dashboard.html', context)
@@ -798,3 +804,100 @@ def export_statistics(request):
     # This is a placeholder - we'll implement this in Phase 5
     messages.info(request, "Fonctionnalité d'export en cours de développement.")
     return redirect('administrator:exports')
+
+@admin_required
+def pending_registrations(request):
+    """View pending user registrations"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+    
+    pending = PendingRegistration.objects.filter(
+        is_approved=False
+    ).order_by('-created_at')
+    
+    # Get statistics
+    total_pending = pending.count()
+    student_pending = pending.filter(role='student').count()
+    teacher_pending = pending.filter(role='teacher').count()
+    
+    context = {
+        'admin': admin,
+        'pending_registrations': pending,
+        'total_pending': total_pending,
+        'student_pending': student_pending,
+        'teacher_pending': teacher_pending,
+    }
+    
+    return render(request, 'administrator/pending_registrations.html', context)
+
+@admin_required  
+def approve_registration(request, registration_id):
+    """Approve a pending registration"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+    
+    registration = get_object_or_404(PendingRegistration, id=registration_id, is_approved=False)
+    
+    if request.method == 'POST':
+        try:
+            # Create the actual user account - FIXED VERSION
+            user = User.objects.create(
+                username=registration.username,
+                email=registration.email,
+                first_name=registration.first_name,
+                last_name=registration.last_name,
+                is_active=True  # Make sure user is active
+            )
+            # Set the already hashed password directly
+            user.password = registration.password
+            user.save()
+            
+            # Create appropriate profile
+            if registration.role == 'student':
+                StudentProfile.objects.create(
+                    user=user,
+                    student_id=registration.student_id,
+                    year_of_study=registration.year_of_study,
+                    department=registration.department
+                )
+                profile_type = "étudiant"
+            elif registration.role == 'teacher':
+                TeacherProfile.objects.create(
+                    user=user,
+                    teacher_id=registration.teacher_id or '',
+                    department=registration.department
+                )
+                profile_type = "enseignant"
+            
+            # Mark as approved
+            registration.is_approved = True
+            registration.approved_by = request.user
+            registration.approved_at = timezone.now()
+            registration.save()
+            
+            messages.success(request, f"Compte {profile_type} approuvé pour {registration.first_name} {registration.last_name}")
+            
+            # TODO: Send approval email to user
+            
+        except Exception as e:
+            messages.error(request, f"Erreur lors de l'approbation: {str(e)}")
+    
+    return redirect('administrator:pending_registrations')
+
+@admin_required
+def reject_registration(request, registration_id):
+    """Reject a pending registration"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+    
+    registration = get_object_or_404(PendingRegistration, id=registration_id, is_approved=False)
+    
+    if request.method == 'POST':
+        try:
+            name = f"{registration.first_name} {registration.last_name}"
+            
+            # TODO: Send rejection email before deleting
+            registration.delete()
+            
+            messages.info(request, f"Demande d'inscription de {name} rejetée")
+        except Exception as e:
+            messages.error(request, f"Erreur lors du rejet: {str(e)}")
+    
+    return redirect('administrator:pending_registrations')

@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     "teacher",
     "administrator",
     "search",
-    "certificates",
+
 ]
 
 MIDDLEWARE = [

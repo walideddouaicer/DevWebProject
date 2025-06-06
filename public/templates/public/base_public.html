@@ -169,10 +169,23 @@
                 <a href="{% url 'public:about' %}">À propos</a>
                 <a href="{% url 'public:explore_projects' %}">Projets</a>
                 {% if user.is_authenticated %}
-                    <a href="{% url 'smart_redirect' %}" class="btn">Tableau de bord</a>
+                    <a href="{% url 'smart_redirect' %}" class="btn">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Mon Espace
+                    </a>
+                    <a href="{% url 'logout' %}" class="btn-outline btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Déconnexion
+                    </a>
                 {% else %}
-                    <a href="{% url 'login' %}" class="btn-outline btn">Connexion</a>
-                    <a href="#" class="btn">S'inscrire</a>
+                    <a href="{% url 'login' %}" class="btn-outline btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Connexion
+                    </a>
+                    <a href="{% url 'accounts:signup_choice' %}" class="btn">
+                        <i class="fas fa-user-plus"></i>
+                        S'inscrire
+                    </a>
                 {% endif %}
             </div>
         </div>

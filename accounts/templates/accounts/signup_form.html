@@ -1,0 +1,411 @@
+<!-- accounts/templates/accounts/signup_form.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription {{ role_display }} - ENSA Project Manager</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4F46E5;
+            margin-bottom: 1rem;
+        }
+        
+        .role-badge {
+            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .help-text {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-top: 0.25rem;
+        }
+        
+        .errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
+        }
+        
+        .errorlist li {
+            color: #e53e3e;
+            font-size: 0.875rem;
+            padding: 0.25rem 0;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        }
+        
+        .form-footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .form-footer a {
+            color: #4F46E5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .form-footer a:hover {
+            color: #4338CA;
+        }
+        
+        .approval-notice {
+            background: #edf2f7;
+            border-left: 4px solid #4F46E5;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        
+        .approval-notice-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .approval-notice-text {
+            color: #4a5568;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-container {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-header">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                ENSA Manager
+            </div>
+            
+            <div class="role-badge">
+                {% if role == 'student' %}
+                    <i class="fas fa-user-graduate"></i>
+                    Inscription Étudiant
+                {% elif role == 'teacher' %}
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    Inscription Enseignant
+                {% endif %}
+            </div>
+            
+            <h1>Créer votre compte</h1>
+            <p class="subtitle">Remplissez le formulaire ci-dessous pour commencer</p>
+        </div>
+        
+        <div class="approval-notice">
+            <div class="approval-notice-title">
+                <i class="fas fa-info-circle"></i>
+                Processus d'approbation
+            </div>
+            <div class="approval-notice-text">
+                Votre demande d'inscription sera examinée par un administrateur. Vous recevrez un email de confirmation une fois votre compte approuvé.
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Display form errors if any -->
+            {% if form.non_field_errors %}
+                <div style="background: #fed7d7; border: 1px solid #fc8181; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                    {% for error in form.non_field_errors %}
+                        <p style="color: #c53030; margin: 0;">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <!-- Basic Information -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.first_name.id_for_label }}">Prénom</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.first_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.last_name.id_for_label }}">Nom</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.last_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Nom d'utilisateur</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.username.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Adresse email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.email.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <!-- Role-specific fields -->
+            {% if role == 'student' %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.student_id.id_for_label }}">Numéro d'étudiant</label>
+                        {{ form.student_id }}
+                        {% if form.student_id.help_text %}
+                            <div class="help-text">{{ form.student_id.help_text }}</div>
+                        {% endif %}
+                        {% if form.student_id.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.student_id.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.year_of_study.id_for_label }}">Année d'étude</label>
+                        {{ form.year_of_study }}
+                        {% if form.year_of_study.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.year_of_study.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.department.id_for_label }}">Filière</label>
+                    {{ form.department }}
+                    {% if form.department.help_text %}
+                        <div class="help-text">{{ form.department.help_text }}</div>
+                    {% endif %}
+                    {% if form.department.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.department.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                
+            {% elif role == 'teacher' %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.teacher_id.id_for_label }}">Identifiant enseignant</label>
+                        {{ form.teacher_id }}
+                        {% if form.teacher_id.help_text %}
+                            <div class="help-text">{{ form.teacher_id.help_text }}</div>
+                        {% endif %}
+                        {% if form.teacher_id.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.teacher_id.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.department.id_for_label }}">Département</label>
+                        {{ form.department }}
+                        {% if form.department.help_text %}
+                            <div class="help-text">{{ form.department.help_text }}</div>
+                        {% endif %}
+                        {% if form.department.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.department.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Password fields -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}">Mot de passe</label>
+                    {{ form.password }}
+                    {% if form.password.help_text %}
+                        <div class="help-text">{{ form.password.help_text }}</div>
+                    {% endif %}
+                    {% if form.password.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.password.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.password_confirm.id_for_label }}">Confirmer le mot de passe</label>
+                    {{ form.password_confirm }}
+                    {% if form.password_confirm.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.password_confirm.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <button type="submit" class="btn">
+                <i class="fas fa-user-plus"></i>
+                Créer mon compte
+            </button>
+        </form>
+        
+        <div class="form-footer">
+            <p>
+                <a href="{% url 'accounts:signup_choice' %}">
+                    <i class="fas fa-arrow-left"></i>
+                    Changer de type de compte
+                </a>
+            </p>
+            <p style="margin-top: 1rem;">
+                Vous avez déjà un compte? 
+                <a href="{% url 'login' %}">Se connecter</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

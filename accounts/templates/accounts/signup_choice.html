@@ -1,0 +1,184 @@
+<!-- accounts/templates/accounts/signup_choice.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un compte - ENSA Project Manager</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .signup-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4F46E5;
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+        
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .role-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .role-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .role-card:hover {
+            border-color: #4F46E5;
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.2);
+            transform: translateY(-4px);
+        }
+        
+        .role-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .role-icon {
+            font-size: 3rem;
+            color: #4F46E5;
+            margin-bottom: 1rem;
+        }
+        
+        .role-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .role-description {
+            color: #718096;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .back-link {
+            color: #4F46E5;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #4338CA;
+        }
+        
+        .admin-note {
+            background: #fef5e7;
+            border: 1px solid #f6e05e;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 2rem;
+            font-size: 0.875rem;
+            color: #744210;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            ENSA Manager
+        </div>
+        
+        <h1>Créer un compte</h1>
+        <p class="subtitle">Choisissez votre type de compte pour commencer</p>
+        
+        <div class="role-grid">
+            <a href="{% url 'accounts:student_signup' %}" class="role-card">
+                <div class="role-icon">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="role-title">Étudiant</div>
+                <div class="role-description">
+                    Gérez vos projets, collaborez avec vos pairs et suivez votre progression académique.
+                </div>
+            </a>
+            
+            <a href="{% url 'accounts:teacher_signup' %}" class="role-card">
+                <div class="role-icon">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="role-title">Enseignant</div>
+                <div class="role-description">
+                    Supervisez les projets étudiants, évaluez les travaux et gérez vos modules.
+                </div>
+            </a>
+        </div>
+        
+        <div class="admin-note">
+            <i class="fas fa-info-circle"></i>
+            <strong>Administrateurs:</strong> Les comptes administrateur sont créés par d'autres administrateurs depuis le panneau d'administration.
+        </div>
+        
+        <p style="margin-top: 2rem;">
+            <a href="{% url 'public:homepage' %}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Retour à l'accueil
+            </a>
+        </p>
+    </div>
+</body>
+</html>
+
+       

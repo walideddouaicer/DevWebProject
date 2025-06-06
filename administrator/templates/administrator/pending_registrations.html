@@ -1,0 +1,392 @@
+<!-- administrator/templates/administrator/pending_registrations.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demandes d'inscription en attente - Administration</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #2d3748;
+        }
+        
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: #2d3748;
+            color: white;
+            padding: 2rem 1rem;
+        }
+        
+        .sidebar h2 {
+            margin-bottom: 2rem;
+            color: #4299e1;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+        }
+        
+        .sidebar li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar a {
+            color: #e2e8f0;
+            text-decoration: none;
+            padding: 0.75rem;
+            display: block;
+            border-radius: 0.5rem;
+            transition: background 0.3s;
+        }
+        
+        .sidebar a:hover, .sidebar a.active {
+            background: #4a5568;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #2d3748;
+            font-size: 2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            color: #4299e1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-card p {
+            color: #718096;
+        }
+        
+        .registrations-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .registrations-header {
+            background: #4299e1;
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .registrations-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .registration-card {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .registration-card:last-child {
+            border-bottom: none;
+        }
+        
+        .registration-info {
+            flex: 1;
+        }
+        
+        .registration-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .registration-details {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
+        .registration-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .role-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .role-student {
+            background: #bee3f8;
+            color: #2b6cb0;
+        }
+        
+        .role-teacher {
+            background: #c6f6d5;
+            color: #276749;
+        }
+        
+        .registration-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-approve {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-approve:hover {
+            background: #38a169;
+        }
+        
+        .btn-reject {
+            background: #f56565;
+            color: white;
+        }
+        
+        .btn-reject:hover {
+            background: #e53e3e;
+        }
+        
+        .btn-back {
+            background: #4299e1;
+            color: white;
+            margin-bottom: 2rem;
+        }
+        
+        .btn-back:hover {
+            background: #3182ce;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #718096;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #cbd5e0;
+        }
+        
+        .messages {
+            margin-bottom: 2rem;
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background: #c6f6d5;
+            color: #276749;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+        
+        .alert-info {
+            background: #bee3f8;
+            color: #2b6cb0;
+            border: 1px solid #90cdf4;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <h2><i class="fas fa-cog"></i> Administration</h2>
+            <ul>
+                <li><a href="{% url 'administrator:dashboard' %}"><i class="fas fa-tachometer-alt"></i> Tableau de bord</a></li>
+                <li><a href="{% url 'administrator:projects_list' %}"><i class="fas fa-project-diagram"></i> Projets</a></li>
+                <li><a href="{% url 'administrator:modules_list' %}"><i class="fas fa-book"></i> Modules</a></li>
+                <li><a href="{% url 'administrator:assignments_management' %}"><i class="fas fa-users-cog"></i> Assignations</a></li>
+                <li><a href="{% url 'administrator:users_overview' %}"><i class="fas fa-users"></i> Utilisateurs</a></li>
+                <li><a href="{% url 'administrator:pending_registrations' %}" class="active"><i class="fas fa-user-clock"></i> Inscriptions</a></li>
+                <li><a href="{% url 'administrator:statistics' %}"><i class="fas fa-chart-bar"></i> Statistiques</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Back Button -->
+            <a href="{% url 'administrator:dashboard' %}" class="btn btn-back">
+                <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+            </a>
+
+            <!-- Messages -->
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Header -->
+            <div class="header">
+                <h1><i class="fas fa-user-clock"></i> Demandes d'inscription en attente</h1>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>{{ total_pending }}</h3>
+                    <p>Total en attente</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ student_pending }}</h3>
+                    <p>Étudiants</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ teacher_pending }}</h3>
+                    <p>Enseignants</p>
+                </div>
+            </div>
+
+            <!-- Registrations List -->
+            <div class="registrations-container">
+                <div class="registrations-header">
+                    <h2>Demandes d'inscription</h2>
+                    <span>{{ total_pending }} demande{{ total_pending|pluralize }}</span>
+                </div>
+
+                {% if pending_registrations %}
+                    {% for registration in pending_registrations %}
+                    <div class="registration-card">
+                        <div class="registration-info">
+                            <div class="registration-name">
+                                {{ registration.first_name }} {{ registration.last_name }}
+                            </div>
+                            <div class="registration-details">
+                                <strong>Nom d'utilisateur:</strong> {{ registration.username }}<br>
+                                <strong>Email:</strong> {{ registration.email }}<br>
+                                {% if registration.role == 'student' %}
+                                    <strong>Numéro étudiant:</strong> {{ registration.student_id }}<br>
+                                    <strong>Année:</strong> {{ registration.get_year_of_study_display }}<br>
+                                {% elif registration.role == 'teacher' %}
+                                    {% if registration.teacher_id %}
+                                    <strong>ID enseignant:</strong> {{ registration.teacher_id }}<br>
+                                    {% endif %}
+                                {% endif %}
+                                <strong>Département:</strong> {{ registration.department }}
+                            </div>
+                            <div class="registration-meta">
+                                <span class="role-badge role-{{ registration.role }}">
+                                    {{ registration.get_role_display }}
+                                </span>
+                                <span style="color: #718096; font-size: 0.85rem;">
+                                    <i class="fas fa-clock"></i> {{ registration.created_at|date:"d/m/Y H:i" }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="registration-actions">
+                            <form method="post" action="{% url 'administrator:approve_registration' registration.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-approve" onclick="return confirm('Êtes-vous sûr de vouloir approuver cette inscription ?')">
+                                    <i class="fas fa-check"></i> Approuver
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'administrator:reject_registration' registration.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-reject" onclick="return confirm('Êtes-vous sûr de vouloir rejeter cette inscription ?')">
+                                    <i class="fas fa-times"></i> Rejeter
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>Aucune demande en attente</h3>
+                        <p>Toutes les demandes d'inscription ont été traitées.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Add some basic interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-refresh every 30 seconds to check for new registrations
+            setTimeout(function() {
+                location.reload();
+            }, 30000);
+        });
+    </script>
+</body>
+</html>

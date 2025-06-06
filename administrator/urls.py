@@ -29,10 +29,19 @@ urlpatterns = [
     path('users/', views.users_overview, name='users_overview'),
     path('users/students/', views.students_list, name='students_list'),
     path('users/teachers/', views.teachers_list, name='teachers_list'),
+    path('registrations/pending/', views.pending_registrations, name='pending_registrations'),
+    path('registrations/<int:registration_id>/approve/', views.approve_registration, name='approve_registration'),
+    path('registrations/<int:registration_id>/reject/', views.reject_registration, name='reject_registration'),
     
     # Statistics & Reports
     path('statistics/', views.statistics, name='statistics'),
     path('exports/', views.exports, name='exports'),
     path('exports/projects/', views.export_projects, name='export_projects'),
     path('exports/statistics/', views.export_statistics, name='export_statistics'),
+
+
+    # NEW: Registration Management
+    path('registrations/pending/', views.pending_registrations, name='pending_registrations'),
+    path('registrations/<int:registration_id>/approve/', views.approve_registration, name='approve_registration'),
+    path('registrations/<int:registration_id>/reject/', views.reject_registration, name='reject_registration'),
 ]

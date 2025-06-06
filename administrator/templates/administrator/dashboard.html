@@ -5,7 +5,42 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'administrator/css/dashboard.css' %}">
-
+<style>
+    /* Additional styles for pending registrations */
+    .action-btn-custom.urgent {
+        background: linear-gradient(135deg, #f56565, #e53e3e);
+        color: white;
+        animation: pulse-urgent 2s infinite;
+    }
+    
+    @keyframes pulse-urgent {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+    
+    .stat-card.pending {
+        border-left: 4px solid #f6ad55;
+        background: linear-gradient(135deg, #fffaf0, #fef5e7);
+    }
+    
+    .pending-badge {
+        background: #f56565;
+        color: white;
+        border-radius: 50%;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+        animation: bounce 1s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-3px); }
+        60% { transform: translateY(-2px); }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -50,6 +85,17 @@
                 Actions Rapides
             </h3>
             <div class="action-grid">
+                <!-- Pending Registrations - Priority Action -->
+                {% if pending_registrations_count > 0 %}
+                <a href="{% url 'administrator:pending_registrations' %}" class="action-btn-custom urgent">
+                    <span>
+                        <i class="fas fa-user-clock"></i>
+                        Inscriptions en attente
+                    </span>
+                    <span class="action-count">{{ pending_registrations_count }}</span>
+                </a>
+                {% endif %}
+                
                 {% if projects_submitted > 0 %}
                 <a href="{% url 'administrator:projects_list' %}?status=submitted" class="action-btn-custom priority">
                     <span>
@@ -91,6 +137,17 @@
                     </span>
                     <span class="action-count">{{ total_teachers }}</span>
                 </a>
+                
+                <!-- Always show registrations management -->
+                {% if pending_registrations_count == 0 %}
+                <a href="{% url 'administrator:pending_registrations' %}" class="action-btn-custom">
+                    <span>
+                        <i class="fas fa-user-check"></i>
+                        Gérer inscriptions
+                    </span>
+                    <span class="action-count">✓</span>
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -120,6 +177,24 @@
         <div class="stat-card">
             <div class="stat-value">{{ recent_enrollments }}</div>
             <div class="stat-label">Nouvelles Inscriptions (30j)</div>
+        </div>
+        <!-- NEW: Pending Registrations Card -->
+        <div class="stat-card {% if pending_registrations_count > 0 %}pending{% endif %}">
+            <div class="stat-value">
+                {{ pending_registrations_count|default:0 }}
+                {% if pending_registrations_count > 0 %}
+                    <span class="pending-badge">!</span>
+                {% endif %}
+            </div>
+            <div class="stat-label">
+                {% if pending_registrations_count > 0 %}
+                    <a href="{% url 'administrator:pending_registrations' %}" style="color: #d69e2e; text-decoration: none;">
+                        Inscriptions en Attente
+                    </a>
+                {% else %}
+                    Inscriptions en Attente
+                {% endif %}
+            </div>
         </div>
     </div>
 
@@ -151,6 +226,28 @@
             </div>
         </div>
 
+        <!-- Registration Status Section -->
+        {% if pending_registrations_count > 0 %}
+        <div class="stats-section">
+            <h3>
+                <i class="fas fa-user-clock"></i>
+                Demandes d'Inscription
+                <span class="pending-badge">{{ pending_registrations_count }}</span>
+            </h3>
+            <div class="status-breakdown">
+                <div class="status-item" style="background: #fef5e7; border-left: 4px solid #f6ad55;">
+                    <div class="status-value">{{ pending_registrations_count }}</div>
+                    <div class="status-label">En Attente</div>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; text-align: center;">
+                <a href="{% url 'administrator:pending_registrations' %}" class="btn" style="background: #f6ad55; color: white;">
+                    <i class="fas fa-eye"></i>
+                    Traiter les Demandes
+                </a>
+            </div>
+        </div>
+        {% else %}
         <!-- Recent Activity Feed -->
         <div class="stats-section">
             <h3>
@@ -196,7 +293,28 @@
                 </div>
             {% endif %}
         </div>
+        {% endif %}
     </div>
+
+    <!-- Alert for Pending Registrations -->
+    {% if pending_registrations_count > 0 %}
+    <div style="background: #fef5e7; border-left: 4px solid #f6ad55; padding: 1rem; margin: 2rem 0; border-radius: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <i class="fas fa-exclamation-triangle" style="color: #d69e2e; font-size: 1.5rem;"></i>
+            <div>
+                <h4 style="margin: 0; color: #744210;">
+                    {{ pending_registrations_count }} demande{{ pending_registrations_count|pluralize }} d'inscription en attente
+                </h4>
+                <p style="margin: 0.5rem 0 0 0; color: #975a16;">
+                    Des utilisateurs attendent l'approbation de leur compte. 
+                    <a href="{% url 'administrator:pending_registrations' %}" style="color: #d69e2e; font-weight: 600;">
+                        Traiter maintenant →
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Top Modules Section -->
     <div class="module-overview">
@@ -269,23 +387,84 @@
 
 {% block extra_js %}
 <script>
-    // Add any dashboard-specific JavaScript here
     document.addEventListener('DOMContentLoaded', function() {
         // Auto-refresh statistics every 5 minutes
         setInterval(function() {
-            // This could be enhanced to update stats without full page reload
-            console.log('Statistics refresh interval');
-        }, 300000);
+            // Check for new pending registrations and update badge
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the response to check for pending registrations
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newPendingCount = doc.querySelector('.pending-badge');
+                    
+                    if (newPendingCount && !document.querySelector('.pending-badge')) {
+                        // New pending registrations detected, show notification
+                        showNotification('Nouvelles demandes d\'inscription reçues!', 'info');
+                    }
+                });
+        }, 300000); // 5 minutes
         
         // Add smooth scroll for internal links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
             });
         });
+        
+        // Function to show notifications
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'info' ? '#4299e1' : '#f56565'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 0.5rem;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-${type === 'info' ? 'info-circle' : 'exclamation-triangle'}"></i>
+                    ${message}
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 5000);
+        }
+        
+        // Add CSS for notification animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     });
 </script>
 {% endblock %}
