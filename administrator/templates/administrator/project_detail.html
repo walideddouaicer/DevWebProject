@@ -12,367 +12,581 @@
 
 {% block extra_css %}
 <style>
-    .project-header {
-        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    /* Reset and base styles */
+    .project-detail-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Header section */
+    .project-hero {
+        background: linear-gradient(135deg, var(--info) 0%, #2563eb 100%);
         color: white;
-        padding: 30px;
+        padding: 32px;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+    }
+    
+    .project-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 200px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+        border-radius: 20px;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .project-hero h1 {
+        font-size: 28px;
+        font-weight: 800;
+        margin: 0 0 16px 0;
+    }
+    
+    .status-badges {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .status-in_progress { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .status-submitted { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .status-validated { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .status-rejected { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    
+    .module-badge {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .project-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+    }
+    
+    .meta-card {
+        background: rgba(255,255,255,0.15);
+        padding: 16px;
         border-radius: 12px;
-        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .meta-label {
+        font-size: 13px;
+        opacity: 0.8;
+        margin-bottom: 6px;
+        font-weight: 500;
+    }
+    
+    .meta-value {
+        font-weight: 700;
+        font-size: 16px;
+    }
+    
+    /* Main layout */
+    .project-layout {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    
+    .main-sections {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .project-sidebar {
+        width: 300px;
+        flex-shrink: 0;
+    }
+    
+    /* Content sections */
+    .content-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         position: relative;
         overflow: hidden;
     }
     
-    .project-header::before {
+    .content-card::before {
         content: '';
         position: absolute;
-        top: -50%;
-        right: -20px;
-        width: 100px;
-        height: 200%;
-        background: rgba(255,255,255,0.1);
-        transform: rotate(15deg);
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--info), #2563eb);
     }
     
-    .project-meta {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
-    }
-    
-    .meta-item {
-        background: rgba(255,255,255,0.1);
-        padding: 15px;
-        border-radius: 8px;
-    }
-    
-    .meta-label {
-        font-size: 0.9em;
-        opacity: 0.8;
-        margin-bottom: 5px;
-    }
-    
-    .meta-value {
-        font-weight: bold;
-        font-size: 1.1em;
-    }
-    
-    .project-status-badge {
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-weight: bold;
-        text-transform: uppercase;
-        font-size: 0.9em;
-    }
-    
-    .status-in_progress {
-        background: #cce7ff;
-        color: #0066cc;
-    }
-    
-    .status-submitted {
-        background: #fff3cd;
-        color: #856404;
-    }
-    
-    .status-validated {
-        background: #d4edda;
-        color: #155724;
-    }
-    
-    .status-rejected {
-        background: #f8d7da;
-        color: #721c24;
-    }
-    
-    .content-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 30px;
-        margin-bottom: 30px;
-    }
-    
-    .main-content {
-        display: flex;
-        flex-direction: column;
-        gap: 25px;
-    }
-    
-    .sidebar-content {
-        display: flex;
-        flex-direction: column;
-        gap: 25px;
-    }
-    
-    .content-section {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-left: 4px solid #17a2b8;
-    }
-    
-    .section-header {
+    .card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #f1f3f4;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--border-primary);
     }
     
-    .section-title {
+    .card-title {
         margin: 0;
-        color: #495057;
-        font-size: 1.3em;
+        color: var(--text-primary);
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
-    .section-count {
-        background: #e9ecef;
-        color: #495057;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 0.8em;
-        font-weight: bold;
+    .count-badge {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
     }
     
-    .project-description {
+    /* Description */
+    .description-content {
         line-height: 1.6;
-        color: #495057;
-        background: #f8f9fa;
+        color: var(--text-secondary);
+        background: var(--bg-tertiary);
         padding: 20px;
-        border-radius: 8px;
-        border-left: 4px solid #17a2b8;
+        border-radius: 12px;
+        border: 1px solid var(--border-primary);
+        position: relative;
     }
     
+    .description-content::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(135deg, var(--info), #2563eb);
+        border-radius: 0 0 0 12px;
+    }
+    
+    .company-info {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 2px solid var(--border-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--info);
+        font-weight: 600;
+    }
+    
+    /* Deliverables grid */
     .deliverables-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 20px;
+        gap: 16px;
     }
     
-    .deliverable-card {
-        background: #f8f9fa;
+    .deliverable-item {
+        background: var(--bg-tertiary);
         padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        border: 2px solid var(--border-primary);
         transition: all 0.3s ease;
     }
     
-    .deliverable-card:hover {
-        border-color: #17a2b8;
-        background: #e8f4ff;
-        transform: translateY(-2px);
+    .deliverable-item:hover {
+        border-color: var(--info);
+        background: var(--bg-card);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
     
     .deliverable-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
+    }
+    
+    .deliverable-info h4 {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 8px 0;
+        font-size: 16px;
+    }
+    
+    .deliverable-meta {
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.4;
     }
     
     .deliverable-icon {
-        font-size: 2em;
-        opacity: 0.3;
+        font-size: 32px;
+        color: var(--text-muted);
+        opacity: 0.4;
     }
     
-    .milestone-timeline {
+    .download-btn {
+        background: linear-gradient(135deg, var(--info), #2563eb);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .download-btn:hover {
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    
+    /* Timeline */
+    .timeline {
         position: relative;
         padding-left: 30px;
     }
     
-    .milestone-timeline::before {
+    .timeline::before {
         content: '';
         position: absolute;
         left: 15px;
         top: 0;
         bottom: 0;
-        width: 2px;
-        background: #e9ecef;
+        width: 3px;
+        background: var(--border-secondary);
+        border-radius: 2px;
     }
     
-    .milestone-item {
+    .timeline-item {
         position: relative;
         padding: 20px 0;
-        border-bottom: 1px solid #f1f3f4;
+        border-bottom: 1px solid var(--border-primary);
     }
     
-    .milestone-item:last-child {
+    .timeline-item:last-child {
         border-bottom: none;
     }
     
-    .milestone-marker {
+    .timeline-marker {
         position: absolute;
         left: -22px;
         top: 25px;
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.8em;
-        font-weight: bold;
-        border: 3px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        font-size: 12px;
+        font-weight: 700;
+        border: 3px solid var(--bg-card);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
-    .milestone-completed {
-        background: #28a745;
-        color: white;
+    .marker-completed { background: var(--success); color: white; }
+    .marker-pending { background: var(--text-muted); color: white; }
+    .marker-overdue { background: var(--error); color: white; }
+    
+    .timeline-content h4 {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 8px 0;
+        font-size: 16px;
     }
     
-    .milestone-pending {
-        background: #6c757d;
-        color: white;
-    }
-    
-    .milestone-overdue {
-        background: #dc3545;
-        color: white;
-    }
-    
-    .collaborator-card {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid #17a2b8;
+    .timeline-meta {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-bottom: 8px;
         display: flex;
-        align-items: center;
         gap: 12px;
-        margin-bottom: 15px;
+        flex-wrap: wrap;
     }
     
-    .collaborator-avatar {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background: #17a2b8;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 1.2em;
+    .timeline-desc {
+        color: var(--text-secondary);
+        line-height: 1.4;
+        font-size: 14px;
     }
     
-    .comments-section {
+    /* Comments */
+    .comments-list {
         max-height: 600px;
         overflow-y: auto;
+        padding-right: 8px;
     }
     
-    .comment-item {
+    .comment {
         padding: 20px;
-        margin-bottom: 15px;
-        border-radius: 8px;
+        margin-bottom: 16px;
+        border-radius: 12px;
+        border: 2px solid var(--border-primary);
+        transition: all 0.3s ease;
         position: relative;
     }
     
-    .teacher-comment {
-        background: #e8f4ff;
-        border-left: 4px solid #17a2b8;
+    .comment:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     }
     
-    .student-comment {
-        background: #f8f9fa;
-        border-left: 4px solid #6c757d;
+    .comment-teacher {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+        border-color: var(--info);
+    }
+    
+    .comment-teacher::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(135deg, var(--info), #2563eb);
+        border-radius: 12px 0 0 12px;
+    }
+    
+    .comment-student {
+        background: var(--bg-tertiary);
+        border-color: var(--border-secondary);
+    }
+    
+    .comment-student::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(135deg, var(--text-muted), var(--border-secondary));
+        border-radius: 12px 0 0 12px;
     }
     
     .comment-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
     
     .comment-author {
-        font-weight: bold;
-        color: #17a2b8;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+    }
+    
+    .comment-date {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+    
+    .comment-text {
+        line-height: 1.6;
+        color: var(--text-secondary);
+        font-size: 14px;
+    }
+    
+    /* Sidebar */
+    .sidebar-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sidebar-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    }
+    
+    .sidebar-title {
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+        font-size: 16px;
+        font-weight: 700;
         display: flex;
         align-items: center;
         gap: 8px;
     }
     
-    .comment-date {
-        font-size: 0.9em;
-        color: #6c757d;
-    }
-    
-    .comment-content {
-        line-height: 1.6;
-        color: #333;
-    }
-    
-    .quick-actions {
-        position: sticky;
-        top: 20px;
-    }
-    
-    .action-button {
+    /* Action buttons */
+    .action-btn {
         display: block;
         width: 100%;
-        padding: 12px;
+        padding: 10px 14px;
         margin-bottom: 10px;
         text-align: center;
         text-decoration: none;
         border-radius: 8px;
-        font-weight: 500;
+        font-weight: 600;
+        font-size: 13px;
         transition: all 0.3s ease;
-    }
-    
-    .btn-back {
-        background: #6c757d;
-        color: white;
-    }
-    
-    .btn-back:hover {
-        background: #5a6268;
-        transform: translateY(-1px);
-        color: white;
-        text-decoration: none;
-    }
-    
-    .btn-export {
-        background: #28a745;
-        color: white;
-    }
-    
-    .btn-export:hover {
-        background: #1e7e34;
-        transform: translateY(-1px);
-        color: white;
-        text-decoration: none;
-    }
-    
-    .owner-info {
+        border: 2px solid transparent;
         display: flex;
         align-items: center;
-        padding: 15px;
-        background: #e8f4ff;
-        border-radius: 8px;
-        border: 2px solid #007bff;
+        justify-content: center;
+        gap: 6px;
     }
     
-    .owner-avatar {
-        width: 50px;
-        height: 50px;
+    .btn-back { background: var(--bg-tertiary); color: var(--text-secondary); border-color: var(--border-secondary); }
+    .btn-export { background: linear-gradient(135deg, var(--success), #059669); color: white; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); }
+    .btn-print { background: linear-gradient(135deg, var(--info), #2563eb); color: white; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .btn-back:hover { background: var(--border-secondary); color: var(--text-primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .btn-export:hover { color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+    .btn-print:hover { color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+    
+    /* Team section */
+    .owner-card {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+        border-radius: 12px;
+        border: 2px solid var(--info);
+        margin-bottom: 16px;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
-        background: #007bff;
+        background: linear-gradient(135deg, var(--info), #2563eb);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        margin-right: 15px;
-        font-size: 1.2em;
+        font-weight: 700;
+        margin-right: 12px;
+        font-size: 16px;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
     }
     
-    .module-info-card {
-        background: #e8f4ff;
-        border: 2px solid #007bff;
+    .user-info h4 {
+        margin: 0 0 4px 0;
+        font-weight: 700;
+        color: var(--info);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .user-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 15px;
+        margin-bottom: 2px;
+    }
+    
+    .user-id {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+    
+    .collaborator {
+        background: var(--bg-tertiary);
+        padding: 12px;
         border-radius: 8px;
-        padding: 15px;
+        border: 1px solid var(--border-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .collaborator:hover {
+        background: var(--bg-card);
+        border-color: var(--accent-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .collaborator .user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+    }
+    
+    /* Module info */
+    .module-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+        border: 2px solid var(--info);
+        border-radius: 12px;
+        padding: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .module-card:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.08));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
     }
     
     .module-header {
@@ -383,182 +597,377 @@
     }
     
     .module-code {
-        font-weight: bold;
-        color: #007bff;
-        font-size: 1.1em;
+        font-weight: 700;
+        color: var(--info);
+        font-size: 16px;
+    }
+    
+    .module-status {
+        font-size: 11px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .module-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+        font-size: 14px;
     }
     
     .module-details {
-        color: #6c757d;
-        font-size: 0.9em;
-    }
-    
-    .assigned-teachers {
-        background: #fff3cd;
-        border: 1px solid #ffc107;
-        border-radius: 8px;
-        padding: 15px;
-    }
-    
-    .teacher-list {
+        color: var(--text-muted);
+        font-size: 12px;
+        margin-bottom: 10px;
         display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-top: 10px;
+        align-items: center;
+        gap: 6px;
     }
     
-    .teacher-item {
+    .module-desc {
+        color: var(--text-secondary);
+        font-size: 12px;
+        line-height: 1.4;
+        margin-bottom: 12px;
+    }
+    
+    .view-module-btn {
+        background: linear-gradient(135deg, var(--info), #2563eb);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .view-module-btn:hover {
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    
+    /* Teachers section */
+    .teachers-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+        border: 2px solid var(--warning);
+        border-radius: 12px;
+        padding: 16px;
+    }
+    
+    .teachers-header {
+        font-weight: 600;
+        color: var(--warning);
+        margin-bottom: 12px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .teacher {
         display: flex;
         align-items: center;
         padding: 8px;
-        background: white;
-        border-radius: 4px;
+        background: var(--bg-card);
+        border-radius: 6px;
+        border: 1px solid var(--border-primary);
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
     }
     
-    .teacher-avatar {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background: #ffc107;
-        color: #212529;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        margin-right: 10px;
-        font-size: 0.8em;
+    .teacher:hover {
+        background: var(--bg-tertiary);
+        transform: translateY(-1px);
     }
     
+    .teacher .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+        background: linear-gradient(135deg, var(--warning), #d97706);
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+    
+    .teacher .user-name {
+        font-size: 13px;
+    }
+    
+    .teacher .user-id {
+        font-size: 11px;
+    }
+    
+    /* Stats */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .stat {
+        text-align: center;
+        padding: 12px;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        border: 1px solid var(--border-primary);
+        transition: all 0.3s ease;
+    }
+    
+    .stat:hover {
+        background: var(--bg-card);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: var(--accent-primary);
+    }
+    
+    .stat-value {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--accent-primary);
+        margin-bottom: 4px;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    /* Empty states */
     .empty-state {
         text-align: center;
-        padding: 40px;
-        color: #6c757d;
+        padding: 40px 20px;
+        color: var(--text-muted);
     }
     
-    .navigation-bar {
-        background: #f8f9fa;
+    .empty-icon {
+        font-size: 36px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+    
+    .empty-state h4 {
+        color: var(--text-primary);
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .empty-state p {
+        margin: 0;
+        font-size: 14px;
+    }
+    
+    /* Navigation */
+    .nav-section {
+        background: var(--bg-card);
         padding: 20px;
-        border-radius: 12px;
+        border-radius: 16px;
         text-align: center;
-        margin-top: 30px;
+        margin-top: 24px;
+        border: 1px solid var(--border-primary);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .nav-title {
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+        font-size: 16px;
+        font-weight: 700;
     }
     
     .nav-buttons {
         display: flex;
-        gap: 15px;
+        gap: 12px;
         justify-content: center;
         flex-wrap: wrap;
     }
     
-    /* Responsive Design */
+    .nav-btn {
+        padding: 10px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 2px solid transparent;
+    }
+    
+    .nav-secondary { background: var(--bg-tertiary); color: var(--text-secondary); border-color: var(--border-secondary); }
+    .nav-warning { background: linear-gradient(135deg, var(--warning), #d97706); color: white; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); }
+    
+    .nav-btn:hover {
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+    
+    .nav-secondary:hover { background: var(--border-secondary); color: var(--text-primary); }
+    .nav-warning:hover { color: white; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); }
+    
+    /* Responsive */
     @media (max-width: 768px) {
-        .content-grid {
+        .project-layout {
+            flex-direction: column;
+        }
+        
+        .project-sidebar {
+            width: 100%;
+        }
+        
+        .project-meta-grid {
             grid-template-columns: 1fr;
-        }
-        
-        .project-meta {
-            grid-template-columns: 1fr;
-        }
-        
-        .project-header {
-            padding: 20px;
-        }
-        
-        .content-section {
-            padding: 15px;
         }
         
         .deliverables-grid {
             grid-template-columns: 1fr;
         }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .nav-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .nav-btn {
+            min-width: 200px;
+            justify-content: center;
+        }
+    }
+    
+    /* Print styles */
+    @media print {
+        .project-sidebar { display: none; }
+        .project-layout { flex-direction: column; }
+        .project-hero { background: white !important; color: black !important; box-shadow: none !important; }
+        .action-btn { display: none; }
+        .nav-section { display: none; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="project-detail-container">
     <!-- Project Header -->
-    <div class="project-header">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div style="flex: 1;">
-                <h1 style="margin: 0 0 15px 0; font-size: 2.2em;">{{ project.title }}</h1>
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-                    <span class="project-status-badge status-{{ project.status|lower }}">
-                        {{ project.get_status_display }}
-                    </span>
-                    {% if project.module %}
-                    <span style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px;">
-                        📚 {{ project.module.code }}
-                    </span>
-                    {% endif %}
+    <div class="project-hero">
+        <div class="hero-content">
+            <h1>{{ project.title }}</h1>
+            <div class="status-badges">
+                <span class="status-badge status-{{ project.status|lower }}">
+                    {{ project.get_status_display }}
+                </span>
+                {% if project.module %}
+                <span class="module-badge">
+                    <i class="fas fa-book"></i>
+                    {{ project.module.code }}
+                </span>
+                {% endif %}
+            </div>
+            
+            <div class="project-meta-grid">
+                <div class="meta-card">
+                    <div class="meta-label">
+                        <i class="fas fa-user"></i>
+                        Étudiant
+                    </div>
+                    <div class="meta-value">{{ project.student.user.get_full_name|default:project.student.user.username }}</div>
                 </div>
-                
-                <div class="project-meta">
-                    <div class="meta-item">
-                        <div class="meta-label">👤 Étudiant</div>
-                        <div class="meta-value">{{ project.student.user.get_full_name|default:project.student.user.username }}</div>
+                <div class="meta-card">
+                    <div class="meta-label">
+                        <i class="fas fa-folder"></i>
+                        Type de Projet
                     </div>
-                    <div class="meta-item">
-                        <div class="meta-label">📂 Type de Projet</div>
-                        <div class="meta-value">{{ project.get_project_type_display }}</div>
+                    <div class="meta-value">{{ project.get_project_type_display }}</div>
+                </div>
+                <div class="meta-card">
+                    <div class="meta-label">
+                        <i class="fas fa-calendar-plus"></i>
+                        Créé le
                     </div>
-                    <div class="meta-item">
-                        <div class="meta-label">📅 Créé le</div>
-                        <div class="meta-value">{{ project.created_at|date:"d/m/Y" }}</div>
+                    <div class="meta-value">{{ project.created_at|date:"d/m/Y" }}</div>
+                </div>
+                <div class="meta-card">
+                    <div class="meta-label">
+                        <i class="fas fa-clock"></i>
+                        Dernière MAJ
                     </div>
-                    <div class="meta-item">
-                        <div class="meta-label">⏰ Dernière MAJ</div>
-                        <div class="meta-value">{{ project.updated_at|date:"d/m/Y H:i" }}</div>
-                    </div>
+                    <div class="meta-value">{{ project.updated_at|date:"d/m/Y H:i" }}</div>
                 </div>
             </div>
-            <div style="font-size: 4em; opacity: 0.2;">📋</div>
         </div>
     </div>
 
-    <!-- Main Content Grid -->
-    <div class="content-grid">
+    <!-- Main Layout -->
+    <div class="project-layout">
         <!-- Main Content -->
-        <div class="main-content">
-            <!-- Project Description -->
-            <div class="content-section">
-                <div class="section-header">
-                    <h2 class="section-title">📝 Description du Projet</h2>
+        <div class="main-sections">
+            <!-- Description -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-align-left"></i>
+                        Description du Projet
+                    </h2>
                 </div>
-                <div class="project-description">
+                <div class="description-content">
                     {{ project.description|linebreaks|default:"Aucune description fournie." }}
                 </div>
                 
                 {% if project.module_or_company %}
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">
-                    <strong style="color: #17a2b8;">🏢 Module/Entreprise:</strong> {{ project.module_or_company }}
+                <div class="company-info">
+                    <i class="fas fa-building"></i>
+                    <strong>Module/Entreprise:</strong>
+                    <span style="color: var(--text-secondary); margin-left: 8px;">{{ project.module_or_company }}</span>
                 </div>
                 {% endif %}
             </div>
 
             <!-- Deliverables -->
-            <div class="content-section">
-                <div class="section-header">
-                    <h2 class="section-title">📎 Livrables</h2>
-                    <span class="section-count">{{ deliverables.count }}</span>
+            <div class="content-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-paperclip"></i>
+                        Livrables
+                    </h2>
+                    <span class="count-badge">{{ deliverables.count }}</span>
                 </div>
                 
                 {% if deliverables %}
                     <div class="deliverables-grid">
                         {% for deliverable in deliverables %}
-                        <div class="deliverable-card">
+                        <div class="deliverable-item">
                             <div class="deliverable-header">
-                                <div>
-                                    <h4 style="margin: 0 0 8px 0; color: #17a2b8;">{{ deliverable.name }}</h4>
-                                    <div style="font-size: 0.9em; color: #6c757d;">
+                                <div class="deliverable-info">
+                                    <h4>{{ deliverable.name }}</h4>
+                                    <div class="deliverable-meta">
                                         <strong>Type:</strong> {{ deliverable.get_file_type_display }}<br>
                                         <strong>Uploadé le:</strong> {{ deliverable.upload_date|date:"d/m/Y H:i" }}
                                     </div>
                                 </div>
-                                <div class="deliverable-icon">📄</div>
+                                <div class="deliverable-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
                             </div>
-                            <div style="margin-top: 15px;">
-                                <a href="{{ deliverable.file.url }}" class="btn btn-sm" target="_blank" style="background: #17a2b8; color: white;">
-                                    📥 Télécharger
+                            <div style="margin-top: 16px;">
+                                <a href="{{ deliverable.file.url }}" class="download-btn" target="_blank">
+                                    <i class="fas fa-download"></i>
+                                    Télécharger
                                 </a>
                             </div>
                         </div>
@@ -566,41 +975,53 @@
                     </div>
                 {% else %}
                     <div class="empty-state">
-                        <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">📎</div>
-                        <p>Aucun livrable disponible pour ce projet.</p>
+                        <div class="empty-icon">
+                            <i class="fas fa-paperclip"></i>
+                        </div>
+                        <h4>Aucun Livrable</h4>
+                        <p>Aucun livrable n'a encore été ajouté à ce projet.</p>
                     </div>
                 {% endif %}
             </div>
 
             <!-- Milestones -->
-            <div class="content-section">
-                <div class="section-header">
-                    <h2 class="section-title">🎯 Jalons du Projet</h2>
-                    <span class="section-count">{{ milestones.count }}</span>
+            <div class="content-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-flag-checkered"></i>
+                        Jalons du Projet
+                    </h2>
+                    <span class="count-badge">{{ milestones.count }}</span>
                 </div>
                 
                 {% if milestones %}
-                    <div class="milestone-timeline">
+                    <div class="timeline">
                         {% for milestone in milestones %}
-                        <div class="milestone-item">
-                            <div class="milestone-marker {% if milestone.completed %}milestone-completed{% elif milestone.is_overdue %}milestone-overdue{% else %}milestone-pending{% endif %}">
-                                {% if milestone.completed %}✓{% else %}•{% endif %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker {% if milestone.completed %}marker-completed{% elif milestone.is_overdue %}marker-overdue{% else %}marker-pending{% endif %}">
+                                {% if milestone.completed %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-circle"></i>{% endif %}
                             </div>
-                            <div>
-                                <h4 style="margin: 0 0 8px 0; color: #17a2b8;">{{ milestone.title }}</h4>
-                                <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 8px;">
-                                    <strong>Échéance:</strong> {{ milestone.due_date|date:"d/m/Y" }}
+                            <div class="timeline-content">
+                                <h4>{{ milestone.title }}</h4>
+                                <div class="timeline-meta">
+                                    <span><strong>Échéance:</strong> {{ milestone.due_date|date:"d/m/Y" }}</span>
                                     {% if milestone.completed %}
-                                        • <span style="color: #28a745;">Complété le {{ milestone.completed_at|date:"d/m/Y" }}</span>
+                                        <span style="color: var(--success);">
+                                            <i class="fas fa-check-circle"></i>
+                                            Complété le {{ milestone.completed_at|date:"d/m/Y" }}
+                                        </span>
                                         {% if milestone.completed_by %}
-                                            par {{ milestone.completed_by.get_full_name|default:milestone.completed_by.username }}
+                                            <span>par {{ milestone.completed_by.get_full_name|default:milestone.completed_by.username }}</span>
                                         {% endif %}
                                     {% elif milestone.is_overdue %}
-                                        • <span style="color: #dc3545;">En retard</span>
+                                        <span style="color: var(--error);">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            En retard
+                                        </span>
                                     {% endif %}
                                 </div>
                                 {% if milestone.description %}
-                                <p style="margin: 0; color: #6c757d;">{{ milestone.description }}</p>
+                                <div class="timeline-desc">{{ milestone.description }}</div>
                                 {% endif %}
                             </div>
                         </div>
@@ -608,34 +1029,42 @@
                     </div>
                 {% else %}
                     <div class="empty-state">
-                        <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">🎯</div>
-                        <p>Aucun jalon défini pour ce projet.</p>
+                        <div class="empty-icon">
+                            <i class="fas fa-flag-checkered"></i>
+                        </div>
+                        <h4>Aucun Jalon</h4>
+                        <p>Aucun jalon n'a encore été défini pour ce projet.</p>
                     </div>
                 {% endif %}
             </div>
 
-            <!-- Comments and Discussion -->
-            <div class="content-section">
-                <div class="section-header">
-                    <h2 class="section-title">💬 Discussion et Historique</h2>
-                    <span class="section-count">{{ comments.count }}</span>
+            <!-- Comments -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-comments"></i>
+                        Discussion et Historique
+                    </h2>
+                    <span class="count-badge">{{ comments.count }}</span>
                 </div>
                 
                 {% if comments %}
-                    <div class="comments-section">
+                    <div class="comments-list">
                         {% for comment in comments %}
-                        <div class="comment-item {% if comment.is_teacher_comment %}teacher-comment{% else %}student-comment{% endif %}">
+                        <div class="comment {% if comment.is_teacher_comment %}comment-teacher{% else %}comment-student{% endif %}">
                             <div class="comment-header">
                                 <div class="comment-author">
                                     {% if comment.is_teacher_comment %}
-                                        🎓 {{ comment.author.get_full_name|default:comment.author.username }} (Enseignant)
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                        {{ comment.author.get_full_name|default:comment.author.username }} (Enseignant)
                                     {% else %}
-                                        👤 {{ comment.author.get_full_name|default:comment.author.username }} (Étudiant)
+                                        <i class="fas fa-user-graduate"></i>
+                                        {{ comment.author.get_full_name|default:comment.author.username }} (Étudiant)
                                     {% endif %}
                                 </div>
                                 <div class="comment-date">{{ comment.created_at|date:"d/m/Y H:i" }}</div>
                             </div>
-                            <div class="comment-content">
+                            <div class="comment-text">
                                 {{ comment.content|linebreaks }}
                             </div>
                         </div>
@@ -643,57 +1072,75 @@
                     </div>
                 {% else %}
                     <div class="empty-state">
-                        <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;">💬</div>
-                        <p>Aucun commentaire pour ce projet.</p>
+                        <div class="empty-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <h4>Aucun Commentaire</h4>
+                        <p>Aucune discussion n'a encore eu lieu sur ce projet.</p>
                     </div>
                 {% endif %}
             </div>
         </div>
 
         <!-- Sidebar -->
-        <div class="sidebar-content">
-            <!-- Quick Actions -->
-            <div class="content-section quick-actions">
-                <h3 style="margin: 0 0 15px 0; color: #495057;">⚡ Actions Rapides</h3>
-                <a href="{% url 'administrator:projects_list' %}" class="action-button btn-back">
-                    ← Retour à la Liste
+        <div class="project-sidebar">
+            <!-- Actions -->
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">
+                    <i class="fas fa-bolt"></i>
+                    Actions
+                </h3>
+                <a href="{% url 'administrator:projects_list' %}" class="action-btn btn-back">
+                    <i class="fas fa-arrow-left"></i>
+                    Retour
                 </a>
-                <a href="#" onclick="exportProject()" class="action-button btn-export">
-                    📤 Exporter Projet
+                <a href="#" onclick="exportProject()" class="action-btn btn-export">
+                    <i class="fas fa-file-export"></i>
+                    Exporter
                 </a>
-                <a href="#" onclick="printProject()" class="action-button" style="background: #17a2b8; color: white;">
-                    🖨️ Imprimer
+                <a href="#" onclick="printProject()" class="action-btn btn-print">
+                    <i class="fas fa-print"></i>
+                    Imprimer
                 </a>
             </div>
 
-            <!-- Project Team -->
-            <div class="content-section">
-                <h3 style="margin: 0 0 15px 0; color: #495057;">👥 Équipe Projet</h3>
+            <!-- Team -->
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">
+                    <i class="fas fa-users"></i>
+                    Équipe
+                </h3>
                 
-                <!-- Project Owner -->
-                <div class="owner-info">
-                    <div class="owner-avatar">
+                <!-- Owner -->
+                <div class="owner-card">
+                    <div class="user-avatar">
                         {{ project.student.user.first_name.0|default:project.student.user.username.0|upper }}
                     </div>
-                    <div>
-                        <div style="font-weight: bold; color: #007bff;">👑 Propriétaire</div>
-                        <div style="font-weight: 500;">{{ project.student.user.get_full_name|default:project.student.user.username }}</div>
-                        <div style="font-size: 0.8em; color: #6c757d;">{{ project.student.student_id }}</div>
+                    <div class="user-info">
+                        <h4>
+                            <i class="fas fa-crown"></i>
+                            Propriétaire
+                        </h4>
+                        <div class="user-name">{{ project.student.user.get_full_name|default:project.student.user.username }}</div>
+                        <div class="user-id">{{ project.student.student_id }}</div>
                     </div>
                 </div>
 
                 <!-- Collaborators -->
                 {% if collaborators %}
-                <div style="margin-top: 20px;">
-                    <h4 style="color: #495057; margin-bottom: 10px;">🤝 Collaborateurs ({{ collaborators.count }})</h4>
+                <div style="margin-top: 16px;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 10px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-user-friends"></i>
+                        Collaborateurs ({{ collaborators.count }})
+                    </h4>
                     {% for collaborator in collaborators %}
-                    <div class="collaborator-card">
-                        <div class="collaborator-avatar">
+                    <div class="collaborator">
+                        <div class="user-avatar">
                             {{ collaborator.user.first_name.0|default:collaborator.user.username.0|upper }}
                         </div>
-                        <div style="flex: 1;">
-                            <strong>{{ collaborator.user.get_full_name|default:collaborator.user.username }}</strong><br>
-                            <small style="color: #6c757d;">{{ collaborator.student_id }}</small>
+                        <div class="user-info">
+                            <div class="user-name">{{ collaborator.user.get_full_name|default:collaborator.user.username }}</div>
+                            <div class="user-id">{{ collaborator.student_id }}</div>
                         </div>
                     </div>
                     {% endfor %}
@@ -701,32 +1148,39 @@
                 {% endif %}
             </div>
 
-            <!-- Module Information -->
+            <!-- Module -->
             {% if project.module %}
-            <div class="content-section">
-                <h3 style="margin: 0 0 15px 0; color: #495057;">📚 Module Associé</h3>
-                <div class="module-info-card">
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">
+                    <i class="fas fa-book"></i>
+                    Module
+                </h3>
+                <div class="module-card">
                     <div class="module-header">
                         <div class="module-code">{{ project.module.code }}</div>
-                        <div style="font-size: 0.8em; color: #6c757d;">
+                        <div class="module-status">
                             {% if project.module.is_active %}
-                                <span style="color: #28a745;">● Actif</span>
+                                <i class="fas fa-circle" style="color: var(--success);"></i>
+                                Actif
                             {% else %}
-                                <span style="color: #dc3545;">● Inactif</span>
+                                <i class="fas fa-circle" style="color: var(--error);"></i>
+                                Inactif
                             {% endif %}
                         </div>
                     </div>
-                    <div style="font-weight: 500; margin-bottom: 8px;">{{ project.module.name }}</div>
+                    <div class="module-name">{{ project.module.name }}</div>
                     <div class="module-details">
-                        📅 {{ project.module.academic_year }} • {{ project.module.get_semester_display }}
+                        <i class="fas fa-calendar"></i>
+                        {{ project.module.academic_year }} • {{ project.module.get_semester_display }}
                     </div>
                     {% if project.module.description %}
-                    <div style="margin-top: 10px; font-size: 0.9em; color: #6c757d;">
-                        {{ project.module.description|truncatechars:100 }}
+                    <div class="module-desc">
+                        {{ project.module.description|truncatechars:80 }}
                     </div>
                     {% endif %}
-                    <div style="margin-top: 15px;">
-                        <a href="{% url 'administrator:module_detail' project.module.id %}" class="btn btn-sm btn-primary">
+                    <div style="margin-top: 12px;">
+                        <a href="{% url 'administrator:module_detail' project.module.id %}" class="view-module-btn">
+                            <i class="fas fa-external-link-alt"></i>
                             Voir Module
                         </a>
                     </div>
@@ -734,50 +1188,55 @@
             </div>
             {% endif %}
 
-            <!-- Assigned Teachers -->
+            <!-- Teachers -->
             {% if assigned_teachers %}
-            <div class="content-section">
-                <h3 style="margin: 0 0 15px 0; color: #495057;">👨‍🏫 Enseignants Assignés</h3>
-                <div class="assigned-teachers">
-                    <div style="font-weight: 500; color: #856404; margin-bottom: 10px;">
-                        {{ assigned_teachers|length }} enseignant{{ assigned_teachers|length|pluralize }} assigné{{ assigned_teachers|length|pluralize }}
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    Enseignants
+                </h3>
+                <div class="teachers-card">
+                    <div class="teachers-header">
+                        <i class="fas fa-users"></i>
+                        {{ assigned_teachers|length }} assigné{{ assigned_teachers|length|pluralize }}
                     </div>
-                    <div class="teacher-list">
-                        {% for teacher in assigned_teachers %}
-                        <div class="teacher-item">
-                            <div class="teacher-avatar">
-                                {{ teacher.user.first_name.0|default:teacher.user.username.0|upper }}
-                            </div>
-                            <div>
-                                <div style="font-weight: 500;">{{ teacher.user.get_full_name|default:teacher.user.username }}</div>
-                                <div style="font-size: 0.8em; color: #6c757d;">{{ teacher.teacher_id|default:"ID non défini" }}</div>
-                            </div>
+                    {% for teacher in assigned_teachers %}
+                    <div class="teacher">
+                        <div class="user-avatar">
+                            {{ teacher.user.first_name.0|default:teacher.user.username.0|upper }}
                         </div>
-                        {% endfor %}
+                        <div class="user-info">
+                            <div class="user-name">{{ teacher.user.get_full_name|default:teacher.user.username }}</div>
+                            <div class="user-id">{{ teacher.teacher_id|default:"ID non défini" }}</div>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
             {% endif %}
 
-            <!-- Project Statistics -->
-            <div class="content-section">
-                <h3 style="margin: 0 0 15px 0; color: #495057;">📊 Statistiques</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                        <div style="font-size: 1.5em; font-weight: bold; color: #495057;">{{ deliverables.count }}</div>
-                        <div style="font-size: 0.8em; color: #6c757d;">Livrables</div>
+            <!-- Stats -->
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Statistiques
+                </h3>
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-value">{{ deliverables.count }}</div>
+                        <div class="stat-label">Livrables</div>
                     </div>
-                    <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                        <div style="font-size: 1.5em; font-weight: bold; color: #495057;">{{ milestones.count }}</div>
-                        <div style="font-size: 0.8em; color: #6c757d;">Jalons</div>
+                    <div class="stat">
+                        <div class="stat-value">{{ milestones.count }}</div>
+                        <div class="stat-label">Jalons</div>
                     </div>
-                    <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                        <div style="font-size: 1.5em; font-weight: bold; color: #495057;">{{ comments.count }}</div>
-                        <div style="font-size: 0.8em; color: #6c757d;">Commentaires</div>
+                    <div class="stat">
+                        <div class="stat-value">{{ comments.count }}</div>
+                        <div class="stat-label">Commentaires</div>
                     </div>
-                    <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                        <div style="font-size: 1.5em; font-weight: bold; color: #495057;">{{ collaborators.count|add:1 }}</div>
-                        <div style="font-size: 0.8em; color: #6c757d;">Membres</div>
+                    <div class="stat">
+                        <div class="stat-value">{{ collaborators.count|add:1 }}</div>
+                        <div class="stat-label">Membres</div>
                     </div>
                 </div>
             </div>
@@ -785,27 +1244,31 @@
     </div>
 
     <!-- Navigation -->
-    <div class="navigation-bar">
+    <div class="nav-section">
+        <h3 class="nav-title">Navigation Rapide</h3>
         <div class="nav-buttons">
-            <a href="{% url 'administrator:projects_list' %}" class="btn btn-secondary">
-                ← Retour à la Liste
+            <a href="{% url 'administrator:projects_list' %}" class="nav-btn nav-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la Liste
             </a>
             {% if project.module %}
-            <a href="{% url 'administrator:projects_list' %}?module={{ project.module.id }}" class="btn btn-secondary">
-                📚 Autres Projets du Module
+            <a href="{% url 'administrator:projects_list' %}?module={{ project.module.id }}" class="nav-btn nav-secondary">
+                <i class="fas fa-book"></i>
+                Autres Projets du Module
             </a>
             {% endif %}
-            <a href="{% url 'administrator:projects_list' %}?status=submitted" class="btn" style="background: #ffc107; color: #212529;">
-                ⏳ Projets en Attente
+            <a href="{% url 'administrator:projects_list' %}?status=submitted" class="nav-btn nav-warning">
+                <i class="fas fa-clock"></i>
+                Projets en Attente
             </a>
         </div>
     </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     function exportProject() {
-        // Create export URL
         const exportUrl = `{% url 'administrator:export_projects' %}?project_id={{ project.id }}`;
         window.open(exportUrl, '_blank');
     }
@@ -814,18 +1277,36 @@
         window.print();
     }
     
-    // Add print styles
-    const printStyles = `
-        @media print {
-            .sidebar-content { display: none; }
-            .content-grid { grid-template-columns: 1fr; }
-            .project-header { background: white !important; color: black !important; }
-            .action-button { display: none; }
+    document.addEventListener('DOMContentLoaded', function() {
+        // Loading states for buttons
+        const exportBtn = document.querySelector('[onclick="exportProject()"]');
+        const printBtn = document.querySelector('[onclick="printProject()"]');
+        
+        if (exportBtn) {
+            exportBtn.addEventListener('click', function() {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Export...';
+                this.style.pointerEvents = 'none';
+                
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.style.pointerEvents = 'auto';
+                }, 2000);
+            });
         }
-    `;
-    
-    const styleSheet = document.createElement("style");
-    styleSheet.innerText = printStyles;
-    document.head.appendChild(styleSheet);
+        
+        if (printBtn) {
+            printBtn.addEventListener('click', function() {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Print...';
+                this.style.pointerEvents = 'none';
+                
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.style.pointerEvents = 'auto';
+                }, 1000);
+            });
+        }
+    });
 </script>
 {% endblock %}

@@ -14,108 +14,151 @@
 {% block extra_css %}
 <style>
     .module-header {
-        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
         color: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
+        padding: 32px;
+        border-radius: 16px;
+        margin-bottom: 32px;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+    }
+    
+    .module-header.inactive {
+        background: linear-gradient(135deg, var(--error) 0%, #dc2626 100%);
+        box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
     }
     
     .module-header::before {
         content: '';
         position: absolute;
         top: -50%;
-        right: -20px;
-        width: 100px;
+        right: -10%;
+        width: 200px;
         height: 200%;
         background: rgba(255,255,255,0.1);
         transform: rotate(15deg);
-    }
-    
-    .module-header.inactive {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border-radius: 20px;
     }
     
     .status-badge {
         position: absolute;
-        top: 20px;
-        right: 20px;
+        top: 24px;
+        right: 24px;
         padding: 8px 16px;
         border-radius: 20px;
-        font-weight: bold;
-        font-size: 0.9em;
+        font-weight: 700;
+        font-size: 14px;
         background: rgba(255,255,255,0.2);
         backdrop-filter: blur(10px);
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .module-title {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 8px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .module-subtitle {
+        font-size: 18px;
+        opacity: 0.9;
+        margin-bottom: 16px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .module-description-header {
+        opacity: 0.9;
+        line-height: 1.4;
+        margin: 16px 0 0 0;
+        position: relative;
+        z-index: 2;
     }
     
     .module-meta-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
+        gap: 16px;
+        margin-top: 24px;
+        position: relative;
+        z-index: 2;
     }
     
     .meta-item {
         background: rgba(255,255,255,0.15);
-        padding: 15px;
-        border-radius: 8px;
+        padding: 16px;
+        border-radius: 12px;
         text-align: center;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
     }
     
     .meta-label {
-        font-size: 0.9em;
+        font-size: 12px;
         opacity: 0.8;
-        margin-bottom: 5px;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .meta-value {
-        font-weight: bold;
-        font-size: 1.3em;
+        font-weight: 700;
+        font-size: 16px;
     }
     
     .content-tabs {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         overflow: hidden;
-        margin-bottom: 30px;
+        margin-bottom: 32px;
     }
     
     .tab-navigation {
         display: flex;
-        background: #f8f9fa;
-        border-bottom: 1px solid #e9ecef;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-primary);
     }
     
     .tab-button {
         flex: 1;
-        padding: 15px 20px;
+        padding: 16px 20px;
         background: none;
         border: none;
         cursor: pointer;
-        font-weight: 500;
-        color: #6c757d;
+        font-weight: 600;
+        color: var(--text-muted);
         transition: all 0.3s ease;
         position: relative;
         border-bottom: 3px solid transparent;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
     
     .tab-button.active {
-        color: #28a745;
-        background: white;
-        border-bottom-color: #28a745;
+        color: var(--success);
+        background: var(--bg-card);
+        border-bottom-color: var(--success);
     }
     
     .tab-button:hover {
-        background: #e9ecef;
-        color: #495057;
+        background: var(--border-secondary);
+        color: var(--text-primary);
     }
     
     .tab-content {
         display: none;
-        padding: 25px;
+        padding: 24px;
     }
     
     .tab-content.active {
@@ -126,119 +169,177 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 20px;
-        margin-bottom: 30px;
+        margin-bottom: 32px;
     }
     
     .stat-card {
-        background: white;
+        background: var(--bg-card);
         padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         text-align: center;
-        border-left: 4px solid #28a745;
-        transition: transform 0.3s ease;
+        border: 1px solid var(--border-primary);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--success), #059669);
     }
     
     .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        border-color: var(--border-secondary);
     }
     
     .stat-value {
-        font-size: 2em;
-        font-weight: bold;
-        color: #28a745;
-        margin-bottom: 5px;
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--success);
+        margin-bottom: 6px;
+        line-height: 1;
     }
     
     .stat-label {
-        color: #6c757d;
-        font-size: 0.9em;
+        color: var(--text-muted);
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .join-code-section {
-        background: #e8f4ff;
-        border: 2px solid #007bff;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 30px;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+        border: 2px solid rgba(59, 130, 246, 0.3);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .join-code-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--info), #2563eb);
+    }
+    
+    .join-code-section h3 {
+        margin: 0 0 12px 0;
+        color: var(--info);
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .join-code-section p {
+        margin: 0 0 16px 0;
+        color: var(--text-secondary);
+        font-size: 14px;
     }
     
     .join-code {
-        font-family: 'Courier New', monospace;
-        font-size: 1.5em;
-        font-weight: bold;
-        color: #007bff;
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--info);
+        background: var(--bg-card);
+        padding: 16px;
+        border-radius: 12px;
         text-align: center;
-        margin: 15px 0;
-        border: 2px solid #007bff;
-        letter-spacing: 2px;
+        margin: 16px 0;
+        border: 2px solid var(--info);
+        letter-spacing: 3px;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
     }
     
     .copy-button {
-        background: #007bff;
+        background: linear-gradient(135deg, var(--info), #2563eb);
         color: white;
-        padding: 8px 15px;
+        padding: 10px 20px;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 0.9em;
+        font-size: 14px;
+        font-weight: 600;
         transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
     
     .copy-button:hover {
-        background: #0056b3;
         transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     }
     
     .data-table {
         width: 100%;
         border-collapse: collapse;
-        background: white;
-        border-radius: 8px;
+        background: var(--bg-card);
+        border-radius: 12px;
         overflow: hidden;
-        margin-top: 15px;
+        margin-top: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .data-table th {
-        background: #f8f9fa;
-        padding: 12px;
+        background: var(--bg-tertiary);
+        padding: 16px;
         text-align: left;
         font-weight: 600;
-        color: #495057;
-        border-bottom: 2px solid #e9ecef;
+        color: var(--text-secondary);
+        font-size: 13px;
+        border-bottom: 2px solid var(--border-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .data-table td {
-        padding: 12px;
-        border-bottom: 1px solid #f1f3f4;
+        padding: 16px;
+        border-bottom: 1px solid var(--border-primary);
+        color: var(--text-secondary);
+        font-size: 14px;
         vertical-align: middle;
     }
     
     .data-table tr:hover {
-        background: #f8f9fa;
+        background: var(--bg-tertiary);
     }
     
     .user-info {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
     }
     
     .user-avatar {
-        width: 35px;
-        height: 35px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
-        background: #28a745;
+        background: linear-gradient(135deg, var(--success), #059669);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        font-size: 0.9em;
+        font-weight: 700;
+        font-size: 16px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
     
     .user-details {
@@ -247,26 +348,31 @@
     
     .user-name {
         font-weight: 500;
-        color: #495057;
+        color: var(--text-primary);
         margin-bottom: 2px;
+        font-size: 15px;
     }
     
     .user-id {
-        font-size: 0.8em;
-        color: #6c757d;
+        font-size: 12px;
+        color: var(--text-muted);
     }
     
     .project-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 15px;
-        border-bottom: 1px solid #f1f3f4;
+        padding: 16px;
+        border-bottom: 1px solid var(--border-primary);
         transition: all 0.3s ease;
     }
     
     .project-item:hover {
-        background: #f8f9fa;
+        background: var(--bg-tertiary);
+        margin: 0 -24px;
+        padding: 16px 24px;
+        border-radius: 12px;
+        border-bottom: 1px solid transparent;
     }
     
     .project-item:last-child {
@@ -274,76 +380,161 @@
     }
     
     .project-info h4 {
-        margin: 0 0 5px 0;
-        color: #495057;
+        margin: 0 0 6px 0;
+        color: var(--text-primary);
+        font-size: 15px;
+        font-weight: 600;
     }
     
     .project-meta {
-        font-size: 0.9em;
-        color: #6c757d;
+        font-size: 13px;
+        color: var(--text-muted);
     }
     
     .empty-section {
         text-align: center;
-        padding: 50px;
-        color: #6c757d;
+        padding: 60px;
+        color: var(--text-muted);
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        border: 1px solid var(--border-primary);
     }
     
     .empty-icon {
-        font-size: 3em;
-        margin-bottom: 15px;
+        font-size: 48px;
+        margin-bottom: 16px;
         opacity: 0.3;
     }
     
+    .empty-section h4 {
+        color: var(--text-primary);
+        margin-bottom: 8px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
     .quick-actions {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-left: 4px solid #28a745;
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 20px;
+    }
+    
+    .quick-actions h3 {
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .actions-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-top: 15px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
     
     .action-card {
-        background: #f8f9fa;
         padding: 20px;
-        border-radius: 8px;
+        border-radius: 12px;
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border-primary);
         text-align: center;
-        border: 2px solid #e9ecef;
         transition: all 0.3s ease;
+        cursor: pointer;
         text-decoration: none;
         color: inherit;
     }
     
     .action-card:hover {
-        border-color: #28a745;
-        background: #e8f5e8;
-        transform: translateY(-2px);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        background: var(--border-secondary);
+        border-color: var(--success);
         color: inherit;
         text-decoration: none;
     }
     
     .action-icon {
-        font-size: 2em;
-        margin-bottom: 10px;
-        display: block;
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 12px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     
     .action-title {
         font-weight: 600;
-        color: #495057;
-        margin-bottom: 5px;
+        margin-bottom: 6px;
+        color: var(--text-primary);
+        font-size: 14px;
     }
     
     .action-desc {
-        font-size: 0.85em;
-        color: #6c757d;
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .section-title {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .search-input {
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border-secondary);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: var(--text-primary);
+        font-size: 14px;
+        width: 200px;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--success);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+    
+    .btn-remove {
+        background: linear-gradient(135deg, var(--error), #dc2626);
+        color: white;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-remove:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
     }
     
     /* Responsive Design */
@@ -370,12 +561,22 @@
         }
         
         .module-header {
-            padding: 20px;
+            padding: 24px;
         }
         
         .content-tabs {
             margin: 0 -10px;
             border-radius: 0;
+        }
+        
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .search-input {
+            width: 100%;
         }
     }
 </style>
@@ -385,41 +586,61 @@
     <!-- Module Header -->
     <div class="module-header {% if not module.is_active %}inactive{% endif %}">
         <div class="status-badge">
-            {% if module.is_active %}● ACTIF{% else %}● INACTIF{% endif %}
+            {% if module.is_active %}
+                <i class="fas fa-circle"></i> ACTIF
+            {% else %}
+                <i class="fas fa-circle"></i> INACTIF
+            {% endif %}
         </div>
         
-        <h1 style="margin: 0 0 15px 0; font-size: 2.2em;">{{ module.code }}</h1>
-        <h2 style="margin: 0 0 15px 0; font-size: 1.3em; opacity: 0.9;">{{ module.name }}</h2>
+        <h1 class="module-title">{{ module.code }}</h1>
+        <h2 class="module-subtitle">{{ module.name }}</h2>
         
         {% if module.description %}
-        <p style="margin: 15px 0 0 0; opacity: 0.9; line-height: 1.4;">
-            {{ module.description }}
-        </p>
+        <p class="module-description-header">{{ module.description }}</p>
         {% endif %}
         
         <div class="module-meta-grid">
             <div class="meta-item">
-                <div class="meta-label">📅 Année Académique</div>
+                <div class="meta-label">
+                    <i class="fas fa-calendar"></i>
+                    Année Académique
+                </div>
                 <div class="meta-value">{{ module.academic_year }}</div>
             </div>
             <div class="meta-item">
-                <div class="meta-label">📚 Semestre</div>
+                <div class="meta-label">
+                    <i class="fas fa-book"></i>
+                    Semestre
+                </div>
                 <div class="meta-value">{{ module.get_semester_display }}</div>
             </div>
             <div class="meta-item">
-                <div class="meta-label">👥 Étudiants</div>
+                <div class="meta-label">
+                    <i class="fas fa-users"></i>
+                    Étudiants
+                </div>
                 <div class="meta-value">{{ total_students }}</div>
             </div>
             <div class="meta-item">
-                <div class="meta-label">👨‍🏫 Enseignants</div>
+                <div class="meta-label">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    Enseignants
+                </div>
                 <div class="meta-value">{{ total_teachers }}</div>
             </div>
             <div class="meta-item">
-                <div class="meta-label">📋 Projets</div>
+                <div class="meta-label">
+                    <i class="fas fa-project-diagram"></i>
+                    Projets
+                </div>
                 <div class="meta-value">{{ total_projects }}</div>
             </div>
             <div class="meta-item">
-                <div class="meta-label">📅 Créé le</div>
+                <div class="meta-label">
+                    <i class="fas fa-plus"></i>
+                    Créé le
+                </div>
                 <div class="meta-value">{{ module.created_at|date:"d/m/Y" }}</div>
             </div>
         </div>
@@ -453,15 +674,17 @@
 
     <!-- Student Join Code Section -->
     <div class="join-code-section">
-        <h3 style="margin: 0 0 10px 0; color: #007bff; display: flex; align-items: center; gap: 10px;">
-            🔗 Code d'Inscription Étudiant
+        <h3>
+            <i class="fas fa-link"></i>
+            Code d'Inscription Étudiant
         </h3>
-        <p style="margin: 0 0 15px 0; color: #6c757d;">
-            Les étudiants peuvent rejoindre ce module en utilisant ce code unique
-        </p>
+        <p>Les étudiants peuvent rejoindre ce module en utilisant ce code unique</p>
         <div class="join-code" id="join-code">{{ module.code }}</div>
         <div style="text-align: center;">
-            <button class="copy-button" onclick="copyJoinCode()">📋 Copier le Code</button>
+            <button class="copy-button" onclick="copyJoinCode()">
+                <i class="fas fa-copy"></i>
+                Copier le Code
+            </button>
         </div>
     </div>
 
@@ -469,26 +692,36 @@
     <div class="content-tabs">
         <div class="tab-navigation">
             <button class="tab-button active" onclick="showTab('students')">
-                👥 Étudiants ({{ total_students }})
+                <i class="fas fa-users"></i>
+                Étudiants ({{ total_students }})
             </button>
             <button class="tab-button" onclick="showTab('teachers')">
-                👨‍🏫 Enseignants ({{ total_teachers }})
+                <i class="fas fa-chalkboard-teacher"></i>
+                Enseignants ({{ total_teachers }})
             </button>
             <button class="tab-button" onclick="showTab('projects')">
-                📋 Projets ({{ total_projects }})
+                <i class="fas fa-project-diagram"></i>
+                Projets ({{ total_projects }})
             </button>
             <button class="tab-button" onclick="showTab('analytics')">
-                📊 Analytiques
+                <i class="fas fa-chart-bar"></i>
+                Analytiques
             </button>
         </div>
 
         <!-- Students Tab -->
         <div class="tab-content active" id="students-tab">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0; color: #495057;">👥 Étudiants Inscrits</h3>
-                <div>
-                    <input type="text" placeholder="Rechercher un étudiant..." style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-right: 10px;">
-                    <button class="btn btn-sm btn-primary" onclick="exportStudents()">📤 Exporter</button>
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-users"></i>
+                    Étudiants Inscrits
+                </h3>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <input type="text" placeholder="Rechercher un étudiant..." class="search-input">
+                    <button class="btn" onclick="exportStudents()">
+                        <i class="fas fa-download"></i>
+                        Exporter
+                    </button>
                 </div>
             </div>
             
@@ -496,11 +729,26 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>👤 Étudiant</th>
-                            <th>📧 Email</th>
-                            <th>📅 Date d'Inscription</th>
-                            <th>📋 Projets</th>
-                            <th>⚡ Actions</th>
+                            <th>
+                                <i class="fas fa-user"></i>
+                                Étudiant
+                            </th>
+                            <th>
+                                <i class="fas fa-envelope"></i>
+                                Email
+                            </th>
+                            <th>
+                                <i class="fas fa-calendar"></i>
+                                Date d'Inscription
+                            </th>
+                            <th>
+                                <i class="fas fa-project-diagram"></i>
+                                Projets
+                            </th>
+                            <th>
+                                <i class="fas fa-cog"></i>
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -522,13 +770,13 @@
                             <td>{{ enrollment.student.user.email|default:"Non renseigné" }}</td>
                             <td>{{ enrollment.enrolled_at|date:"d/m/Y à H:i" }}</td>
                             <td>
-                                <span style="background: #e9ecef; padding: 4px 8px; border-radius: 12px; font-size: 0.8em;">
+                                <span style="background: var(--bg-tertiary); color: var(--text-secondary); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">
                                     {{ enrollment.student.projects.count }} projet{{ enrollment.student.projects.count|pluralize }}
                                 </span>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-danger" onclick="removeStudent({{ enrollment.student.id }})" title="Désinscrire">
-                                    🗑️
+                                <button class="btn-remove" onclick="removeStudent({{ enrollment.student.id }})" title="Désinscrire">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </td>
                         </tr>
@@ -537,10 +785,12 @@
                 </table>
             {% else %}
                 <div class="empty-section">
-                    <div class="empty-icon">👥</div>
+                    <div class="empty-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
                     <h4>Aucun Étudiant Inscrit</h4>
                     <p>Aucun étudiant ne s'est encore inscrit à ce module.</p>
-                    <p style="color: #007bff; font-weight: 500;">
+                    <p style="color: var(--info); font-weight: 500;">
                         Code d'inscription: <strong>{{ module.code }}</strong>
                     </p>
                 </div>
@@ -549,10 +799,14 @@
 
         <!-- Teachers Tab -->
         <div class="tab-content" id="teachers-tab">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0; color: #495057;">👨‍🏫 Enseignants Assignés</h3>
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    Enseignants Assignés
+                </h3>
                 <a href="{% url 'administrator:assignments_management' %}?module={{ module.id }}" class="btn btn-success">
-                    ➕ Assigner Enseignant
+                    <i class="fas fa-plus"></i>
+                    Assigner Enseignant
                 </a>
             </div>
             
@@ -560,11 +814,26 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>👨‍🏫 Enseignant</th>
-                            <th>📧 Email</th>
-                            <th>🏢 Département</th>
-                            <th>📅 Date d'Assignation</th>
-                            <th>⚡ Actions</th>
+                            <th>
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                Enseignant
+                            </th>
+                            <th>
+                                <i class="fas fa-envelope"></i>
+                                Email
+                            </th>
+                            <th>
+                                <i class="fas fa-building"></i>
+                                Département
+                            </th>
+                            <th>
+                                <i class="fas fa-calendar"></i>
+                                Date d'Assignation
+                            </th>
+                            <th>
+                                <i class="fas fa-cog"></i>
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -588,14 +857,15 @@
                             <td>
                                 {{ assignment.assigned_at|date:"d/m/Y à H:i" }}
                                 {% if assignment.assigned_by %}
-                                <div style="font-size: 0.7em; color: #6c757d;">
+                                <div style="font-size: 11px; color: var(--text-muted);">
                                     Par: {{ assignment.assigned_by.get_full_name|default:assignment.assigned_by.username }}
                                 </div>
                                 {% endif %}
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-danger" onclick="removeAssignment({{ assignment.id }})" title="Retirer">
-                                    🗑️ Retirer
+                                <button class="btn-remove" onclick="removeAssignment({{ assignment.id }})" title="Retirer">
+                                    <i class="fas fa-trash"></i>
+                                    Retirer
                                 </button>
                             </td>
                         </tr>
@@ -604,11 +874,14 @@
                 </table>
             {% else %}
                 <div class="empty-section">
-                    <div class="empty-icon">👨‍🏫</div>
+                    <div class="empty-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
                     <h4>Aucun Enseignant Assigné</h4>
                     <p>Aucun enseignant n'est actuellement assigné à ce module.</p>
-                    <a href="{% url 'administrator:assignments_management' %}?module={{ module.id }}" class="btn btn-primary">
-                        👥 Assigner un Enseignant
+                    <a href="{% url 'administrator:assignments_management' %}?module={{ module.id }}" class="btn" style="margin-top: 16px;">
+                        <i class="fas fa-user-tie"></i>
+                        Assigner un Enseignant
                     </a>
                 </div>
             {% endif %}
@@ -616,10 +889,14 @@
 
         <!-- Projects Tab -->
         <div class="tab-content" id="projects-tab">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0; color: #495057;">📋 Projets du Module</h3>
-                <a href="{% url 'administrator:projects_list' %}?module={{ module.id }}" class="btn btn-primary">
-                    👁️ Voir Tous les Projets
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-project-diagram"></i>
+                    Projets du Module
+                </h3>
+                <a href="{% url 'administrator:projects_list' %}?module={{ module.id }}" class="btn">
+                    <i class="fas fa-eye"></i>
+                    Voir Tous les Projets
                 </a>
             </div>
             
@@ -643,7 +920,10 @@
                                 {{ project.get_status_display }}
                             </span>
                             <div style="margin-top: 8px;">
-                                <a href="{% url 'administrator:project_detail' project.id %}" class="btn btn-sm">Examiner</a>
+                                <a href="{% url 'administrator:project_detail' project.id %}" class="btn btn-secondary">
+                                    <i class="fas fa-eye"></i>
+                                    Examiner
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -651,49 +931,62 @@
                 </div>
             {% else %}
                 <div class="empty-section">
-                    <div class="empty-icon">📋</div>
+                    <div class="empty-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
                     <h4>Aucun Projet</h4>
                     <p>Aucun projet n'a encore été créé pour ce module.</p>
-                    <p style="color: #6c757d;">Les projets apparaîtront ici lorsque les étudiants les associeront à ce module.</p>
+                    <p style="color: var(--text-muted);">Les projets apparaîtront ici lorsque les étudiants les associeront à ce module.</p>
                 </div>
             {% endif %}
         </div>
 
         <!-- Analytics Tab -->
         <div class="tab-content" id="analytics-tab">
-            <h3 style="margin: 0 0 20px 0; color: #495057;">📊 Analytiques du Module</h3>
+            <h3 style="margin: 0 0 20px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-chart-bar"></i>
+                Analytiques du Module
+            </h3>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
                 <!-- Project Status Chart -->
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                    <h4 style="color: #495057; margin-bottom: 15px;">📈 Répartition des Projets</h4>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                        <div style="text-align: center; padding: 15px; background: white; border-radius: 6px;">
-                            <div style="font-size: 1.5em; font-weight: bold; color: #17a2b8;">
+                <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px; border: 1px solid var(--border-primary);">
+                    <h4 style="color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-chart-pie"></i>
+                        Répartition des Projets
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                        <div style="text-align: center; padding: 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-primary);">
+                            <div style="font-size: 20px; font-weight: 700; color: var(--info);">
                                 {{ module_projects|length }}
                             </div>
-                            <div style="font-size: 0.8em; color: #6c757d;">En Cours</div>
+                            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">En Cours</div>
                         </div>
-                        <div style="text-align: center; padding: 15px; background: white; border-radius: 6px;">
-                            <div style="font-size: 1.5em; font-weight: bold; color: #ffc107;">0</div>
-                            <div style="font-size: 0.8em; color: #6c757d;">Soumis</div>
+                        <div style="text-align: center; padding: 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-primary);">
+                            <div style="font-size: 20px; font-weight: 700; color: var(--warning);">0</div>
+                            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Soumis</div>
                         </div>
-                        <div style="text-align: center; padding: 15px; background: white; border-radius: 6px;">
-                            <div style="font-size: 1.5em; font-weight: bold; color: #28a745;">0</div>
-                            <div style="font-size: 0.8em; color: #6c757d;">Validés</div>
+                        <div style="text-align: center; padding: 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-primary);">
+                            <div style="font-size: 20px; font-weight: 700; color: var(--success);">0</div>
+                            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Validés</div>
                         </div>
-                        <div style="text-align: center; padding: 15px; background: white; border-radius: 6px;">
-                            <div style="font-size: 1.5em; font-weight: bold; color: #dc3545;">0</div>
-                            <div style="font-size: 0.8em; color: #6c757d;">Rejetés</div>
+                        <div style="text-align: center; padding: 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-primary);">
+                            <div style="font-size: 20px; font-weight: 700; color: var(--error);">0</div>
+                            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Rejetés</div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Activity Timeline -->
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                    <h4 style="color: #495057; margin-bottom: 15px;">📅 Activité Récente</h4>
-                    <div style="color: #6c757d; text-align: center; padding: 20px;">
-                        <div style="font-size: 2em; margin-bottom: 10px; opacity: 0.3;">📈</div>
+                <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px; border: 1px solid var(--border-primary);">
+                    <h4 style="color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-clock"></i>
+                        Activité Récente
+                    </h4>
+                    <div style="color: var(--text-muted); text-align: center; padding: 20px;">
+                        <div style="font-size: 32px; margin-bottom: 12px; opacity: 0.3;">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
                         <p>Données d'activité disponibles prochainement</p>
                     </div>
                 </div>
@@ -703,25 +996,36 @@
 
     <!-- Quick Actions -->
     <div class="quick-actions">
-        <h3 style="margin: 0 0 15px 0; color: #495057;">⚡ Actions Rapides</h3>
+        <h3>
+            <i class="fas fa-bolt"></i>
+            Actions Rapides
+        </h3>
         <div class="actions-grid">
             <a href="{% url 'administrator:module_edit' module.id %}" class="action-card">
-                <span class="action-icon">✏️</span>
+                <div class="action-icon" style="background: linear-gradient(135deg, var(--warning), #d97706);">
+                    <i class="fas fa-edit"></i>
+                </div>
                 <div class="action-title">Modifier Module</div>
                 <div class="action-desc">Éditer les informations</div>
             </a>
             <a href="{% url 'administrator:assignments_management' %}?module={{ module.id }}" class="action-card">
-                <span class="action-icon">👥</span>
+                <div class="action-icon" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                    <i class="fas fa-user-tie"></i>
+                </div>
                 <div class="action-title">Gérer Assignations</div>
                 <div class="action-desc">Assigner des enseignants</div>
             </a>
             <a href="{% url 'administrator:projects_list' %}?module={{ module.id }}" class="action-card">
-                <span class="action-icon">📋</span>
+                <div class="action-icon" style="background: linear-gradient(135deg, var(--info), #2563eb);">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
                 <div class="action-title">Voir Projets</div>
                 <div class="action-desc">Projets de ce module</div>
             </a>
             <a href="#" onclick="exportModule()" class="action-card">
-                <span class="action-icon">📤</span>
+                <div class="action-icon" style="background: linear-gradient(135deg, var(--success), #059669);">
+                    <i class="fas fa-download"></i>
+                </div>
                 <div class="action-title">Exporter Données</div>
                 <div class="action-desc">Export Excel/PDF</div>
             </a>
@@ -754,129 +1058,130 @@
         navigator.clipboard.writeText(joinCode).then(function() {
             // Temporary feedback
             const button = event.target;
-            const originalText = button.textContent;
-            button.textContent = '✅ Copié!';
-            button.style.background = '#28a745';
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Copié!';
+            button.style.background = 'linear-gradient(135deg, var(--success), #059669)';
             
             setTimeout(() => {
-                button.textContent = originalText;
-                button.style.background = '#007bff';
+                button.innerHTML = originalText;
+                button.style.background = 'linear-gradient(135deg, var(--info), #2563eb)';
             }, 2000);
         });
     }
     
     function removeStudent(studentId) {
-    if (confirm('Êtes-vous sûr de vouloir désinscrire cet étudiant du module ?')) {
-        // Show loading state
-        const button = event.target;
-        const originalContent = button.innerHTML;
-        button.innerHTML = '⏳';
-        button.disabled = true;
-        
-        // Get CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                         document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        
-        // Make AJAX request
-        fetch(`{% url 'administrator:remove_student_from_module' module.id 0 %}`.replace('0', studentId), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({})
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success message
-                showMessage(data.message, 'success');
-                
-                // Remove the row from the table
-                const row = button.closest('tr');
-                row.style.transition = 'opacity 0.3s';
-                row.style.opacity = '0';
-                setTimeout(() => {
-                    row.remove();
-                    // Update the student count in the header and tabs
-                    updateStudentCount();
-                }, 300);
-            } else {
-                showMessage(data.message, 'error');
+        if (confirm('Êtes-vous sûr de vouloir désinscrire cet étudiant du module ?')) {
+            // Show loading state
+            const button = event.target;
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.disabled = true;
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                             document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            // Make AJAX request
+            fetch(`{% url 'administrator:remove_student_from_module' module.id 0 %}`.replace('0', studentId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    showMessage(data.message, 'success');
+                    
+                    // Remove the row from the table
+                    const row = button.closest('tr');
+                    row.style.transition = 'opacity 0.3s';
+                    row.style.opacity = '0';
+                    setTimeout(() => {
+                        row.remove();
+                        // Update the student count in the header and tabs
+                        updateStudentCount();
+                    }, 300);
+                } else {
+                    showMessage(data.message, 'error');
+                    // Restore button state
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Erreur lors de la désinscription. Veuillez réessayer.', 'error');
                 // Restore button state
                 button.innerHTML = originalContent;
                 button.disabled = false;
+            });
+        }
+    }
+
+    // Helper function to show messages
+    function showMessage(message, type) {
+        // Create message element
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 16px 20px;
+            border-radius: 12px;
+            background: ${type === 'success' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05))' : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05))'};
+            color: ${type === 'success' ? 'var(--success)' : 'var(--error)'};
+            border: 1px solid ${type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'};
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+        `;
+        messageDiv.textContent = message;
+        
+        // Add to page
+        document.body.appendChild(messageDiv);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                document.body.removeChild(messageDiv);
+            }, 300);
+        }, 5000);
+    }
+
+    // Helper function to update student count in UI
+    function updateStudentCount() {
+        const currentCount = document.querySelectorAll('#students-tab tbody tr').length;
+        
+        // Update count in tab button
+        const tabButton = document.querySelector('[onclick="showTab(\'students\')"]');
+        if (tabButton) {
+            tabButton.innerHTML = `<i class="fas fa-users"></i> Étudiants (${currentCount})`;
+        }
+        
+        // Update count in header meta
+        const metaValues = document.querySelectorAll('.meta-value');
+        metaValues.forEach(value => {
+            if (value.previousElementSibling && value.previousElementSibling.textContent.includes('Étudiants')) {
+                value.textContent = currentCount;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showMessage('Erreur lors de la désinscription. Veuillez réessayer.', 'error');
-            // Restore button state
-            button.innerHTML = originalContent;
-            button.disabled = false;
+        });
+        
+        // Update count in stats cards
+        const statValues = document.querySelectorAll('.stat-value');
+        statValues.forEach((value, index) => {
+            if (index === 0 || value.nextElementSibling?.textContent.includes('Étudiants')) {
+                value.textContent = currentCount;
+            }
         });
     }
-}
-
-// Helper function to show messages
-function showMessage(message, type) {
-    // Create message element
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
-    messageDiv.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1000;
-        padding: 15px 20px;
-        border-radius: 5px;
-        background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
-        color: ${type === 'success' ? '#155724' : '#721c24'};
-        border: 1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        max-width: 400px;
-    `;
-    messageDiv.textContent = message;
-    
-    // Add to page
-    document.body.appendChild(messageDiv);
-    
-    // Remove after 5 seconds
-    setTimeout(() => {
-        messageDiv.style.opacity = '0';
-        setTimeout(() => {
-            document.body.removeChild(messageDiv);
-        }, 300);
-    }, 5000);
-}
-
-// Helper function to update student count in UI
-function updateStudentCount() {
-    const currentCount = document.querySelectorAll('#students-tab tbody tr').length;
-    
-    // Update count in tab button
-    const tabButton = document.querySelector('[onclick="showTab(\'students\')"]');
-    if (tabButton) {
-        tabButton.innerHTML = `👥 Étudiants (${currentCount})`;
-    }
-    
-    // Update count in header meta
-    const metaValues = document.querySelectorAll('.meta-value');
-    metaValues.forEach(value => {
-        if (value.previousElementSibling && value.previousElementSibling.textContent.includes('👥 Étudiants')) {
-            value.textContent = currentCount;
-        }
-    });
-    
-    // Update count in stats cards
-    const statValues = document.querySelectorAll('.stat-value');
-    statValues.forEach((value, index) => {
-        if (index === 0 || value.nextElementSibling?.textContent.includes('Étudiants')) {
-            value.textContent = currentCount;
-        }
-    });
-}
     
     function removeAssignment(assignmentId) {
         if (confirm('Êtes-vous sûr de vouloir retirer cet enseignant du module ?')) {

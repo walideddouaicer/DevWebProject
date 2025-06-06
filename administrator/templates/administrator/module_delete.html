@@ -15,81 +15,163 @@
 {% block extra_css %}
 <style>
     .delete-header {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        background: linear-gradient(135deg, var(--error) 0%, #dc2626 100%);
         color: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
+        padding: 32px;
+        border-radius: 16px;
+        margin-bottom: 32px;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
     }
     
     .delete-header::before {
         content: '';
         position: absolute;
         top: -50%;
-        right: -20px;
-        width: 100px;
+        right: -10%;
+        width: 200px;
         height: 200%;
         background: rgba(255,255,255,0.1);
         transform: rotate(15deg);
+        border-radius: 20px;
+    }
+    
+    .delete-header h1 {
+        font-size: 28px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .module-info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .module-basic-info div:first-child {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+    
+    .module-basic-info div:last-child {
+        opacity: 0.8;
+        font-size: 16px;
+    }
+    
+    .delete-status-info {
+        text-align: right;
+        font-size: 14px;
     }
     
     .warning-section {
-        background: #fff3cd;
-        border: 3px solid #ffc107;
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 30px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+        border: 2px solid rgba(245, 158, 11, 0.3);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .warning-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--warning), #d97706);
     }
     
     .warning-title {
-        color: #856404;
-        font-weight: bold;
-        font-size: 1.2em;
-        margin-bottom: 15px;
+        color: var(--warning);
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 12px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
     }
     
     .warning-text {
-        color: #856404;
+        color: var(--text-secondary);
         line-height: 1.6;
-        margin-bottom: 15px;
+        margin-bottom: 16px;
+        font-size: 14px;
     }
     
     .danger-section {
-        background: #f8d7da;
-        border: 3px solid #dc3545;
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 30px;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+        border: 2px solid rgba(239, 68, 68, 0.3);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .danger-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--error), #dc2626);
     }
     
     .danger-title {
-        color: #721c24;
-        font-weight: bold;
-        font-size: 1.2em;
-        margin-bottom: 15px;
+        color: var(--error);
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 12px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
     }
     
     .danger-text {
-        color: #721c24;
+        color: var(--text-secondary);
         line-height: 1.6;
-        margin-bottom: 15px;
+        margin-bottom: 16px;
+        font-size: 14px;
     }
     
     .module-info {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-left: 4px solid #dc3545;
-        margin-bottom: 30px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .module-info::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--error), #dc2626);
+    }
+    
+    .module-info h3 {
+        margin: 0 0 20px 0;
+        color: var(--text-primary);
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .module-details {
@@ -100,32 +182,63 @@
     }
     
     .detail-item {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
+        background: var(--bg-tertiary);
+        padding: 16px;
+        border-radius: 12px;
         text-align: center;
+        border: 1px solid var(--border-primary);
+        transition: all 0.3s ease;
+    }
+    
+    .detail-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .detail-label {
-        font-size: 0.8em;
-        color: #6c757d;
+        font-size: 12px;
+        color: var(--text-muted);
         text-transform: uppercase;
-        margin-bottom: 5px;
+        margin-bottom: 6px;
+        letter-spacing: 0.5px;
+        font-weight: 600;
     }
     
     .detail-value {
-        font-weight: bold;
-        color: #495057;
-        font-size: 1.1em;
+        font-weight: 700;
+        color: var(--text-primary);
+        font-size: 16px;
     }
     
     .impact-analysis {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-left: 4px solid #17a2b8;
-        margin-bottom: 30px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .impact-analysis::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    }
+    
+    .impact-analysis h3 {
+        margin: 0 0 16px 0;
+        color: var(--accent-primary);
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .impact-grid {
@@ -136,145 +249,239 @@
     }
     
     .impact-item {
-        background: #f8f9fa;
+        background: var(--bg-tertiary);
         padding: 20px;
-        border-radius: 8px;
-        border-left: 4px solid #6c757d;
+        border-radius: 12px;
+        border: 2px solid var(--border-primary);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .impact-item.blocked::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--error), #dc2626);
+    }
+    
+    .impact-item.safe::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--success), #059669);
     }
     
     .impact-item.blocked {
-        background: #f8d7da;
-        border-left-color: #dc3545;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(220, 38, 38, 0.02));
+        border-color: rgba(239, 68, 68, 0.3);
     }
     
     .impact-item.safe {
-        background: #d4edda;
-        border-left-color: #28a745;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(5, 150, 105, 0.02));
+        border-color: rgba(16, 185, 129, 0.3);
     }
     
     .impact-icon {
-        font-size: 2em;
-        margin-bottom: 10px;
+        font-size: 32px;
+        margin-bottom: 12px;
         text-align: center;
+        color: var(--text-muted);
     }
     
     .impact-title {
         font-weight: 600;
-        color: #495057;
+        color: var(--text-primary);
         margin-bottom: 8px;
         text-align: center;
+        font-size: 16px;
     }
     
     .impact-value {
-        font-size: 1.5em;
-        font-weight: bold;
+        font-size: 24px;
+        font-weight: 800;
         text-align: center;
         margin-bottom: 8px;
+        line-height: 1;
     }
     
     .impact-value.danger {
-        color: #dc3545;
+        color: var(--error);
     }
     
     .impact-value.safe {
-        color: #28a745;
+        color: var(--success);
     }
     
     .impact-description {
-        font-size: 0.9em;
-        color: #6c757d;
+        font-size: 13px;
+        color: var(--text-muted);
         text-align: center;
+        line-height: 1.4;
     }
     
     .consequences-list {
-        background: #fff3cd;
-        border: 2px solid #ffc107;
-        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+        border: 2px solid rgba(245, 158, 11, 0.3);
+        border-radius: 12px;
         padding: 20px;
         margin: 20px 0;
     }
     
     .consequences-list h4 {
-        color: #856404;
-        margin-bottom: 15px;
+        color: var(--warning);
+        margin-bottom: 16px;
         display: flex;
         align-items: center;
         gap: 8px;
+        font-size: 16px;
+        font-weight: 700;
     }
     
     .consequences-list ul {
-        color: #856404;
+        color: var(--text-secondary);
         line-height: 1.6;
         margin: 0;
         padding-left: 20px;
     }
     
+    .consequences-list li {
+        margin-bottom: 8px;
+    }
+    
     .delete-form {
-        background: #f8d7da;
-        border: 3px solid #dc3545;
-        border-radius: 12px;
-        padding: 30px;
-        margin-bottom: 30px;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+        border: 2px solid rgba(239, 68, 68, 0.3);
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .delete-form::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--error), #dc2626);
+    }
+    
+    .delete-form h3 {
+        margin: 0 0 24px 0;
+        color: var(--error);
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .confirmation-section {
-        margin-bottom: 25px;
+        margin-bottom: 24px;
     }
     
     .confirmation-checkbox {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 15px;
-        padding: 15px;
-        background: white;
-        border-radius: 8px;
-        border: 2px solid #dc3545;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 16px;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 2px solid var(--error);
+        transition: all 0.3s ease;
+    }
+    
+    .confirmation-checkbox:hover {
+        background: var(--bg-tertiary);
+        transform: translateY(-1px);
     }
     
     .confirmation-checkbox input[type="checkbox"] {
-        transform: scale(1.5);
+        transform: scale(1.3);
+        accent-color: var(--error);
     }
     
     .confirmation-text {
-        color: #721c24;
+        color: var(--text-primary);
         font-weight: 500;
+        font-size: 14px;
     }
     
     .verification-input {
         width: 100%;
-        padding: 15px;
-        border: 3px solid #dc3545;
-        border-radius: 8px;
-        font-size: 1em;
-        background: white;
-        color: #495057;
+        padding: 16px;
+        border: 2px solid var(--error);
+        border-radius: 12px;
+        font-size: 16px;
+        background: var(--bg-card);
+        color: var(--text-primary);
         margin-bottom: 20px;
+        transition: all 0.3s ease;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 1px;
     }
     
     .verification-input:focus {
         outline: none;
-        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        border-color: var(--error);
+    }
+    
+    .verification-label {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--error);
+        font-weight: 700;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .code-highlight {
+        background: var(--error);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-weight: 700;
+        letter-spacing: 1px;
     }
     
     .form-actions {
         display: flex;
-        gap: 15px;
+        gap: 16px;
         justify-content: flex-end;
     }
     
     .btn-delete-confirm {
-        background: #dc3545;
+        background: linear-gradient(135deg, var(--error), #dc2626);
         color: white;
-        padding: 15px 30px;
+        padding: 14px 28px;
         border: none;
-        border-radius: 8px;
-        font-weight: bold;
-        font-size: 1em;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 16px;
         cursor: pointer;
         transition: all 0.3s ease;
         opacity: 0.5;
         pointer-events: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
     
     .btn-delete-confirm.enabled {
@@ -283,52 +490,74 @@
     }
     
     .btn-delete-confirm.enabled:hover {
-        background: #c82333;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
     }
     
     .btn-cancel {
-        background: #28a745;
+        background: linear-gradient(135deg, var(--success), #059669);
         color: white;
-        padding: 15px 30px;
+        padding: 14px 24px;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         font-weight: 600;
         text-decoration: none;
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
         gap: 8px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
     
     .btn-cancel:hover {
-        background: #1e7e34;
         color: white;
         text-decoration: none;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
     }
     
     .alternative-actions {
-        background: #d1ecf1;
-        border: 2px solid #17a2b8;
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 30px;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+        border: 2px solid rgba(59, 130, 246, 0.3);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .alternative-actions::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--info), #2563eb);
+    }
+    
+    .alternative-actions h3 {
+        margin: 0 0 16px 0;
+        color: var(--info);
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .alternative-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 15px;
-        margin-top: 15px;
+        gap: 16px;
+        margin-top: 16px;
     }
     
     .alternative-option {
-        background: white;
+        background: var(--bg-card);
         padding: 20px;
-        border-radius: 8px;
-        border: 2px solid #17a2b8;
+        border-radius: 12px;
+        border: 2px solid var(--info);
         text-align: center;
         text-decoration: none;
         color: inherit;
@@ -336,27 +565,75 @@
     }
     
     .alternative-option:hover {
-        background: #e8f4ff;
-        transform: translateY(-2px);
+        background: var(--bg-tertiary);
+        transform: translateY(-4px);
         color: inherit;
         text-decoration: none;
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
     }
     
     .option-icon {
-        font-size: 2em;
-        margin-bottom: 10px;
-        color: #17a2b8;
+        font-size: 32px;
+        margin-bottom: 12px;
+        color: var(--info);
     }
     
     .option-title {
         font-weight: 600;
-        color: #495057;
+        color: var(--text-primary);
         margin-bottom: 8px;
+        font-size: 16px;
     }
     
     .option-desc {
-        font-size: 0.9em;
-        color: #6c757d;
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+    
+    .info-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .info-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--text-muted), var(--border-secondary));
+    }
+    
+    .info-panel h4 {
+        color: var(--text-primary);
+        margin-bottom: 16px;
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .info-panel ul {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        font-size: 14px;
+    }
+    
+    .info-panel li {
+        margin-bottom: 8px;
+    }
+    
+    .info-panel strong {
+        color: var(--text-primary);
     }
     
     /* Responsive Design */
@@ -378,11 +655,20 @@
         }
         
         .delete-header {
-            padding: 20px;
+            padding: 24px;
         }
         
         .delete-form, .module-info, .impact-analysis {
             padding: 20px;
+        }
+        
+        .module-info-header {
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .delete-status-info {
+            text-align: left;
         }
     }
 </style>
@@ -391,22 +677,34 @@
 {% block content %}
     <!-- Delete Header -->
     <div class="delete-header">
-        <h1 style="margin: 0 0 10px 0; font-size: 2em;">🗑️ Supprimer le Module</h1>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 5px;">{{ module.code }}</div>
-                <div style="opacity: 0.9;">{{ module.name }}</div>
+        <h1>
+            <i class="fas fa-trash-alt"></i>
+            Supprimer le Module
+        </h1>
+        <div class="module-info-header">
+            <div class="module-basic-info">
+                <div>{{ module.code }}</div>
+                <div>{{ module.name }}</div>
             </div>
-            <div style="text-align: right; font-size: 0.9em;">
-                <div>⚠️ SUPPRESSION DÉFINITIVE</div>
-                <div>📅 Action irréversible</div>
+            <div class="delete-status-info">
+                <div>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    SUPPRESSION DÉFINITIVE
+                </div>
+                <div>
+                    <i class="fas fa-ban"></i>
+                    Action irréversible
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Module Information -->
     <div class="module-info">
-        <h3 style="margin: 0 0 20px 0; color: #495057;">📋 Informations du Module</h3>
+        <h3>
+            <i class="fas fa-info-circle"></i>
+            Informations du Module
+        </h3>
         <div class="module-details">
             <div class="detail-item">
                 <div class="detail-label">Code Module</div>
@@ -427,7 +725,11 @@
             <div class="detail-item">
                 <div class="detail-label">Statut</div>
                 <div class="detail-value">
-                    {% if module.is_active %}🟢 Actif{% else %}🔴 Inactif{% endif %}
+                    {% if module.is_active %}
+                        <i class="fas fa-circle" style="color: var(--success);"></i> Actif
+                    {% else %}
+                        <i class="fas fa-circle" style="color: var(--error);"></i> Inactif
+                    {% endif %}
                 </div>
             </div>
             <div class="detail-item">
@@ -437,23 +739,28 @@
         </div>
         
         {% if module.description %}
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px;">
-            <strong>Description:</strong>
-            <p style="margin: 10px 0 0 0; color: #6c757d;">{{ module.description }}</p>
+        <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 12px; margin-top: 20px; border: 1px solid var(--border-primary);">
+            <strong style="color: var(--text-primary);">Description:</strong>
+            <p style="margin: 12px 0 0 0; color: var(--text-secondary); line-height: 1.4;">{{ module.description }}</p>
         </div>
         {% endif %}
     </div>
 
     <!-- Impact Analysis -->
     <div class="impact-analysis">
-        <h3 style="margin: 0 0 15px 0; color: #17a2b8;">📊 Analyse d'Impact</h3>
-        <p style="color: #6c757d; margin-bottom: 20px;">
+        <h3>
+            <i class="fas fa-chart-line"></i>
+            Analyse d'Impact
+        </h3>
+        <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">
             Vérification des éléments qui seraient affectés par la suppression de ce module.
         </p>
         
         <div class="impact-grid">
             <div class="impact-item {% if student_count > 0 %}blocked{% else %}safe{% endif %}">
-                <div class="impact-icon">👥</div>
+                <div class="impact-icon">
+                    <i class="fas fa-users"></i>
+                </div>
                 <div class="impact-title">Étudiants Inscrits</div>
                 <div class="impact-value {% if student_count > 0 %}danger{% else %}safe{% endif %}">
                     {{ student_count }}
@@ -468,7 +775,9 @@
             </div>
             
             <div class="impact-item {% if teacher_count > 0 %}blocked{% else %}safe{% endif %}">
-                <div class="impact-icon">👨‍🏫</div>
+                <div class="impact-icon">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
                 <div class="impact-title">Enseignants Assignés</div>
                 <div class="impact-value {% if teacher_count > 0 %}danger{% else %}safe{% endif %}">
                     {{ teacher_count }}
@@ -483,7 +792,9 @@
             </div>
             
             <div class="impact-item {% if project_count > 0 %}blocked{% else %}safe{% endif %}">
-                <div class="impact-icon">📋</div>
+                <div class="impact-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
                 <div class="impact-title">Projets Associés</div>
                 <div class="impact-value {% if project_count > 0 %}danger{% else %}safe{% endif %}">
                     {{ project_count }}
@@ -503,12 +814,13 @@
     {% if student_count > 0 or teacher_count > 0 or project_count > 0 %}
         <div class="danger-section">
             <div class="danger-title">
-                🚫 Suppression Bloquée
+                <i class="fas fa-ban"></i>
+                Suppression Bloquée
             </div>
             <div class="danger-text">
                 Ce module ne peut pas être supprimé car il est actuellement utilisé par:
             </div>
-            <ul style="color: #721c24; line-height: 1.6; margin: 15px 0;">
+            <ul style="color: var(--text-secondary); line-height: 1.6; margin: 16px 0; padding-left: 20px;">
                 {% if student_count > 0 %}
                     <li><strong>{{ student_count }} étudiant{{ student_count|pluralize }}</strong> inscrit{{ student_count|pluralize }}</li>
                 {% endif %}
@@ -522,7 +834,7 @@
             <div class="danger-text">
                 <strong>Pour supprimer ce module, vous devez d'abord:</strong>
             </div>
-            <ol style="color: #721c24; line-height: 1.6; margin: 15px 0; padding-left: 20px;">
+            <ol style="color: var(--text-secondary); line-height: 1.6; margin: 16px 0; padding-left: 20px;">
                 {% if student_count > 0 %}
                     <li>Désinscrire tous les étudiants ou les transférer vers d'autres modules</li>
                 {% endif %}
@@ -537,26 +849,35 @@
 
         <!-- Alternative Actions -->
         <div class="alternative-actions">
-            <h3 style="margin: 0 0 15px 0; color: #17a2b8;">🔧 Actions Alternatives</h3>
-            <p style="color: #0c5460; margin-bottom: 15px;">
+            <h3>
+                <i class="fas fa-tools"></i>
+                Actions Alternatives
+            </h3>
+            <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 14px;">
                 Plutôt que de supprimer définitivement, considérez ces alternatives:
             </p>
             
             <div class="alternative-grid">
                 <a href="{% url 'administrator:module_edit' module.id %}" class="alternative-option">
-                    <div class="option-icon">⏸️</div>
+                    <div class="option-icon">
+                        <i class="fas fa-pause"></i>
+                    </div>
                     <div class="option-title">Désactiver le Module</div>
                     <div class="option-desc">Masquer aux nouveaux étudiants tout en conservant les données</div>
                 </a>
                 
                 <a href="{% url 'administrator:assignments_management' %}?module={{ module.id }}" class="alternative-option">
-                    <div class="option-icon">👥</div>
+                    <div class="option-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
                     <div class="option-title">Gérer les Assignations</div>
                     <div class="option-desc">Retirer les enseignants assignés à ce module</div>
                 </a>
                 
                 <a href="{% url 'administrator:module_detail' module.id %}" class="alternative-option">
-                    <div class="option-icon">👤</div>
+                    <div class="option-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
                     <div class="option-title">Gérer les Inscriptions</div>
                     <div class="option-desc">Voir et gérer les étudiants inscrits</div>
                 </a>
@@ -567,13 +888,17 @@
         <!-- Safe to delete -->
         <div class="warning-section">
             <div class="warning-title">
-                ⚠️ Confirmer la Suppression
+                <i class="fas fa-exclamation-triangle"></i>
+                Confirmer la Suppression
             </div>
             <div class="warning-text">
                 Ce module peut être supprimé en toute sécurité car aucun étudiant, enseignant ou projet n'y est associé.
             </div>
             <div class="consequences-list">
-                <h4>📋 Conséquences de la suppression:</h4>
+                <h4>
+                    <i class="fas fa-list"></i>
+                    Conséquences de la suppression:
+                </h4>
                 <ul>
                     <li>Le module sera définitivement supprimé de la base de données</li>
                     <li>Le code "{{ module.code }}" pourra être réutilisé pour un nouveau module</li>
@@ -586,7 +911,10 @@
         <!-- Delete Form -->
         <form method="post" class="delete-form" id="delete-form">
             {% csrf_token %}
-            <h3 style="margin: 0 0 20px 0; color: #721c24;">🗑️ Confirmation de Suppression</h3>
+            <h3>
+                <i class="fas fa-trash-alt"></i>
+                Confirmation de Suppression
+            </h3>
             
             <div class="confirmation-section">
                 <div class="confirmation-checkbox">
@@ -612,8 +940,9 @@
             </div>
             
             <div style="margin-bottom: 20px;">
-                <label for="verification-code" style="display: block; margin-bottom: 10px; color: #721c24; font-weight: bold;">
-                    Pour confirmer, tapez le code du module: <span style="background: #721c24; color: white; padding: 2px 8px; border-radius: 4px;">{{ module.code }}</span>
+                <label for="verification-code" class="verification-label">
+                    <i class="fas fa-keyboard"></i>
+                    Pour confirmer, tapez le code du module: <span class="code-highlight">{{ module.code }}</span>
                 </label>
                 <input type="text" id="verification-code" class="verification-input" 
                        placeholder="Tapez {{ module.code }} ici" onkeyup="updateDeleteButton()">
@@ -621,19 +950,24 @@
             
             <div class="form-actions">
                 <a href="{% url 'administrator:module_detail' module.id %}" class="btn-cancel">
-                    ✅ Annuler et Retourner
+                    <i class="fas fa-check"></i>
+                    Annuler et Retourner
                 </a>
                 <button type="submit" class="btn-delete-confirm" id="delete-button" disabled>
-                    🗑️ SUPPRIMER DÉFINITIVEMENT
+                    <i class="fas fa-trash-alt"></i>
+                    SUPPRIMER DÉFINITIVEMENT
                 </button>
             </div>
         </form>
     {% endif %}
 
     <!-- Additional Information -->
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #6c757d;">
-        <h4 style="color: #495057; margin-bottom: 15px;">💡 Informations Importantes</h4>
-        <ul style="color: #6c757d; line-height: 1.6;">
+    <div class="info-panel">
+        <h4>
+            <i class="fas fa-lightbulb"></i>
+            Informations Importantes
+        </h4>
+        <ul>
             <li><strong>Suppression définitive:</strong> Aucune récupération possible après suppression</li>
             <li><strong>Code module:</strong> Le code "{{ module.code }}" pourra être réutilisé</li>
             <li><strong>Historique:</strong> Toutes les données liées au module seront perdues</li>
@@ -667,14 +1001,17 @@
         // Visual feedback for verification code
         const verificationInput = document.getElementById('verification-code');
         if (verificationCode && codeMatches) {
-            verificationInput.style.borderColor = '#28a745';
-            verificationInput.style.background = '#d4edda';
+            verificationInput.style.borderColor = 'var(--success)';
+            verificationInput.style.background = 'rgba(16, 185, 129, 0.1)';
+            verificationInput.style.color = 'var(--success)';
         } else if (verificationCode) {
-            verificationInput.style.borderColor = '#dc3545';
-            verificationInput.style.background = '#f8d7da';
+            verificationInput.style.borderColor = 'var(--error)';
+            verificationInput.style.background = 'rgba(239, 68, 68, 0.1)';
+            verificationInput.style.color = 'var(--error)';
         } else {
-            verificationInput.style.borderColor = '#dc3545';
-            verificationInput.style.background = 'white';
+            verificationInput.style.borderColor = 'var(--error)';
+            verificationInput.style.background = 'var(--bg-card)';
+            verificationInput.style.color = 'var(--text-primary)';
         }
     }
     

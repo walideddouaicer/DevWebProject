@@ -13,39 +13,69 @@
 {% block extra_css %}
 <style>
     .creation-header {
-        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
         color: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
+        padding: 32px;
+        border-radius: 16px;
+        margin-bottom: 32px;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
     }
     
     .creation-header::before {
         content: '';
         position: absolute;
         top: -50%;
-        right: -20px;
-        width: 100px;
+        right: -10%;
+        width: 200px;
         height: 200%;
         background: rgba(255,255,255,0.1);
         transform: rotate(15deg);
+        border-radius: 20px;
+    }
+    
+    .creation-header h1 {
+        font-size: 28px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .creation-header p {
+        opacity: 0.9;
+        font-size: 16px;
+        position: relative;
+        z-index: 2;
+        margin: 0;
     }
     
     .creation-form {
-        background: white;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-left: 4px solid #28a745;
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .creation-form::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--success), #059669);
     }
     
     .form-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 25px;
-        margin-bottom: 25px;
+        gap: 24px;
+        margin-bottom: 24px;
     }
     
     .form-group-full {
@@ -53,109 +83,134 @@
     }
     
     .form-group {
-        margin-bottom: 25px;
+        margin-bottom: 24px;
     }
     
     .form-group label {
         display: block;
         margin-bottom: 8px;
         font-weight: 600;
-        color: #495057;
-        font-size: 0.95em;
+        color: var(--text-primary);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
     
     .form-group label .required {
-        color: #dc3545;
-        margin-left: 2px;
+        color: var(--error);
+        margin-left: 4px;
     }
     
     .form-control {
         width: 100%;
-        padding: 12px 15px;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        font-size: 0.95em;
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border-secondary);
+        border-radius: 10px;
+        padding: 12px 16px;
+        color: var(--text-primary);
+        font-size: 14px;
         transition: all 0.3s ease;
-        background: #fafafa;
     }
     
     .form-control:focus {
-        border-color: #28a745;
+        border-color: var(--success);
         outline: none;
-        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
-        background: white;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        background: var(--bg-card);
     }
     
     .form-control.error {
-        border-color: #dc3545;
-        background: #fff5f5;
+        border-color: var(--error);
+        background: rgba(239, 68, 68, 0.05);
     }
     
     .help-text {
-        font-size: 0.8em;
-        color: #6c757d;
-        margin-top: 5px;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 6px;
         font-style: italic;
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
     
     .error-message {
-        color: #dc3545;
-        font-size: 0.8em;
-        margin-top: 5px;
+        color: var(--error);
+        font-size: 12px;
+        margin-top: 6px;
         font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
     
     .form-section {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 25px;
-        border-left: 4px solid #6c757d;
+        background: var(--bg-tertiary);
+        padding: 24px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        border: 1px solid var(--border-primary);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(135deg, var(--text-muted), var(--border-secondary));
     }
     
     .section-title {
-        margin: 0 0 15px 0;
-        color: #495057;
-        font-size: 1.1em;
-        font-weight: 600;
-    }
-    
-    .form-actions {
-        display: flex;
-        gap: 15px;
-        justify-content: flex-end;
-        padding-top: 25px;
-        border-top: 2px solid #e9ecef;
-        margin-top: 30px;
-    }
-    
-    .btn-create {
-        background: #28a745;
-        color: white;
-        padding: 12px 30px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.95em;
-        cursor: pointer;
-        transition: all 0.3s ease;
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+        font-size: 16px;
+        font-weight: 700;
         display: flex;
         align-items: center;
         gap: 8px;
     }
     
+    .form-actions {
+        display: flex;
+        gap: 16px;
+        justify-content: flex-end;
+        padding-top: 24px;
+        border-top: 2px solid var(--border-primary);
+        margin-top: 32px;
+    }
+    
+    .btn-create {
+        background: linear-gradient(135deg, var(--success), #059669);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
     .btn-create:hover {
-        background: #1e7e34;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
     }
     
     .btn-cancel {
-        background: #6c757d;
-        color: white;
-        padding: 12px 25px;
-        border: none;
-        border-radius: 8px;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 2px solid var(--border-secondary);
+        padding: 12px 20px;
+        border-radius: 10px;
         font-weight: 500;
         text-decoration: none;
         transition: all 0.3s ease;
@@ -165,8 +220,8 @@
     }
     
     .btn-cancel:hover {
-        background: #5a6268;
-        color: white;
+        background: var(--border-secondary);
+        color: var(--text-primary);
         text-decoration: none;
         transform: translateY(-1px);
     }
@@ -174,7 +229,7 @@
     .semester-options {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 10px;
+        gap: 12px;
     }
     
     .semester-option {
@@ -190,84 +245,140 @@
     
     .semester-label {
         display: block;
-        padding: 12px 15px;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
+        padding: 12px 16px;
+        border: 2px solid var(--border-secondary);
+        border-radius: 10px;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
-        background: #fafafa;
+        background: var(--bg-tertiary);
         font-weight: 500;
+        color: var(--text-secondary);
     }
     
     .semester-option input[type="radio"]:checked + .semester-label {
-        border-color: #28a745;
-        background: #d4edda;
-        color: #155724;
+        border-color: var(--success);
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     }
     
     .semester-label:hover {
-        border-color: #28a745;
-        background: #e8f5e8;
+        border-color: var(--success);
+        background: rgba(16, 185, 129, 0.05);
+        transform: translateY(-1px);
     }
     
     .preview-card {
-        background: white;
-        border: 2px solid #28a745;
-        border-radius: 12px;
-        padding: 20px;
-        margin-top: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        background: var(--bg-card);
+        border: 2px solid var(--success);
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 24px;
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .preview-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--success), #059669);
     }
     
     .preview-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
+        margin-bottom: 16px;
     }
     
     .module-code-display {
-        font-size: 1.3em;
-        font-weight: bold;
-        color: #28a745;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--success);
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     }
     
     .module-status {
-        background: #28a745;
+        background: linear-gradient(135deg, var(--success), #059669);
         color: white;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 0.8em;
-        font-weight: bold;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .preview-content {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+    
+    .preview-name {
+        font-weight: 600;
+        font-size: 16px;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+    
+    .preview-period {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .preview-description {
+        color: var(--text-secondary);
+        line-height: 1.4;
+        font-size: 14px;
     }
     
     .tips-section {
-        background: #e8f4ff;
-        border: 2px solid #17a2b8;
-        border-radius: 8px;
-        padding: 20px;
-        margin-top: 25px;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+        border: 2px solid rgba(59, 130, 246, 0.3);
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 32px;
     }
     
     .tips-title {
-        color: #17a2b8;
+        color: var(--info);
         font-weight: 600;
-        margin-bottom: 10px;
+        margin-bottom: 16px;
         display: flex;
         align-items: center;
         gap: 8px;
+        font-size: 16px;
     }
     
     .tips-list {
         margin: 0;
         padding-left: 20px;
-        color: #495057;
+        color: var(--text-secondary);
     }
     
     .tips-list li {
-        margin-bottom: 8px;
+        margin-bottom: 12px;
         line-height: 1.4;
+        font-size: 14px;
+    }
+    
+    .tips-list li strong {
+        color: var(--text-primary);
     }
     
     /* Responsive Design */
@@ -277,11 +388,11 @@
         }
         
         .creation-header {
-            padding: 20px;
+            padding: 24px;
         }
         
         .creation-form {
-            padding: 20px;
+            padding: 24px;
         }
         
         .form-actions {
@@ -291,6 +402,10 @@
         .semester-options {
             grid-template-columns: 1fr;
         }
+        
+        .preview-content {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
@@ -298,10 +413,11 @@
 {% block content %}
     <!-- Creation Header -->
     <div class="creation-header">
-        <h1 style="margin: 0 0 10px 0; font-size: 2em;">📚 Créer un Nouveau Module</h1>
-        <p style="margin: 0; opacity: 0.9; font-size: 1.1em;">
-            Configurez un nouveau module pour organiser les projets et assignations
-        </p>
+        <h1>
+            <i class="fas fa-plus-circle"></i>
+            Créer un Nouveau Module
+        </h1>
+        <p>Configurez un nouveau module pour organiser les projets et assignations</p>
     </div>
 
     <!-- Creation Form -->
@@ -310,56 +426,89 @@
         
         <!-- Basic Information Section -->
         <div class="form-section">
-            <h3 class="section-title">📋 Informations de Base</h3>
+            <h3 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Informations de Base
+            </h3>
             
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="name">Nom du Module <span class="required">*</span></label>
+                    <label for="name">
+                        <i class="fas fa-book"></i>
+                        Nom du Module <span class="required">*</span>
+                    </label>
                     <input type="text" id="name" name="name" class="form-control" 
                            placeholder="ex: Programmation Web Avancée" 
                            required maxlength="200"
                            oninput="updatePreview()">
-                    <div class="help-text">Nom descriptif et complet du module</div>
+                    <div class="help-text">
+                        <i class="fas fa-info"></i>
+                        Nom descriptif et complet du module
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="code">Code du Module <span class="required">*</span></label>
+                    <label for="code">
+                        <i class="fas fa-hashtag"></i>
+                        Code du Module <span class="required">*</span>
+                    </label>
                     <input type="text" id="code" name="code" class="form-control" 
                            placeholder="ex: WEB301, MATH204" 
                            required maxlength="10"
                            style="text-transform: uppercase;"
                            oninput="this.value = this.value.toUpperCase(); updatePreview()">
-                    <div class="help-text">Code unique pour l'identification (lettres et chiffres)</div>
+                    <div class="help-text">
+                        <i class="fas fa-info"></i>
+                        Code unique pour l'identification (lettres et chiffres)
+                    </div>
                 </div>
             </div>
             
             <div class="form-group form-group-full">
-                <label for="description">Description du Module</label>
+                <label for="description">
+                    <i class="fas fa-align-left"></i>
+                    Description du Module
+                </label>
                 <textarea id="description" name="description" class="form-control" 
                           rows="4" placeholder="Décrivez les objectifs, contenu et compétences du module..."
                           oninput="updatePreview()"></textarea>
-                <div class="help-text">Description optionnelle pour clarifier le contenu du module</div>
+                <div class="help-text">
+                    <i class="fas fa-info"></i>
+                    Description optionnelle pour clarifier le contenu du module
+                </div>
             </div>
         </div>
 
         <!-- Academic Settings Section -->
         <div class="form-section">
-            <h3 class="section-title">📅 Paramètres Académiques</h3>
+            <h3 class="section-title">
+                <i class="fas fa-calendar-alt"></i>
+                Paramètres Académiques
+            </h3>
             
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="academic_year">Année Académique <span class="required">*</span></label>
+                    <label for="academic_year">
+                        <i class="fas fa-calendar"></i>
+                        Année Académique <span class="required">*</span>
+                    </label>
                     <select id="academic_year" name="academic_year" class="form-control" required onchange="updatePreview()">
                         <option value="">Sélectionner l'année</option>
                         <option value="2024-2025" selected>2024-2025</option>
                         <option value="2025-2026">2025-2026</option>
                         <option value="2026-2027">2026-2027</option>
                     </select>
-                    <div class="help-text">Année académique pour ce module</div>
+                    <div class="help-text">
+                        <i class="fas fa-info"></i>
+                        Année académique pour ce module
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label>Semestre <span class="required">*</span></label>
+                    <label>
+                        <i class="fas fa-list"></i>
+                        Semestre <span class="required">*</span>
+                    </label>
                     <div class="semester-options">
                         {% for key, label in semester_choices %}
                         <div class="semester-option">
@@ -369,7 +518,10 @@
                         </div>
                         {% endfor %}
                     </div>
-                    <div class="help-text">Période d'enseignement du module</div>
+                    <div class="help-text">
+                        <i class="fas fa-info"></i>
+                        Période d'enseignement du module
+                    </div>
                 </div>
             </div>
         </div>
@@ -377,20 +529,27 @@
         <!-- Preview Section -->
         <div class="preview-card">
             <div class="preview-header">
-                <h3 style="margin: 0; color: #28a745;">👁️ Aperçu du Module</h3>
-                <span class="module-status">● Actif</span>
+                <h3 style="margin: 0; color: var(--success); display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-eye"></i>
+                    Aperçu du Module
+                </h3>
+                <span class="module-status">
+                    <i class="fas fa-circle"></i>
+                    Actif
+                </span>
             </div>
             
-            <div style="display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: start;">
+            <div class="preview-content">
                 <div class="module-code-display" id="preview-code">NOUVEAU</div>
                 <div>
-                    <div style="font-weight: 600; font-size: 1.1em; color: #495057; margin-bottom: 5px;" id="preview-name">
+                    <div class="preview-name" id="preview-name">
                         [Nom du module]
                     </div>
-                    <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 10px;" id="preview-period">
+                    <div class="preview-period" id="preview-period">
+                        <i class="fas fa-calendar"></i>
                         [Année académique] • [Semestre]
                     </div>
-                    <div style="color: #495057; line-height: 1.4;" id="preview-description">
+                    <div class="preview-description" id="preview-description">
                         [Description du module sera affichée ici]
                     </div>
                 </div>
@@ -400,10 +559,12 @@
         <!-- Form Actions -->
         <div class="form-actions">
             <a href="{% url 'administrator:modules_list' %}" class="btn-cancel">
-                ← Annuler
+                <i class="fas fa-arrow-left"></i>
+                Annuler
             </a>
             <button type="submit" class="btn-create">
-                📚 Créer le Module
+                <i class="fas fa-plus"></i>
+                Créer le Module
             </button>
         </div>
     </form>
@@ -411,7 +572,8 @@
     <!-- Tips Section -->
     <div class="tips-section">
         <div class="tips-title">
-            💡 Conseils pour la Création de Modules
+            <i class="fas fa-lightbulb"></i>
+            Conseils pour la Création de Modules
         </div>
         <ul class="tips-list">
             <li><strong>Code unique:</strong> Utilisez un code court et mémorable (ex: WEB301, MATH204, UML101)</li>
@@ -443,7 +605,7 @@
         // Update preview
         document.getElementById('preview-code').textContent = code;
         document.getElementById('preview-name').textContent = name;
-        document.getElementById('preview-period').textContent = `${academicYear} • ${semesterText}`;
+        document.getElementById('preview-period').innerHTML = `<i class="fas fa-calendar"></i> ${academicYear} • ${semesterText}`;
         document.getElementById('preview-description').textContent = description;
     }
     
@@ -500,7 +662,7 @@
         
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
-        errorDiv.textContent = message;
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
         
         field.parentNode.appendChild(errorDiv);
     }
@@ -530,6 +692,25 @@
             // Add numbers for uniqueness
             suggestion += '01';
             codeField.placeholder = `Suggestion: ${suggestion.toUpperCase()}`;
+        }
+    });
+    
+    // Real-time validation feedback
+    document.getElementById('name').addEventListener('input', function() {
+        const value = this.value.trim();
+        if (value.length < 3) {
+            this.style.borderColor = 'var(--error)';
+        } else {
+            this.style.borderColor = 'var(--success)';
+        }
+    });
+    
+    document.getElementById('code').addEventListener('input', function() {
+        const value = this.value.trim();
+        if (value.length < 2) {
+            this.style.borderColor = 'var(--error)';
+        } else {
+            this.style.borderColor = 'var(--success)';
         }
     });
 </script>

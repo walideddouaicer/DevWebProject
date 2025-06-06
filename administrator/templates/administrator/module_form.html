@@ -1,0 +1,354 @@
+{% extends 'administrator/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Administration{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator">></span>
+<a href="{% url 'administrator:modules_list' %}">Modules</a>
+<span class="breadcrumb-separator">></span>
+<span>{{ title }}</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/project_form.css' %}">
+<style>
+    .module-form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #dc3545 0%, #a71e2a 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50px;
+        width: 150px;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(15deg);
+    }
+    
+    .form-main {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-left: 4px solid #dc3545;
+    }
+    
+    .form-section {
+        margin-bottom: 30px;
+        padding-bottom: 25px;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .section-title {
+        color: #dc3545;
+        font-size: 1.2em;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: #dc3545;
+        font-size: 0.95em;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #dc3545;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+        line-height: 1.5;
+    }
+    
+    .form-group small {
+        display: block;
+        margin-top: 5px;
+        color: #6c757d;
+        font-size: 0.85em;
+        font-style: italic;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .required-field {
+        color: #dc3545;
+        margin-left: 3px;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 2px solid #f1f3f4;
+    }
+    
+    .btn {
+        padding: 12px 25px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-primary {
+        background: #dc3545;
+        color: white;
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-primary:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+    }
+    
+    .help-card {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 30px;
+    }
+    
+    .help-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 12px;
+        font-size: 0.9em;
+    }
+    
+    .help-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .help-icon {
+        background: #dc3545;
+        color: white;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8em;
+        font-weight: bold;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="module-form-container">
+    <!-- Form Header -->
+    <div class="form-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="margin: 0 0 10px 0; font-size: 2.2em;">{{ title }}</h1>
+                <p style="margin: 0; opacity: 0.9; font-size: 1.1em;">
+                    {% if 'Créer' in title %}
+                        Créez un nouveau module d'enseignement pour les étudiants
+                    {% else %}
+                        Modifiez les paramètres de ce module
+                    {% endif %}
+                </p>
+            </div>
+            <div style="font-size: 4em; opacity: 0.2;">📚</div>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <div class="form-main">
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h3 class="section-title">📝 Informations de Base</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="code">Code du Module <span class="required-field">*</span></label>
+                        <input type="text" id="code" name="code" placeholder="Ex: CS101, MATH204" required 
+                               style="text-transform: uppercase;" value="{{ module.code|default:'' }}">
+                        <small>Code unique utilisé par les étudiants pour s'inscrire (sera converti en majuscules)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="academic_year">Année Académique <span class="required-field">*</span></label>
+                        <input type="text" id="academic_year" name="academic_year" placeholder="2024-2025" required
+                               value="{{ module.academic_year|default:'2024-2025' }}">
+                        <small>Format: YYYY-YYYY (ex: 2024-2025)</small>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="name">Nom du Module <span class="required-field">*</span></label>
+                    <input type="text" id="name" name="name" placeholder="Ex: Programmation Orientée Objet" required
+                           value="{{ module.name|default:'' }}">
+                    <small>Nom complet et descriptif du module</small>
+                </div>
+            </div>
+
+            <!-- Academic Information -->
+            <div class="form-section">
+                <h3 class="section-title">🗓️ Informations Académiques</h3>
+                
+                <div class="form-group">
+                    <label for="semester">Semestre <span class="required-field">*</span></label>
+                    <select id="semester" name="semester" required>
+                        <option value="">Sélectionnez le semestre</option>
+                        <option value="S1" {% if module.semester == 'S1' %}selected{% endif %}>Semestre 1</option>
+                        <option value="S2" {% if module.semester == 'S2' %}selected{% endif %}>Semestre 2</option>
+                        <option value="Summer" {% if module.semester == 'Summer' %}selected{% endif %}>Session d'été</option>
+                    </select>
+                    <small>Période académique du module</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description du Module</label>
+                    <textarea id="description" name="description" rows="4" 
+                              placeholder="Décrivez les objectifs, le contenu et les compétences développées dans ce module...">{{ module.description|default:'' }}</textarea>
+                    <small>Description détaillée visible par les étudiants et enseignants</small>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <a href="{% url 'administrator:modules_list' %}" class="btn btn-secondary">
+                    ❌ Annuler
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    {% if 'Créer' in title %}🚀 Créer le Module{% else %}💾 Sauvegarder les Modifications{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Help Card -->
+    <div class="help-card">
+        <h4 style="margin: 0 0 15px 0; color: #dc3545;">💡 Guide de Création</h4>
+        
+        <div class="help-item">
+            <div class="help-icon">1</div>
+            <div>
+                <strong>Code unique:</strong> Choisissez un code court et mémorable que les étudiants utiliseront pour s'inscrire.
+            </div>
+        </div>
+        
+        <div class="help-item">
+            <div class="help-icon">2</div>
+            <div>
+                <strong>Nom descriptif:</strong> Utilisez le nom officiel du module tel qu'il apparaît dans le programme.
+            </div>
+        </div>
+        
+        <div class="help-item">
+            <div class="help-icon">3</div>
+            <div>
+                <strong>Description complète:</strong> Incluez les objectifs, prérequis et compétences développées.
+            </div>
+        </div>
+        
+        <div class="help-item">
+            <div class="help-icon">4</div>
+            <div>
+                <strong>Après création:</strong> Vous pourrez assigner des enseignants et voir les étudiants s'inscrire.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-uppercase the code field
+    const codeField = document.getElementById('code');
+    codeField.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+    
+    // Auto-format academic year
+    const yearField = document.getElementById('academic_year');
+    yearField.addEventListener('blur', function() {
+        const value = this.value.trim();
+        if (value.length === 4 && !isNaN(value)) {
+            const year = parseInt(value);
+            this.value = `${year}-${year + 1}`;
+        }
+    });
+});
+</script>
+{% endblock %}

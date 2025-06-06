@@ -11,57 +11,86 @@
 {% block extra_css %}
 <style>
     .modules-header {
-        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
         color: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
+        padding: 32px;
+        border-radius: 16px;
+        margin-bottom: 32px;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 8px 32px rgba(79, 70, 229, 0.3);
     }
     
     .modules-header::before {
         content: '';
         position: absolute;
         top: -50%;
-        right: -20px;
-        width: 100px;
+        right: -10%;
+        width: 200px;
         height: 200%;
         background: rgba(255,255,255,0.1);
         transform: rotate(15deg);
+        border-radius: 20px;
+    }
+    
+    .modules-header h1 {
+        font-size: 28px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .modules-header p {
+        opacity: 0.9;
+        font-size: 16px;
+        position: relative;
+        z-index: 2;
+        margin: 0;
     }
     
     .create-module-btn {
-        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        background: linear-gradient(135deg, var(--success), #059669);
         color: white;
-        padding: 12px 25px;
-        border-radius: 8px;
+        padding: 12px 24px;
+        border-radius: 12px;
         text-decoration: none;
         font-weight: 600;
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
         gap: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         position: absolute;
-        top: 20px;
-        right: 20px;
+        top: 24px;
+        right: 24px;
+        z-index: 3;
     }
     
     .create-module-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
         color: white;
         text-decoration: none;
     }
     
     .filter-section {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        margin-bottom: 25px;
-        border-left: 4px solid #17a2b8;
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 24px;
+    }
+    
+    .filter-section h3 {
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .filter-grid {
@@ -80,28 +109,42 @@
     .modules-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 25px;
-        margin-bottom: 30px;
+        gap: 24px;
+        margin-bottom: 32px;
     }
     
     .module-card {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-left: 4px solid #28a745;
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
     }
     
+    .module-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--success), #059669);
+    }
+    
+    .module-card.inactive::before {
+        background: linear-gradient(135deg, var(--error), #dc2626);
+    }
+    
     .module-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        border-color: var(--border-secondary);
     }
     
     .module-card.inactive {
-        border-left-color: #dc3545;
         opacity: 0.8;
     }
     
@@ -109,43 +152,46 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 15px;
+        margin-bottom: 16px;
     }
     
     .module-code {
-        font-size: 1.3em;
-        font-weight: bold;
-        color: #28a745;
-        margin-bottom: 5px;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--success);
+        margin-bottom: 6px;
     }
     
     .module-code.inactive {
-        color: #dc3545;
+        color: var(--error);
     }
     
     .module-status {
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 0.7em;
-        font-weight: bold;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .status-active {
-        background: #d4edda;
-        color: #155724;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
     }
     
     .status-inactive {
-        background: #f8d7da;
-        color: #721c24;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+        color: var(--error);
+        border: 1px solid rgba(239, 68, 68, 0.3);
     }
     
     .module-name {
         font-weight: 600;
-        color: #495057;
-        font-size: 1.1em;
-        margin-bottom: 10px;
+        color: var(--text-primary);
+        font-size: 16px;
+        margin-bottom: 12px;
         line-height: 1.3;
     }
     
@@ -153,17 +199,18 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 6px;
-        font-size: 0.9em;
-        color: #6c757d;
+        margin-bottom: 16px;
+        padding: 12px;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        font-size: 13px;
+        color: var(--text-muted);
+        border: 1px solid var(--border-primary);
     }
     
     .module-description {
-        color: #6c757d;
-        font-size: 0.9em;
+        color: var(--text-secondary);
+        font-size: 14px;
         line-height: 1.4;
         margin-bottom: 20px;
         max-height: 60px;
@@ -174,36 +221,38 @@
     .module-stats {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
+        gap: 12px;
         margin-bottom: 20px;
     }
     
     .stat-item {
         text-align: center;
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 6px;
-        border: 1px solid #e9ecef;
-        transition: transform 0.3s ease;
+        padding: 12px;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        border: 1px solid var(--border-primary);
+        transition: all 0.3s ease;
     }
     
     .stat-item:hover {
         transform: translateY(-2px);
-        background: #e8f4ff;
+        background: var(--border-secondary);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .stat-value {
-        font-weight: bold;
-        font-size: 1.2em;
-        color: #495057;
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--text-primary);
         display: block;
+        margin-bottom: 2px;
     }
     
     .stat-label {
-        font-size: 0.7em;
-        color: #6c757d;
+        font-size: 10px;
+        color: var(--text-muted);
         text-transform: uppercase;
-        margin-top: 2px;
+        letter-spacing: 0.5px;
     }
     
     .module-actions {
@@ -213,134 +262,165 @@
     }
     
     .btn-action {
-        padding: 6px 12px;
-        border-radius: 6px;
+        padding: 8px 12px;
+        border-radius: 8px;
         text-decoration: none;
-        font-size: 0.8em;
-        font-weight: 500;
+        font-size: 12px;
+        font-weight: 600;
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
         gap: 4px;
+        border: 2px solid transparent;
     }
     
     .btn-view {
-        background: #6c757d;
-        color: white;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border-color: var(--border-secondary);
     }
     
     .btn-view:hover {
-        background: #5a6268;
-        color: white;
+        background: var(--border-secondary);
+        color: var(--text-primary);
         transform: translateY(-1px);
         text-decoration: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .btn-edit {
-        background: #ffc107;
-        color: #212529;
+        background: linear-gradient(135deg, var(--warning), #d97706);
+        color: white;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
     }
     
     .btn-edit:hover {
-        background: #e0a800;
-        color: #212529;
         transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
         text-decoration: none;
+        color: white;
     }
     
     .btn-assignments {
-        background: #17a2b8;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
         color: white;
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
     }
     
     .btn-assignments:hover {
-        background: #138496;
-        color: white;
         transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
         text-decoration: none;
+        color: white;
     }
     
     .btn-delete {
-        background: #dc3545;
+        background: linear-gradient(135deg, var(--error), #dc2626);
         color: white;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
     }
     
     .btn-delete:hover {
-        background: #c82333;
-        color: white;
         transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         text-decoration: none;
+        color: white;
     }
     
     .empty-state {
         text-align: center;
         padding: 80px 20px;
-        color: #6c757d;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        color: var(--text-muted);
+        background: var(--bg-card);
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-primary);
     }
     
     .empty-icon {
-        font-size: 5em;
+        font-size: 64px;
         margin-bottom: 20px;
         opacity: 0.3;
+    }
+    
+    .empty-state h3 {
+        color: var(--text-primary);
+        margin-bottom: 12px;
+        font-size: 20px;
+        font-weight: 700;
     }
     
     .quick-stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
+        gap: 24px;
+        margin-bottom: 32px;
     }
     
     .quick-stat-card {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-left: 4px solid #17a2b8;
+        background: var(--bg-card);
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-primary);
         text-align: center;
-        transition: transform 0.3s ease;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .quick-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     }
     
     .quick-stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        border-color: var(--border-secondary);
     }
     
     .quick-stat-value {
-        font-size: 2em;
-        font-weight: bold;
-        color: #495057;
-        margin-bottom: 5px;
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--accent-primary);
+        margin-bottom: 8px;
+        line-height: 1;
     }
     
     .quick-stat-label {
-        color: #6c757d;
-        font-size: 0.9em;
+        color: var(--text-muted);
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .module-teachers {
-        margin-top: 10px;
-        font-size: 0.85em;
+        margin-top: 12px;
+        font-size: 13px;
     }
     
     .teacher-list {
-        color: #495057;
+        color: var(--text-secondary);
         font-weight: 500;
     }
     
     .teacher-list .no-teachers {
-        color: #dc3545;
+        color: var(--error);
         font-style: italic;
     }
     
     .bulk-actions {
-        background: #fff3cd;
-        border: 2px solid #ffc107;
-        border-radius: 8px;
-        padding: 15px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+        border: 2px solid rgba(245, 158, 11, 0.3);
+        border-radius: 12px;
+        padding: 16px;
         margin-bottom: 20px;
         display: none;
     }
@@ -351,31 +431,34 @@
     
     .module-checkbox {
         position: absolute;
-        top: 15px;
-        right: 15px;
+        top: 16px;
+        right: 16px;
         transform: scale(1.2);
+        accent-color: var(--accent-primary);
     }
     
     .code-display {
-        background: #17a2b8;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
         color: white;
         padding: 4px 8px;
-        border-radius: 4px;
-        font-family: monospace;
-        font-weight: bold;
-        font-size: 0.9em;
+        border-radius: 6px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-weight: 700;
+        font-size: 12px;
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
     }
     
     /* Responsive Design */
     @media (max-width: 768px) {
         .modules-header {
-            padding: 20px;
+            padding: 24px;
             text-align: center;
         }
         
         .create-module-btn {
             position: static;
             margin-top: 20px;
+            align-self: center;
         }
         
         .modules-grid {
@@ -404,16 +487,18 @@
 {% block content %}
     <!-- Modules Header -->
     <div class="modules-header">
-        <h1 style="margin: 0 0 10px 0; font-size: 2em;">📚 Gestion des Modules</h1>
-        <p style="margin: 0; font-size: 1.1em; opacity: 0.9;">
-            Gérez vos {{ total_modules }} modules et organisez l'enseignement
-        </p>
+        <h1>
+            <i class="fas fa-book"></i>
+            Gestion des Modules
+        </h1>
+        <p>Gérez vos {{ total_modules }} modules et organisez l'enseignement</p>
         <a href="{% url 'administrator:module_create' %}" class="create-module-btn">
-            ➕ Créer un Module
+            <i class="fas fa-plus"></i>
+            Créer un Module
         </a>
     </div>
 
-    <!-- FIXED: Quick Statistics using manual counts -->
+    <!-- Quick Statistics -->
     <div class="quick-stats">
         <div class="quick-stat-card">
             <div class="quick-stat-value">{{ total_modules }}</div>
@@ -435,17 +520,26 @@
 
     <!-- Filter Section -->
     <div class="filter-section">
-        <h3 style="margin: 0 0 15px 0; color: #495057;">🔍 Filtres de Recherche</h3>
+        <h3>
+            <i class="fas fa-search"></i>
+            Filtres de Recherche
+        </h3>
         
         <form method="get">
             <div class="filter-grid">
                 <div class="form-group">
-                    <label for="search">🔎 Recherche</label>
+                    <label for="search">
+                        <i class="fas fa-search"></i>
+                        Recherche
+                    </label>
                     <input type="text" id="search" name="search" value="{{ search_query }}" 
                            placeholder="Code ou nom du module..." class="form-control">
                 </div>
                 <div class="form-group">
-                    <label for="academic_year">📅 Année Académique</label>
+                    <label for="academic_year">
+                        <i class="fas fa-calendar"></i>
+                        Année Académique
+                    </label>
                     <select id="academic_year" name="academic_year" class="form-control">
                         <option value="">Toutes les années</option>
                         {% for year in academic_years %}
@@ -456,7 +550,10 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="semester">📚 Semestre</label>
+                    <label for="semester">
+                        <i class="fas fa-book"></i>
+                        Semestre
+                    </label>
                     <select id="semester" name="semester" class="form-control">
                         <option value="">Tous les semestres</option>
                         {% for key, label in semester_choices %}
@@ -467,7 +564,10 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="status">📊 Statut</label>
+                    <label for="status">
+                        <i class="fas fa-toggle-on"></i>
+                        Statut
+                    </label>
                     <select id="status" name="status" class="form-control">
                         <option value="">Tous les statuts</option>
                         <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Actifs</option>
@@ -477,8 +577,14 @@
             </div>
             
             <div class="filter-actions">
-                <button type="submit" class="btn btn-primary">🔍 Appliquer</button>
-                <a href="{% url 'administrator:modules_list' %}" class="btn">🔄 Réinitialiser</a>
+                <button type="submit" class="btn">
+                    <i class="fas fa-search"></i>
+                    Appliquer
+                </button>
+                <a href="{% url 'administrator:modules_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i>
+                    Réinitialiser
+                </a>
             </div>
         </form>
     </div>
@@ -486,11 +592,22 @@
     <!-- Bulk Actions (Hidden by default) -->
     <div class="bulk-actions" id="bulk-actions">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span><strong><span id="selected-count">0</span></strong> module(s) sélectionné(s)</span>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-sm btn-success" onclick="bulkActivate()">✅ Activer</button>
-                <button class="btn btn-sm btn-warning" onclick="bulkDeactivate()">⏸️ Désactiver</button>
-                <button class="btn btn-sm btn-primary" onclick="bulkExport()">📤 Exporter</button>
+            <span style="color: var(--warning); font-weight: 600;">
+                <strong><span id="selected-count">0</span></strong> module(s) sélectionné(s)
+            </span>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-success" onclick="bulkActivate()">
+                    <i class="fas fa-check"></i>
+                    Activer
+                </button>
+                <button class="btn btn-warning" onclick="bulkDeactivate()">
+                    <i class="fas fa-pause"></i>
+                    Désactiver
+                </button>
+                <button class="btn" onclick="bulkExport()">
+                    <i class="fas fa-download"></i>
+                    Exporter
+                </button>
             </div>
         </div>
     </div>
@@ -510,13 +627,23 @@
                         <div class="module-name">{{ module.name }}</div>
                     </div>
                     <div class="module-status {% if module.is_active %}status-active{% else %}status-inactive{% endif %}">
-                        {% if module.is_active %}● Actif{% else %}● Inactif{% endif %}
+                        {% if module.is_active %}
+                            <i class="fas fa-circle"></i> Actif
+                        {% else %}
+                            <i class="fas fa-circle"></i> Inactif
+                        {% endif %}
                     </div>
                 </div>
                 
                 <div class="module-meta">
-                    <span>📅 {{ module.academic_year }}</span>
-                    <span>📚 {{ module.get_semester_display }}</span>
+                    <span>
+                        <i class="fas fa-calendar"></i>
+                        {{ module.academic_year }}
+                    </span>
+                    <span>
+                        <i class="fas fa-book"></i>
+                        {{ module.get_semester_display }}
+                    </span>
                 </div>
                 
                 {% if module.description %}
@@ -525,7 +652,6 @@
                 </div>
                 {% endif %}
                 
-                <!-- FIXED: Using the manually calculated counts -->
                 <div class="module-stats">
                     <div class="stat-item">
                         <span class="stat-value">{{ module.student_count }}</span>
@@ -543,7 +669,10 @@
                 
                 <!-- Teachers List -->
                 <div class="module-teachers">
-                    <strong>👨‍🏫 Enseignants:</strong>
+                    <strong>
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        Enseignants:
+                    </strong>
                     <div class="teacher-list">
                         {% if module.assignments.all %}
                             {% for assignment in module.assignments.all %}
@@ -561,18 +690,22 @@
                 
                 <div class="module-actions">
                     <a href="{% url 'administrator:module_detail' module.id %}" class="btn-action btn-view">
-                        👁️ Voir
+                        <i class="fas fa-eye"></i>
+                        Voir
                     </a>
                     <a href="{% url 'administrator:module_edit' module.id %}" class="btn-action btn-edit">
-                        ✏️ Modifier
+                        <i class="fas fa-edit"></i>
+                        Modifier
                     </a>
                     <a href="{% url 'administrator:assignments_management' %}?module={{ module.id }}" class="btn-action btn-assignments">
-                        👥 Assignations
+                        <i class="fas fa-user-tie"></i>
+                        Assignations
                     </a>
                     {% if module.student_count == 0 and module.project_count == 0 %}
                     <a href="{% url 'administrator:module_delete' module.id %}" class="btn-action btn-delete" 
                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce module ?')">
-                        🗑️ Supprimer
+                        <i class="fas fa-trash"></i>
+                        Supprimer
                     </a>
                     {% endif %}
                 </div>
@@ -581,20 +714,26 @@
         </div>
     {% else %}
         <div class="empty-state">
-            <div class="empty-icon">📚</div>
+            <div class="empty-icon">
+                <i class="fas fa-book"></i>
+            </div>
             <h3>Aucun Module Trouvé</h3>
-            <p>{% if search_query or selected_academic_year or selected_semester %}
-                Aucun module ne correspond aux critères de recherche.
-            {% else %}
-                Aucun module n'a encore été créé. Commencez par créer votre premier module.
-            {% endif %}</p>
+            <p>
+                {% if search_query or selected_academic_year or selected_semester %}
+                    Aucun module ne correspond aux critères de recherche.
+                {% else %}
+                    Aucun module n'a encore été créé. Commencez par créer votre premier module.
+                {% endif %}
+            </p>
             {% if not search_query and not selected_academic_year and not selected_semester %}
-                <a href="{% url 'administrator:module_create' %}" class="btn btn-primary" style="margin-top: 20px;">
-                    📚 Créer le Premier Module
+                <a href="{% url 'administrator:module_create' %}" class="btn" style="margin-top: 20px;">
+                    <i class="fas fa-plus"></i>
+                    Créer le Premier Module
                 </a>
             {% else %}
-                <a href="{% url 'administrator:modules_list' %}" class="btn" style="margin-top: 20px;">
-                    🔄 Voir Tous les Modules
+                <a href="{% url 'administrator:modules_list' %}" class="btn btn-secondary" style="margin-top: 20px;">
+                    <i class="fas fa-undo"></i>
+                    Voir Tous les Modules
                 </a>
             {% endif %}
         </div>
@@ -602,14 +741,19 @@
 
     <!-- Additional Actions -->
     {% if modules %}
-    <div style="text-align: center; margin-top: 40px; padding: 30px; background: #f8f9fa; border-radius: 12px;">
-        <h3 style="color: #495057; margin-bottom: 20px;">⚡ Actions Rapides</h3>
-        <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+    <div style="text-align: center; margin-top: 40px; padding: 32px; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fas fa-bolt"></i>
+            Actions Rapides
+        </h3>
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
             <a href="{% url 'administrator:module_create' %}" class="btn btn-success">
-                ➕ Nouveau Module
+                <i class="fas fa-plus"></i>
+                Nouveau Module
             </a>
-            <a href="{% url 'administrator:assignments_management' %}" class="btn btn-primary">
-                👥 Gérer Assignations
+            <a href="{% url 'administrator:assignments_management' %}" class="btn">
+                <i class="fas fa-user-tie"></i>
+                Gérer Assignations
             </a>
         </div>
     </div>
@@ -691,7 +835,7 @@
             selectAllBtn.type = 'button';
             selectAllBtn.className = 'btn btn-secondary';
             selectAllBtn.id = 'select-all-btn';
-            selectAllBtn.textContent = '☑️ Tout sélectionner';
+            selectAllBtn.innerHTML = '<i class="fas fa-check-square"></i> Tout sélectionner';
             selectAllBtn.onclick = toggleSelectAll;
             filterActions.appendChild(selectAllBtn);
         }

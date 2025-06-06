@@ -15,40 +15,86 @@
 {% block extra_css %}
 <style>
     .edit-header {
-        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-        color: #212529;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
+        background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+        color: white;
+        padding: 32px;
+        border-radius: 16px;
+        margin-bottom: 32px;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 8px 32px rgba(245, 158, 11, 0.3);
     }
     
     .edit-header::before {
         content: '';
         position: absolute;
         top: -50%;
-        right: -20px;
-        width: 100px;
+        right: -10%;
+        width: 200px;
         height: 200%;
         background: rgba(255,255,255,0.2);
         transform: rotate(15deg);
+        border-radius: 20px;
+    }
+    
+    .edit-header h1 {
+        font-size: 28px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .module-info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .module-basic-info div:first-child {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+    
+    .module-basic-info div:last-child {
+        opacity: 0.8;
+        font-size: 16px;
+    }
+    
+    .module-status-info {
+        text-align: right;
+        font-size: 14px;
     }
     
     .edit-form {
-        background: white;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-left: 4px solid #ffc107;
-        margin-bottom: 30px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .edit-form::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--warning), #d97706);
     }
     
     .form-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 25px;
-        margin-bottom: 25px;
+        gap: 24px;
+        margin-bottom: 24px;
     }
     
     .form-group-full {
@@ -56,80 +102,109 @@
     }
     
     .form-group {
-        margin-bottom: 25px;
+        margin-bottom: 24px;
     }
     
     .form-group label {
         display: block;
         margin-bottom: 8px;
         font-weight: 600;
-        color: #495057;
-        font-size: 0.95em;
+        color: var(--text-primary);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
     
     .form-group label .required {
-        color: #dc3545;
-        margin-left: 2px;
+        color: var(--error);
+        margin-left: 4px;
     }
     
     .form-control {
         width: 100%;
-        padding: 12px 15px;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        font-size: 0.95em;
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border-secondary);
+        border-radius: 10px;
+        padding: 12px 16px;
+        color: var(--text-primary);
+        font-size: 14px;
         transition: all 0.3s ease;
-        background: #fafafa;
     }
     
     .form-control:focus {
-        border-color: #ffc107;
+        border-color: var(--warning);
         outline: none;
-        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
-        background: white;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        background: var(--bg-card);
     }
     
     .form-control.readonly {
-        background: #e9ecef;
+        background: var(--border-primary);
         cursor: not-allowed;
+        opacity: 0.7;
     }
     
     .help-text {
-        font-size: 0.8em;
-        color: #6c757d;
-        margin-top: 5px;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 6px;
         font-style: italic;
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
     
     .form-section {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 25px;
-        border-left: 4px solid #6c757d;
+        background: var(--bg-tertiary);
+        padding: 24px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        border: 1px solid var(--border-primary);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(135deg, var(--text-muted), var(--border-secondary));
     }
     
     .section-title {
-        margin: 0 0 15px 0;
-        color: #495057;
-        font-size: 1.1em;
-        font-weight: 600;
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .status-toggle {
         display: flex;
         align-items: center;
-        gap: 15px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border: 2px solid #e9ecef;
+        gap: 16px;
+        padding: 20px;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        border: 2px solid var(--border-primary);
+        transition: all 0.3s ease;
+    }
+    
+    .status-toggle:focus-within {
+        border-color: var(--warning);
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
     }
     
     .toggle-switch {
         position: relative;
         width: 60px;
-        height: 30px;
+        height: 32px;
     }
     
     .toggle-switch input {
@@ -145,78 +220,88 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #ccc;
+        background: var(--border-secondary);
         transition: 0.4s;
-        border-radius: 30px;
+        border-radius: 32px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .toggle-slider:before {
         position: absolute;
         content: "";
-        height: 22px;
-        width: 22px;
+        height: 24px;
+        width: 24px;
         left: 4px;
         bottom: 4px;
-        background-color: white;
+        background: white;
         transition: 0.4s;
         border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
     
     .toggle-switch input:checked + .toggle-slider {
-        background-color: #28a745;
+        background: var(--success);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
     }
     
     .toggle-switch input:checked + .toggle-slider:before {
-        transform: translateX(30px);
+        transform: translateX(28px);
+    }
+    
+    .status-info {
+        flex: 1;
     }
     
     .status-label {
         font-weight: 600;
-        color: #495057;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+        font-size: 16px;
     }
     
     .status-description {
-        font-size: 0.9em;
-        color: #6c757d;
-        margin-top: 5px;
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 6px;
+        line-height: 1.4;
     }
     
     .form-actions {
         display: flex;
-        gap: 15px;
+        gap: 16px;
         justify-content: flex-end;
-        padding-top: 25px;
-        border-top: 2px solid #e9ecef;
-        margin-top: 30px;
+        padding-top: 24px;
+        border-top: 2px solid var(--border-primary);
+        margin-top: 32px;
     }
     
     .btn-save {
-        background: #ffc107;
-        color: #212529;
-        padding: 12px 30px;
+        background: linear-gradient(135deg, var(--warning), #d97706);
+        color: white;
+        padding: 12px 24px;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         font-weight: 600;
-        font-size: 0.95em;
+        font-size: 14px;
         cursor: pointer;
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
         gap: 8px;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
     }
     
     .btn-save:hover {
-        background: #e0a800;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
     }
     
     .btn-cancel {
-        background: #6c757d;
-        color: white;
-        padding: 12px 25px;
-        border: none;
-        border-radius: 8px;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 2px solid var(--border-secondary);
+        padding: 12px 20px;
+        border-radius: 10px;
         font-weight: 500;
         text-decoration: none;
         transition: all 0.3s ease;
@@ -226,35 +311,38 @@
     }
     
     .btn-cancel:hover {
-        background: #5a6268;
-        color: white;
+        background: var(--border-secondary);
+        color: var(--text-primary);
         text-decoration: none;
+        transform: translateY(-1px);
     }
     
     .btn-delete {
-        background: #dc3545;
+        background: linear-gradient(135deg, var(--error), #dc2626);
         color: white;
-        padding: 12px 25px;
+        padding: 12px 20px;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         font-weight: 500;
         text-decoration: none;
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
         gap: 8px;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
     
     .btn-delete:hover {
-        background: #c82333;
         color: white;
         text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
     }
     
     .semester-options {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 10px;
+        gap: 12px;
     }
     
     .semester-option {
@@ -270,99 +358,116 @@
     
     .semester-label {
         display: block;
-        padding: 12px 15px;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
+        padding: 12px 16px;
+        border: 2px solid var(--border-secondary);
+        border-radius: 10px;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
-        background: #fafafa;
+        background: var(--bg-tertiary);
         font-weight: 500;
+        color: var(--text-secondary);
     }
     
     .semester-option input[type="radio"]:checked + .semester-label {
-        border-color: #ffc107;
-        background: #fff3cd;
-        color: #856404;
+        border-color: var(--warning);
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
     }
     
     .semester-label:hover {
-        border-color: #ffc107;
-        background: #fffbf0;
-    }
-    
-    .current-info {
-        background: #e8f4ff;
-        border: 2px solid #007bff;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 30px;
-    }
-    
-    .current-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
-        margin-top: 15px;
-    }
-    
-    .stat-item {
-        text-align: center;
-        padding: 15px;
-        background: white;
-        border-radius: 8px;
-        border: 1px solid #b3d9ff;
-    }
-    
-    .stat-value {
-        font-size: 1.5em;
-        font-weight: bold;
-        color: #007bff;
-        margin-bottom: 5px;
-    }
-    
-    .stat-label {
-        font-size: 0.8em;
-        color: #6c757d;
+        border-color: var(--warning);
+        background: rgba(245, 158, 11, 0.05);
+        transform: translateY(-1px);
     }
     
     .warning-section {
-        background: #fff3cd;
-        border: 2px solid #ffc107;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 25px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+        border: 2px solid rgba(245, 158, 11, 0.3);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
     }
     
     .warning-title {
-        color: #856404;
+        color: var(--warning);
         font-weight: 600;
         margin-bottom: 8px;
         display: flex;
         align-items: center;
         gap: 8px;
+        font-size: 16px;
     }
     
     .warning-text {
-        color: #856404;
-        font-size: 0.9em;
+        color: var(--text-secondary);
+        font-size: 14px;
         line-height: 1.4;
     }
     
     .change-indicator {
-        background: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
-        padding: 8px 12px;
-        border-radius: 4px;
-        font-size: 0.8em;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: var(--success);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
         font-weight: 500;
-        margin-top: 5px;
+        margin-top: 6px;
         display: none;
+        align-items: center;
+        gap: 4px;
     }
     
     .change-indicator.show {
-        display: block;
+        display: flex;
+    }
+    
+    .impact-info {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .impact-info::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--text-muted), var(--border-secondary));
+    }
+    
+    .impact-info h4 {
+        color: var(--text-primary);
+        margin-bottom: 16px;
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .impact-info ul {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        font-size: 14px;
+    }
+    
+    .impact-info li {
+        margin-bottom: 8px;
+    }
+    
+    .impact-info strong {
+        color: var(--text-primary);
     }
     
     /* Responsive Design */
@@ -372,11 +477,11 @@
         }
         
         .edit-header {
-            padding: 20px;
+            padding: 24px;
         }
         
         .edit-form {
-            padding: 20px;
+            padding: 24px;
         }
         
         .form-actions {
@@ -387,8 +492,13 @@
             grid-template-columns: 1fr;
         }
         
-        .current-stats {
-            grid-template-columns: repeat(2, 1fr);
+        .module-info-header {
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .module-status-info {
+            text-align: left;
         }
     }
 </style>
@@ -397,27 +507,39 @@
 {% block content %}
     <!-- Edit Header -->
     <div class="edit-header">
-        <h1 style="margin: 0 0 10px 0; font-size: 2em;">✏️ Modifier le Module</h1>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <div style="font-size: 1.3em; font-weight: bold; margin-bottom: 5px;">{{ module.code }}</div>
-                <div style="opacity: 0.8;">{{ module.name }}</div>
+        <h1>
+            <i class="fas fa-edit"></i>
+            Modifier le Module
+        </h1>
+        <div class="module-info-header">
+            <div class="module-basic-info">
+                <div>{{ module.code }}</div>
+                <div>{{ module.name }}</div>
             </div>
-            <div style="text-align: right; font-size: 0.9em;">
-                <div>📅 Créé le {{ module.created_at|date:"d/m/Y" }}</div>
-                <div>📊 {% if module.is_active %}Statut: Actif{% else %}Statut: Inactif{% endif %}</div>
+            <div class="module-status-info">
+                <div>
+                    <i class="fas fa-calendar"></i>
+                    Créé le {{ module.created_at|date:"d/m/Y" }}
+                </div>
+                <div>
+                    {% if module.is_active %}
+                        <i class="fas fa-circle" style="color: #10B981;"></i>
+                        Statut: Actif
+                    {% else %}
+                        <i class="fas fa-circle" style="color: #EF4444;"></i>
+                        Statut: Inactif
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
-
-   
-
 
     <!-- Warning Section -->
     {% if total_students > 0 or total_projects > 0 %}
     <div class="warning-section">
         <div class="warning-title">
-            ⚠️ Attention - Module Actif
+            <i class="fas fa-exclamation-triangle"></i>
+            Attention - Module Actif
         </div>
         <div class="warning-text">
             Ce module contient {{ total_students }} étudiant{{ total_students|pluralize }} et {{ total_projects }} projet{{ total_projects|pluralize }}. 
@@ -432,56 +554,98 @@
         
         <!-- Basic Information Section -->
         <div class="form-section">
-            <h3 class="section-title">📋 Informations de Base</h3>
+            <h3 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Informations de Base
+            </h3>
             
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="name">Nom du Module <span class="required">*</span></label>
+                    <label for="name">
+                        <i class="fas fa-book"></i>
+                        Nom du Module <span class="required">*</span>
+                    </label>
                     <input type="text" id="name" name="name" class="form-control" 
                            value="{{ module.name }}" required maxlength="200"
                            oninput="trackChanges(this)">
-                    <div class="help-text">Nom descriptif et complet du module</div>
-                    <div class="change-indicator" id="name-change">📝 Nom modifié</div>
+                    <div class="help-text">
+                        <i class="fas fa-info"></i>
+                        Nom descriptif et complet du module
+                    </div>
+                    <div class="change-indicator" id="name-change">
+                        <i class="fas fa-edit"></i>
+                        Nom modifié
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="code">Code du Module</label>
+                    <label for="code">
+                        <i class="fas fa-hashtag"></i>
+                        Code du Module
+                    </label>
                     <input type="text" id="code" name="code" class="form-control readonly" 
                            value="{{ module.code }}" readonly
                            title="Le code du module ne peut pas être modifié après création">
-                    <div class="help-text">⚠️ Le code ne peut pas être modifié après création</div>
+                    <div class="help-text">
+                        <i class="fas fa-lock"></i>
+                        Le code ne peut pas être modifié après création
+                    </div>
                 </div>
             </div>
             
             <div class="form-group form-group-full">
-                <label for="description">Description du Module</label>
+                <label for="description">
+                    <i class="fas fa-align-left"></i>
+                    Description du Module
+                </label>
                 <textarea id="description" name="description" class="form-control" 
                           rows="4" placeholder="Décrivez les objectifs, contenu et compétences du module..."
                           oninput="trackChanges(this)">{{ module.description }}</textarea>
-                <div class="help-text">Description optionnelle pour clarifier le contenu du module</div>
-                <div class="change-indicator" id="description-change">📝 Description modifiée</div>
+                <div class="help-text">
+                    <i class="fas fa-info"></i>
+                    Description optionnelle pour clarifier le contenu du module
+                </div>
+                <div class="change-indicator" id="description-change">
+                    <i class="fas fa-edit"></i>
+                    Description modifiée
+                </div>
             </div>
         </div>
 
         <!-- Academic Settings Section -->
         <div class="form-section">
-            <h3 class="section-title">📅 Paramètres Académiques</h3>
+            <h3 class="section-title">
+                <i class="fas fa-calendar-alt"></i>
+                Paramètres Académiques
+            </h3>
             
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="academic_year">Année Académique <span class="required">*</span></label>
+                    <label for="academic_year">
+                        <i class="fas fa-calendar"></i>
+                        Année Académique <span class="required">*</span>
+                    </label>
                     <select id="academic_year" name="academic_year" class="form-control" required onchange="trackChanges(this)">
                         <option value="">Sélectionner l'année</option>
                         <option value="2024-2025" {% if module.academic_year == "2024-2025" %}selected{% endif %}>2024-2025</option>
                         <option value="2025-2026" {% if module.academic_year == "2025-2026" %}selected{% endif %}>2025-2026</option>
                         <option value="2026-2027" {% if module.academic_year == "2026-2027" %}selected{% endif %}>2026-2027</option>
                     </select>
-                    <div class="help-text">Année académique pour ce module</div>
-                    <div class="change-indicator" id="academic_year-change">📝 Année modifiée</div>
+                    <div class="help-text">
+                        <i class="fas fa-info"></i>
+                        Année académique pour ce module
+                    </div>
+                    <div class="change-indicator" id="academic_year-change">
+                        <i class="fas fa-edit"></i>
+                        Année modifiée
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label>Semestre <span class="required">*</span></label>
+                    <label>
+                        <i class="fas fa-list"></i>
+                        Semestre <span class="required">*</span>
+                    </label>
                     <div class="semester-options">
                         {% for key, label in semester_choices %}
                         <div class="semester-option">
@@ -491,15 +655,24 @@
                         </div>
                         {% endfor %}
                     </div>
-                    <div class="help-text">Période d'enseignement du module</div>
-                    <div class="change-indicator" id="semester-change">📝 Semestre modifié</div>
+                    <div class="help-text">
+                        <i class="fas fa-info"></i>
+                        Période d'enseignement du module
+                    </div>
+                    <div class="change-indicator" id="semester-change">
+                        <i class="fas fa-edit"></i>
+                        Semestre modifié
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Module Status Section -->
         <div class="form-section">
-            <h3 class="section-title">⚙️ Statut du Module</h3>
+            <h3 class="section-title">
+                <i class="fas fa-toggle-on"></i>
+                Statut du Module
+            </h3>
             
             <div class="status-toggle">
                 <div class="toggle-switch">
@@ -507,13 +680,16 @@
                            {% if module.is_active %}checked{% endif %} onchange="trackChanges(this)">
                     <span class="toggle-slider"></span>
                 </div>
-                <div>
+                <div class="status-info">
                     <div class="status-label">Module Actif</div>
                     <div class="status-description">
                         Les modules actifs sont visibles par les étudiants et peuvent recevoir de nouvelles inscriptions.
                         Les modules inactifs sont masqués mais conservent leurs données.
                     </div>
-                    <div class="change-indicator" id="is_active-change">📝 Statut modifié</div>
+                    <div class="change-indicator" id="is_active-change">
+                        <i class="fas fa-edit"></i>
+                        Statut modifié
+                    </div>
                 </div>
             </div>
         </div>
@@ -521,24 +697,30 @@
         <!-- Form Actions -->
         <div class="form-actions">
             <a href="{% url 'administrator:module_detail' module.id %}" class="btn-cancel">
-                ← Annuler
+                <i class="fas fa-arrow-left"></i>
+                Annuler
             </a>
             {% if total_students == 0 and total_projects == 0 %}
             <a href="{% url 'administrator:module_delete' module.id %}" class="btn-delete"
                onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce module ? Cette action est irréversible.')">
-                🗑️ Supprimer
+                <i class="fas fa-trash"></i>
+                Supprimer
             </a>
             {% endif %}
             <button type="submit" class="btn-save">
-                💾 Enregistrer les Modifications
+                <i class="fas fa-save"></i>
+                Enregistrer les Modifications
             </button>
         </div>
     </form>
 
     <!-- Impact Information -->
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #6c757d;">
-        <h4 style="color: #495057; margin-bottom: 15px;">💡 Impact des Modifications</h4>
-        <ul style="color: #6c757d; line-height: 1.6;">
+    <div class="impact-info">
+        <h4>
+            <i class="fas fa-lightbulb"></i>
+            Impact des Modifications
+        </h4>
+        <ul>
             <li><strong>Nom et Description:</strong> Mis à jour immédiatement pour tous les utilisateurs</li>
             <li><strong>Année/Semestre:</strong> Affecte l'organisation et peut impacter les rapports</li>
             <li><strong>Statut Inactif:</strong> Le module devient invisible pour les nouveaux étudiants</li>
@@ -603,11 +785,11 @@
         // Update save button appearance
         const saveButton = document.querySelector('.btn-save');
         if (hasChanges) {
-            saveButton.style.background = '#28a745';
-            saveButton.innerHTML = '💾 Enregistrer les Modifications (' + changeIndicators.length + ')';
+            saveButton.style.background = 'linear-gradient(135deg, var(--success), #059669)';
+            saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer les Modifications (' + changeIndicators.length + ')';
         } else {
-            saveButton.style.background = '#ffc107';
-            saveButton.innerHTML = '💾 Enregistrer les Modifications';
+            saveButton.style.background = 'linear-gradient(135deg, var(--warning), #d97706)';
+            saveButton.innerHTML = '<i class="fas fa-save"></i> Enregistrer les Modifications';
         }
     }
     
@@ -673,11 +855,11 @@
         if (this.checked) {
             statusLabel.textContent = 'Module Actif';
             statusDesc.textContent = 'Le module est visible et accessible aux étudiants. Nouvelles inscriptions autorisées.';
-            statusDesc.style.color = '#155724';
+            statusDesc.style.color = 'var(--success)';
         } else {
             statusLabel.textContent = 'Module Inactif';
             statusDesc.textContent = 'Le module est masqué aux nouveaux étudiants. Les données existantes sont conservées.';
-            statusDesc.style.color = '#721c24';
+            statusDesc.style.color = 'var(--error)';
         }
         
         trackChanges(this);
@@ -687,9 +869,9 @@
     document.getElementById('name').addEventListener('input', function() {
         const value = this.value.trim();
         if (value.length < 3) {
-            this.style.borderColor = '#dc3545';
+            this.style.borderColor = 'var(--error)';
         } else {
-            this.style.borderColor = '#28a745';
+            this.style.borderColor = 'var(--success)';
         }
     });
 </script>

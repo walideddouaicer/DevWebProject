@@ -1,518 +1,546 @@
 <!--
-Base template for the administrator app - Modern Design Update
+Enhanced Base template for the administrator app - Modern Design with Rich Interface
 -->
 {% load static %}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}ENSA Project Manager - Administration{% endblock %}</title>
     
-    <!-- Common CSS -->
-    <link rel="stylesheet" href="{% static 'student/css/base.css' %}">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <!-- Page-specific CSS -->
     {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'teacher/css/base.css' %}">
     
-    <style>
-        /* Modern Administrator Interface Styling */
-        .main-nav {
-            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-            padding: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .nav-links {
-            display: flex;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 18px 24px;
-            transition: all 0.3s ease;
-            position: relative;
-            font-weight: 500;
-        }
-        
-        .nav-links a:hover, .nav-links a.active {
-            background: rgba(255,255,255,0.15);
-            transform: translateY(-1px);
-        }
-        
-        .nav-links a.urgent-badge::after {
-            content: attr(data-count);
-            background: #dc3545;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 10px;
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            min-width: 18px;
-            text-align: center;
-        }
-        
-        .breadcrumb {
-            background: #f8f9fa;
-            padding: 12px 0;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .breadcrumb-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        .breadcrumb a {
-            color: #17a2b8;
-            text-decoration: none;
-        }
-        
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-        
-        .breadcrumb-separator {
-            margin: 0 8px;
-            color: #6c757d;
-        }
-        
-        /* Header styling */
-        .header {
-            background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        
-        .admin-header {
-            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-        }
-        
-        .admin-header h1 {
-            margin: 0;
-            font-size: 1.8em;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* Container styling */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* Card components */
-        .admin-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
-            border-left: 4px solid #17a2b8;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .admin-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f1f3f4;
-        }
-        
-        .card-title {
-            margin: 0;
-            color: #495057;
-            font-size: 1.3em;
-            font-weight: 600;
-        }
-        
-        /* Status badges */
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        .status-active {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status-inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .status-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-submitted {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-validated {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status-rejected {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .status-in_progress {
-            background: #cce7ff;
-            color: #0066cc;
-        }
-        
-        /* Button styling */
-        .btn {
-            background: #17a2b8;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: inline-block;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        
-        .btn:hover {
-            background: #138496;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            color: white;
-            text-decoration: none;
-        }
-        
-        .btn-primary {
-            background: #007bff;
-        }
-        
-        .btn-primary:hover {
-            background: #0056b3;
-        }
-        
-        .btn-success {
-            background: #28a745;
-        }
-        
-        .btn-success:hover {
-            background: #1e7e34;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
-        }
-        
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-        
-        .btn-warning:hover {
-            background: #e0a800;
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.8em;
-        }
-        
-        /* Form styling */
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #495057;
-        }
-        
-        .form-control, .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
-            background: #fafafa;
-        }
-        
-        .form-control:focus, .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            border-color: #17a2b8;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
-            background: white;
-        }
-        
-        /* Table styling */
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .admin-table th {
-            background: #f8f9fa;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            color: #495057;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        .admin-table td {
-            padding: 15px;
-            border-bottom: 1px solid #f1f3f4;
-            vertical-align: middle;
-        }
-        
-        .admin-table tr:hover {
-            background: #f8f9fa;
-        }
-        
-        /* Grid layouts */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-        }
-        
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-        
-        .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-        }
-        
-        .grid-auto {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        
-        /* Statistics cards */
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-left: 4px solid #17a2b8;
-            transition: transform 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-        }
-        
-        .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #17a2b8;
-            margin-bottom: 8px;
-        }
-        
-        .stat-label {
-            color: #6c757d;
-            font-size: 0.9em;
-            font-weight: 500;
-        }
-        
-        /* Messages styling */
-        .messages {
-            margin-bottom: 20px;
-        }
-        
-        .alert {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-left: 4px solid;
-            font-weight: 500;
-        }
-        
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border-left-color: #28a745;
-        }
-        
-        .alert-error, .alert-danger {
-            background: #f8d7da;
-            color: #721c24;
-            border-left-color: #dc3545;
-        }
-        
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border-left-color: #ffc107;
-        }
-        
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border-left-color: #17a2b8;
-        }
-        
-        /* Empty states */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .empty-icon {
-            font-size: 4em;
-            margin-bottom: 20px;
-            opacity: 0.3;
-        }
-        
-        /* Responsive design */
-        @media (max-width: 768px) {
-            .grid-2, .grid-3, .grid-4 {
-                grid-template-columns: 1fr;
-            }
-            
-            .nav-links {
-                flex-direction: column;
-                padding: 0;
-            }
-            
-            .nav-links a {
-                width: 100%;
-                text-align: center;
-                border-bottom: 1px solid rgba(255,255,255,0.1);
-            }
-            
-            .container {
-                padding: 0 15px;
-            }
-            
-            .admin-card {
-                padding: 20px;
-            }
-        }
-    </style>
 </head>
 <body>
-    <div class="header">
-        <div style="background: white; padding: 15px 0; border-bottom: 1px solid #e9ecef;">
-            <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
-                <h1 style="margin: 0; color: #17a2b8;">🛠️ ENSA Project Manager - Administration</h1>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <span class="logo-text">ENSA Admin</span>
             </div>
-        </div>
-        
-        <!-- Administrator Navigation -->
-        <nav class="main-nav">
-            <div class="nav-links">
-                <a href="{% url 'administrator:dashboard' %}" class="{% if 'dashboard' in request.resolver_match.url_name %}active{% endif %}">
-                    📊 Tableau de Bord
-                </a>
-                <a href="{% url 'administrator:projects_list' %}" class="{% if 'project' in request.resolver_match.url_name %}active{% endif %}">
-                    📋 Tous les Projets
-                </a>
-                <a href="{% url 'administrator:modules_list' %}" class="{% if 'module' in request.resolver_match.url_name %}active{% endif %}">
-                    📚 Gestion Modules
-                </a>
-                <a href="{% url 'administrator:assignments_management' %}" class="{% if 'assignment' in request.resolver_match.url_name %}active{% endif %}">
-                    👥 Assignations
-                </a>
-                
-                <form method="post" action="{% url 'logout' %}" style="margin-left: auto; display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" style="background: none; border: none; color: white; padding: 18px 24px; cursor: pointer; font-weight: 500; font-size: inherit; transition: all 0.3s ease;">
-                        🚪 Déconnexion
+
+            <nav class="nav-menu">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <a href="{% url 'administrator:dashboard' %}" class="nav-item {% if 'dashboard' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Tableau de Bord</span>
+                    </a>
+                    <a href="{% url 'administrator:projects_list' %}" class="nav-item {% if 'project' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-project-diagram"></i>
+                        <span>Tous les Projets</span>
+                        {% if pending_projects_count > 0 %}
+                        <span class="nav-badge">{{ pending_projects_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'administrator:modules_list' %}" class="nav-item {% if 'module' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-book"></i>
+                        <span>Gestion Modules</span>
+                    </a>
+                    <a href="{% url 'administrator:assignments_management' %}" class="nav-item {% if 'assignment' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Assignations</span>
+                        {% if unassigned_modules_count > 0 %}
+                        <span class="nav-badge">{{ unassigned_modules_count }}</span>
+                        {% endif %}
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestion</div>
+                    <a href="{% url 'administrator:projects_list' %}?status=submitted" class="nav-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Projets Soumis</span>
+                        {% if submitted_projects_count > 0 %}
+                        <span class="nav-badge">{{ submitted_projects_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'administrator:users_overview' %}" class="nav-item {% if 'users' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-users"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="{% url 'administrator:students_list' %}" class="nav-item">
+                        <i class="fas fa-user-graduate"></i>
+                        <span>Étudiants</span>
+                    </a>
+                    <a href="{% url 'administrator:teachers_list' %}" class="nav-item">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span>Enseignants</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Rapports & Outils</div>
+                    <a href="{% url 'administrator:statistics' %}" class="nav-item {% if 'statistic' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Statistiques</span>
+                    </a>
+                    <a href="{% url 'administrator:exports' %}" class="nav-item {% if 'export' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-download"></i>
+                        <span>Exports</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Système</div>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Paramètres</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Support</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Quick Create Button -->
+            <a href="{% url 'administrator:module_create' %}" class="create-btn">
+                <i class="fas fa-plus"></i> Nouveau Module
+            </a>
+
+            <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </form>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Rechercher projets, modules, utilisateurs..." id="globalSearch">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+
+                <div class="top-actions">
+                    <a href="{% url 'administrator:module_create' %}" class="action-btn">
+                        <i class="fas fa-plus"></i>
+                        Nouveau Module
+                    </a>
+                    <a href="{% url 'administrator:assignments_management' %}" class="action-btn">
+                        <i class="fas fa-user-tie"></i>
+                        Assignations
+                    </a>
+                    <a href="{% url 'administrator:projects_list' %}" class="action-btn primary">
+                        <i class="fas fa-project-diagram"></i>
+                        Projets
+                    </a>
+                </div>
+
+                <div class="user-menu">
+                    <button class="notification-btn" onclick="showNotifications()">
+                        <i class="fas fa-bell"></i>
+                        {% if total_notifications > 0 %}
+                        <span class="notification-badge">{{ total_notifications }}</span>
+                        {% endif %}
                     </button>
-                </form>
-            </div>
-        </nav>
-    </div>
+                    <button class="theme-toggle-btn" onclick="toggleTheme()">
+                        <i class="fas fa-moon theme-icon" id="themeIcon"></i>
+                    </button>
+                    <div class="user-avatar" onclick="toggleUserMenu()">
+                        {% if user.first_name %}
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        {% else %}
+                            {{ user.username|first|upper }}
+                        {% endif %}
+                    </div>
+                </div>
+            </header>
 
-    <!-- Breadcrumb Navigation -->
-    {% block breadcrumb %}
-    {% if not 'dashboard' in request.resolver_match.url_name %}
-    <div class="breadcrumb">
-        <div class="breadcrumb-container">
-            <a href="{% url 'administrator:dashboard' %}">Accueil</a>
-            {% block breadcrumb_items %}{% endblock %}
+            <!-- Breadcrumb Navigation -->
+            {% block breadcrumb %}
+            {% if not 'dashboard' in request.resolver_match.url_name %}
+            <div style="background: var(--bg-secondary); padding: 12px 32px; border-bottom: 1px solid var(--border-primary);">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-muted);">
+                    <a href="{% url 'administrator:dashboard' %}" style="color: var(--accent-primary); text-decoration: none;">
+                        <i class="fas fa-home"></i> Accueil
+                    </a>
+                    {% block breadcrumb_items %}{% endblock %}
+                </div>
+            </div>
+            {% endif %}
+            {% endblock %}
+
+            <div class="container">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {% if message.tags == 'success' %}<i class="fas fa-check-circle"></i>
+                                {% elif message.tags == 'error' %}<i class="fas fa-exclamation-circle"></i>
+                                {% elif message.tags == 'warning' %}<i class="fas fa-exclamation-triangle"></i>
+                                {% else %}<i class="fas fa-info-circle"></i>{% endif %}
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <!-- User Menu Dropdown -->
+    <div id="userDropdown" class="user-dropdown" style="display: none;">
+        <div class="user-dropdown-content">
+            <div class="user-info">
+                <div class="user-avatar-large">
+                    {% if user.first_name %}
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    {% else %}
+                        {{ user.username|first|upper }}
+                    {% endif %}
+                </div>
+                <div class="user-details">
+                    <strong>{{ user.get_full_name|default:user.username }}</strong>
+                    <small>Administrateur</small>
+                </div>
+            </div>
+            <hr>
+            <a href="#" class="dropdown-item">
+                <i class="fas fa-user"></i> Mon Profil
+            </a>
+            <a href="#" class="dropdown-item">
+                <i class="fas fa-cog"></i> Paramètres
+            </a>
+            <hr>
+            <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item logout-item">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </form>
         </div>
     </div>
-    {% endif %}
-    {% endblock %}
 
-    <div class="container">
-        {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
+    <!-- Notification Panel -->
+    <div id="notificationPanel" class="notification-panel" style="display: none;">
+        <div class="notification-header">
+            <h3>Notifications</h3>
+            <button onclick="closeNotifications()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="notification-content">
+            {% if pending_projects_count > 0 %}
+            <div class="notification-item">
+                <i class="fas fa-clock text-warning"></i>
+                <div>
+                    <strong>{{ pending_projects_count }} projet{{ pending_projects_count|pluralize }} en attente</strong>
+                    <small>Projets soumis nécessitant une validation</small>
+                </div>
             </div>
-        {% endif %}
-        
-        {% block content %}{% endblock %}
+            {% endif %}
+            
+            {% if unassigned_modules_count > 0 %}
+            <div class="notification-item">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+                <div>
+                    <strong>{{ unassigned_modules_count }} module{{ unassigned_modules_count|pluralize }} sans enseignant</strong>
+                    <small>Modules nécessitant une assignation</small>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if total_notifications == 0 %}
+            <div class="notification-item">
+                <i class="fas fa-check text-success"></i>
+                <div>
+                    <strong>Aucune notification</strong>
+                    <small>Tout est à jour !</small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
     </div>
     
     <!-- Common JavaScript -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="{% static 'student/js/main.js' %}"></script>
+    
+    <script>
+        // Theme Toggle Functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            
+            // Update icon
+            if (newTheme === 'light') {
+                themeIcon.className = 'fas fa-sun theme-icon';
+            } else {
+                themeIcon.className = 'fas fa-moon theme-icon';
+            }
+            
+            // Save preference
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            
+            html.setAttribute('data-theme', savedTheme);
+            
+            if (savedTheme === 'light') {
+                themeIcon.className = 'fas fa-sun theme-icon';
+            } else {
+                themeIcon.className = 'fas fa-moon theme-icon';
+            }
+        });
+
+        // Mobile sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('mobile-open');
+        }
+
+        // User Menu Toggle
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Notification Panel
+        function showNotifications() {
+            const panel = document.getElementById('notificationPanel');
+            panel.style.display = 'block';
+        }
+
+        function closeNotifications() {
+            const panel = document.getElementById('notificationPanel');
+            panel.style.display = 'none';
+        }
+
+        // Global search functionality
+        document.getElementById('globalSearch')?.addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            console.log('Searching for:', query);
+            
+            // Here you can implement real-time search results
+            // For now, we'll just handle Enter key to redirect to search results
+        });
+
+        document.getElementById('globalSearch')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const query = e.target.value;
+                if (query.trim()) {
+                    // Redirect to a search results page or filter current page
+                    window.location.href = `{% url 'administrator:projects_list' %}?search=${encodeURIComponent(query)}`;
+                }
+            }
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const userDropdown = document.getElementById('userDropdown');
+            const userAvatar = document.querySelector('.user-avatar');
+            const notificationPanel = document.getElementById('notificationPanel');
+            const notificationBtn = document.querySelector('.notification-btn');
+            
+            // Close user dropdown
+            if (!userAvatar.contains(event.target)) {
+                userDropdown.style.display = 'none';
+            }
+            
+            // Close notification panel
+            if (!notificationBtn.contains(event.target) && !notificationPanel.contains(event.target)) {
+                notificationPanel.style.display = 'none';
+            }
+        });
+
+        // Navigation active state
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Django handles active states, but we can add loading indicators here
+            });
+        });
+
+        // Calculate and display notification counts
+        const pendingProjects = parseInt('{{ pending_projects_count|default:"0" }}', 10);
+        const unassignedModules = parseInt('{{ unassigned_modules_count|default:"0" }}', 10);
+        const submittedProjects = parseInt('{{ submitted_projects_count|default:"0" }}', 10);
+        
+        console.log('Admin Dashboard - Pending Projects:', pendingProjects);
+        console.log('Admin Dashboard - Unassigned Modules:', unassignedModules);
+        console.log('Admin Dashboard - Submitted Projects:', submittedProjects);
+    </script>
+    
+    <style>
+        /* Additional styles for the enhanced interface */
+        .user-dropdown {
+            position: absolute;
+            top: 70px;
+            right: 32px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 250px;
+        }
+
+        .user-dropdown-content {
+            padding: 16px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .user-avatar-large {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .user-details strong {
+            display: block;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .user-details small {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            color: var(--text-primary);
+        }
+
+        .logout-item {
+            color: var(--error);
+        }
+
+        .logout-item:hover {
+            color: var(--error);
+        }
+
+        .notification-panel {
+            position: absolute;
+            top: 70px;
+            right: 80px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+            width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        .notification-header button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .notification-content {
+            padding: 16px 20px;
+        }
+
+        .notification-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-item i {
+            margin-top: 2px;
+            font-size: 16px;
+        }
+
+        .notification-item strong {
+            display: block;
+            color: var(--text-primary);
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .notification-item small {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .text-warning { color: var(--warning) !important; }
+        .text-success { color: var(--success) !important; }
+        .text-error { color: var(--error) !important; }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .user-dropdown, .notification-panel {
+                right: 16px;
+                width: calc(100vw - 32px);
+                max-width: 350px;
+            }
+        }
+    </style>
     
     <!-- Page-specific JavaScript -->
     {% block extra_js %}{% endblock %}
