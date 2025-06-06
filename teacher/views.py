@@ -31,6 +31,7 @@ def dashboard(request):
     # Calculate statistics
     total_modules = assigned_modules.count()
     total_students = 0
+    total_projects = teacher_projects.count()  # MISSING: Add this line
     pending_projects = teacher_projects.filter(status='submitted').count()
     validated_projects = teacher_projects.filter(status='validated').count()
     
@@ -41,13 +42,20 @@ def dashboard(request):
     # Get recent modules for display
     recent_modules = assigned_modules[:5]  # Show 5 most recent
     
+    # Get recent projects for the activity section
+    recent_projects = teacher_projects.select_related(
+        'student__user', 'module'
+    ).order_by('-updated_at')[:5]  # MISSING: Add this line
+    
     context = {
         'teacher': teacher,
         'total_modules': total_modules,
         'total_students': total_students,
+        'total_projects': total_projects,  # MISSING: Add this line
         'pending_projects': pending_projects,
         'validated_projects': validated_projects,
         'recent_modules': recent_modules,
+        'recent_projects': recent_projects,  # MISSING: Add this line
         'assigned_modules': assigned_modules,
     }
     
