@@ -1,0 +1,67 @@
+<!-- public/templates/public/homepage.html -->
+{% extends 'public/base_public.html' %}
+
+{% block title %}ENSA Project Manager - Plateforme de Gestion de Projets Académiques{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <h1>Gérez vos projets académiques avec ENSA Project Manager</h1>
+        <p>La plateforme complète pour la collaboration, le suivi et l'évaluation des projets étudiants</p>
+        <div class="hero-buttons">
+            {% if not user.is_authenticated %}
+                <a href="{% url 'login' %}" class="btn">Se connecter</a>
+                <a href="#" class="btn btn-outline">Créer un compte</a>
+            {% else %}
+                <a href="{% url 'smart_redirect' %}" class="btn">Accéder au tableau de bord</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="stats">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <h3>{{ total_projects|default:"0" }}</h3>
+                <p>Projets réalisés</p>
+            </div>
+            <div class="stat-item">
+                <h3>{{ total_students|default:"0" }}</h3>
+                <p>Étudiants actifs</p>
+            </div>
+            <div class="stat-item">
+                <h3>{{ total_teachers|default:"0" }}</h3>
+                <p>Enseignants</p>
+            </div>
+            <div class="stat-item">
+                <h3>7</h3>
+                <p>Applications intégrées</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Projects -->
+{% if featured_projects %}
+<section style="padding: 4rem 0; background: #f7fafc;">
+    <div class="container">
+        <h2 style="text-align: center; margin-bottom: 3rem; font-size: 2.5rem; color: #2d3748;">Projets en vedette</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            {% for project in featured_projects %}
+            <div style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <h3 style="color: #4F46E5; margin-bottom: 1rem;">{{ project.title }}</h3>
+                <p style="color: #718096; margin-bottom: 1rem;">{{ project.description|truncatechars:100 }}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.875rem; color: #a0aec0;">{{ project.student.user.get_full_name }}</span>
+                    <span style="background: #48bb78; color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem;">{{ project.get_status_display }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

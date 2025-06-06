@@ -25,7 +25,7 @@ from .views import smart_redirect  # Add this import
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', RedirectView.as_view(pattern_name='login'), name='home'), # Redirect root to login
+    path('', include('public.urls', namespace='public')),
     
     # Authentication URLs
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),

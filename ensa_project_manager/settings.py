@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # ENSA Project Manager apps
+    "public",
     "accounts",
     "projects",
     "student",
