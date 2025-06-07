@@ -78,18 +78,7 @@
     </div>
 </section>
 
-{% if user.is_authenticated and user == project.student.user %}
-<div style="background: #1f2937; color: #f9fafb; padding: 1rem; margin: 1rem 0; border-radius: 8px; font-family: monospace; font-size: 0.875rem;">
-    <h4 style="color: #fbbf24; margin-bottom: 0.5rem;">🐛 DEBUG INFO (Only visible to project owner):</h4>
-    <div><strong>Has Enhanced Content:</strong> {{ project.has_public_content }}</div>
-    <div><strong>Public Cover Image:</strong> {% if project.public_cover_image %}✅ {{ project.public_cover_image.url }}{% else %}❌ None{% endif %}</div>
-    <div><strong>Public Description:</strong> {% if project.public_description %}✅ "{{ project.public_description|truncatewords:10 }}"{% else %}❌ None{% endif %}</div>
-    <div><strong>Demo URL:</strong> {% if project.public_demo_url %}✅ {{ project.public_demo_url }}{% else %}❌ None{% endif %}</div>
-    <div><strong>GitHub URL:</strong> {% if project.public_github_url %}✅ {{ project.public_github_url }}{% else %}❌ None{% endif %}</div>
-    <div><strong>Portfolio URL:</strong> {% if project.public_portfolio_url %}✅ {{ project.public_portfolio_url }}{% else %}❌ None{% endif %}</div>
-    <div><strong>Display Description:</strong> "{{ project.display_description|truncatewords:10 }}"</div>
-</div>
-{% endif %}
+
 
 <!-- Main Content -->
 <div class="main-content">
