@@ -42,4 +42,7 @@ urlpatterns = [
     path('modules/join/', views.join_module, name='join_module'),
     path('modules/', views.my_modules, name='my_modules'), 
     path('modules/<int:module_id>/leave/', views.leave_module, name='leave_module'),
+
+    path('projects/<int:project_id>/make-public/', views.make_project_public, name='make_project_public'),
+    path('projects/<int:project_id>/make-private/', views.make_project_private, name='make_project_private'),
 ]

@@ -1,0 +1,469 @@
+{% extends 'public/base_public.html' %}
+{% load static %}
+
+
+{% block title %}{{ project.title }} - Vitrine Projets ENSA{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'public/css/project_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Project Hero -->
+<section class="public-project-hero">
+    <div class="project-header">
+        <!-- Enhanced Cover Image Display -->
+        {% if project.public_cover_image %}
+            <div style="background-image: url('{{ project.public_cover_image.url }}'); background-size: cover; background-position: center; height: 200px; border-radius: 12px; margin-bottom: 2rem; position: relative;">
+                <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8)); height: 100%; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <div style="text-align: center; color: white;">
+                        <h1 class="project-title" style="text-shadow: 0 2px 4px rgba(0,0,0,0.3);">{{ project.title }}</h1>
+                        {% if project.has_public_content %}
+                            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; backdrop-filter: blur(10px);">
+                                ✨ Projet enrichi
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Default header for projects without custom image -->
+            <h1 class="project-title">{{ project.title }}</h1>
+            {% if project.has_public_content %}
+                <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.5rem 1rem; border-radius: 20px; display: inline-block; margin-bottom: 1rem; font-size: 0.9rem;">
+                    ✨ Contenu personnalisé
+                </div>
+            {% endif %}
+        {% endif %}
+        
+        <div class="project-meta">
+            <span class="meta-badge">{{ project.get_project_type_display }}</span>
+            <span class="meta-badge">{{ project.get_status_display }}</span>
+            {% if project.module %}
+                <span class="meta-badge">📚 {{ project.module.code }}</span>
+            {% endif %}
+            <span class="meta-badge">📅 {{ project.made_public_at|date:"d/m/Y" }}</span>
+        </div>
+        
+        <!-- Enhanced Description Display -->
+        <p style="font-size: 1.1rem; opacity: 0.9; max-width: 800px;">
+            {% if project.public_description %}
+                {{ project.public_description|truncatewords:50 }}
+                <span style="background: rgba(255,255,255,0.2); padding: 0.25rem 0.5rem; border-radius: 10px; font-size: 0.8rem; margin-left: 0.5rem;">
+                    📝 Description personnalisée
+                </span>
+            {% else %}
+                {{ project.description|truncatewords:50 }}
+            {% endif %}
+        </p>
+        
+        <div class="engagement-stats">
+            <div class="stat-item">
+                <div class="stat-number">{{ project.view_count }}</div>
+                <div class="stat-label">Vues</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ project.like_count }}</div>
+                <div class="stat-label">Likes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ deliverables.count }}</div>
+                <div class="stat-label">Livrables</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ milestones.count }}</div>
+                <div class="stat-label">Jalons</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if user.is_authenticated and user == project.student.user %}
+<div style="background: #1f2937; color: #f9fafb; padding: 1rem; margin: 1rem 0; border-radius: 8px; font-family: monospace; font-size: 0.875rem;">
+    <h4 style="color: #fbbf24; margin-bottom: 0.5rem;">🐛 DEBUG INFO (Only visible to project owner):</h4>
+    <div><strong>Has Enhanced Content:</strong> {{ project.has_public_content }}</div>
+    <div><strong>Public Cover Image:</strong> {% if project.public_cover_image %}✅ {{ project.public_cover_image.url }}{% else %}❌ None{% endif %}</div>
+    <div><strong>Public Description:</strong> {% if project.public_description %}✅ "{{ project.public_description|truncatewords:10 }}"{% else %}❌ None{% endif %}</div>
+    <div><strong>Demo URL:</strong> {% if project.public_demo_url %}✅ {{ project.public_demo_url }}{% else %}❌ None{% endif %}</div>
+    <div><strong>GitHub URL:</strong> {% if project.public_github_url %}✅ {{ project.public_github_url }}{% else %}❌ None{% endif %}</div>
+    <div><strong>Portfolio URL:</strong> {% if project.public_portfolio_url %}✅ {{ project.public_portfolio_url }}{% else %}❌ None{% endif %}</div>
+    <div><strong>Display Description:</strong> "{{ project.display_description|truncatewords:10 }}"</div>
+</div>
+{% endif %}
+
+<!-- Main Content -->
+<div class="main-content">
+    <div class="content-column">
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            {% if user.is_authenticated %}
+                <button onclick="toggleLike({{ project.id }})" 
+                        class="btn btn-like {% if user_has_liked %}liked{% endif %}" 
+                        id="like-btn">
+                    <i class="fas fa-heart"></i>
+                    <span id="like-count">{{ project.like_count }}</span> Like{{ project.like_count|pluralize }}
+                </button>
+            {% endif %}
+            
+            {% if project.public_demo_url %}
+                <a href="{{ project.public_demo_url }}" target="_blank" class="btn btn-primary">
+                    <i class="fas fa-external-link-alt"></i>
+                    Voir la Démo
+                </a>
+            {% endif %}
+            
+            {% if project.public_github_url %}
+                <a href="{{ project.public_github_url }}" target="_blank" class="btn btn-outline">
+                    <i class="fab fa-github"></i>
+                    Code Source
+                </a>
+            {% endif %}
+            
+            {% if project.public_portfolio_url %}
+                <a href="{{ project.public_portfolio_url }}" target="_blank" class="btn btn-outline">
+                    <i class="fas fa-link"></i>
+                    Portfolio
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Project Description -->
+        <div class="content-section">
+            <h2 class="section-title">📝 Description du Projet</h2>
+            
+            <!-- Enhanced Description Display -->
+            <div style="line-height: 1.6; color: #4b5563;">
+                {% if project.public_description %}
+                    <!-- Show custom public description -->
+                    <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <div style="font-size: 0.875rem; color: #166534; margin-bottom: 0.5rem; font-weight: 600;">
+                            ✨ Description personnalisée pour la vitrine publique:
+                        </div>
+                        {{ project.public_description|linebreaks }}
+                    </div>
+                    
+                    <!-- Also show original description for context -->
+                    {% if project.description != project.public_description %}
+                        <details style="margin-top: 1rem;">
+                            <summary style="color: #667eea; cursor: pointer; font-weight: 600;">📋 Description originale du projet</summary>
+                            <div style="margin-top: 0.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid #94a3b8;">
+                                {{ project.description|linebreaks }}
+                            </div>
+                        </details>
+                    {% endif %}
+                {% else %}
+                    <!-- Show original description -->
+                    {{ project.description|linebreaks }}
+                {% endif %}
+            </div>
+            
+            
+            
+            <!-- Enhanced Project Links -->
+            {% if project.public_demo_url or project.public_github_url or project.public_portfolio_url %}
+                <div style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #eff6ff, #dbeafe); border-radius: 12px; border: 1px solid #93c5fd;">
+                    <h4 style="color: #1e40af; margin-bottom: 1rem; font-size: 1.1rem;">🔗 Liens du projet personnalisés:</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                        {% if project.public_demo_url %}
+                            <a href="{{ project.public_demo_url }}" target="_blank" 
+                               style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-external-link-alt"></i>
+                                Démo Live
+                            </a>
+                        {% endif %}
+                        
+                        {% if project.public_github_url %}
+                            <a href="{{ project.public_github_url }}" target="_blank" 
+                               style="background: #1f2937; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                <i class="fab fa-github"></i>
+                                Code Source
+                            </a>
+                        {% endif %}
+                        
+                        {% if project.public_portfolio_url %}
+                            <a href="{{ project.public_portfolio_url }}" target="_blank" 
+                               style="background: #7c3aed; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-link"></i>
+                                Portfolio
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Team -->
+        <div class="content-section">
+            <h2 class="section-title">👥 Équipe de Projet</h2>
+            
+            <!-- Project Owner -->
+            <div style="margin-bottom: 2rem;">
+                <h4 style="color: #667eea; margin-bottom: 1rem;">👑 Propriétaire du Projet</h4>
+                <div class="collaborator-card" style="border-left: 4px solid #f59e0b;">
+                    <div class="collaborator-avatar" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        {{ project.student.user.first_name.0 }}{{ project.student.user.last_name.0 }}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #1e293b;">
+                            {{ project.student.user.get_full_name|default:project.student.user.username }}
+                        </div>
+                        <div style="color: #64748b; font-size: 0.875rem;">
+                            {{ project.student.student_id }} • {{ project.student.department }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collaborators -->
+            {% if collaborators %}
+                <div>
+                    <h4 style="color: #667eea; margin-bottom: 1rem;">🤝 Collaborateurs ({{ collaborators.count }})</h4>
+                    {% for collaborator in collaborators %}
+                        <div class="collaborator-card">
+                            <div class="collaborator-avatar">
+                                {{ collaborator.user.first_name.0 }}{{ collaborator.user.last_name.0 }}
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: #1e293b;">
+                                    {{ collaborator.user.get_full_name|default:collaborator.user.username }}
+                                </div>
+                                <div style="color: #64748b; font-size: 0.875rem;">
+                                    {{ collaborator.student_id }} • {{ collaborator.department }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Deliverables -->
+        {% if deliverables %}
+            <div class="content-section">
+                <h2 class="section-title">📎 Livrables ({{ deliverables.count }})</h2>
+                <div class="deliverables-grid">
+                    {% for deliverable in deliverables %}
+                        <div class="deliverable-card">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                                <h4 style="margin: 0; color: #1e293b; font-size: 1.1rem;">{{ deliverable.name }}</h4>
+                                <div style="font-size: 2rem;">📄</div>
+                            </div>
+                            
+                            <div style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">
+                                <div><strong>Type:</strong> {{ deliverable.get_file_type_display }}</div>
+                                <div><strong>Uploadé le:</strong> {{ deliverable.upload_date|date:"d/m/Y" }}</div>
+                            </div>
+                            
+                            <a href="{{ deliverable.file.url }}" 
+                               class="btn btn-primary" 
+                               style="width: 100%; justify-content: center;"
+                               target="_blank">
+                                <i class="fas fa-download"></i>
+                                Télécharger
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        
+
+        <!-- Comments Section -->
+        <div class="content-section comments-section">
+            <h2 class="section-title">💬 Commentaires ({{ comments.count }})</h2>
+            
+            {% if user.is_authenticated and comment_form %}
+                <div class="comment-form">
+                    <h4 style="margin-bottom: 1rem; color: #1e293b;">Ajouter un commentaire</h4>
+                    <form method="post" action="{% url 'public:add_project_comment' project.id %}">
+                        {% csrf_token %}
+                        {{ comment_form.content }}
+                        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                            <i class="fas fa-comment"></i>
+                            Publier le Commentaire
+                        </button>
+                    </form>
+                </div>
+            {% elif not user.is_authenticated %}
+                <div style="text-align: center; padding: 2rem; background: #f8fafc; border-radius: 12px; margin-bottom: 2rem;">
+                    <p style="color: #64748b; margin: 0;">
+                        <a href="{% url 'login' %}" style="color: #667eea; text-decoration: none;">Connectez-vous</a> 
+                        pour ajouter un commentaire
+                    </p>
+                </div>
+            {% endif %}
+            
+            {% if comments %}
+                {% for comment in comments %}
+                    <div class="comment-item">
+                        <div class="comment-author">
+                            {% if comment.author_profile %}
+                                {{ comment.author_profile.user.get_full_name|default:comment.author.username }}
+                                {% if comment.author_profile.department %}
+                                    <span style="color: #64748b; font-weight: normal;">• {{ comment.author_profile.department }}</span>
+                                {% endif %}
+                            {% else %}
+                                {{ comment.author.get_full_name|default:comment.author.username }}
+                            {% endif %}
+                        </div>
+                        <div class="comment-date">{{ comment.created_at|date:"d/m/Y à H:i" }}</div>
+                        <div style="line-height: 1.5; color: #4b5563;">
+                            {{ comment.content|linebreaks }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 2rem; color: #64748b;">
+                    <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>Aucun commentaire pour le moment. Soyez le premier à commenter!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar-column">
+        <!-- Project Info -->
+        <div class="sidebar-card">
+            <h3 class="sidebar-title">ℹ️ Informations du Projet</h3>
+            <table class="info-table">
+                <tr>
+                    <th>Type de projet</th>
+                    <td>{{ project.get_project_type_display }}</td>
+                </tr>
+                <tr>
+                    <th>Date de début</th>
+                    <td>{{ project.start_date|date:"d/m/Y" }}</td>
+                </tr>
+                {% if project.end_date %}
+                <tr>
+                    <th>Date de fin</th>
+                    <td>{{ project.end_date|date:"d/m/Y" }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <th>Propriétaire</th>
+                    <td>{{ project.student.user.get_full_name|default:project.student.user.username }}</td>
+                </tr>
+                <tr>
+                    <th>Département</th>
+                    <td>{{ project.student.department }}</td>
+                </tr>
+                {% if project.module %}
+                <tr>
+                    <th>Module associé</th>
+                    <td>{{ project.module.code }} - {{ project.module.name }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <th>Publié le</th>
+                    <td>{{ project.made_public_at|date:"d/m/Y" }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Related Projects -->
+        {% if related_projects %}
+        <div class="sidebar-card">
+            <h3 class="sidebar-title">🔗 Projets Similaires</h3>
+            <div class="related-projects">
+                {% for related in related_projects %}
+                    <a href="{% url 'public:project_detail' related.id %}" class="related-project">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #1e293b; font-size: 1rem;">{{ related.title|truncatewords:5 }}</h4>
+                        <p style="margin: 0; color: #64748b; font-size: 0.875rem;">{{ related.display_description|truncatewords:10 }}</p>
+                        <div style="margin-top: 0.5rem; color: #667eea; font-size: 0.875rem;">
+                            ❤️ {{ related.like_count }} • 👁️ {{ related.view_count }}
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Report Project -->
+        {% if user.is_authenticated and can_report %}
+        <div class="sidebar-card">
+            <h3 class="sidebar-title">🚨 Signaler un Problème</h3>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">
+                Si ce projet contient du contenu inapproprié, vous pouvez le signaler.
+            </p>
+            <a href="{% url 'public:report_project' project.id %}" class="report-link">
+                <i class="fas fa-flag"></i>
+                Signaler ce projet
+            </a>
+        {% else %}
+            <!-- User has already reported - show confirmation -->
+            <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <i class="fas fa-check-circle" style="color: #ef4444;"></i>
+                    <span style="font-weight: 600; color: #991b1b; font-size: 0.875rem;">Projet signalé</span>
+                </div>
+                <p style="color: #7f1d1d; font-size: 0.8rem; margin: 0; line-height: 1.4;">
+                    Vous avez déjà signalé ce projet. Notre équipe examinera votre signalement.
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleLike(projectId) {
+    fetch(`/api/projects/${projectId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        const likeBtn = document.getElementById('like-btn');
+        const likeCount = document.getElementById('like-count');
+        
+        if (data.liked) {
+            likeBtn.classList.add('liked');
+        } else {
+            likeBtn.classList.remove('liked');
+        }
+        
+        likeCount.textContent = data.like_count;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

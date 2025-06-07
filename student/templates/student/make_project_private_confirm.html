@@ -1,0 +1,86 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}Retirer du Public - {{ project.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/make_project_private_confirm.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="private-confirmation-container">
+    <div class="private-confirmation-workspace">
+        <div class="private-confirmation-card">
+            <!-- Header Section -->
+            <div class="private-confirmation-header">
+                <div class="private-icon-container">
+                    <i class="fas fa-eye-slash private-icon"></i>
+                </div>
+                <h1 class="private-confirmation-title">Retirer du Public</h1>
+                <p class="private-confirmation-subtitle">Voulez-vous vraiment retirer ce projet de la vitrine publique?</p>
+            </div>
+
+            <!-- Project Summary -->
+            <div class="project-summary-card">
+                <h3 class="project-summary-title">📋 {{ project.title }}</h3>
+                <div class="project-stats-grid">
+                    <div class="project-stat-item">
+                        <span class="stat-label">Vues actuelles:</span>
+                        <span class="stat-value">{{ project.view_count }}</span>
+                    </div>
+                    <div class="project-stat-item">
+                        <span class="stat-label">Likes reçus:</span>
+                        <span class="stat-value">{{ project.like_count }}</span>
+                    </div>
+                    <div class="project-stat-item">
+                        <span class="stat-label">Rendu public le:</span>
+                        <span class="stat-value">{{ project.made_public_at|date:"d/m/Y à H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning Notice -->
+            <div class="privacy-warning">
+                <div class="warning-header">
+                    <div class="warning-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3 class="warning-title">⚠️ Important:</h3>
+                </div>
+                <ul class="consequences-list">
+                    <li class="consequence-item">
+                        <div class="consequence-bullet"></div>
+                        <p class="consequence-text">Votre projet ne sera plus visible sur la vitrine publique</p>
+                    </li>
+                    <li class="consequence-item">
+                        <div class="consequence-bullet"></div>
+                        <p class="consequence-text">Les liens existants vers votre projet ne fonctionneront plus</p>
+                    </li>
+                    <li class="consequence-item">
+                        <div class="consequence-bullet"></div>
+                        <p class="consequence-text">Vous pourrez le rendre à nouveau public à tout moment</p>
+                    </li>
+                    <li class="consequence-item">
+                        <div class="consequence-bullet"></div>
+                        <p class="consequence-text">Les likes et commentaires actuels seront conservés</p>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons-container">
+                <a href="{% url 'student:project_detail' project.id %}" class="btn-cancel">
+                    ← Annuler
+                </a>
+                
+                <form method="post" class="confirm-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-confirm">
+                        🔒 Confirmer - Retirer du Public
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

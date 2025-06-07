@@ -1,5 +1,7 @@
 <!-- public/templates/public/base_public.html -->
 {% load static %}
+
+
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark">
 <head>
@@ -24,7 +26,7 @@
                 <a href="{% url 'public:homepage' %}">Accueil</a>
                 <a href="{% url 'public:features' %}">Fonctionnalités</a>
                 <a href="{% url 'public:about' %}">À propos</a>
-                <a href="{% url 'public:explore_projects' %}">Projets</a>
+                <a href="{% url 'public:projects_showcase' %}">Projets</a>
                 {% if user.is_authenticated %}
                     <a href="{% url 'smart_redirect' %}" class="btn btn-primary">
                         <i class="fas fa-tachometer-alt"></i>

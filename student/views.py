@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import StudentProfile, Project
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import ProjectForm
+from .forms import ProjectForm, QuickPublishForm, MakeProjectPublicForm
 from django.contrib import messages
 from .forms import DeliverableForm
 from .forms import ProjectDeliverable
@@ -924,7 +924,92 @@ def add_comment(request, project_id):
 
 
 
+# making projects public or private
 
+@login_required
+def make_project_public(request, project_id):
+    """Student makes their project public (instant, no approval needed)"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_object_or_404(Project, id=project_id, student=student)
+    
+    if not project.can_be_made_public():
+        messages.error(request, "Ce projet ne peut pas être rendu public. Il doit être validé.")
+        return redirect('student:project_detail', project_id=project.id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'quick_publish':
+            # Quick publish with current content
+            form = QuickPublishForm(request.POST)
+            if form.is_valid():
+                if project.make_public():
+                    ProjectActivity.objects.create(
+                        project=project,
+                        user=request.user,
+                        activity_type='made_public',
+                        description="Projet rendu public"
+                    )
+                    messages.success(request, f"🎉 Votre projet '{project.title}' est maintenant visible publiquement!")
+                    return redirect('public:project_detail', project_id=project.id)
+        
+        elif action == 'enhanced_publish':
+            # Publish with enhanced content
+            form = MakeProjectPublicForm(request.POST, request.FILES, instance=project)
+            if form.is_valid():
+                project = form.save(commit=False)
+                if project.make_public():
+                    form.save_m2m()  # Save tags
+                    
+                    ProjectActivity.objects.create(
+                        project=project,
+                        user=request.user,
+                        activity_type='made_public',
+                        description="Projet rendu public avec contenu enrichi"
+                    )
+                    messages.success(request, f"🎉 Votre projet '{project.title}' est maintenant visible publiquement!")
+                    return redirect('public:project_detail', project_id=project.id)
+                else:
+                # Form has errors, show them
+                 for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Erreur dans {field}: {error}")
+    
+    
+    # GET request - show both options
+    quick_form = QuickPublishForm()
+    enhanced_form = MakeProjectPublicForm(instance=project)
+    
+    context = {
+        'project': project,
+        'quick_form': quick_form,
+        'enhanced_form': enhanced_form,
+    }
+    
+    return render(request, 'student/make_project_public.html', context)
+
+
+@login_required
+def make_project_private(request, project_id):
+    """Student removes their project from public showcase"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_object_or_404(Project, id=project_id, student=student, is_public=True)
+    
+    if request.method == 'POST':
+        project.make_private()
+        
+        ProjectActivity.objects.create(
+            project=project,
+            user=request.user,
+            activity_type='made_private',
+            description="Projet retiré de l'affichage public"
+        )
+        
+        messages.success(request, f"Votre projet '{project.title}' n'est plus visible publiquement.")
+        return redirect('student:project_detail', project_id=project.id)
+    
+    context = {'project': project}
+    return render(request, 'student/make_project_private_confirm.html', context)
 
 
 

@@ -1,0 +1,232 @@
+<!-- public/templates/public/projects_showcase.html -->
+{% extends 'public/base_public.html' %}
+{% load static %}
+
+{% block title %}Projets Étudiants - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'public/css/projects_showcase.css' %}">
+
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="projects-hero">
+    <div class="container">
+        <h1>🚀 Projets Étudiants</h1>
+        <p>Découvrez les créations innovantes et inspirantes de nos étudiants ENSA</p>
+        
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span class="hero-stat-number">{{ total_projects }}</span>
+                <span class="hero-stat-label">Projets Partagés</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-number">{{ projects_with_demo }}</span>
+                <span class="hero-stat-label">Avec Démo Live</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-number">{{ projects_with_github }}</span>
+                <span class="hero-stat-label">Code Open Source</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filters Section -->
+<section class="filters-section">
+    <div class="filters-container">
+        <form method="get" class="filters-grid">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" name="search" value="{{ search_query }}" 
+                       class="search-input" placeholder="Rechercher des projets...">
+            </div>
+            
+            <select name="type" class="filter-select">
+                <option value="">Tous les types</option>
+                {% for value, label in project_types %}
+                    <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+            
+            <select name="tag" class="filter-select">
+                <option value="">Toutes les technologies</option>
+                {% for tag in available_tags %}
+                    <option value="{{ tag.name }}" {% if tag_filter == tag.name %}selected{% endif %}>
+                        {{ tag.name }} ({{ tag.project_count }})
+                    </option>
+                {% endfor %}
+            </select>
+            
+            <div style="display: flex; gap: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem;">
+                    <input type="checkbox" name="has_demo" {% if has_demo %}checked{% endif %}>
+                    Démo Live
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem;">
+                    <input type="checkbox" name="has_github" {% if has_github %}checked{% endif %}>
+                    GitHub
+                </label>
+            </div>
+            
+            <button type="submit" style="background: #667eea; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">
+                <i class="fas fa-filter"></i> Filtrer
+            </button>
+        </form>
+        
+        <!-- Sort Options -->
+        <div class="sort-buttons" style="margin-top: 1rem; text-align: center;">
+            <span style="color: #64748b; margin-right: 1rem;">Trier par:</span>
+            <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if type_filter %}type={{ type_filter }}&{% endif %}{% if tag_filter %}tag={{ tag_filter }}&{% endif %}sort=recent" 
+               class="sort-btn {% if sort_by == 'recent' %}active{% endif %}">
+                📅 Récents
+            </a>
+            <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if type_filter %}type={{ type_filter }}&{% endif %}{% if tag_filter %}tag={{ tag_filter }}&{% endif %}sort=popular" 
+               class="sort-btn {% if sort_by == 'popular' %}active{% endif %}">
+                🔥 Populaires
+            </a>
+            <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if type_filter %}type={{ type_filter }}&{% endif %}{% if tag_filter %}tag={{ tag_filter }}&{% endif %}sort=likes" 
+               class="sort-btn {% if sort_by == 'likes' %}active{% endif %}">
+                ❤️ Plus aimés
+            </a>
+            <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if type_filter %}type={{ type_filter }}&{% endif %}{% if tag_filter %}tag={{ tag_filter }}&{% endif %}sort=views" 
+               class="sort-btn {% if sort_by == 'views' %}active{% endif %}">
+                👁️ Plus vus
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Projects Grid -->
+<section class="projects-grid">
+    {% for project in page_obj %}
+        <div class="project-card">
+            <div class="project-image">
+                {% if project.public_cover_image %}
+                    <img src="{{ project.public_cover_image.url }}" alt="{{ project.title }}">
+                {% else %}
+                    <div class="default-image">
+                        <i class="fas fa-code"></i>
+                    </div>
+                {% endif %}
+                
+                <div class="project-stats">
+                    <div class="stat-badge">
+                        <i class="fas fa-heart text-red-500"></i>
+                        {{ project.like_count }}
+                    </div>
+                    <div class="stat-badge">
+                        <i class="fas fa-eye"></i>
+                        {{ project.view_count }}
+                    </div>
+                    {% if project.deliverables.count %}
+                        <div class="stat-badge">
+                            <i class="fas fa-file"></i>
+                            {{ project.deliverables.count }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="project-content">
+                <div class="project-tags">
+                    <span class="project-tag">{{ project.get_project_type_display }}</span>
+                    
+                </div>
+                
+                <h3 class="project-title">{{ project.title }}</h3>
+                <p class="project-description">{{ project.display_description|truncatewords:25 }}</p>
+                
+                <div class="project-author">
+                    <div class="author-info">
+                        <div class="author-avatar">
+                            {{ project.student.user.first_name.0 }}{{ project.student.user.last_name.0 }}
+                        </div>
+                        <div class="author-details">
+                            <h4>{{ project.student.user.get_full_name }}</h4>
+                            <p>{{ project.student.department }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="project-actions">
+                        {% if project.public_demo_url %}
+                            <a href="{{ project.public_demo_url }}" target="_blank" class="action-btn" title="Voir la démo">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        {% endif %}
+                        {% if project.public_github_url %}
+                            <a href="{{ project.public_github_url }}" target="_blank" class="action-btn" title="Code source">
+                                <i class="fab fa-github"></i>
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'public:project_detail' project.id %}" class="view-btn">
+                            Voir Plus
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="no-projects">
+            <i class="fas fa-search"></i>
+            <h3>Aucun projet trouvé</h3>
+            <p>Essayez de modifier vos critères de recherche ou de supprimer certains filtres.</p>
+        </div>
+    {% endfor %}
+</section>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="pagination-container">
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if tag_filter %}&tag={{ tag_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="current">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if tag_filter %}&tag={{ tag_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if tag_filter %}&tag={{ tag_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit form on filter changes
+    document.querySelectorAll('.filter-select').forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+    
+    // Smooth animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.project-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

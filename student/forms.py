@@ -1,5 +1,5 @@
 from django import forms
-from .models import Project, ProjectDeliverable, StudentProfile, ProjectMilestone
+from .models import Project, ProjectDeliverable, StudentProfile, ProjectMilestone, ProjectReport, PublicProjectComment
 
 class ProjectForm(forms.ModelForm):
     
@@ -132,3 +132,117 @@ class MilestoneForm(forms.ModelForm):
         }
 
 
+# Updated forms.py - Much simpler approach
+
+class MakeProjectPublicForm(forms.ModelForm):
+    """Simple form to make project public with optional enhancements"""
+    
+    showcase_tags = forms.ModelMultipleChoiceField(
+        queryset=None,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Sélectionnez jusqu'à 5 tags (optionnel)"
+    )
+    
+    class Meta:
+        model = Project
+        fields = ['public_cover_image', 'public_description', 'public_demo_url', 
+                  'public_github_url', 'public_portfolio_url']
+        widgets = {
+            'public_cover_image': forms.FileInput(attrs={
+                'class': 'form-input',
+                'accept': 'image/*'
+            }),
+            'public_description': forms.Textarea(attrs={
+                'class': 'form-textarea',
+                'rows': 4,
+                'placeholder': 'Description publique personnalisée (optionnel - sinon votre description principale sera utilisée)...'
+            }),
+            'public_demo_url': forms.URLInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'https://demo.monprojet.com (optionnel)'
+            }),
+            'public_github_url': forms.URLInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'https://github.com/username/projet (optionnel)'
+            }),
+            'public_portfolio_url': forms.URLInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'https://portfolio.com/projet (optionnel)'
+            }),
+        }
+        labels = {
+            'public_cover_image': 'Image de couverture (optionnel)',
+            'public_description': 'Description publique (optionnel)',
+            'public_demo_url': 'Lien de démonstration (optionnel)',
+            'public_github_url': 'Lien GitHub (optionnel)',
+            'public_portfolio_url': 'Lien portfolio (optionnel)',
+        }
+        help_texts = {
+            'public_cover_image': 'Image qui représentera votre projet. Si non fournie, une image par défaut sera utilisée.',
+            'public_description': 'Si vide, votre description principale sera utilisée.',
+            'public_demo_url': 'Lien vers une démonstration en ligne',
+            'public_github_url': 'Lien vers le code source',
+            'public_portfolio_url': 'Lien vers votre portfolio',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import ShowcaseTag
+        self.fields['showcase_tags'].queryset = ShowcaseTag.objects.all()
+    
+    def clean_public_cover_image(self):
+        image = self.cleaned_data.get('public_cover_image')
+        if image and image.size > 5 * 1024 * 1024:  # 5MB limit
+            raise forms.ValidationError("L'image est trop volumineuse (max 5MB).")
+        return image
+
+
+class QuickPublishForm(forms.Form):
+    """Ultra-simple form for instant publishing with current content"""
+    confirm = forms.BooleanField(
+        required=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        label="Je confirme vouloir rendre ce projet visible publiquement"
+    )
+
+
+class ProjectReportForm(forms.ModelForm):
+    """Form for reporting inappropriate public projects"""
+    
+    class Meta:
+        model = ProjectReport
+        fields = ['reason', 'description']
+        widgets = {
+            'reason': forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.Textarea(attrs={
+                'class': 'form-textarea',
+                'rows': 4,
+                'placeholder': 'Décrivez le problème en détail...'
+            })
+        }
+        labels = {
+            'reason': 'Raison du signalement',
+            'description': 'Description détaillée'
+        }
+
+
+class PublicCommentForm(forms.ModelForm):
+    """Simple comment form"""
+    class Meta:
+        model = PublicProjectComment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-textarea',
+                'rows': 3,
+                'placeholder': 'Votre commentaire...',
+                'maxlength': 1000
+            })
+        }
+    
+    def clean_content(self):
+        content = self.cleaned_data.get('content')
+        if content and len(content.strip()) < 5:
+            raise forms.ValidationError("Le commentaire doit contenir au moins 5 caractères.")
+        return content

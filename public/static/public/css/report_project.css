@@ -1,0 +1,542 @@
+/* Report Project Page Specific Styles */
+
+/* Report Container */
+.report-container {
+    min-height: calc(100vh - 160px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    background: radial-gradient(circle at 30% 40%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(245, 87, 108, 0.1) 0%, transparent 50%);
+}
+
+.report-card {
+    width: 100%;
+    max-width: 600px;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: 30px;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+    animation: slideInUp 1s ease 0.2s both;
+    box-shadow: 0 20px 60px rgba(239, 68, 68, 0.15);
+}
+
+.report-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-radius: 30px 30px 0 0;
+}
+
+/* Report Header */
+.report-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    animation: fadeInUp 1s ease 0.4s both;
+}
+
+.report-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+    margin: 0 auto 1.5rem auto;
+    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+}
+
+.report-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.report-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* Project Info */
+.project-info {
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.1);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    animation: fadeInUp 1s ease 0.6s both;
+}
+
+.project-info h3 {
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.project-info p:first-of-type {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ef4444;
+    margin-bottom: 0.5rem;
+}
+
+.project-info p:last-of-type {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Warning Box */
+.warning-box {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    animation: fadeInUp 1s ease 0.8s both;
+}
+
+.warning-text {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.warning-text i {
+    color: #f59e0b;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+}
+
+.warning-text strong {
+    color: #f59e0b;
+}
+
+/* Form Styling */
+form {
+    animation: fadeInUp 1s ease 1s both;
+}
+
+.form-group {
+    margin-bottom: 2rem;
+}
+
+.form-label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
+    position: relative;
+}
+
+.form-label::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: var(--primary-gradient);
+    border-radius: 1px;
+}
+
+/* Form Controls */
+select[name="reason"] {
+    width: 100%;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 2px solid var(--card-border);
+    border-radius: 15px;
+    padding: 1.2rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5rem;
+    padding-right: 3rem;
+}
+
+select[name="reason"]:focus {
+    outline: none;
+    border-color: rgba(102, 126, 234, 0.5);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+    transform: translateY(-2px);
+}
+
+select[name="reason"] option {
+    background: var(--dark-bg);
+    color: var(--text-primary);
+    padding: 1rem;
+}
+
+textarea[name="description"] {
+    width: 100%;
+    min-height: 150px;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 2px solid var(--card-border);
+    border-radius: 15px;
+    padding: 1.2rem;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+textarea[name="description"]:focus {
+    outline: none;
+    border-color: rgba(102, 126, 234, 0.5);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+    transform: translateY(-2px);
+}
+
+textarea[name="description"]::placeholder {
+    color: var(--text-secondary);
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 3rem;
+    animation: fadeInUp 1s ease 1.2s both;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-secondary {
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    color: var(--text-secondary);
+    border: 2px solid var(--card-border);
+}
+
+.btn-secondary:hover {
+    color: var(--text-primary);
+    border-color: rgba(102, 126, 234, 0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: 2px solid transparent;
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger:active {
+    transform: translateY(-1px);
+}
+
+/* Error States */
+.form-group .errorlist {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-top: 0.5rem;
+    color: #ef4444;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.form-group .errorlist li {
+    list-style: none;
+    margin: 0;
+}
+
+/* Help Text */
+.form-group small {
+    display: block;
+    margin-top: 0.5rem;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+/* Additional Information Section */
+.report-container + div {
+    animation: fadeInUp 1s ease 1.4s both;
+}
+
+.report-container + div > div {
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.report-container + div h3 {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    background: var(--primary-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.report-container + div .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    text-align: left;
+    margin-top: 1.5rem;
+}
+
+.report-container + div h4 {
+    color: #ef4444;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.report-container + div p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Animations */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .report-container {
+        padding: 2rem 1rem;
+    }
+    
+    .report-card {
+        padding: 2rem;
+        border-radius: 20px;
+    }
+    
+    .report-header h1 {
+        font-size: 2rem;
+    }
+    
+    .report-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .btn {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .project-info {
+        padding: 1.5rem;
+    }
+    
+    .warning-box {
+        padding: 1rem;
+    }
+    
+    .warning-text {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .warning-text i {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-container {
+        padding: 1rem;
+    }
+    
+    .report-card {
+        padding: 1.5rem;
+    }
+    
+    .report-header {
+        margin-bottom: 2rem;
+    }
+    
+    .report-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .report-header p {
+        font-size: 1rem;
+    }
+    
+    .form-label {
+        font-size: 1rem;
+    }
+    
+    select[name="reason"],
+    textarea[name="description"] {
+        padding: 1rem;
+        font-size: 0.95rem;
+    }
+    
+    .btn {
+        padding: 0.8rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .project-info,
+    .warning-box {
+        padding: 1rem;
+    }
+    
+    .report-container + div {
+        padding: 0 1rem;
+    }
+    
+    .report-container + div > div {
+        padding: 1.5rem;
+    }
+    
+    .report-container + div .grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+/* Focus States for Accessibility */
+.btn:focus,
+select[name="reason"]:focus,
+textarea[name="description"]:focus {
+    outline: 2px solid rgba(102, 126, 234, 0.5);
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .report-card {
+        border: 2px solid var(--text-primary);
+    }
+    
+    .project-info,
+    .warning-box {
+        border: 2px solid currentColor;
+    }
+    
+    select[name="reason"],
+    textarea[name="description"] {
+        border: 2px solid var(--text-primary);
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .report-icon {
+        animation: none;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .report-container {
+        background: none;
+        padding: 0;
+    }
+    
+    .report-card {
+        box-shadow: none;
+        border: 1px solid #000;
+        background: #fff;
+        color: #000;
+    }
+    
+    .btn {
+        display: none;
+    }
+}
