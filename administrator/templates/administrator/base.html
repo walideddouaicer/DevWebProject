@@ -89,6 +89,12 @@ Base template for the administrator app - Modern Design Update with Dark/Light T
                 <div class="top-actions">
                     <!-- Top Navigation Buttons -->
                     <div class="top-nav-buttons">
+                        <!-- NEW: Homepage Button -->
+                        <a href="{% url 'public:homepage' %}" class="top-nav-btn" title="Retour à l'accueil">
+                            <i class="fas fa-home"></i>
+                            <span>Accueil</span>
+                        </a>
+                        
                         <a href="{% url 'administrator:projects_list' %}" class="top-nav-btn {% if 'project' in request.resolver_match.url_name %}active{% endif %}">
                             <i class="fas fa-project-diagram"></i>
                             <span>Projets</span>

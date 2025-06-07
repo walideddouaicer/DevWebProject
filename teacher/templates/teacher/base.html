@@ -96,6 +96,12 @@ Base template for the teacher app - Modern Dark/Light Theme with Sidebar
                 </div>
 
                 <div class="top-actions">
+                    <!-- NEW: Homepage Button -->
+                    <a href="{% url 'public:homepage' %}" class="action-btn" title="Retour à l'accueil">
+                        <i class="fas fa-home"></i>
+                        Accueil
+                    </a>
+                    
                     <a href="{% url 'teacher:modules_list' %}" class="action-btn">
                         <i class="fas fa-book"></i>
                         Modules

@@ -126,6 +126,12 @@ Enhanced Base template with modern UI, theme toggle, and modular CSS
                 </div>
 
                 <div class="top-actions">
+                    <!-- NEW: Homepage Button -->
+                    <a href="{% url 'public:homepage' %}" class="action-btn" title="Retour à l'accueil">
+                        <i class="fas fa-home"></i>
+                        <span class="hidden sm:inline">Accueil</span>
+                    </a>
+                    
                     <a href="{% url 'student:dashboard' %}#project-list" class="action-btn">
                         <i class="fas fa-th"></i>
                         <span class="hidden sm:inline">Mes Projets</span>
