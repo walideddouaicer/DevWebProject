@@ -957,24 +957,32 @@ def make_project_public(request, project_id):
             # Publish with enhanced content
             form = MakeProjectPublicForm(request.POST, request.FILES, instance=project)
             if form.is_valid():
-                project = form.save(commit=False)
-                if project.make_public():
-                    form.save_m2m()  # Save tags
+                # Save the enhanced fields first
+                enhanced_project = form.save(commit=False)
+                
+                # Then make it public
+                if enhanced_project.make_public():
+                    # Now save all the enhanced fields to the database
+                    enhanced_project.save()
+                    
+                    # Save many-to-many relationships (tags)
+                    form.save_m2m()
                     
                     ProjectActivity.objects.create(
-                        project=project,
+                        project=enhanced_project,
                         user=request.user,
                         activity_type='made_public',
                         description="Projet rendu public avec contenu enrichi"
                     )
-                    messages.success(request, f"🎉 Votre projet '{project.title}' est maintenant visible publiquement!")
-                    return redirect('public:project_detail', project_id=project.id)
+                    messages.success(request, f"🎉 Votre projet '{enhanced_project.title}' est maintenant visible publiquement!")
+                    return redirect('public:project_detail', project_id=enhanced_project.id)
                 else:
+                    messages.error(request, "Erreur lors de la publication du projet.")
+            else:
                 # Form has errors, show them
-                 for field, errors in form.errors.items():
+                for field, errors in form.errors.items():
                     for error in errors:
                         messages.error(request, f"Erreur dans {field}: {error}")
-    
     
     # GET request - show both options
     quick_form = QuickPublishForm()
