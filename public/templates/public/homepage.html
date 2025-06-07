@@ -303,15 +303,119 @@
 </section>
 
 <!-- Projects Section (Placeholder) -->
+<!-- Projects Carousel Section - Replace the existing projects-section -->
 <section class="projects-section">
     <div class="container">
         <h2>Projets Étudiants en Vedette</h2>
         
-        <div class="projects-placeholder">
-            <i class="fas fa-rocket"></i>
-            <h3>Fonctionnalité à Venir</h3>
-            <p>Cette section présentera bientôt les projets les plus innovants et remarquables de nos étudiants. Restez connectés pour découvrir les créations exceptionnelles de la communauté ENSA.</p>
-        </div>
+        {% if featured_projects %}
+            <div class="projects-carousel">
+                <div class="projects-track" id="projectsTrack">
+                    {% for project in featured_projects %}
+                        <div class="project-card">
+                            <div class="project-header">
+                                <div class="project-icon">
+                                    {% if project.project_type == 'stage_pfe' %}
+                                        <i class="fas fa-graduation-cap"></i>
+                                    {% elif project.project_type == 'module' %}
+                                        <i class="fas fa-book"></i>
+                                    {% elif project.project_type == 'stage_ingenieur' %}
+                                        <i class="fas fa-cogs"></i>
+                                    {% else %}
+                                        <i class="fas fa-code"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="project-status">{{ project.get_project_type_display }}</div>
+                            </div>
+                            <h3 class="project-title">
+                                <a href="{% url 'public:project_detail' project.id %}" style="text-decoration: none; color: inherit;">
+                                    {{ project.title|truncatechars:50 }}
+                                </a>
+                            </h3>
+                            <p class="project-description">
+                                {{ project.display_description|truncatewords:20 }}
+                            </p>
+                            
+                            <!-- Replace the technologies section in the template with this simpler version -->
+
+                            <!-- Project Technologies (simplified approach) -->
+                            {% if project.technologies %}
+                            <div class="project-technologies">
+                                <span class="tech-tag">
+                                        <i class="fas fa-code"></i>
+                                        {{ project.technologies|truncatechars:30 }}
+                                </span>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Project Stats -->
+                            <div class="project-stats">
+                                <div class="stat-item">
+                                    <i class="fas fa-heart text-red-500"></i>
+                                    <span>{{ project.like_count }}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="fas fa-eye"></i>
+                                    <span>{{ project.view_count }}</span>
+                                </div>
+                                {% if project.deliverables.count %}
+                                    <div class="stat-item">
+                                        <i class="fas fa-file"></i>
+                                        <span>{{ project.deliverables.count }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="project-meta">
+                                <div class="project-author">
+                                    <div class="author-avatar">
+                                        {{ project.student.user.first_name.0|default:'?' }}{{ project.student.user.last_name.0|default:'?' }}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600; color: var(--text-primary);">
+                                            {{ project.student.user.get_full_name|default:project.student.user.username }}
+                                        </div>
+                                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                            {{ project.student.student_id }} • {{ project.student.department }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="project-actions">
+                                    {% if project.public_demo_url %}
+                                        <a href="{{ project.public_demo_url }}" target="_blank" class="action-btn" title="Voir la démo">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% if project.public_github_url %}
+                                        <a href="{{ project.public_github_url }}" target="_blank" class="action-btn" title="Code source">
+                                            <i class="fab fa-github"></i>
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'public:project_detail' project.id %}" class="view-btn">
+                                        Voir Plus
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Call to Action -->
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="{% url 'public:projects_showcase' %}" class="btn btn-primary">
+                    <i class="fas fa-rocket"></i>
+                    Découvrir Tous les Projets
+                </a>
+            </div>
+        {% else %}
+            <!-- Fallback if no projects -->
+            <div class="projects-placeholder">
+                <i class="fas fa-rocket"></i>
+                <h3>Bientôt des Projets Innovants</h3>
+                <p>Les étudiants ENSA travaillent sur des projets exceptionnels qui seront bientôt partagés ici. Restez connectés!</p>
+            </div>
+        {% endif %}
     </div>
 </section>
 {% endblock %}
@@ -404,10 +508,167 @@
         });
     }
 
-    // Initialize everything
+    // Projects Carousel
+    function initProjectsCarousel() {
+        const track = document.getElementById('projectsTrack');
+        const carousel = document.querySelector('.projects-carousel');
+        
+        if (!track || !carousel) return; // Exit if elements don't exist
+        
+        let currentIndex = 0;
+        const cardWidth = 370; // 350px + 20px gap
+        const visibleCards = Math.floor(carousel.offsetWidth / cardWidth);
+        const totalCards = track.children.length;
+        const maxIndex = Math.max(0, totalCards - visibleCards);
+        let isMouseOverCarousel = false;
+
+        function updateCarousel() {
+            track.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
+        }
+
+        function moveToNext() {
+            if (currentIndex < maxIndex) {
+                currentIndex++;
+                updateCarousel();
+            }
+        }
+
+        function moveToPrev() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCarousel();
+            }
+        }
+
+        // Mouse wheel navigation
+        function handleWheelScroll(e) {
+            if (!isMouseOverCarousel) return;
+            
+            e.preventDefault(); // Prevent page scroll
+            e.stopPropagation();
+            
+            // Determine scroll direction
+            const delta = e.deltaY || e.detail || e.wheelDelta;
+            
+            if (delta > 0) {
+                // Scrolling down/right - move to next
+                moveToNext();
+            } else {
+                // Scrolling up/left - move to previous
+                moveToPrev();
+            }
+        }
+
+        // Track mouse enter/leave for the carousel
+        carousel.addEventListener('mouseenter', () => {
+            isMouseOverCarousel = true;
+            carousel.style.cursor = 'grab';
+            // Add visual indicator that scrolling is available
+            carousel.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.3)';
+            carousel.style.transition = 'box-shadow 0.3s ease';
+        });
+
+        carousel.addEventListener('mouseleave', () => {
+            isMouseOverCarousel = false;
+            carousel.style.cursor = 'default';
+            carousel.style.boxShadow = 'none';
+        });
+
+        // Add wheel event listeners
+        carousel.addEventListener('wheel', handleWheelScroll, { passive: false });
+        
+        // Fallback for older browsers
+        carousel.addEventListener('DOMMouseScroll', handleWheelScroll); // Firefox
+        carousel.addEventListener('mousewheel', handleWheelScroll); // Webkit
+
+        // Auto-slide (optional - you can remove this if you want only manual control)
+        let autoSlideInterval;
+        
+        function startAutoSlide() {
+            autoSlideInterval = setInterval(() => {
+                if (!isMouseOverCarousel && totalCards > visibleCards) {
+                    if (currentIndex < maxIndex) {
+                        currentIndex++;
+                    } else {
+                        currentIndex = 0; // Loop back to start
+                    }
+                    updateCarousel();
+                }
+            }, 4000); // Change slide every 4 seconds
+        }
+
+        function stopAutoSlide() {
+            if (autoSlideInterval) {
+                clearInterval(autoSlideInterval);
+            }
+        }
+
+        // Start auto-slide
+        if (totalCards > visibleCards) {
+            startAutoSlide();
+        }
+
+        // Pause auto-slide when hovering
+        carousel.addEventListener('mouseenter', stopAutoSlide);
+        carousel.addEventListener('mouseleave', () => {
+            if (totalCards > visibleCards) {
+                startAutoSlide();
+            }
+        });
+
+        // Initial state
+        updateCarousel();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const newVisibleCards = Math.floor(carousel.offsetWidth / cardWidth);
+            const newMaxIndex = Math.max(0, totalCards - newVisibleCards);
+            if (currentIndex > newMaxIndex) {
+                currentIndex = newMaxIndex;
+            }
+            updateCarousel();
+        });
+
+        // Touch support for mobile devices
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+
+        carousel.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            isDragging = true;
+            carousel.style.cursor = 'grabbing';
+        });
+
+        carousel.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            currentX = e.touches[0].clientX;
+        });
+
+        carousel.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            carousel.style.cursor = 'grab';
+            
+            const diffX = startX - currentX;
+            const threshold = 50; // Minimum distance for swipe
+            
+            if (Math.abs(diffX) > threshold) {
+                if (diffX > 0) {
+                    moveToNext(); // Swipe left - next
+                } else {
+                    moveToPrev(); // Swipe right - previous
+                }
+            }
+        });
+    }
+
+    // Update the main initialization function to include the projects carousel
     document.addEventListener('DOMContentLoaded', function() {
         animateCounters();
         initFeaturesSlider();
+        initProjectsCarousel();
         initScrollAnimations();
 
         // Smooth scrolling for navigation

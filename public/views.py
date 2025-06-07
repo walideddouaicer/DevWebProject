@@ -22,13 +22,23 @@ from student.forms import PublicCommentForm, ProjectReportForm
 
 def get_common_context():
     """Get common context data for all public pages"""
+    
+    # Get popular public projects for the featured section
+    featured_projects = Project.objects.filter(
+        is_public=True,
+        is_hidden_by_admin=False,
+        status='validated'
+    ).select_related(
+        'student__user', 'module'
+    ).prefetch_related(
+        'deliverables', 'showcase_tags__tag'
+    ).order_by('-like_count', '-view_count', '-made_public_at')[:8]  # Get 8 popular projects
+    
     return {
-        'total_projects': Project.objects.count(),
+        'total_projects': Project.objects.filter(is_public=True, is_hidden_by_admin=False).count(),
         'total_students': StudentProfile.objects.count(),
         'total_teachers': TeacherProfile.objects.count(),
-        'featured_projects': Project.objects.filter(
-            status='validated'
-        ).order_by('-created_at')[:3],  # Show 3 recent validated projects
+        'featured_projects': featured_projects,
     }
 
 

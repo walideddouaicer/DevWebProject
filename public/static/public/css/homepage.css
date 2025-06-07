@@ -288,6 +288,72 @@
 .projects-carousel {
     position: relative;
     overflow: hidden;
+    padding: 0;
+    margin: 0;
+    border-radius: 20px;
+    transition: box-shadow 0.3s ease;
+}
+
+/* Beautiful top and bottom shadow on hover */
+.projects-carousel:hover {
+    box-shadow: 
+        0 -15px 40px rgba(102, 126, 234, 0.4),  /* Stronger top shadow */
+        0 15px 40px rgba(102, 126, 234, 0.4);   /* Stronger bottom shadow */
+}
+
+/* Scroll hint tooltip */
+.projects-carousel .scroll-hint {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(102, 126, 234, 0.9);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+.projects-carousel:hover .scroll-hint {
+    opacity: 1;
+}
+
+/* Optional: Add gradient borders for extra elegance */
+.projects-carousel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.6), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+.projects-carousel::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.6), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+.projects-carousel:hover::before,
+.projects-carousel:hover::after {
+    opacity: 1;
 }
 
 .projects-track {
@@ -295,6 +361,11 @@
     gap: 2rem;
     transition: transform 0.5s ease;
     padding: 1rem 0;
+    cursor: grab;
+}
+
+.projects-track:active {
+    cursor: grabbing;
 }
 
 .project-card {
@@ -307,6 +378,7 @@
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    user-select: none;
 }
 
 .project-card::before {
@@ -402,31 +474,44 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: var(--card-bg);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--card-border);
+    border: 2px solid rgba(102, 126, 234, 0.3);
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    color: var(--text-primary);
+    color: #667eea;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    font-size: 1.2rem;
 }
 
 .carousel-nav:hover {
     background: var(--primary-gradient);
+    color: white;
     transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+    border-color: transparent;
+}
+
+.carousel-nav:disabled,
+.carousel-nav[style*="opacity: 0.5"] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: translateY(-50%) scale(0.9);
 }
 
 .carousel-prev {
-    left: -25px;
+    left: 20px;
 }
 
 .carousel-next {
-    right: -25px;
+    right: 20px;
 }
 
 /* Placeholder content for future functionality */
@@ -457,6 +542,149 @@
     margin: 0 auto;
 }
 
+/* Additional styles for the projects carousel - Add to homepage.css */
+
+/* Project Technologies */
+.project-technologies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.tech-tag {
+    background: rgba(102, 126, 234, 0.2);
+    color: var(--text-accent);
+    padding: 0.3rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+/* Project Stats */
+.project-stats {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+}
+
+.project-stats .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.project-stats .stat-item i {
+    font-size: 0.9rem;
+}
+
+.text-red-500 {
+    color: #ef4444;
+}
+
+/* Project Actions */
+.project-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.action-btn {
+    width: 35px;
+    height: 35px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.action-btn:hover {
+    background: var(--primary-gradient);
+    color: white;
+    transform: scale(1.1);
+    border-color: transparent;
+}
+
+.view-btn {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Enhanced project card hover effects */
+.project-card:hover .tech-tag {
+    background: rgba(102, 126, 234, 0.3);
+    border-color: rgba(102, 126, 234, 0.5);
+}
+
+.project-card:hover .project-stats {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+/* Project title link styling */
+.project-title a:hover {
+    color: var(--text-accent) !important;
+    transition: color 0.3s ease;
+}
+
+/* Responsive adjustments for project stats */
+@media (max-width: 768px) {
+    .project-stats {
+        flex-wrap: wrap;
+        gap: 0.8rem;
+    }
+    
+    .project-actions {
+        flex-wrap: wrap;
+        gap: 0.6rem;
+    }
+    
+    .tech-tag {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .project-technologies {
+        gap: 0.3rem;
+    }
+    
+    .project-stats {
+        gap: 0.6rem;
+        padding: 0.8rem;
+    }
+    
+    .project-stats .stat-item {
+        font-size: 0.8rem;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .hero-text h1 {
@@ -473,6 +701,12 @@
         gap: 3rem;
         text-align: center;
     }
+    .projects-carousel {
+        padding: 0;
+        margin: 0;
+    }
+    
+    /* Removed carousel navigation button styles */
 }
 
 @media (max-width: 768px) {
@@ -491,6 +725,7 @@
     
     .project-card {
         min-width: 300px;
+        padding: 2rem;
     }
     
     .hero-cards {
@@ -502,6 +737,20 @@
     .hero-card:nth-child(4) {
         margin-top: 0;
     }
+    .projects-carousel {
+        padding: 0;
+        margin: 0;
+    }
+    
+    /* Hide scroll hint on mobile since touch is more intuitive */
+    .projects-carousel::after {
+        content: '← Swipe to navigate →';
+    }
+    
+    .projects-track {
+        gap: 1.5rem;
+    }
+    /* Removed carousel navigation button styles */
 }
 
 @media (max-width: 480px) {
@@ -525,4 +774,23 @@
     .feature-slide {
         padding: 2rem;
     }
+    .projects-carousel {
+        padding: 0;
+        margin: 0;
+    }
+    
+    .projects-carousel::after {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.8rem;
+    }
+    
+    .projects-track {
+        gap: 1rem;
+    }
+    /* Removed carousel navigation button styles */
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+    /* Removed carousel navigation button styles */
 }
