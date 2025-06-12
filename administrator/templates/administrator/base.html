@@ -41,7 +41,11 @@ Base template for the administrator app - Modern Design Update with Dark/Light T
                         <i class="fas fa-project-diagram"></i>
                         <span>Tous les Projets</span>
                     </a>
-                    <a href="{% url 'administrator:modules_list' %}" class="nav-item {% if 'module' in request.resolver_match.url_name %}active{% endif %}">
+                    <a href="{% url 'administrator:users_list' %}" class="nav-item {% if 'users_list' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-users"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                    <a href="{% url 'administrator:modules_list' %}" class="nav-item {% if 'module' in request.resolver_match.url_name and 'users' not in request.resolver_match.url_name %}active{% endif %}">
                         <i class="fas fa-book"></i>
                         <span>Gestion Modules</span>
                     </a>
@@ -56,6 +60,13 @@ Base template for the administrator app - Modern Design Update with Dark/Light T
                     <a href="{% url 'administrator:module_create' %}" class="nav-item">
                         <i class="fas fa-plus"></i>
                         <span>Nouveau Module</span>
+                    </a>
+                    <a href="{% url 'administrator:pending_registrations' %}" class="nav-item">
+                        <i class="fas fa-user-clock"></i>
+                        <span>Inscriptions</span>
+                        {% if pending_registrations_count > 0 %}
+                            <span class="nav-badge">{{ pending_registrations_count }}</span>
+                        {% endif %}
                     </a>
                 </div>
 
@@ -99,7 +110,13 @@ Base template for the administrator app - Modern Design Update with Dark/Light T
                             <i class="fas fa-project-diagram"></i>
                             <span>Projets</span>
                         </a>
-                        <a href="{% url 'administrator:modules_list' %}" class="top-nav-btn {% if 'module' in request.resolver_match.url_name %}active{% endif %}">
+                        
+                        <a href="{% url 'administrator:users_list' %}" class="top-nav-btn {% if 'users_list' in request.resolver_match.url_name %}active{% endif %}">
+                            <i class="fas fa-users"></i>
+                            <span>Utilisateurs</span>
+                        </a>
+                        
+                        <a href="{% url 'administrator:modules_list' %}" class="top-nav-btn {% if 'module' in request.resolver_match.url_name and 'users' not in request.resolver_match.url_name %}active{% endif %}">
                             <i class="fas fa-book"></i>
                             <span>Modules</span>
                         </a>

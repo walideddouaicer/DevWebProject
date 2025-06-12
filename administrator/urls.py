@@ -27,6 +27,7 @@ urlpatterns = [
     
     # User Management
     path('users/', views.users_overview, name='users_overview'),
+    path('users/list/', views.users_list, name='users_list'),
     path('users/students/', views.students_list, name='students_list'),
     path('users/teachers/', views.teachers_list, name='teachers_list'),
     path('registrations/pending/', views.pending_registrations, name='pending_registrations'),
@@ -38,6 +39,7 @@ urlpatterns = [
     path('exports/', views.exports, name='exports'),
     path('exports/projects/', views.export_projects, name='export_projects'),
     path('exports/statistics/', views.export_statistics, name='export_statistics'),
+    path('exports/users/', views.export_users, name='export_users'),
 
 
     # NEW: Registration Management

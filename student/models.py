@@ -298,7 +298,7 @@ class Notification(models.Model):
     
 
 
-# Add to models.py
+# project activity
 class ProjectActivity(models.Model):
     ACTIVITY_TYPES = [
         ('created', 'Création du projet'),
@@ -368,7 +368,7 @@ class ProjectComment(models.Model):
             
 
 
-# 3. ADD these NEW models at the end of your student/models.py file:
+# 3. 
 
 class ShowcaseTag(models.Model):
     """Tags for categorizing public projects"""

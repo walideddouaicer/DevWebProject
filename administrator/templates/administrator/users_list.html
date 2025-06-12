@@ -1,0 +1,660 @@
+{% extends 'administrator/base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Utilisateurs - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+    <span class="breadcrumb-separator">›</span>
+    <span>Gestion des Utilisateurs</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'administrator/css/users_list.css' %}">
+{% endblock %}
+
+{% block content %}
+    <!-- Users Header -->
+    <div class="users-header">
+        <h1>
+            <i class="fas fa-users"></i>
+            Gestion des Utilisateurs
+        </h1>
+        <p>Supervisez et gérez tous les utilisateurs de la plateforme</p>
+        <div class="users-count">
+            {{ page_obj.paginator.count }} utilisateur{{ page_obj.paginator.count|pluralize }}
+        </div>
+    </div>
+
+    <!-- User Type Toggle -->
+    <div class="user-type-toggle">
+        <div class="toggle-container">
+            <div class="toggle-header">
+                <h3>
+                    <i class="fas fa-toggle-on"></i>
+                    Type d'Utilisateur
+                </h3>
+            </div>
+            <div class="toggle-buttons">
+                <a href="?type=students{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                   class="toggle-btn {% if user_type == 'students' %}active{% endif %}">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Étudiants</span>
+                    <span class="toggle-count">{{ total_students }}</span>
+                </a>
+                <a href="?type=teachers{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" 
+                   class="toggle-btn {% if user_type == 'teachers' %}active{% endif %}">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    <span>Enseignants</span>
+                    <span class="toggle-count">{{ total_teachers }}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Statistics -->
+    <div class="quick-stats">
+        <div class="quick-stat-card">
+            <div class="quick-stat-value">{{ current_type_count }}</div>
+            <div class="quick-stat-label">
+                {% if user_type == 'students' %}Étudiants{% else %}Enseignants{% endif %} Actuels
+            </div>
+        </div>
+        <div class="quick-stat-card">
+            <div class="quick-stat-value">{{ total_students|add:total_teachers }}</div>
+            <div class="quick-stat-label">Total Utilisateurs</div>
+        </div>
+        <div class="quick-stat-card">
+            <div class="quick-stat-value">
+                {% if user_type == 'students' %}{{ recent_students }}{% else %}{{ recent_teachers }}{% endif %}
+            </div>
+            <div class="quick-stat-label">Nouveaux (30j)</div>
+        </div>
+        <div class="quick-stat-card">
+            <div class="quick-stat-value">{{ dept_breakdown|length }}</div>
+            <div class="quick-stat-label">Départements</div>
+        </div>
+        {% if user_type == 'students' and year_breakdown %}
+        <div class="quick-stat-card">
+            <div class="quick-stat-value">{{ year_breakdown|length }}</div>
+            <div class="quick-stat-label">Niveaux d'Étude</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Department Breakdown -->
+    {% if dept_breakdown %}
+    <div class="breakdown-section">
+        <h3>
+            <i class="fas fa-chart-bar"></i>
+            Répartition par Département
+            {% if user_type == 'students' %}(Étudiants){% else %}(Enseignants){% endif %}
+        </h3>
+        <div class="breakdown-grid">
+            {% for dept in dept_breakdown %}
+            <div class="breakdown-item">
+                <div class="breakdown-name">{{ dept.department|default:"Non défini" }}</div>
+                <div class="breakdown-count">{{ dept.count }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filter Panel -->
+    <div class="filter-panel">
+        <div class="filter-header">
+            <h3>
+                <i class="fas fa-search"></i>
+                Filtres de Recherche
+            </h3>
+            <button class="filter-toggle" onclick="toggleAdvancedFilters()">
+                <span id="filter-toggle-text">Filtres Avancés</span>
+                <i class="fas fa-chevron-down" id="filter-toggle-icon"></i>
+            </button>
+        </div>
+        
+        <form method="get" id="filter-form">
+            <input type="hidden" name="type" value="{{ user_type }}">
+            
+            <!-- Basic Filters -->
+            <div class="filter-row">
+                <div class="form-group">
+                    <label for="search">
+                        <i class="fas fa-search"></i>
+                        Recherche
+                    </label>
+                    <input type="text" id="search" name="search" value="{{ search_query }}" 
+                           placeholder="Nom, email, ID..." class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="department">
+                        <i class="fas fa-building"></i>
+                        Département
+                    </label>
+                    <select id="department" name="department" class="form-control">
+                        <option value="">Tous les départements</option>
+                        {% for dept in all_departments %}
+                            <option value="{{ dept }}" {% if department_filter == dept %}selected{% endif %}>
+                                {{ dept|default:"Non défini" }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if user_type == 'students' %}
+                <div class="form-group">
+                    <label for="year_of_study">
+                        <i class="fas fa-graduation-cap"></i>
+                        Année d'Étude
+                    </label>
+                    <select id="year_of_study" name="year_of_study" class="form-control">
+                        <option value="">Toutes les années</option>
+                        {% for year_value, year_label in year_choices %}
+                            <option value="{{ year_value }}" {% if selected_year == year_value|stringformat:"s" %}selected{% endif %}>
+                                {{ year_label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Advanced Filters -->
+            <div class="advanced-filters" id="advanced-filters">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="date_from">
+                            <i class="fas fa-calendar-alt"></i>
+                            Inscription Depuis
+                        </label>
+                        <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="date_to">
+                            <i class="fas fa-calendar-alt"></i>
+                            Inscription Jusqu'à
+                        </label>
+                        <input type="date" id="date_to" name="date_to" value="{{ date_to }}" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <a href="{% url 'administrator:users_list' %}?type={{ user_type }}" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i>
+                    Réinitialiser
+                </a>
+                <button type="submit" class="btn">
+                    <i class="fas fa-search"></i>
+                    Appliquer Filtres
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="users-table-container">
+        <!-- Export/Bulk Actions -->
+        {% if page_obj %}
+        <div class="export-actions">
+            <div class="bulk-actions">
+                <input type="checkbox" id="select-all" class="select-all" onchange="toggleSelectAll()">
+                <label for="select-all" style="color: var(--text-secondary); font-weight: 500; margin-right: 16px;">Tout sélectionner</label>
+                <button class="bulk-action-btn export" onclick="exportSelected()" disabled id="export-btn">
+                    <i class="fas fa-download"></i>
+                    Exporter Sélection
+                </button>
+            </div>
+            <div style="color: var(--text-muted); font-size: 14px;">
+                <span id="selected-count">0</span> utilisateur(s) sélectionné(s)
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Table Header with Results Info -->
+        <div class="table-header">
+            <div class="results-info">
+                {% if page_obj.paginator.count > 0 %}
+                    Affichage de {{ page_obj.start_index }}-{{ page_obj.end_index }} 
+                    sur {{ page_obj.paginator.count }} 
+                    {% if user_type == 'students' %}étudiant{{ page_obj.paginator.count|pluralize }}{% else %}enseignant{{ page_obj.paginator.count|pluralize }}{% endif %}
+                {% endif %}
+            </div>
+            <div class="table-actions">
+                <button class="bulk-action-btn" onclick="refreshTable()">
+                    <i class="fas fa-sync-alt"></i>
+                    Actualiser
+                </button>
+            </div>
+        </div>
+
+        {% if page_obj %}
+            <div style="overflow-x: auto;">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" class="select-all-header" onchange="toggleSelectAllHeader()">
+                            </th>
+                            <th>
+                                <i class="fas fa-user"></i>
+                                Nom & Contact
+                            </th>
+                            <th>
+                                <i class="fas fa-id-card"></i>
+                                ID & Département
+                            </th>
+                            {% if user_type == 'students' %}
+                            <th>
+                                <i class="fas fa-graduation-cap"></i>
+                                Année d'Étude
+                            </th>
+                            <th>
+                                <i class="fas fa-book"></i>
+                                Modules
+                            </th>
+                            <th>
+                                <i class="fas fa-project-diagram"></i>
+                                Projets
+                            </th>
+                            {% else %}
+                            <th>
+                                <i class="fas fa-chalkboard"></i>
+                                Modules Assignés
+                            </th>
+                            <th>
+                                <i class="fas fa-users"></i>
+                                Étudiants
+                            </th>
+                            {% endif %}
+                            <th>
+                                <i class="fas fa-calendar"></i>
+                                Inscription
+                            </th>
+                            <th>
+                                <i class="fas fa-cogs"></i>
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in page_obj %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="selected_users" value="{{ user.id }}" 
+                                       class="user-checkbox" onchange="updateSelectedCount()">
+                            </td>
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-name">
+                                        {{ user.user.get_full_name|default:user.user.username }}
+                                    </div>
+                                    <div class="user-email">
+                                        <i class="fas fa-envelope"></i>
+                                        {{ user.user.email|default:"Non renseigné" }}
+                                    </div>
+                                    <div class="user-username">
+                                        @{{ user.user.username }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="id-info">
+                                    {% if user_type == 'students' %}
+                                        <div class="user-id">{{ user.student_id }}</div>
+                                    {% else %}
+                                        <div class="user-id">{{ user.teacher_id|default:"Non défini" }}</div>
+                                    {% endif %}
+                                    <div class="user-department">{{ user.department }}</div>
+                                </div>
+                            </td>
+                            {% if user_type == 'students' %}
+                            <td>
+                                <span class="year-badge year-{{ user.year_of_study }}">
+                                    {{ user.get_year_of_study_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="count-badge modules">
+                                    <i class="fas fa-book"></i>
+                                    {{ user.modules_count }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="count-badge projects">
+                                    <i class="fas fa-project-diagram"></i>
+                                    {{ user.projects_count }}
+                                </div>
+                            </td>
+                            {% else %}
+                            <td>
+                                <div class="count-badge modules">
+                                    <i class="fas fa-chalkboard"></i>
+                                    {{ user.modules_count }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="count-badge students">
+                                    <i class="fas fa-users"></i>
+                                    {{ user.students_taught }}
+                                </div>
+                            </td>
+                            {% endif %}
+                            <td>
+                                <div class="registration-date">
+                                    <div class="date-joined">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        {{ user.user.date_joined|date:"d/m/Y" }}
+                                    </div>
+                                    <div class="date-last-login">
+                                        <i class="fas fa-sign-in-alt"></i>
+                                        {% if user.user.last_login %}
+                                            {{ user.user.last_login|date:"d/m/Y" }}
+                                        {% else %}
+                                            <em>Jamais</em>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-view" onclick="viewUserDetails({{ user.id }}, '{{ user_type }}')">
+                                        <i class="fas fa-eye"></i>
+                                        Voir
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+                    </div>
+                    <div class="pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="page-link">
+                                <i class="fas fa-chevron-left"></i> Précédent
+                            </a>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="page-link current">{{ num }}</span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}" class="page-link">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="page-link">
+                                Suivant <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-user-slash"></i>
+                </div>
+                <h3>Aucun Utilisateur Trouvé</h3>
+                <p>Aucun {% if user_type == 'students' %}étudiant{% else %}enseignant{% endif %} ne correspond aux critères de recherche spécifiés.</p>
+                <a href="{% url 'administrator:users_list' %}?type={{ user_type }}" class="btn" style="margin-top: 20px;">
+                    <i class="fas fa-undo"></i>
+                    Voir Tous les {% if user_type == 'students' %}Étudiants{% else %}Enseignants{% endif %}
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- User Type Info Legend -->
+    <div class="type-legend">
+        <div class="legend-content">
+            <div class="legend-icon">
+                {% if user_type == 'students' %}
+                    <i class="fas fa-user-graduate"></i>
+                {% else %}
+                    <i class="fas fa-chalkboard-teacher"></i>
+                {% endif %}
+            </div>
+            <div class="legend-info">
+                <h3 class="legend-title">
+                    {% if user_type == 'students' %}Guide Étudiants{% else %}Guide Enseignants{% endif %}
+                </h3>
+                <div class="legend-items">
+                    {% if user_type == 'students' %}
+                        <div class="legend-item">
+                            <span class="legend-badge modules"></span>
+                            <strong>Modules:</strong> Nombre de modules auxquels l'étudiant est inscrit
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge projects"></span>
+                            <strong>Projets:</strong> Nombre total de projets (propriétaire + collaborateur)
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge year-3"></span>
+                            <strong>3ème Année:</strong> Étudiant en 3ème année
+                        </div>
+                    {% else %}
+                        <div class="legend-item">
+                            <span class="legend-badge modules"></span>
+                            <strong>Modules:</strong>  Nombre de modules assignés à l'enseignant
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge students"></span>
+                            <strong>Étudiants:</strong>  Nombre total d'étudiants enseignés
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleAdvancedFilters() {
+        const advancedFilters = document.getElementById('advanced-filters');
+        const toggleText = document.getElementById('filter-toggle-text');
+        const toggleIcon = document.getElementById('filter-toggle-icon');
+        
+        if (advancedFilters.classList.contains('show')) {
+            advancedFilters.classList.remove('show');
+            toggleText.textContent = 'Filtres Avancés';
+            toggleIcon.className = 'fas fa-chevron-down';
+        } else {
+            advancedFilters.classList.add('show');
+            toggleText.textContent = 'Masquer Filtres';
+            toggleIcon.className = 'fas fa-chevron-up';
+        }
+    }
+    
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        const headerCheckbox = document.querySelector('.select-all-header');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+        
+        if (headerCheckbox) {
+            headerCheckbox.checked = selectAll.checked;
+        }
+        
+        updateSelectedCount();
+    }
+    
+    function toggleSelectAllHeader() {
+        const headerCheckbox = document.querySelector('.select-all-header');
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        const selectAllFooter = document.getElementById('select-all');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = headerCheckbox.checked;
+        });
+        
+        if (selectAllFooter) {
+            selectAllFooter.checked = headerCheckbox.checked;
+        }
+        
+        updateSelectedCount();
+    }
+    
+    function updateSelectedCount() {
+        const checkboxes = document.querySelectorAll('.user-checkbox:checked');
+        const count = checkboxes.length;
+        const selectedCountElement = document.getElementById('selected-count');
+        const exportBtn = document.getElementById('export-btn');
+        
+        selectedCountElement.textContent = count;
+        
+        if (exportBtn) {
+            exportBtn.disabled = count === 0;
+            if (count > 0) {
+                exportBtn.style.opacity = '1';
+                exportBtn.style.pointerEvents = 'auto';
+            } else {
+                exportBtn.style.opacity = '0.5';
+                exportBtn.style.pointerEvents = 'none';
+            }
+        }
+    }
+    
+    function exportSelected() {
+        const selectedUsers = [];
+        document.querySelectorAll('.user-checkbox:checked').forEach(checkbox => {
+            selectedUsers.push(checkbox.value);
+        });
+        
+        if (selectedUsers.length === 0) {
+            alert('Veuillez sélectionner au moins un utilisateur pour l\'export.');
+            return;
+        }
+        
+        // Create export form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "administrator:export_users" %}';
+        form.style.display = 'none';
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken.value;
+            form.appendChild(csrfInput);
+        }
+        
+        // Add user type
+        const typeInput = document.createElement('input');
+        typeInput.type = 'hidden';
+        typeInput.name = 'user_type';
+        typeInput.value = '{{ user_type }}';
+        form.appendChild(typeInput);
+        
+        // Add selected users
+        selectedUsers.forEach(userId => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'selected_users';
+            input.value = userId;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+    
+    function refreshTable() {
+        const btn = event.target.closest('.bulk-action-btn');
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualisation...';
+        btn.disabled = true;
+        
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    }
+    
+    function viewUserDetails(userId, userType) {
+        // Placeholder for user details modal
+        alert(`Voir détails ${userType === 'students' ? 'étudiant' : 'enseignant'} ID: ${userId}\n\nFonctionnalité à implémenter.`);
+    }
+    
+    // Auto-search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search');
+        let searchTimeout;
+        
+        searchInput?.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                // Optional: Auto-submit on search change
+                // document.getElementById('filter-form').submit();
+            }, 500);
+        });
+        
+        // Form submission with loading state
+        const filterForm = document.getElementById('filter-form');
+        filterForm?.addEventListener('submit', function() {
+            const submitBtn = filterForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recherche...';
+            submitBtn.disabled = true;
+            
+            // Re-enable after a short delay in case of quick response
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 3000);
+        });
+        
+        // Initialize selected count
+        updateSelectedCount();
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+A to select all
+        if (e.ctrlKey && e.key === 'a' && !e.target.matches('input, textarea')) {
+            e.preventDefault();
+            const selectAll = document.getElementById('select-all');
+            if (selectAll) {
+                selectAll.checked = true;
+                toggleSelectAll();
+            }
+        }
+        
+        // Escape to deselect all
+        if (e.key === 'Escape') {
+            const checkboxes = document.querySelectorAll('.user-checkbox, .select-all, .select-all-header');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedCount();
+        }
+        
+        // Tab to switch between user types
+        if (e.key === 'Tab' && e.altKey) {
+            e.preventDefault();
+            const currentType = '{{ user_type }}';
+            const newType = currentType === 'students' ? 'teachers' : 'students';
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.set('type', newType);
+            window.location.href = '?' + currentParams.toString();
+        }
+    });
+</script>
+{% endblock %}
