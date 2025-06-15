@@ -1268,24 +1268,30 @@ def account_settings(request):
     """Account settings and preferences"""
     student = get_object_or_404(StudentProfile, user=request.user)
     
+    # Check if password was just changed
+    password_changed = request.GET.get('changed') == 'true'
+    
     if request.method == 'POST':
         form = AccountSettingsForm(request.POST)
         if form.is_valid():
             # Handle settings changes
             if form.cleaned_data.get('change_password'):
                 # Redirect to password change
-                messages.info(request, "Redirection vers le changement de mot de passe...")
-                return redirect('password_change')  # Django's built-in password change
+                return redirect('student:password_change')
             
-            # For now, just show a success message
+            # Handle other settings here
             messages.success(request, "Paramètres mis à jour avec succès!")
-            return redirect('student:profile_settings', tab='settings')
+            return redirect('student:profile_settings')
     else:
         form = AccountSettingsForm()
+    
+    if password_changed:
+        messages.success(request, "🎉 Votre mot de passe a été modifié avec succès!")
     
     context = {
         'student': student,
         'form': form,
+        'password_changed': password_changed,
     }
     
     return render(request, 'student/account_settings.html', context)

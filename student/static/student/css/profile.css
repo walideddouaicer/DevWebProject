@@ -187,6 +187,12 @@
     background: var(--warning-gradient);
     border-radius: var(--radius-full);
     transition: width var(--transition-normal);
+    width: var(--completion-progress);
+}
+
+@keyframes slideInSuccess {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Settings Container */

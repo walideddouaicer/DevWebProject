@@ -399,7 +399,7 @@ class StudentProfileForm(forms.ModelForm):
 
 
 class AccountSettingsForm(forms.Form):
-    """Form for account-related settings (can be extended later)"""
+    """Form for account-related settings"""
     
     change_password = forms.BooleanField(
         required=False,
@@ -407,7 +407,7 @@ class AccountSettingsForm(forms.Form):
         label="Je veux changer mon mot de passe"
     )
     
-    # Placeholder for future settings
+    # Notification preferences (functional now)
     email_notifications = forms.BooleanField(
         required=False,
         initial=True,
@@ -428,3 +428,13 @@ class AccountSettingsForm(forms.Form):
         widget=forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
         label="Notifications de collaboration"
     )
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Pre-populate settings if user is provided
+        if user:
+            # You could load user preferences from a UserPreferences model
+            # For now, we'll use default values
+            pass

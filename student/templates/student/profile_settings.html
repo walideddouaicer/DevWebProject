@@ -83,7 +83,7 @@
             </div>
         </div>
         <div class="completion-progress">
-            <div class="progress-bar" style="width: {{ profile_completion }}%;"></div>
+            <div class="progress-bar" style="--completion-progress: {{ profile_completion }}%;"></div>
         </div>
     </div>
     {% endif %}
@@ -209,6 +209,49 @@
             {% elif active_tab == 'account' %}
                 <!-- Account Settings Tab -->
                 <div class="settings-section">
+                    <!-- Password Change Success Message -->
+                    {% if request.GET.changed == 'true' or 'changed=true' in request.get_full_path %}
+                    <div class="password-success-message" style="
+                        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08)); 
+                        border: 2px solid rgba(16, 185, 129, 0.4); 
+                        border-radius: 16px; 
+                        padding: 20px 24px; 
+                        margin-bottom: 32px; 
+                        display: flex; 
+                        align-items: center; 
+                        gap: 16px; 
+                        color: #059669;
+                        font-weight: 600;
+                        font-size: 16px;
+                        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+                        animation: slideInSuccess 0.5s ease-out;">
+                        <div style="
+                            width: 48px; 
+                            height: 48px; 
+                            background: linear-gradient(135deg, #10b981, #059669); 
+                            border-radius: 50%; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            color: white; 
+                            font-size: 24px;">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div>
+                            <div style="margin-bottom: 4px;">🎉 Mot de passe modifié avec succès !</div>
+                            <div style="font-size: 14px; font-weight: normal; opacity: 0.8;">
+                                Votre compte est maintenant sécurisé avec votre nouveau mot de passe.
+                            </div>
+                        </div>
+                    </div>
+                    <style>
+                    @keyframes slideInSuccess {
+                        from { opacity: 0; transform: translateY(-20px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    </style>
+                    {% endif %}
+                    
                     <div class="section-header">
                         <h2>
                             <i class="fas fa-shield-alt"></i>
@@ -246,7 +289,8 @@
                                 <p>Dernière modification: {{ student.user.last_login|date:"d/m/Y"|default:"Non disponible" }}</p>
                             </div>
                             <div class="setting-action">
-                                <a href="#" class="btn btn-sm btn-primary" onclick="alert('Fonctionnalite bientot disponible')">
+                                <a href="{% url 'student:password_change' %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-key"></i>
                                     Changer
                                 </a>
                             </div>
@@ -357,6 +401,29 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Handle password change success message
+    const successMessage = document.querySelector('.password-success-message');
+    if (successMessage) {
+        // Auto-hide after 6 seconds
+        setTimeout(() => {
+            successMessage.style.transition = 'all 0.6s ease-in-out';
+            successMessage.style.opacity = '0';
+            successMessage.style.transform = 'translateY(-20px)';
+            
+            // Remove from DOM after animation
+            setTimeout(() => {
+                successMessage.remove();
+            }, 600);
+        }, 6000);
+        
+        // Clean up URL (remove ?changed=true)
+        if (window.location.search.includes('changed=true')) {
+            const url = new URL(window.location);
+            url.searchParams.delete('changed');
+            window.history.replaceState({}, '', url.toString());
+        }
+    }
+    
     // Profile completion circle animation
     const completionCircle = document.querySelector('.completion-circle');
     if (completionCircle) {

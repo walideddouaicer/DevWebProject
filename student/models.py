@@ -525,3 +525,28 @@ class ProjectReport(models.Model):
     
     def __str__(self):
         return f"Report by {self.reporter.username} on {self.project.title}"
+    
+
+
+
+class UserPreferences(models.Model):
+    """Store user preferences and settings"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preferences')
+    
+    # Notification preferences
+    email_notifications = models.BooleanField(default=True)
+    project_notifications = models.BooleanField(default=True)
+    collaboration_notifications = models.BooleanField(default=True)
+    
+    # Other preferences
+    theme_preference = models.CharField(
+        max_length=20, 
+        choices=[('light', 'Clair'), ('dark', 'Sombre'), ('auto', 'Automatique')],
+        default='auto'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Preferences for {self.user.username}"

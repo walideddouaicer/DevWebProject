@@ -2,6 +2,7 @@
 
 from django.urls import path
 from . import views
+from django.contrib.auth import views as auth_views
 
 app_name = 'student'
 
@@ -53,4 +54,14 @@ urlpatterns = [
     path('settings/', views.profile_settings, name='profile_settings'),
     path('settings/account/', views.account_settings, name='account_settings'),
     path('profile/picture/delete/', views.delete_profile_picture, name='delete_profile_picture'),
+
+    # Password Change URLs
+    path('password/change/', auth_views.PasswordChangeView.as_view(
+        template_name='student/password_change.html',
+        success_url='/student/settings/?tab=account&changed=true'
+    ), name='password_change'),
+    
+    path('password/change/done/', auth_views.PasswordChangeDoneView.as_view(
+        template_name='student/password_change_done.html'
+    ), name='password_change_done'),
 ]
