@@ -273,3 +273,37 @@ img {
         line-height: 1.4;
     }
 }
+
+/* ===== STEP 13: Add to student/static/student/css/base.css or components.css ===== */
+
+/* User Avatar Image in Navigation */
+.user-avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Ensure user-avatar container is clickable */
+.user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    color: white;
+    font-weight: 600;
+    font-size: var(--text-sm);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+    text-decoration: none;
+    color: white;
+}

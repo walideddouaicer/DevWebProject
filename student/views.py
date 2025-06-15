@@ -15,6 +15,7 @@ from .models import ProjectActivity
 from django.db.models import Q, OuterRef, Case, When
 from django.utils import timezone
 from .models import Notification
+from .forms import StudentProfileForm, AccountSettingsForm
 
 # Add these stub functions for the new URL patterns
 @login_required
@@ -1195,3 +1196,113 @@ def project_submit_confirmation(request, project_id):
     }
     
     return render(request, 'student/project_submit_confirmation.html', context)
+
+
+
+
+
+
+
+
+
+
+
+
+# profil related views
+
+@login_required
+def profile_settings(request):
+    """Main profile and settings page with tabs"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    
+    # Get current tab (default to profile)
+    active_tab = request.GET.get('tab', 'profile')
+    
+    context = {
+        'student': student,
+        'active_tab': active_tab,
+        'profile_completion': student.get_profile_completion_percentage(),
+    }
+    
+    return render(request, 'student/profile_settings.html', context)
+
+@login_required
+def profile_edit(request):
+    """Edit student profile information"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    
+    if request.method == 'POST':
+        form = StudentProfileForm(request.POST, request.FILES, instance=student, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Votre profil a été mis à jour avec succès!")
+            return redirect('student:profile_settings')
+        else:
+            messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
+    else:
+        form = StudentProfileForm(instance=student, user=request.user)
+    
+    context = {
+        'student': student,
+        'form': form,
+        'profile_completion': student.get_profile_completion_percentage(),
+    }
+    
+    return render(request, 'student/profile_edit.html', context)
+
+@login_required
+def profile_view(request):
+    """View own profile (read-only)"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    
+    context = {
+        'student': student,
+        'profile_completion': student.get_profile_completion_percentage(),
+        'is_own_profile': True,
+    }
+    
+    return render(request, 'student/profile_view.html', context)
+
+@login_required
+def account_settings(request):
+    """Account settings and preferences"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    
+    if request.method == 'POST':
+        form = AccountSettingsForm(request.POST)
+        if form.is_valid():
+            # Handle settings changes
+            if form.cleaned_data.get('change_password'):
+                # Redirect to password change
+                messages.info(request, "Redirection vers le changement de mot de passe...")
+                return redirect('password_change')  # Django's built-in password change
+            
+            # For now, just show a success message
+            messages.success(request, "Paramètres mis à jour avec succès!")
+            return redirect('student:profile_settings', tab='settings')
+    else:
+        form = AccountSettingsForm()
+    
+    context = {
+        'student': student,
+        'form': form,
+    }
+    
+    return render(request, 'student/account_settings.html', context)
+
+@login_required
+def delete_profile_picture(request):
+    """Delete profile picture (AJAX endpoint)"""
+    if request.method == 'POST':
+        student = get_object_or_404(StudentProfile, user=request.user)
+        
+        if student.profile_picture:
+            # Delete the file
+            student.profile_picture.delete()
+            messages.success(request, "Photo de profil supprimée avec succès.")
+        else:
+            messages.warning(request, "Aucune photo de profil à supprimer.")
+        
+        return redirect('student:profile_edit')
+    
+    return redirect('student:profile_settings')

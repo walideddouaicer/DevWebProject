@@ -1,0 +1,307 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}Mon Profil - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+    <span class="breadcrumb-separator">›</span>
+    <a href="{% url 'student:profile_settings' %}" class="breadcrumb-link">Profil & Paramètres</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>Mon Profil</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+    <!-- Profile View Header -->
+    <div class="profile-view-header">
+        <div class="header-actions">
+            <a href="{% url 'student:profile_settings' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour aux paramètres
+            </a>
+            <a href="{% url 'student:profile_edit' %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i>
+                Modifier le profil
+            </a>
+        </div>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="profile-card">
+        <div class="profile-banner">
+            <div class="banner-pattern"></div>
+        </div>
+        
+        <div class="profile-content">
+            <div class="profile-main">
+                <div class="profile-avatar-section">
+                    {% if student.profile_picture %}
+                        <img src="{{ student.profile_picture.url }}" alt="Photo de profil" class="profile-avatar">
+                    {% else %}
+                        <div class="profile-avatar avatar-placeholder">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="profile-completion-badge">
+                        <i class="fas fa-star"></i>
+                        {{ profile_completion }}%
+                    </div>
+                </div>
+                
+                <div class="profile-info">
+                    <h1 class="profile-name">
+                        {{ student.get_display_name }}
+                    </h1>
+                    
+                    <div class="profile-details">
+                        <div class="detail-item">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>{{ student.get_year_of_study_display }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-building"></i>
+                            <span>{{ student.department }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-id-card"></i>
+                            <span>{{ student.student_id }}</span>
+                        </div>
+                        {% if student.user.email %}
+                        <div class="detail-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>{{ student.user.email }}</span>
+                        </div>
+                        {% endif %}
+                        {% if student.phone_number %}
+                        <div class="detail-item">
+                            <i class="fas fa-phone"></i>
+                            <span>{{ student.phone_number }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Sections -->
+    <div class="profile-sections">
+        <!-- About Section -->
+        {% if student.bio %}
+        <div class="profile-section">
+            <div class="section-header">
+                <h3>
+                    <i class="fas fa-user"></i>
+                    À propos de moi
+                </h3>
+            </div>
+            <div class="section-content">
+                <p class="bio-text">{{ student.bio|linebreaks }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Social Links Section -->
+        {% if student.linkedin_url or student.github_url or student.personal_website %}
+        <div class="profile-section">
+            <div class="section-header">
+                <h3>
+                    <i class="fas fa-link"></i>
+                    Liens
+                </h3>
+            </div>
+            <div class="section-content">
+                <div class="social-links">
+                    {% if student.linkedin_url %}
+                    <a href="{{ student.linkedin_url }}" target="_blank" rel="noopener" class="social-link linkedin">
+                        <div class="link-icon">
+                            <i class="fab fa-linkedin"></i>
+                        </div>
+                        <div class="link-info">
+                            <div class="link-title">LinkedIn</div>
+                            <div class="link-url">{{ student.linkedin_url|truncatechars:40 }}</div>
+                        </div>
+                        <div class="link-arrow">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if student.github_url %}
+                    <a href="{{ student.github_url }}" target="_blank" rel="noopener" class="social-link github">
+                        <div class="link-icon">
+                            <i class="fab fa-github"></i>
+                        </div>
+                        <div class="link-info">
+                            <div class="link-title">GitHub</div>
+                            <div class="link-url">{{ student.github_url|truncatechars:40 }}</div>
+                        </div>
+                        <div class="link-arrow">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if student.personal_website %}
+                    <a href="{{ student.personal_website }}" target="_blank" rel="noopener" class="social-link website">
+                        <div class="link-icon">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <div class="link-info">
+                            <div class="link-title">Site personnel</div>
+                            <div class="link-url">{{ student.personal_website|truncatechars:40 }}</div>
+                        </div>
+                        <div class="link-arrow">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Profile Stats Section -->
+        <div class="profile-section">
+            <div class="section-header">
+                <h3>
+                    <i class="fas fa-chart-bar"></i>
+                    Statistiques
+                </h3>
+            </div>
+            <div class="section-content">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ student.user.date_joined|date:"F Y" }}</div>
+                            <div class="stat-label">Membre depuis</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ student.profile_updated_at|date:"d/m/Y" }}</div>
+                            <div class="stat-label">Dernière mise à jour</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ profile_completion }}%</div>
+                            <div class="stat-label">Profil complété</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State for Missing Information -->
+        {% if profile_completion < 50 %}
+        <div class="profile-section incomplete-section">
+            <div class="section-header">
+                <h3>
+                    <i class="fas fa-exclamation-circle"></i>
+                    Complétez votre profil
+                </h3>
+            </div>
+            <div class="section-content">
+                <div class="incomplete-notice">
+                    <div class="notice-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="notice-content">
+                        <h4>Votre profil n'est pas complet</h4>
+                        <p>Ajoutez plus d'informations pour améliorer votre présence et faciliter les collaborations.</p>
+                        <div class="missing-items">
+                            {% if not student.bio %}
+                                <span class="missing-item">
+                                    <i class="fas fa-file-alt"></i>
+                                    Biographie
+                                </span>
+                            {% endif %}
+                            {% if not student.profile_picture %}
+                                <span class="missing-item">
+                                    <i class="fas fa-image"></i>
+                                    Photo de profil
+                                </span>
+                            {% endif %}
+                            {% if not student.phone_number %}
+                                <span class="missing-item">
+                                    <i class="fas fa-phone"></i>
+                                    Téléphone
+                                </span>
+                            {% endif %}
+                            {% if not student.linkedin_url and not student.github_url and not student.personal_website %}
+                                <span class="missing-item">
+                                    <i class="fas fa-link"></i>
+                                    Liens sociaux
+                                </span>
+                            {% endif %}
+                        </div>
+                        <a href="{% url 'student:profile_edit' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit"></i>
+                            Compléter le profil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate stats on scroll
+    const statValues = document.querySelectorAll('.stat-value');
+    
+    function animateStats() {
+        statValues.forEach(stat => {
+            const rect = stat.getBoundingClientRect();
+            const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+            
+            if (isVisible && !stat.classList.contains('animated')) {
+                stat.classList.add('animated');
+                // Add animation class for smooth appearance
+                stat.style.opacity = '0';
+                stat.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    stat.style.transition = 'all 0.5s ease';
+                    stat.style.opacity = '1';
+                    stat.style.transform = 'translateY(0)';
+                }, 100);
+            }
+        });
+    }
+    
+    // Animate on load and scroll
+    animateStats();
+    window.addEventListener('scroll', animateStats);
+    
+    // Social links tracking
+    const socialLinks = document.querySelectorAll('.social-link');
+    socialLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            const platform = this.classList.contains('linkedin') ? 'LinkedIn' : 
+                           this.classList.contains('github') ? 'GitHub' : 'Website';
+            console.log(`Visiting ${platform} profile`);
+        });
+    });
+});
+</script>
+{% endblock %}

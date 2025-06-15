@@ -145,28 +145,32 @@ Enhanced Base template with modern UI, theme toggle, and modular CSS
                 <div class="user-menu">
                     <!-- Theme toggle will be inserted here by JavaScript -->
                     
-                    <a href="{% url 'student:notifications' %}" class="notification-btn" >
+                    <a href="{% url 'student:notifications' %}" class="notification-btn">
                         <i class="fas fa-bell"></i>
                         {% if unread_notifications_count > 0 %}
                             <span class="notification-badge">{{ unread_notifications_count }}</span>
                         {% endif %}
                     </a>
                     
-                    <button class="notification-btn" >
+                    <a href="{% url 'student:profile_settings' %}" class="notification-btn" title="Profil & Paramètres">
                         <i class="fas fa-cog"></i>
-                    </button>
+                    </a>
                     
-                    <div class="user-avatar" >
-                        {% if user.first_name %}
-                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper|default:'' }}
+                    <a href="{% url 'student:profile_view' %}" class="user-avatar" title="Mon Profil">
+                        {% if user.studentprofile.profile_picture %}
+                            <img src="{{ user.studentprofile.profile_picture.url }}" alt="Profile" class="user-avatar-img">
                         {% else %}
-                            {{ user.username|first|upper }}
+                            {% if user.first_name %}
+                                {{ user.first_name|first|upper }}{{ user.last_name|first|upper|default:'' }}
+                            {% else %}
+                                {{ user.username|first|upper }}
+                            {% endif %}
                         {% endif %}
-                    </div>
+                    </a>
                     
                     <form method="post" action="{% url 'logout' %}" style="display: inline;">
                         {% csrf_token %}
-                        <button type="submit" class="action-btn" >
+                        <button type="submit" class="action-btn" title="Déconnexion">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
                     </form>

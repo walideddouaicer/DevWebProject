@@ -246,3 +246,185 @@ class PublicCommentForm(forms.ModelForm):
         if content and len(content.strip()) < 5:
             raise forms.ValidationError("Le commentaire doit contenir au moins 5 caractères.")
         return content
+    
+
+
+
+
+# student profil addition
+
+class StudentProfileForm(forms.ModelForm):
+    """Form for editing student profile information"""
+    
+    # User fields
+    first_name = forms.CharField(
+        max_length=30,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Votre prénom...'
+        })
+    )
+    
+    last_name = forms.CharField(
+        max_length=30,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Votre nom...'
+        })
+    )
+    
+    email = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'votre.email@example.com'
+        })
+    )
+    
+    class Meta:
+        model = StudentProfile
+        fields = [
+            'bio', 'phone_number', 'profile_picture', 
+            'linkedin_url', 'github_url', 'personal_website'
+        ]
+        widgets = {
+            'bio': forms.Textarea(attrs={
+                'class': 'form-textarea',
+                'rows': 4,
+                'placeholder': 'Parlez-nous de vous, vos intérêts, vos objectifs...'
+            }),
+            'phone_number': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': '+212 6XX XXX XXX'
+            }),
+            'profile_picture': forms.FileInput(attrs={
+                'class': 'form-input',
+                'accept': 'image/*'
+            }),
+            'linkedin_url': forms.URLInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'https://linkedin.com/in/votreprofil'
+            }),
+            'github_url': forms.URLInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'https://github.com/votrenom'
+            }),
+            'personal_website': forms.URLInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'https://votresite.com'
+            }),
+        }
+        labels = {
+            'bio': 'Biographie',
+            'phone_number': 'Numéro de téléphone',
+            'profile_picture': 'Photo de profil',
+            'linkedin_url': 'Profil LinkedIn',
+            'github_url': 'Profil GitHub',
+            'personal_website': 'Site personnel',
+        }
+        help_texts = {
+            'bio': 'Une brève description de vous-même, vos intérêts académiques et professionnels.',
+            'phone_number': 'Votre numéro de téléphone (optionnel).',
+            'profile_picture': 'Choisissez une photo de profil (formats acceptés: JPG, PNG, GIF, max 5MB).',
+            'linkedin_url': 'L\'URL complète de votre profil LinkedIn.',
+            'github_url': 'L\'URL complète de votre profil GitHub.',
+            'personal_website': 'L\'URL de votre site personnel ou portfolio.',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Pre-populate user fields if user is provided
+        if user:
+            self.fields['first_name'].initial = user.first_name
+            self.fields['last_name'].initial = user.last_name
+            self.fields['email'].initial = user.email
+    
+    def clean_profile_picture(self):
+        """Validate profile picture"""
+        picture = self.cleaned_data.get('profile_picture')
+        if picture:
+            # Check file size (5MB max)
+            if picture.size > 5 * 1024 * 1024:
+                raise forms.ValidationError("L'image est trop volumineuse (maximum 5MB).")
+            
+            # Check file type
+            if not picture.content_type.startswith('image/'):
+                raise forms.ValidationError("Le fichier doit être une image.")
+        
+        return picture
+    
+    def clean_phone_number(self):
+        """Validate phone number"""
+        phone = self.cleaned_data.get('phone_number')
+        if phone:
+            # Remove spaces and common separators
+            phone_clean = ''.join(filter(str.isdigit, phone.replace('+', '')))
+            if len(phone_clean) < 8:
+                raise forms.ValidationError("Le numéro de téléphone semble trop court.")
+        return phone
+    
+    def clean_linkedin_url(self):
+        """Validate LinkedIn URL"""
+        url = self.cleaned_data.get('linkedin_url')
+        if url and 'linkedin.com' not in url.lower():
+            raise forms.ValidationError("Veuillez entrer une URL LinkedIn valide.")
+        return url
+    
+    def clean_github_url(self):
+        """Validate GitHub URL"""
+        url = self.cleaned_data.get('github_url')
+        if url and 'github.com' not in url.lower():
+            raise forms.ValidationError("Veuillez entrer une URL GitHub valide.")
+        return url
+    
+    def save(self, commit=True):
+        """Save the profile and update user fields"""
+        profile = super().save(commit=False)
+        
+        if commit:
+            # Update user fields
+            user = profile.user
+            user.first_name = self.cleaned_data.get('first_name', '')
+            user.last_name = self.cleaned_data.get('last_name', '')
+            user.email = self.cleaned_data.get('email', '')
+            user.save()
+            
+            profile.save()
+        
+        return profile
+
+
+class AccountSettingsForm(forms.Form):
+    """Form for account-related settings (can be extended later)"""
+    
+    change_password = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        label="Je veux changer mon mot de passe"
+    )
+    
+    # Placeholder for future settings
+    email_notifications = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        label="Recevoir les notifications par email"
+    )
+    
+    project_notifications = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        label="Notifications de projets"
+    )
+    
+    collaboration_notifications = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        label="Notifications de collaboration"
+    )

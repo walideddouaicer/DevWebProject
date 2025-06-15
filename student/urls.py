@@ -45,4 +45,12 @@ urlpatterns = [
 
     path('projects/<int:project_id>/make-public/', views.make_project_public, name='make_project_public'),
     path('projects/<int:project_id>/make-private/', views.make_project_private, name='make_project_private'),
+
+
+     # Profile Management URLs
+    path('profile/', views.profile_view, name='profile_view'),
+    path('profile/edit/', views.profile_edit, name='profile_edit'),
+    path('settings/', views.profile_settings, name='profile_settings'),
+    path('settings/account/', views.account_settings, name='account_settings'),
+    path('profile/picture/delete/', views.delete_profile_picture, name='delete_profile_picture'),
 ]

@@ -4,16 +4,61 @@ from django.utils import timezone
 # Create your models here.
 
 
-# Student Profile model
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     student_id = models.CharField(max_length=20, unique=True)
     year_of_study = models.IntegerField(choices=[(3, '3rd Year'), (4, '4th Year'), (5, '5th Year')])
     department = models.CharField(max_length=100)
     
+    # NEW PROFILE FIELDS - All optional
+    bio = models.TextField(blank=True, null=True, help_text="Tell us about yourself")
+    phone_number = models.CharField(max_length=20, blank=True, null=True, help_text="Your contact number")
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True, help_text="Profile photo")
+    linkedin_url = models.URLField(blank=True, null=True, help_text="LinkedIn profile URL")
+    github_url = models.URLField(blank=True, null=True, help_text="GitHub profile URL")
+    personal_website = models.URLField(blank=True, null=True, help_text="Personal website or portfolio")
+    
+    # Profile completion tracking
+    profile_updated_at = models.DateTimeField(auto_now=True)
+    
     def __str__(self):
         return f"{self.user.get_full_name() or self.user.username} ({self.student_id}) - {self.department}"
     
+    def get_profile_completion_percentage(self):
+        """Calculate profile completion percentage"""
+        total_fields = 9  # Total optional profile fields we track
+        completed_fields = 0
+        
+        # Check basic required fields
+        if self.user.first_name: completed_fields += 1
+        if self.user.last_name: completed_fields += 1
+        if self.user.email: completed_fields += 1
+        
+        # Check optional profile fields
+        if self.bio: completed_fields += 1
+        if self.phone_number: completed_fields += 1
+        if self.profile_picture: completed_fields += 1
+        if self.linkedin_url: completed_fields += 1
+        if self.github_url: completed_fields += 1
+        if self.personal_website: completed_fields += 1
+        
+        return int((completed_fields / total_fields) * 100)
+    
+    def get_avatar_url(self):
+        """Get profile picture URL or return None for default avatar"""
+        if self.profile_picture:
+            return self.profile_picture.url
+        return None
+    
+    def get_full_name(self):
+        """Get user's full name or username as fallback"""
+        return self.user.get_full_name() or self.user.username
+    
+    def get_display_name(self):
+        """Get display name for UI"""
+        if self.user.first_name or self.user.last_name:
+            return f"{self.user.first_name} {self.user.last_name}".strip()
+        return self.user.username
 
 
 

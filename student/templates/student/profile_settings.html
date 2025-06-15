@@ -1,0 +1,400 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}Profil & Paramètres - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+    <span class="breadcrumb-separator">›</span>
+    <span>Profil & Paramètres</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-hero">
+            <div class="profile-avatar-section">
+                {% if student.profile_picture %}
+                    <img src="{{ student.profile_picture.url }}" alt="Photo de profil" class="profile-avatar-large">
+                {% else %}
+                    <div class="profile-avatar-large profile-avatar-placeholder">
+                        <i class="fas fa-user"></i>
+                    </div>
+                {% endif %}
+                <div class="profile-completion">
+                    <div class="completion-circle" data-percentage="{{ profile_completion }}">
+                        <div class="completion-text">{{ profile_completion }}%</div>
+                    </div>
+                    <div class="completion-label">Profil complété</div>
+                </div>
+            </div>
+            
+            <div class="profile-info">
+                <h1 class="profile-name">
+                    {{ student.get_display_name }}
+                </h1>
+                <p class="profile-title">
+                    {{ student.get_year_of_study_display }} - {{ student.department }}
+                </p>
+                <p class="profile-id">
+                    <i class="fas fa-id-card"></i>
+                    {{ student.student_id }}
+                </p>
+                
+                {% if student.bio %}
+                    <div class="profile-bio">
+                        <p>{{ student.bio|truncatewords:30 }}</p>
+                    </div>
+                {% endif %}
+                
+                <div class="profile-actions">
+                    <a href="{% url 'student:profile_view' %}" class="btn btn-secondary">
+                        <i class="fas fa-eye"></i>
+                        Voir le Profil
+                    </a>
+                    <a href="{% url 'student:profile_edit' %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i>
+                        Modifier le Profil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Completion Banner -->
+    {% if profile_completion < 80 %}
+    <div class="completion-banner">
+        <div class="banner-content">
+            <div class="banner-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="banner-text">
+                <h3>Complétez votre profil</h3>
+                <p>Votre profil est complété à {{ profile_completion }}%. Ajoutez plus d'informations pour améliorer votre présence.</p>
+            </div>
+            <div class="banner-action">
+                <a href="{% url 'student:profile_edit' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i>
+                    Compléter
+                </a>
+            </div>
+        </div>
+        <div class="completion-progress">
+            <div class="progress-bar" style="width: {{ profile_completion }}%;"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Settings Navigation -->
+    <div class="settings-container">
+        <div class="settings-sidebar">
+            <nav class="settings-nav">
+                <h3 class="settings-nav-title">
+                    <i class="fas fa-cog"></i>
+                    Paramètres
+                </h3>
+                <ul class="settings-nav-list">
+                    <li>
+                        <a href="{% url 'student:profile_settings' %}" 
+                           class="settings-nav-item {% if active_tab == 'profile' %}active{% endif %}">
+                            <i class="fas fa-user"></i>
+                            <span>Informations personnelles</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'student:profile_settings' %}?tab=account" 
+                           class="settings-nav-item {% if active_tab == 'account' %}active{% endif %}">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Compte & Sécurité</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'student:profile_settings' %}?tab=notifications" 
+                           class="settings-nav-item {% if active_tab == 'notifications' %}active{% endif %}">
+                            <i class="fas fa-bell"></i>
+                            <span>Notifications</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'student:profile_settings' %}?tab=privacy" 
+                           class="settings-nav-item {% if active_tab == 'privacy' %}active{% endif %}">
+                            <i class="fas fa-eye"></i>
+                            <span>Confidentialité</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="settings-content">
+            {% if active_tab == 'profile' %}
+                <!-- Profile Information Tab -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-user"></i>
+                            Informations personnelles
+                        </h2>
+                        <p>Gérez vos informations de profil et préférences personnelles.</p>
+                    </div>
+                    
+                    <div class="profile-summary-cards">
+                        <div class="summary-card">
+                            <div class="card-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Informations de base</h4>
+                                <p>Nom, email, contact</p>
+                                <div class="card-status">
+                                    {% if student.user.first_name and student.user.last_name and student.user.email %}
+                                        <span class="status-complete">Complété</span>
+                                    {% else %}
+                                        <span class="status-incomplete">Incomplet</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-card">
+                            <div class="card-icon">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Photo de profil</h4>
+                                <p>Avatar personnalisé</p>
+                                <div class="card-status">
+                                    {% if student.profile_picture %}
+                                        <span class="status-complete">Ajoutée</span>
+                                    {% else %}
+                                        <span class="status-incomplete">Non ajoutée</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-card">
+                            <div class="card-icon">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Liens sociaux</h4>
+                                <p>LinkedIn, GitHub, site web</p>
+                                <div class="card-status">
+                                    {% if student.linkedin_url or student.github_url or student.personal_website %}
+                                        <span class="status-partial">{{ student.linkedin_url|yesno:"1,0"|add:student.github_url|yesno:"1,0"|add:student.personal_website|yesno:"1,0" }}/3</span>
+                                    {% else %}
+                                        <span class="status-incomplete">0/3</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-actions">
+                        <a href="{% url 'student:profile_edit' %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i>
+                            Modifier les informations
+                        </a>
+                        <a href="{% url 'student:profile_view' %}" class="btn btn-secondary">
+                            <i class="fas fa-eye"></i>
+                            Prévisualiser le profil
+                        </a>
+                    </div>
+                </div>
+
+            {% elif active_tab == 'account' %}
+                <!-- Account Settings Tab -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-shield-alt"></i>
+                            Compte & Sécurité
+                        </h2>
+                        <p>Gérez votre compte et vos paramètres de sécurité.</p>
+                    </div>
+                    
+                    <div class="settings-cards">
+                        <div class="setting-card">
+                            <div class="setting-info">
+                                <h4>Nom d'utilisateur</h4>
+                                <p>{{ student.user.username }}</p>
+                            </div>
+                            <div class="setting-status">
+                                <span class="status-complete">Configuré</span>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <div class="setting-info">
+                                <h4>Adresse email</h4>
+                                <p>{{ student.user.email|default:"Non définie" }}</p>
+                            </div>
+                            <div class="setting-action">
+                                <a href="{% url 'student:profile_edit' %}" class="btn btn-sm btn-secondary">
+                                    Modifier
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-card">
+                            <div class="setting-info">
+                                <h4>Mot de passe</h4>
+                                <p>Dernière modification: {{ student.user.last_login|date:"d/m/Y"|default:"Non disponible" }}</p>
+                            </div>
+                            <div class="setting-action">
+                                <a href="#" class="btn btn-sm btn-primary" onclick="alert('Fonctionnalite bientot disponible')">
+                                    Changer
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            {% elif active_tab == 'notifications' %}
+                <!-- Notifications Tab -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-bell"></i>
+                            Notifications
+                        </h2>
+                        <p>Configurez vos préférences de notification.</p>
+                    </div>
+                    
+                    <div class="notification-settings">
+                        <div class="notification-group">
+                            <h4>Notifications de projets</h4>
+                            <div class="notification-item">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <strong>Mises à jour de projets</strong>
+                                    <p>Notifications lors de changements sur vos projets</p>
+                                </div>
+                            </div>
+                            <div class="notification-item">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <strong>Invitations de collaboration</strong>
+                                    <p>Alertes pour les nouvelles invitations</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="notification-group">
+                            <h4>Notifications système</h4>
+                            <div class="notification-item">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <strong>Notifications par email</strong>
+                                    <p>Recevoir des notifications par email</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-note">
+                        <p><i class="fas fa-info-circle"></i> Ces paramètres seront bientôt fonctionnels.</p>
+                    </div>
+                </div>
+
+            {% elif active_tab == 'privacy' %}
+                <!-- Privacy Tab -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-eye"></i>
+                            Confidentialité
+                        </h2>
+                        <p>Contrôlez la visibilité de vos informations.</p>
+                    </div>
+                    
+                    <div class="privacy-notice">
+                        <div class="notice-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="notice-content">
+                            <h4>Vos données sont privées</h4>
+                            <p>Actuellement, toutes vos informations de profil sont privées et ne sont visibles que par vous. Les fonctionnalités de profil public seront ajoutées dans une future mise à jour.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="privacy-preview">
+                        <h4>Aperçu de la confidentialité future</h4>
+                        <div class="privacy-settings">
+                            <div class="privacy-item">
+                                <span>Profil public</span>
+                                <span class="privacy-status disabled">Désactivé</span>
+                            </div>
+                            <div class="privacy-item">
+                                <span>Visibilité des projets</span>
+                                <span class="privacy-status disabled">Privé</span>
+                            </div>
+                            <div class="privacy-item">
+                                <span>Informations de contact</span>
+                                <span class="privacy-status disabled">Privé</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile completion circle animation
+    const completionCircle = document.querySelector('.completion-circle');
+    if (completionCircle) {
+        const percentage = completionCircle.getAttribute('data-percentage');
+        const circumference = 2 * Math.PI * 45; // radius = 45
+        const offset = circumference - (percentage / 100 * circumference);
+        
+        // Add CSS for the circle
+        const style = document.createElement('style');
+        style.textContent = `
+            .completion-circle::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 90px;
+                height: 90px;
+                margin: -45px 0 0 -45px;
+                border: 8px solid var(--border-secondary);
+                border-radius: 50%;
+                border-top-color: var(--accent-primary);
+                transform: rotate(-90deg);
+                transition: all 0.5s ease;
+                stroke-dasharray: ${circumference};
+                stroke-dashoffset: ${offset};
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Toggle switches
+    const toggleSwitches = document.querySelectorAll('.toggle-switch input');
+    toggleSwitches.forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            // This would handle the toggle change in a real implementation
+            console.log('Toggle changed:', this.checked);
+        });
+    });
+});
+</script>
+{% endblock %}

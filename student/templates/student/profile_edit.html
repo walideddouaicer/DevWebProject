@@ -1,0 +1,402 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}Modifier le Profil - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+    <span class="breadcrumb-separator">›</span>
+    <a href="{% url 'student:profile_settings' %}" class="breadcrumb-link">Profil & Paramètres</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>Modifier le Profil</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+    <!-- Edit Profile Header -->
+    <div class="edit-profile-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1>
+                    <i class="fas fa-edit"></i>
+                    Modifier mon profil
+                </h1>
+                <p>Mettez à jour vos informations personnelles et préférences</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'student:profile_settings' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Retour aux paramètres
+                </a>
+                <a href="{% url 'student:profile_view' %}" class="btn btn-ghost">
+                    <i class="fas fa-eye"></i>
+                    Aperçu
+                </a>
+            </div>
+        </div>
+        
+        <!-- Progress Indicator -->
+        <div class="completion-indicator">
+            <div class="completion-bar">
+                <div class="completion-fill" style="width: {{ profile_completion }}%;"></div>
+            </div>
+            <span class="completion-text">{{ profile_completion }}% complété</span>
+        </div>
+    </div>
+
+    <!-- Profile Edit Form -->
+    <form method="post" enctype="multipart/form-data" class="profile-edit-form">
+        {% csrf_token %}
+        
+        <div class="form-sections">
+            <!-- Profile Picture Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-camera"></i>
+                        Photo de profil
+                    </h3>
+                    <p>Ajoutez une photo pour personnaliser votre profil</p>
+                </div>
+                
+                <div class="profile-picture-upload">
+                    <div class="current-picture">
+                        {% if student.profile_picture %}
+                            <img src="{{ student.profile_picture.url }}" alt="Photo de profil actuelle" class="current-avatar" id="currentAvatar">
+                        {% else %}
+                            <div class="current-avatar avatar-placeholder" id="currentAvatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="picture-controls">
+                        <div class="upload-section">
+                            {{ form.profile_picture }}
+                            <label for="{{ form.profile_picture.id_for_label }}" class="upload-btn">
+                                <i class="fas fa-upload"></i>
+                                Choisir une photo
+                            </label>
+                            <div class="upload-info">
+                                <small>JPG, PNG ou GIF. Maximum 5MB.</small>
+                            </div>
+                        </div>
+                        
+                        {% if student.profile_picture %}
+                        <div class="picture-actions">
+                            <a href="{% url 'student:delete_profile_picture' %}" 
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer votre photo de profil ?')">
+                                <i class="fas fa-trash"></i>
+                                Supprimer
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if form.profile_picture.errors %}
+                    <div class="form-error">
+                        {{ form.profile_picture.errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Personal Information Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-user"></i>
+                        Informations personnelles
+                    </h3>
+                    <p>Vos informations de base et de contact</p>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                            <i class="fas fa-user"></i>
+                            Prénom
+                        </label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="form-error">{{ form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                            <i class="fas fa-user"></i>
+                            Nom
+                        </label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="form-error">{{ form.last_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group form-group-full">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">
+                            <i class="fas fa-envelope"></i>
+                            Adresse email
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="form-error">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group form-group-full">
+                        <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                            <i class="fas fa-phone"></i>
+                            {{ form.phone_number.label }}
+                        </label>
+                        {{ form.phone_number }}
+                        <div class="form-help">{{ form.phone_number.help_text }}</div>
+                        {% if form.phone_number.errors %}
+                            <div class="form-error">{{ form.phone_number.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Information Section (Read-only) -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-graduation-cap"></i>
+                        Informations académiques
+                    </h3>
+                    <p>Ces informations sont gérées par l'administration</p>
+                </div>
+                
+                <div class="academic-info">
+                    <div class="academic-item">
+                        <div class="academic-label">
+                            <i class="fas fa-id-card"></i>
+                            ID Étudiant
+                        </div>
+                        <div class="academic-value">{{ student.student_id }}</div>
+                    </div>
+                    <div class="academic-item">
+                        <div class="academic-label">
+                            <i class="fas fa-graduation-cap"></i>
+                            Année d'étude
+                        </div>
+                        <div class="academic-value">{{ student.get_year_of_study_display }}</div>
+                    </div>
+                    <div class="academic-item">
+                        <div class="academic-label">
+                            <i class="fas fa-building"></i>
+                            Département
+                        </div>
+                        <div class="academic-value">{{ student.department }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Biography Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-file-alt"></i>
+                        À propos de moi
+                    </h3>
+                    <p>Décrivez-vous en quelques mots</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.bio.id_for_label }}" class="form-label">
+                        {{ form.bio.label }}
+                    </label>
+                    {{ form.bio }}
+                    <div class="form-help">{{ form.bio.help_text }}</div>
+                    <div class="char-counter">
+                        <span id="bioCharCount">0</span> caractères
+                    </div>
+                    {% if form.bio.errors %}
+                        <div class="form-error">{{ form.bio.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Social Links Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="fas fa-link"></i>
+                        Liens sociaux
+                    </h3>
+                    <p>Partagez vos profils professionnels et personnels</p>
+                </div>
+                
+                <div class="social-links-grid">
+                    <div class="social-link-group">
+                        <div class="social-icon linkedin">
+                            <i class="fab fa-linkedin"></i>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.linkedin_url.id_for_label }}" class="form-label">
+                                {{ form.linkedin_url.label }}
+                            </label>
+                            {{ form.linkedin_url }}
+                            <div class="form-help">{{ form.linkedin_url.help_text }}</div>
+                            {% if form.linkedin_url.errors %}
+                                <div class="form-error">{{ form.linkedin_url.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="social-link-group">
+                        <div class="social-icon github">
+                            <i class="fab fa-github"></i>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.github_url.id_for_label }}" class="form-label">
+                                {{ form.github_url.label }}
+                            </label>
+                            {{ form.github_url }}
+                            <div class="form-help">{{ form.github_url.help_text }}</div>
+                            {% if form.github_url.errors %}
+                                <div class="form-error">{{ form.github_url.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="social-link-group">
+                        <div class="social-icon website">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.personal_website.id_for_label }}" class="form-label">
+                                {{ form.personal_website.label }}
+                            </label>
+                            {{ form.personal_website }}
+                            <div class="form-help">{{ form.personal_website.help_text }}</div>
+                            {% if form.personal_website.errors %}
+                                <div class="form-error">{{ form.personal_website.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <div class="actions-left">
+                <a href="{% url 'student:profile_settings' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </a>
+            </div>
+            <div class="actions-right">
+                <button type="button" class="btn btn-ghost" onclick="previewChanges()">
+                    <i class="fas fa-eye"></i>
+                    Aperçu
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Enregistrer les modifications
+                </button>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile picture preview
+    const fileInput = document.getElementById('{{ form.profile_picture.id_for_label }}');
+    const currentAvatar = document.getElementById('currentAvatar');
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (currentAvatar.tagName === 'IMG') {
+                        currentAvatar.src = e.target.result;
+                    } else {
+                        // Replace placeholder with image
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'current-avatar';
+                        img.alt = 'Nouvelle photo de profil';
+                        currentAvatar.parentNode.replaceChild(img, currentAvatar);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Character counter for bio
+    const bioTextarea = document.getElementById('{{ form.bio.id_for_label }}');
+    const charCounter = document.getElementById('bioCharCount');
+    
+    if (bioTextarea && charCounter) {
+        function updateCharCount() {
+            charCounter.textContent = bioTextarea.value.length;
+        }
+        
+        bioTextarea.addEventListener('input', updateCharCount);
+        updateCharCount(); // Initial count
+    }
+    
+    // Form validation
+    const form = document.querySelector('.profile-edit-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Add loading state to submit button
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+            submitBtn.disabled = true;
+            
+            // Re-enable button after 3 seconds as fallback
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 3000);
+        });
+    }
+    
+    // URL validation for social links
+    const urlFields = ['{{ form.linkedin_url.id_for_label }}', '{{ form.github_url.id_for_label }}', '{{ form.personal_website.id_for_label }}'];
+    
+    urlFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value && !value.startsWith('http://') && !value.startsWith('https://')) {
+                    this.value = 'https://' + value;
+                }
+            });
+        }
+    });
+});
+
+function previewChanges() {
+    // Simple preview functionality - could be enhanced
+    const bio = document.getElementById('{{ form.bio.id_for_label }}').value;
+    const firstName = document.getElementById('{{ form.first_name.id_for_label }}').value;
+    const lastName = document.getElementById('{{ form.last_name.id_for_label }}').value;
+    
+    let previewContent = 'Aperçu des modifications:\n\n';
+    if (firstName || lastName) {
+        previewContent += `Nom: ${firstName} ${lastName}\n`;
+    }
+    if (bio) {
+        previewContent += `Bio: ${bio.substring(0, 100)}${bio.length > 100 ? '...' : ''}\n`;
+    }
+    
+    alert(previewContent || 'Aucune modification détectée.');
+}
+</script>
+{% endblock %}
