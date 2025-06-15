@@ -81,19 +81,12 @@ Enhanced Base template with modern UI, theme toggle, and modular CSS
                         <i class="fas fa-plus nav-icon"></i>
                         <span class="nav-text">Nouveau Projet</span>
                     </a>
-                    <a href="#" class="nav-item">
-                        <i class="fas fa-chart-bar nav-icon"></i>
-                        <span class="nav-text">Statistiques</span>
-                    </a>
-                    <a href="#" class="nav-item">
-                        <i class="fas fa-download nav-icon"></i>
-                        <span class="nav-text">Exports</span>
-                    </a>
+                    
                 </div>
 
                 <div class="nav-section">
                     <div class="nav-section-title">Système</div>
-                    <a href="#" class="nav-item">
+                    <a href="{% url 'student:profile_settings' %}" class="nav-item">
                         <i class="fas fa-cog nav-icon"></i>
                         <span class="nav-text">Paramètres</span>
                     </a>
