@@ -1,0 +1,583 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Créer un Module - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+<style>
+.module-form {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.approval-notice {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+    border: 1px solid var(--info);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.module-preview {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.input-group {
+    position: relative;
+}
+
+.input-help {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.code-preview {
+    font-family: 'Courier New', monospace;
+    background: var(--bg-secondary);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    border: 1px solid var(--border-primary);
+}
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+    <span style="color: var(--text-muted);"> / </span>
+    <a href="{% url 'teacher:my_modules' %}" style="color: var(--accent-primary); text-decoration: none;">Mes Modules</a>
+    <span style="color: var(--text-muted);"> / </span>
+    <span>Créer un Module</span>
+{% endblock %}
+
+{% block content %}
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-plus-circle"></i>
+            Créer un Nouveau Module
+        </h1>
+        <div class="top-actions">
+            <a href="{% url 'teacher:my_modules' %}" class="action-btn">
+                <i class="fas fa-arrow-left"></i>
+                Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Welcome Section -->
+    <div class="assignment-detail-header">
+        <div class="assignment-detail-content">
+            <div class="assignment-detail-title">Création de Module Enseignant</div>
+            <p style="opacity: 0.9; font-size: 1.1em; margin-bottom: 20px;">
+                Créez un nouveau module d'enseignement pour organiser vos cours et projets étudiants.
+            </p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 20px;">
+                <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 4px;">Étape 1</div>
+                    <div style="font-weight: 700;">Création du Module</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 4px;">Étape 2</div>
+                    <div style="font-weight: 700;">Approbation Admin</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 4px;">Étape 3</div>
+                    <div style="font-weight: 700;">Inscription Étudiants</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Notice -->
+    <div class="approval-notice">
+        <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <div style="color: var(--info); font-size: 2em;">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div>
+                <h3 style="color: var(--info); font-weight: 700; margin-bottom: 12px; font-size: 1.2em;">
+                    ℹ️ Processus d'Approbation
+                </h3>
+                <div style="color: var(--text-primary); line-height: 1.6; margin-bottom: 16px;">
+                    Les modules créés par les enseignants nécessitent une <strong>approbation administrative</strong> 
+                    avant d'être activés et visibles par les étudiants.
+                </div>
+                <ul style="color: var(--text-secondary); line-height: 1.6; margin-left: 20px;">
+                    <li>📝 Votre module sera soumis à l'administration après création</li>
+                    <li>⏳ Un administrateur vérifiera et approuvera le module</li>
+                    <li>✅ Une fois approuvé, le module sera activé automatiquement</li>
+                    <li>📧 Vous recevrez une notification lors de l'approbation</li>
+                    <li>👥 Les étudiants pourront alors s'inscrire avec le code du module</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Creation Form -->
+    <div class="module-form">
+        <form method="post" id="moduleForm">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Informations du Module
+                </h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                        {{ form.name }}
+                        {% if form.name.help_text %}
+                            <div class="form-help">{{ form.name.help_text }}</div>
+                        {% endif %}
+                        {% if form.name.errors %}
+                            <div class="form-errors">
+                                {% for error in form.name.errors %}
+                                    <div class="form-error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.code.id_for_label }}" class="form-label">{{ form.code.label }}</label>
+                        <div class="input-group">
+                            {{ form.code }}
+                            <div class="input-help">Auto-majuscules</div>
+                        </div>
+                        {% if form.code.help_text %}
+                            <div class="form-help">{{ form.code.help_text }}</div>
+                        {% endif %}
+                        {% if form.code.errors %}
+                            <div class="form-errors">
+                                {% for error in form.code.errors %}
+                                    <div class="form-error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="code-preview" id="codePreview" style="margin-top: 8px; display: none;">
+                            Code: <span id="codeDisplay"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                    {{ form.description }}
+                    {% if form.description.help_text %}
+                        <div class="form-help">{{ form.description.help_text }}</div>
+                    {% endif %}
+                    {% if form.description.errors %}
+                        <div class="form-errors">
+                            {% for error in form.description.errors %}
+                                <div class="form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Academic Details -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Détails Académiques
+                </h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.academic_year.id_for_label }}" class="form-label">{{ form.academic_year.label }}</label>
+                        {{ form.academic_year }}
+                        {% if form.academic_year.help_text %}
+                            <div class="form-help">{{ form.academic_year.help_text }}</div>
+                        {% endif %}
+                        {% if form.academic_year.errors %}
+                            <div class="form-errors">
+                                {% for error in form.academic_year.errors %}
+                                    <div class="form-error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.semester.id_for_label }}" class="form-label">{{ form.semester.label }}</label>
+                        {{ form.semester }}
+                        {% if form.semester.help_text %}
+                            <div class="form-help">{{ form.semester.help_text }}</div>
+                        {% endif %}
+                        {% if form.semester.errors %}
+                            <div class="form-errors">
+                                {% for error in form.semester.errors %}
+                                    <div class="form-error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.classroom.id_for_label }}" class="form-label">{{ form.classroom.label }}</label>
+                    {{ form.classroom }}
+                    {% if form.classroom.help_text %}
+                        <div class="form-help">{{ form.classroom.help_text }}</div>
+                    {% endif %}
+                    {% if form.classroom.errors %}
+                        <div class="form-errors">
+                            {% for error in form.classroom.errors %}
+                                <div class="form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="module-preview" id="modulePreview" style="display: none;">
+                <h4 style="color: var(--text-primary); font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-eye"></i>
+                    Aperçu du Module
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Nom Complet</div>
+                        <div id="previewName" style="color: var(--text-secondary);">--</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Code</div>
+                        <div id="previewCode" style="color: var(--text-secondary); font-family: monospace; font-weight: 600;">--</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Année Académique</div>
+                        <div id="previewYear" style="color: var(--text-secondary);">--</div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Semestre</div>
+                        <div id="previewSemester" style="color: var(--text-secondary);">--</div>
+                    </div>
+                </div>
+                <div style="margin-top: 16px;">
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Description</div>
+                    <div id="previewDescription" style="color: var(--text-secondary); line-height: 1.5; font-style: italic;">Aucune description</div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions" style="display: flex; gap: 16px; justify-content: flex-end; padding-top: 24px; border-top: 1px solid var(--border-primary); margin-top: 32px;">
+                <a href="{% url 'teacher:my_modules' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </a>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="fas fa-plus-circle"></i>
+                    Créer le Module
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Help Section -->
+    <div class="content-card" style="margin-top: 32px;">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-question-circle"></i>
+                Aide et Conseils
+            </h3>
+        </div>
+        <div class="card-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+                <div>
+                    <h4 style="color: var(--text-primary); font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-lightbulb" style="color: var(--warning);"></i>
+                        Bonnes Pratiques
+                    </h4>
+                    <ul style="color: var(--text-secondary); line-height: 1.6; margin-left: 20px;">
+                        <li>Utilisez un code court et mémorable (ex: CS301, MATH204)</li>
+                        <li>Soyez descriptif dans le nom du module</li>
+                        <li>Incluez les objectifs dans la description</li>
+                        <li>Spécifiez la salle si elle est fixe</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 style="color: var(--text-primary); font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-info-circle" style="color: var(--info);"></i>
+                        Informations Importantes
+                    </h4>
+                    <ul style="color: var(--text-secondary); line-height: 1.6; margin-left: 20px;">
+                        <li>Le code du module doit être unique dans le système</li>
+                        <li>L'approbation peut prendre 24-48 heures</li>
+                        <li>Vous serez automatiquement assigné comme enseignant principal</li>
+                        <li>Le module apparaîtra dans votre liste après approbation</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 style="color: var(--text-primary); font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-cogs" style="color: var(--success);"></i>
+                        Après Création
+                    </h4>
+                    <ul style="color: var(--text-secondary); line-height: 1.6; margin-left: 20px;">
+                        <li>Créez des devoirs et projets pour vos étudiants</li>
+                        <li>Partagez le code du module avec vos étudiants</li>
+                        <li>Gérez les inscriptions et permissions</li>
+                        <li>Suivez les progrès des projets étudiants</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Examples Section -->
+    <div class="content-card" style="margin-top: 24px;">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-book-open"></i>
+                Exemples de Modules
+            </h3>
+        </div>
+        <div class="card-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; border-left: 4px solid var(--accent-primary);">
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
+                        <span class="code-preview" style="margin-right: 8px;">CS301</span>
+                        Programmation Orientée Objet
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 13px; margin-bottom: 8px;">
+                        2024-2025 • Semestre 1 • Salle Lab-Info
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 12px; line-height: 1.4;">
+                        Introduction aux concepts de la POO avec Java et Python. Projets pratiques et exercices.
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; border-left: 4px solid var(--success);">
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
+                        <span class="code-preview" style="margin-right: 8px;">MATH204</span>
+                        Algèbre Linéaire
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 13px; margin-bottom: 8px;">
+                        2024-2025 • Semestre 2 • Amphi A
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 12px; line-height: 1.4;">
+                        Espaces vectoriels, matrices, déterminants et applications en ingénierie.
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
+                        <span class="code-preview" style="margin-right: 8px;">ENG105</span>
+                        Technical English
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 13px; margin-bottom: 8px;">
+                        2024-2025 • Semestre 1 • Salle B201
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 12px; line-height: 1.4;">
+                        Anglais technique pour ingénieurs. Communication professionnelle et rédaction.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('moduleForm');
+    const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+    const codeInput = document.getElementById('{{ form.code.id_for_label }}');
+    const descriptionInput = document.getElementById('{{ form.description.id_for_label }}');
+    const yearInput = document.getElementById('{{ form.academic_year.id_for_label }}');
+    const semesterInput = document.getElementById('{{ form.semester.id_for_label }}');
+    
+    const modulePreview = document.getElementById('modulePreview');
+    const codePreview = document.getElementById('codePreview');
+    const codeDisplay = document.getElementById('codeDisplay');
+    
+    // Preview elements
+    const previewName = document.getElementById('previewName');
+    const previewCode = document.getElementById('previewCode');
+    const previewDescription = document.getElementById('previewDescription');
+    const previewYear = document.getElementById('previewYear');
+    const previewSemester = document.getElementById('previewSemester');
+    
+    // Auto-uppercase code input
+    codeInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+        updateCodePreview();
+        updateModulePreview();
+    });
+    
+    // Update previews when inputs change
+    nameInput.addEventListener('input', updateModulePreview);
+    descriptionInput.addEventListener('input', updateModulePreview);
+    yearInput.addEventListener('input', updateModulePreview);
+    semesterInput.addEventListener('change', updateModulePreview);
+    
+    function updateCodePreview() {
+        const code = codeInput.value.trim();
+        if (code) {
+            codeDisplay.textContent = code;
+            codePreview.style.display = 'block';
+        } else {
+            codePreview.style.display = 'none';
+        }
+    }
+    
+    function updateModulePreview() {
+        const name = nameInput.value.trim();
+        const code = codeInput.value.trim();
+        const description = descriptionInput.value.trim();
+        const year = yearInput.value.trim();
+        const semester = semesterInput.value;
+        
+        // Show preview if any field has content
+        if (name || code || description || year || semester) {
+            modulePreview.style.display = 'block';
+            
+            previewName.textContent = name || '--';
+            previewCode.textContent = code || '--';
+            previewDescription.textContent = description || 'Aucune description';
+            previewYear.textContent = year || '--';
+            
+            // Get semester display text
+            const semesterOptions = semesterInput.options;
+            let semesterText = '--';
+            for (let option of semesterOptions) {
+                if (option.value === semester) {
+                    semesterText = option.text;
+                    break;
+                }
+            }
+            previewSemester.textContent = semesterText;
+        } else {
+            modulePreview.style.display = 'none';
+        }
+    }
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const code = codeInput.value.trim();
+        const name = nameInput.value.trim();
+        const year = yearInput.value.trim();
+        
+        if (!code) {
+            e.preventDefault();
+            alert('Le code du module est obligatoire.');
+            codeInput.focus();
+            return false;
+        }
+        
+        if (code.length < 3) {
+            e.preventDefault();
+            alert('Le code du module doit contenir au moins 3 caractères.');
+            codeInput.focus();
+            return false;
+        }
+        
+        if (!name) {
+            e.preventDefault();
+            alert('Le nom du module est obligatoire.');
+            nameInput.focus();
+            return false;
+        }
+        
+        if (!year) {
+            e.preventDefault();
+            alert('L\'année académique est obligatoire.');
+            yearInput.focus();
+            return false;
+        }
+        
+        // Validate year format
+        const yearPattern = /^\d{4}-\d{4}$/;
+        if (!yearPattern.test(year)) {
+            e.preventDefault();
+            alert('L\'année académique doit être au format YYYY-YYYY (ex: 2024-2025).');
+            yearInput.focus();
+            return false;
+        }
+        
+        // Final confirmation
+        const confirmed = confirm(
+            `Créer le module suivant ?\n\n` +
+            `Code: ${code}\n` +
+            `Nom: ${name}\n` +
+            `Année: ${year}\n\n` +
+            `Le module sera soumis pour approbation administrative.`
+        );
+        
+        if (!confirmed) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Disable submit button to prevent double submission
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création en cours...';
+    });
+    
+    // Auto-generate code from name if code is empty
+    nameInput.addEventListener('blur', function() {
+        if (!codeInput.value.trim() && this.value.trim()) {
+            const words = this.value.trim().split(' ');
+            let autoCode = '';
+            
+            for (let word of words) {
+                if (autoCode.length >= 6) break;
+                autoCode += word.charAt(0).toUpperCase();
+            }
+            
+            // Add numbers if too short
+            if (autoCode.length < 3) {
+                autoCode += '101';
+            }
+            
+            codeInput.value = autoCode;
+            updateCodePreview();
+            updateModulePreview();
+        }
+    });
+    
+    // Set current academic year as default
+    if (!yearInput.value) {
+        const currentYear = new Date().getFullYear();
+        const nextYear = currentYear + 1;
+        yearInput.value = `${currentYear}-${nextYear}`;
+        updateModulePreview();
+    }
+    
+    // Add smooth animations
+    const inputs = form.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+            this.parentElement.style.transition = 'transform 0.2s ease';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}

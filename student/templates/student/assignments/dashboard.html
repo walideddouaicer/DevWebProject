@@ -1,0 +1,460 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}Mes Devoirs - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">📚 Mes Devoirs</h1>
+        <p class="page-subtitle">Gérez vos assignations et projets de cours</p>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="assignments-overview">
+    <div class="assignment-stat-card" style="--card-accent: #10b981;">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Total Devoirs</h3>
+                <div class="assignment-stat-value">{{ total_assignments }}</div>
+                <div class="assignment-stat-meta">
+                    <span>📋</span>
+                    <span>Tous vos devoirs</span>
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                📚
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: #f59e0b;">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>En Attente</h3>
+                <div class="assignment-stat-value">{{ pending_assignments }}</div>
+                <div class="assignment-stat-meta">
+                    <span>⏳</span>
+                    <span>À commencer</span>
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                ⏳
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: #ef4444;">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>En Retard</h3>
+                <div class="assignment-stat-value">{{ overdue_assignments }}</div>
+                <div class="assignment-stat-meta">
+                    <span>🚨</span>
+                    <span>Action requise</span>
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                🚨
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: #8b5cf6;">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Validés</h3>
+                <div class="assignment-stat-value">{{ completed_assignments }}</div>
+                <div class="assignment-stat-meta">
+                    <span>✅</span>
+                    <span>Terminés</span>
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                🏆
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Urgent Alerts -->
+{% if overdue_assignments > 0 %}
+<div class="urgent-alert">
+    <div class="urgent-alert-icon">⚠️</div>
+    <div class="urgent-alert-content">
+        <h4>Attention : {{ overdue_assignments }} devoir{{ overdue_assignments|pluralize }} en retard</h4>
+        <p>Certains de vos devoirs ont dépassé leur date limite. Veuillez les traiter en priorité.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Pending Collaboration Invitations (UPDATED) -->
+{% if pending_invitations %}
+<div class="assignment-category">
+    <div class="assignment-category-header">
+        <div class="assignment-category-title">
+            📨 Invitations de Collaboration
+            {% if pending_invitations|length > 0 %}
+                <span class="notification-badge">{{ pending_invitations|length }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="assignment-list">
+        {% for invitation in pending_invitations %}
+        <div class="invitation-card">
+            <div class="invitation-header">
+                <div class="invitation-sender">
+                    <div class="invitation-sender-avatar">
+                        {{ invitation.sender.user.first_name.0|default:invitation.sender.user.username.0 }}{{ invitation.sender.user.last_name.0|default:"" }}
+                    </div>
+                    <div class="invitation-sender-info">
+                        <h4>{{ invitation.sender.get_full_name }}</h4>
+                        <p>
+                            {% if invitation.project.project_assignment %}
+                                Projet d'équipe: {{ invitation.project.title }}
+                                <br><small>Devoir: {{ invitation.project.project_assignment.title }}</small>
+                            {% else %}
+                                Projet personnel: {{ invitation.project.title }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="invitation-time">
+                    {{ invitation.created_at|timesince }} ago
+                </div>
+            </div>
+            {% if invitation.project.project_assignment %}
+            <div class="invitation-content">
+                <div class="team-size-info">
+                    <strong>Équipe:</strong> 
+                    {{ invitation.project.get_team_size }}/{{ invitation.project.get_assignment_max_team_size }} membres
+                    <span class="text-muted">({{ invitation.project.project_assignment.module.code }})</span>
+                </div>
+            </div>
+            {% endif %}
+            <div class="invitation-actions">
+                <a href="{% url 'student:respond_to_invitation' invitation.id 'accept' %}" 
+                   class="btn btn-primary btn-sm">
+                    ✅ Accepter
+                </a>
+                <a href="{% url 'student:respond_to_invitation' invitation.id 'reject' %}" 
+                   class="btn btn-secondary btn-sm">
+                    ❌ Refuser
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Direct Assignments (UPDATED) -->
+{% if direct_assignments %}
+<div class="assignment-category">
+    <div class="assignment-category-header">
+        <div class="assignment-category-title">
+            🎯 Devoirs Directs
+            <span class="badge badge-info">{{ direct_assignments|length }}</span>
+        </div>
+    </div>
+    <div class="assignment-list">
+        {% for assignment_data in direct_assignments %}
+        <div class="assignment-item {% if assignment_data.is_overdue %}overdue{% elif assignment_data.assignment.is_deadline_approaching %}urgent{% endif %}">
+            <div class="assignment-info">
+                <div class="assignment-icon direct">
+                    🎯
+                </div>
+                <div class="assignment-content">
+                    <div class="assignment-title">
+                        <a href="{% url 'student:assignment_detail' assignment_data.assignment.id %}">
+                            {{ assignment_data.assignment.title }}
+                        </a>
+                    </div>
+                    <div class="assignment-meta">
+                        <div class="assignment-meta-item">
+                            <span>📚</span>
+                            {{ assignment_data.assignment.module.code }}
+                        </div>
+                        <div class="assignment-meta-item">
+                            <span>👨‍🏫</span>
+                            {{ assignment_data.assignment.teacher.user.get_full_name }}
+                        </div>
+                        <!-- NEW: Show team info if project exists -->
+                        {% if assignment_data.project and assignment_data.assignment.is_group_work %}
+                        <div class="assignment-meta-item">
+                            <span>👥</span>
+                            {{ assignment_data.project.get_team_size }}/{{ assignment_data.assignment.max_group_size }} membres
+                        </div>
+                        {% endif %}
+                        <div class="assignment-deadline {% if assignment_data.is_overdue %}overdue{% elif assignment_data.assignment.is_deadline_approaching %}urgent{% else %}normal{% endif %}">
+                            📅 {{ assignment_data.assignment.deadline|date:"d M Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="assignment-actions">
+                {% if assignment_data.project %}
+                    <span class="assignment-status {% if assignment_data.project.status == 'validated' %}validated{% elif assignment_data.project.status == 'submitted' %}submitted{% else %}in-progress{% endif %}">
+                        {% if assignment_data.project.status == 'validated' %}
+                            🏆 Validé
+                        {% elif assignment_data.project.status == 'submitted' %}
+                            📤 Soumis
+                        {% else %}
+                            🔄 En cours
+                        {% endif %}
+                    </span>
+                    <a href="{% url 'student:project_detail' assignment_data.project.id %}" class="btn btn-outline-primary btn-sm">
+                        Voir Projet
+                    </a>
+                {% elif assignment_data.can_create_project %}
+                    <span class="assignment-status not-started">
+                        📝 À commencer
+                    </span>
+                    <!-- UPDATED: Direct project creation link -->
+                    <a href="{% url 'student:create_assignment_project_direct' assignment_data.assignment.id %}" class="btn btn-primary btn-sm">
+                        🚀 Créer Projet
+                    </a>
+                {% else %}
+                    <span class="assignment-status blocked">
+                        {{ assignment_data.action_needed|default:"Non disponible" }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Choice-Based Assignments (UPDATED) -->
+{% if choice_assignments %}
+<div class="assignment-category">
+    <div class="assignment-category-header">
+        <div class="assignment-category-title">
+            🎲 Devoirs à Choix Multiple
+            <span class="badge badge-primary">{{ choice_assignments|length }}</span>
+        </div>
+    </div>
+    <div class="assignment-list">
+        {% for assignment_data in choice_assignments %}
+        <div class="assignment-item {% if assignment_data.is_overdue %}overdue{% elif assignment_data.assignment.is_deadline_approaching %}urgent{% endif %}">
+            <div class="assignment-info">
+                <div class="assignment-icon choice">
+                    🎲
+                </div>
+                <div class="assignment-content">
+                    <div class="assignment-title">
+                        <a href="{% url 'student:assignment_detail' assignment_data.assignment.id %}">
+                            {{ assignment_data.assignment.title }}
+                        </a>
+                    </div>
+                    <div class="assignment-meta">
+                        <div class="assignment-meta-item">
+                            <span>📚</span>
+                            {{ assignment_data.assignment.module.code }}
+                        </div>
+                        <div class="assignment-meta-item">
+                            <span>👨‍🏫</span>
+                            {{ assignment_data.assignment.teacher.user.get_full_name }}
+                        </div>
+                        <!-- NEW: Show team info if project exists -->
+                        {% if assignment_data.project %}
+                        <div class="assignment-meta-item">
+                            <span>🎯</span>
+                            {{ assignment_data.project.selected_option.title|truncatewords:3 }}
+                        </div>
+                        {% if assignment_data.assignment.is_group_work %}
+                        <div class="assignment-meta-item">
+                            <span>👥</span>
+                            {{ assignment_data.project.get_team_size }}/{{ assignment_data.assignment.max_group_size }} membres
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                        <div class="assignment-deadline {% if assignment_data.is_overdue %}overdue{% elif assignment_data.assignment.is_deadline_approaching %}urgent{% else %}normal{% endif %}">
+                            📅 {{ assignment_data.assignment.deadline|date:"d M Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="assignment-actions">
+                {% if assignment_data.project %}
+                    <span class="assignment-status {% if assignment_data.project.status == 'validated' %}validated{% elif assignment_data.project.status == 'submitted' %}submitted{% else %}in-progress{% endif %}">
+                        {% if assignment_data.project.status == 'validated' %}
+                            🏆 Validé
+                        {% elif assignment_data.project.status == 'submitted' %}
+                            📤 Soumis
+                        {% else %}
+                            🔄 En cours
+                        {% endif %}
+                    </span>
+                    <a href="{% url 'student:project_detail' assignment_data.project.id %}" class="btn btn-outline-primary btn-sm">
+                        Voir Projet
+                    </a>
+                {% elif assignment_data.can_create_project %}
+                    <span class="assignment-status ready">
+                        {{ assignment_data.action_needed|default:"Prêt" }}
+                    </span>
+                    <!-- UPDATED: Direct to option selection then project creation -->
+                    <a href="{% url 'student:select_project_option_direct' assignment_data.assignment.id %}" class="btn btn-primary btn-sm">
+                        🎯 Choisir & Créer
+                    </a>
+                {% else %}
+                    <span class="assignment-status blocked">
+                        {{ assignment_data.action_needed|default:"Non disponible" }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Group Assignments (UPDATED - Simplified) -->
+{% if group_assignments %}
+<div class="assignment-category">
+    <div class="assignment-category-header">
+        <div class="assignment-category-title">
+            👥 Devoirs de Groupe
+            <span class="badge badge-warning">{{ group_assignments|length }}</span>
+        </div>
+    </div>
+    <div class="assignment-list">
+        {% for assignment_data in group_assignments %}
+        <div class="assignment-item {% if assignment_data.is_overdue %}overdue{% elif assignment_data.assignment.is_deadline_approaching %}urgent{% endif %}">
+            <div class="assignment-info">
+                <div class="assignment-icon group">
+                    👥
+                </div>
+                <div class="assignment-content">
+                    <div class="assignment-title">
+                        <a href="{% url 'student:assignment_detail' assignment_data.assignment.id %}">
+                            {{ assignment_data.assignment.title }}
+                        </a>
+                    </div>
+                    <div class="assignment-meta">
+                        <div class="assignment-meta-item">
+                            <span>📚</span>
+                            {{ assignment_data.assignment.module.code }}
+                        </div>
+                        <!-- NEW: Show team info instead of group info -->
+                        {% if assignment_data.project %}
+                        <div class="assignment-meta-item">
+                            <span>👥</span>
+                            {{ assignment_data.team_info.members_display }}
+                        </div>
+                        <div class="assignment-meta-item">
+                            <span>📊</span>
+                            {{ assignment_data.team_info.size }}/{{ assignment_data.assignment.max_group_size }} membres
+                        </div>
+                        {% endif %}
+                        <div class="assignment-deadline {% if assignment_data.is_overdue %}overdue{% elif assignment_data.assignment.is_deadline_approaching %}urgent{% else %}normal{% endif %}">
+                            📅 {{ assignment_data.assignment.deadline|date:"d M Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="assignment-actions">
+                {% if assignment_data.project %}
+                    <span class="assignment-status {% if assignment_data.project.status == 'validated' %}validated{% elif assignment_data.project.status == 'submitted' %}submitted{% else %}in-progress{% endif %}">
+                        {% if assignment_data.project.status == 'validated' %}
+                            🏆 Validé
+                        {% elif assignment_data.project.status == 'submitted' %}
+                            📤 Soumis
+                        {% else %}
+                            🔄 En cours
+                        {% endif %}
+                    </span>
+                    <a href="{% url 'student:project_detail' assignment_data.project.id %}" class="btn btn-outline-primary btn-sm">
+                        Voir Projet
+                    </a>
+                {% elif assignment_data.can_create_project %}
+                    <span class="assignment-status ready">
+                        {{ assignment_data.action_needed|default:"Prêt à commencer" }}
+                    </span>
+                    <!-- UPDATED: Direct project creation for group work -->
+                    {% if assignment_data.assignment.assignment_type == 'choice_based' %}
+                        <a href="{% url 'student:select_project_option_direct' assignment_data.assignment.id %}" class="btn btn-primary btn-sm">
+                            🎯 Choisir & Créer
+                        </a>
+                    {% else %}
+                        <a href="{% url 'student:create_assignment_project_direct' assignment_data.assignment.id %}" class="btn btn-primary btn-sm">
+                            🚀 Créer Projet
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <span class="assignment-status blocked">
+                        {{ assignment_data.action_needed|default:"Non disponible" }}
+                    </span>
+                    <a href="{% url 'student:assignment_detail' assignment_data.assignment.id %}" class="btn btn-outline-secondary btn-sm">
+                        Voir Détails
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Empty State -->
+{% if not direct_assignments and not choice_assignments and not group_assignments %}
+<div class="empty-state">
+    <div class="empty-icon">📚</div>
+    <div class="empty-title">Aucun devoir assigné</div>
+    <div class="empty-description">
+        Vous n'avez actuellement aucun devoir assigné. 
+        Vérifiez avec vos enseignants ou inscrivez-vous à des modules pour voir les devoirs disponibles.
+    </div>
+    <a href="{% url 'student:my_modules' %}" class="btn btn-primary">
+        📚 Gérer mes modules
+    </a>
+</div>
+{% endif %}
+
+<!-- NEW: Team Size Status Indicators -->
+<style>
+.team-size-info {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.assignment-status.ready {
+    background: var(--success-light);
+    color: var(--success-dark);
+}
+
+.assignment-status.blocked {
+    background: var(--warning-light);
+    color: var(--warning-dark);
+}
+
+.assignment-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .assignment-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+    
+    .assignment-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,1046 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Créer un Devoir - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<a href="{% url 'teacher:assignments_dashboard' %}" style="color: var(--accent-primary); text-decoration: none;">Gestion des Devoirs</a>
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<span class="breadcrumb-current">Créer un Devoir</span>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="assignment-detail-header">
+    <div class="assignment-detail-content">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+            <div>
+                <h1 class="assignment-detail-title">Créer un Nouveau Devoir</h1>
+                <div style="font-size: 1.1em; opacity: 0.9;">
+                    Configurez votre devoir et assignez-le à vos étudiants
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <a href="{% url 'teacher:assignments_dashboard' %}" class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                    <i class="fas fa-arrow-left"></i>
+                    Retour
+                </a>
+            </div>
+        </div>
+        
+        <div class="assignment-detail-meta">
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Modules disponibles</div>
+                <div class="assignment-detail-meta-value">
+                    {{ teacher_modules|length }} module{{ teacher_modules|length|pluralize }}
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Types d'assignation</div>
+                <div class="assignment-detail-meta-value">
+                    <i class="fas fa-user-check"></i> Direct • <i class="fas fa-list-ul"></i> Choix multiple
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Mode de travail</div>
+                <div class="assignment-detail-meta-value">
+                    <i class="fas fa-user"></i> Individuel • <i class="fas fa-users"></i> Groupe
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Configuration</div>
+                <div class="assignment-detail-meta-value">
+                    Guidée étape par étape
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- No Modules Alert -->
+{% if not teacher_modules %}
+<div class="urgent-items">
+    <div class="urgent-items-title">
+        <i class="fas fa-exclamation-triangle"></i>
+        Aucun Module Assigné
+    </div>
+    <div class="urgent-item">
+        <div class="urgent-item-info">
+            <div class="urgent-item-title">Configuration requise</div>
+            <div class="urgent-item-meta">
+                Vous devez être assigné à au moins un module pour créer un devoir
+            </div>
+        </div>
+        <div class="urgent-item-deadline">
+            <a href="{% url 'teacher:create_teacher_module' %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i>
+                Créer un Module
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Form Errors -->
+{% if form.non_field_errors %}
+<div class="urgent-items">
+    <div class="urgent-items-title">
+        <i class="fas fa-exclamation-triangle"></i>
+        Erreurs de Validation
+    </div>
+    {% for error in form.non_field_errors %}
+    <div class="urgent-item">
+        <div class="urgent-item-info">
+            <div class="urgent-item-title">{{ error }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Assignment Creation Form -->
+<form id="assignment-form" method="post">
+    {% csrf_token %}
+    
+    <!-- Basic Information Section -->
+    <div class="content-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-info-circle"></i>
+                Informations Générales
+            </h2>
+            <span style="color: var(--text-muted); font-size: 14px;">
+                Étape 1/4
+            </span>
+        </div>
+        <div class="card-content">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">
+                        {{ form.title.label }}
+                        <span style="color: var(--danger);">*</span>
+                    </label>
+                    {{ form.title }}
+                    <div class="form-help">Donnez un titre clair et descriptif à votre devoir</div>
+                    {% if form.title.errors %}
+                        {% for error in form.title.errors %}
+                            <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="module" class="form-label">
+                        Module
+                        <span style="color: var(--danger);">*</span>
+                    </label>
+                    <select name="module" id="module" class="form-select" required>
+                        <option value="">Sélectionnez un module</option>
+                        {% for module in teacher_modules %}
+                        <option value="{{ module.id }}">
+                            {{ module.code }} - {{ module.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-help">Module dans lequel ce devoir sera assigné</div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                    {{ form.description.label }}
+                    <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.description }}
+                <div class="form-help">Description générale du devoir pour vos étudiants</div>
+                {% if form.description.errors %}
+                    {% for error in form.description.errors %}
+                        <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.instructions.id_for_label }}" class="form-label">
+                    {{ form.instructions.label }}
+                </label>
+                {{ form.instructions }}
+                <div class="form-help">Instructions détaillées et spécifications techniques (optionnel)</div>
+                {% if form.instructions.errors %}
+                    {% for error in form.instructions.errors %}
+                        <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assignment Type & Schedule -->
+    <div class="content-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-cogs"></i>
+                Type et Calendrier
+            </h2>
+            <span style="color: var(--text-muted); font-size: 14px;">
+                Étape 2/4
+            </span>
+        </div>
+        <div class="card-content">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.assignment_type.id_for_label }}" class="form-label">
+                        {{ form.assignment_type.label }}
+                        <span style="color: var(--danger);">*</span>
+                    </label>
+                    {{ form.assignment_type }}
+                    <div class="form-help">
+                        <strong>Assignation directe :</strong> Vous assignez un projet spécifique<br>
+                        <strong>Choix multiple :</strong> Les étudiants choisissent parmi plusieurs options
+                    </div>
+                    {% if form.assignment_type.errors %}
+                        {% for error in form.assignment_type.errors %}
+                            <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="deadline_date" class="form-label">
+                        Date Limite de Rendu
+                        <span style="color: var(--danger);">*</span>
+                    </label>
+                    <input type="date" id="deadline_date" name="deadline_date" class="form-input" required>
+                    <div class="form-help">L'heure sera automatiquement fixée à 23:59</div>
+                    {% if form.deadline.errors %}
+                        {% for error in form.deadline.errors %}
+                            <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Group Work Toggle -->
+            <div class="form-group">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--bg-tertiary); border: 2px solid var(--border-secondary); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" onclick="toggleTeamWorkCheckbox()" id="team-work-toggle">
+                    {{ form.is_team_work }}
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary);">{{ form.is_team_work.label }}</div>
+                        <div class="form-help" style="margin: 0;">Permet aux étudiants de former des équipes pour collaborer</div>
+                    </div>
+                </div>
+                {% if form.is_team_work.errors %}
+                    {% for error in form.is_team_work.errors %}
+                        <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Group Configuration (conditional) -->
+    <div id="group-options" class="content-card" style="display: none;">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-users"></i>
+                Configuration des Groupes
+            </h2>
+            <span style="color: var(--text-muted); font-size: 14px;">
+                Optionnel
+            </span>
+        </div>
+        <div class="card-content">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.min_team_size.id_for_label }}" class="form-label">
+                        {{ form.min_team_size.label }}
+                    </label>
+                    {{ form.min_team_size }}
+                    <div class="form-help">Nombre minimum de membres par groupe</div>
+                    {% if form.min_team_size.errors %}
+                        {% for error in form.min_team_size.errors %}
+                            <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.max_team_size.id_for_label }}" class="form-label">
+                        {{ form.max_team_size.label }}
+                    </label>
+                    {{ form.max_team_size }}
+                    <div class="form-help">Nombre maximum de membres par groupe</div>
+                    {% if form.max_team_size.errors %}
+                        {% for error in form.max_team_size.errors %}
+                            <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="group_formation_deadline_date" class="form-label">
+                    Date Limite de Formation des Groupes
+                </label>
+                <input type="date" id="group_formation_deadline_date" name="group_formation_deadline_date" class="form-input">
+                <div class="form-help">Date limite pour que les étudiants forment leurs groupes (optionnel)</div>
+                {% if form.group_formation_deadline.errors %}
+                    {% for error in form.group_formation_deadline.errors %}
+                        <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assignment Type Specific Options -->
+    
+    <!-- Direct Assignment Options -->
+    <div id="direct-options" class="content-card" style="display: none;">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-user-check"></i>
+                Assignation Directe
+            </h2>
+            <span style="color: var(--text-muted); font-size: 14px;">
+                Étape 3/4
+            </span>
+        </div>
+        <div class="card-content">
+            <div class="form-group">
+                <label for="{{ form.target_selection.id_for_label }}" class="form-label">
+                    {{ form.target_selection.label }}
+                </label>
+                {{ form.target_selection }}
+                <div class="form-help">Choisissez qui doit réaliser ce devoir</div>
+                {% if form.target_selection.errors %}
+                    {% for error in form.target_selection.errors %}
+                        <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <!-- Student Selection Section -->
+            <div id="student-selection-section" style="display: none;">
+                <div class="assignments-list">
+                    <div class="assignments-list-header">
+                        <h2 class="assignments-list-title">
+                            <i class="fas fa-users"></i>
+                            Sélectionner les Étudiants
+                        </h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="selectAllInlineStudents()" id="select-all-inline-btn">
+                                <i class="fas fa-check-square"></i>
+                                Tout sélectionner
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="clearInlineSelection()">
+                                <i class="fas fa-times"></i>
+                                Effacer
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Search -->
+                    <div style="padding: 16px; border-bottom: 1px solid var(--border-primary);">
+                        <input type="text" id="student-search-inline" class="form-input" 
+                               placeholder="Rechercher un étudiant..." style="margin: 0;">
+                    </div>
+                    
+                    <!-- Students List -->
+                    <div id="students-container">
+                        <div id="students-loading" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <i class="fas fa-info-circle"></i>
+                            <br>
+                            Sélectionnez d'abord un module pour voir les étudiants disponibles
+                        </div>
+                    </div>
+                    
+                    <!-- Selection Summary -->
+                    <div style="padding: 16px; border-top: 1px solid var(--border-primary); background: var(--bg-tertiary);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-secondary); font-weight: 600;">
+                                <i class="fas fa-users"></i>
+                                Étudiants sélectionnés:
+                            </span>
+                            <span id="selected-students-count" style="font-weight: 700; color: var(--accent-primary); font-size: 18px;">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Choice-Based Assignment Options -->
+    <div id="choice-based-options" class="content-card" style="display: none;">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-list-ul"></i>
+                Choix Multiple
+            </h2>
+            <span style="color: var(--text-muted); font-size: 14px;">
+                Étape 3/4
+            </span>
+        </div>
+        <div class="card-content">
+            <div class="form-group">
+                <label for="selection_deadline_date" class="form-label">
+                    Date Limite de Sélection des Projets
+                </label>
+                <input type="date" id="selection_deadline_date" name="selection_deadline_date" class="form-input">
+                <div class="form-help">Date limite pour que les étudiants choisissent leur projet (optionnel)</div>
+                {% if form.selection_deadline.errors %}
+                    {% for error in form.selection_deadline.errors %}
+                        <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 16px; margin-top: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px; color: var(--accent-primary); font-weight: 600; margin-bottom: 8px;">
+                    <i class="fas fa-info-circle"></i>
+                    Prochaine étape
+                </div>
+                <p style="color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                    Après avoir créé ce devoir, vous pourrez ajouter les différentes options de projets que vos étudiants pourront choisir.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary and Actions -->
+    <div class="content-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-check-circle"></i>
+                Finalisation
+            </h2>
+            <span style="color: var(--text-muted); font-size: 14px;">
+                Étape 4/4
+            </span>
+        </div>
+        <div class="card-content">
+            <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-lightbulb"></i>
+                    Ce qui se passe ensuite
+                </h3>
+                <ul style="color: var(--text-secondary); line-height: 1.6; margin: 0; padding-left: 20px;">
+                    <li>Votre devoir sera créé en mode <strong>brouillon</strong></li>
+                    <li>Vous pourrez le modifier et le compléter avant publication</li>
+                    <li>Pour les choix multiples : ajoutez les options de projets</li>
+                    <li>Une fois prêt, publiez-le pour que vos étudiants puissent le voir</li>
+                </ul>
+            </div>
+            
+            <div style="display: flex; gap: 16px; justify-content: flex-end;">
+                <a href="{% url 'teacher:assignments_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </a>
+                
+                <button type="submit" class="btn btn-primary" {% if not teacher_modules %}disabled{% endif %}>
+                    <i class="fas fa-plus"></i>
+                    Créer le Devoir
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden datetime fields for backend compatibility -->
+    <input type="hidden" name="deadline" id="deadline_hidden">
+    <input type="hidden" name="group_formation_deadline" id="group_formation_deadline_hidden">
+    <input type="hidden" name="selection_deadline" id="selection_deadline_hidden">
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'teacher/js/assignments.js' %}"></script>
+<script>
+// Global variables for student management
+let allStudents = [];
+let selectedStudentIds = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize form behavior
+    const assignmentTypeSelect = document.getElementById('{{ form.assignment_type.id_for_label }}');
+    const isTeamWorkCheckbox = document.getElementById('{{ form.is_team_work.id_for_label }}');
+    const moduleSelect = document.getElementById('module');
+    const targetSelectionSelect = document.getElementById('{{ form.target_selection.id_for_label }}');
+    
+    // Date inputs
+    const deadlineDate = document.getElementById('deadline_date');
+    const groupFormationDate = document.getElementById('group_formation_deadline_date');
+    const selectionDate = document.getElementById('selection_deadline_date');
+    
+    // Hidden datetime inputs for backend
+    const deadlineHidden = document.getElementById('deadline_hidden');
+    const groupFormationHidden = document.getElementById('group_formation_deadline_hidden');
+    const selectionHidden = document.getElementById('selection_deadline_hidden');
+    
+    // Set minimum date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const minDate = tomorrow.toISOString().split('T')[0];
+    
+    deadlineDate.min = minDate;
+    groupFormationDate.min = minDate;
+    selectionDate.min = minDate;
+    
+    // Set default date to one week from now
+    const oneWeekFromNow = new Date();
+    oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
+    const defaultDate = oneWeekFromNow.toISOString().split('T')[0];
+    
+    deadlineDate.value = defaultDate;
+    
+    // Update hidden fields when date inputs change
+    deadlineDate.addEventListener('change', function() {
+        deadlineHidden.value = convertDateToDateTime(this.value);
+        updateMinDates();
+    });
+    
+    groupFormationDate.addEventListener('change', function() {
+        groupFormationHidden.value = convertDateToDateTime(this.value);
+        updateMinDates();
+    });
+    
+    selectionDate.addEventListener('change', function() {
+        selectionHidden.value = convertDateToDateTime(this.value);
+    });
+    
+    // Set up event listeners
+    if (assignmentTypeSelect) {
+        assignmentTypeSelect.addEventListener('change', function(e) {
+            toggleAssignmentOptions(e.target.value);
+        });
+        
+        // Initialize on page load
+        toggleAssignmentOptions(assignmentTypeSelect.value);
+    }
+    
+    if (isTeamWorkCheckbox) {
+        isTeamWorkCheckbox.addEventListener('change', function(e) {
+            toggleTeamOptions(e.target.checked);
+            updateTeamToggleAppearance();
+        });
+        
+        // Initialize on page load
+        toggleTeamOptions(isTeamWorkCheckbox.checked);
+        updateTeamToggleAppearance();
+    }
+    
+    // Module selection handler
+    if (moduleSelect) {
+        moduleSelect.addEventListener('change', function(e) {
+            const moduleId = e.target.value;
+            if (moduleId && assignmentTypeSelect.value === 'direct') {
+                loadModuleStudents(moduleId);
+            }
+        });
+    }
+    
+    // Target selection handler
+    if (targetSelectionSelect) {
+        targetSelectionSelect.addEventListener('change', function(e) {
+            toggleStudentSelection(e.target.value);
+        });
+        
+        // Initialize on page load
+        toggleStudentSelection(targetSelectionSelect.value);
+    }
+    
+    // Student search handler
+    const studentSearchInline = document.getElementById('student-search-inline');
+    if (studentSearchInline) {
+        studentSearchInline.addEventListener('input', function(e) {
+            filterStudents(e.target.value);
+        });
+    }
+    
+    // Form validation
+    const form = document.getElementById('assignment-form');
+    form.addEventListener('submit', function(e) {
+        // Update hidden fields before submission
+        deadlineHidden.value = convertDateToDateTime(deadlineDate.value);
+        if (groupFormationDate.value) {
+            groupFormationHidden.value = convertDateToDateTime(groupFormationDate.value);
+        }
+        if (selectionDate.value) {
+            selectionHidden.value = convertDateToDateTime(selectionDate.value);
+        }
+        
+        // Add selected students to form data
+        if (assignmentTypeSelect.value === 'direct' && targetSelectionSelect.value === 'specific_students') {
+            addSelectedStudentsToForm();
+        }
+        
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+    
+    // Initialize hidden fields on page load
+    deadlineHidden.value = convertDateToDateTime(deadlineDate.value);
+    updateMinDates();
+});
+
+// Helper Functions
+
+// Convert date to datetime for backend
+function convertDateToDateTime(dateValue) {
+    if (!dateValue) return '';
+    return dateValue + 'T23:59:00';
+}
+
+// Update minimum dates based on dependencies
+function updateMinDates() {
+    if (deadlineDate.value) {
+        const deadline = new Date(deadlineDate.value);
+        deadline.setDate(deadline.getDate() - 1);
+        const maxGroupDate = deadline.toISOString().split('T')[0];
+        
+        groupFormationDate.max = maxGroupDate;
+        selectionDate.max = maxGroupDate;
+    }
+    
+    if (groupFormationDate.value) {
+        const groupDate = new Date(groupFormationDate.value);
+        groupDate.setDate(groupDate.getDate() + 1);
+        const minSelectionDate = groupDate.toISOString().split('T')[0];
+        
+        selectionDate.min = minSelectionDate;
+    }
+}
+
+// Toggle group work checkbox when clicking the container
+function toggleTeamWorkCheckbox() {
+    const checkbox = document.getElementById('{{ form.is_team_work.id_for_label }}');
+    checkbox.checked = !checkbox.checked;
+    checkbox.dispatchEvent(new Event('change'));
+}
+
+// Update toggle appearance
+function updateTeamToggleAppearance() {
+    const toggle = document.getElementById('team-work-toggle');
+    const checkbox = document.getElementById('{{ form.is_team_work.id_for_label }}');
+    
+    if (checkbox.checked) {
+        toggle.style.borderColor = 'var(--accent-primary)';
+        toggle.style.backgroundColor = 'rgba(79, 70, 229, 0.1)';
+    } else {
+        toggle.style.borderColor = 'var(--border-secondary)';
+        toggle.style.backgroundColor = 'var(--bg-tertiary)';
+    }
+}
+
+// Toggle assignment type specific options
+function toggleAssignmentOptions(value) {
+    const directOptions = document.getElementById('direct-options');
+    const choiceOptions = document.getElementById('choice-based-options');
+    
+    if (value === 'direct') {
+        directOptions.style.display = 'block';
+        choiceOptions.style.display = 'none';
+        
+        // If module is already selected, load students
+        const moduleSelect = document.getElementById('module');
+        if (moduleSelect.value) {
+            loadModuleStudents(moduleSelect.value);
+        }
+    } else if (value === 'choice_based') {
+        directOptions.style.display = 'none';
+        choiceOptions.style.display = 'block';
+        
+        // Set default selection deadline
+        if (!selectionDate.value) {
+            const fiveDaysFromNow = new Date();
+            fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
+            selectionDate.value = fiveDaysFromNow.toISOString().split('T')[0];
+            selectionHidden.value = convertDateToDateTime(selectionDate.value);
+        }
+    } else {
+        directOptions.style.display = 'none';
+        choiceOptions.style.display = 'none';
+    }
+}
+
+// Toggle group work options
+function toggleTeamOptions(isChecked) {
+    const groupOptions = document.getElementById('group-options');
+    groupOptions.style.display = isChecked ? 'block' : 'none';
+    
+    if (isChecked) {
+        // Set default group size values
+        const minSizeInput = document.getElementById('{{ form.min_team_size.id_for_label }}');
+        const maxSizeInput = document.getElementById('{{ form.max_team_size.id_for_label }}');
+        
+        if (!minSizeInput.value) minSizeInput.value = '2';
+        if (!maxSizeInput.value) maxSizeInput.value = '4';
+        
+        // Set default group formation deadline
+        if (!groupFormationDate.value) {
+            const threeDaysFromNow = new Date();
+            threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+            groupFormationDate.value = threeDaysFromNow.toISOString().split('T')[0];
+            groupFormationHidden.value = convertDateToDateTime(groupFormationDate.value);
+        }
+    }
+}
+
+// Toggle student selection section
+function toggleStudentSelection(value) {
+    const studentSection = document.getElementById('student-selection-section');
+    
+    if (value === 'specific_students') {
+        studentSection.style.display = 'block';
+        
+        // Load students if module is selected
+        const moduleSelect = document.getElementById('module');
+        if (moduleSelect.value && allStudents.length === 0) {
+            loadModuleStudents(moduleSelect.value);
+        }
+    } else {
+        studentSection.style.display = 'none';
+        selectedStudentIds = [];
+        updateStudentSelectionCount();
+    }
+}
+
+// Load students for selected module
+async function loadModuleStudents(moduleId) {
+    const studentsContainer = document.getElementById('students-container');
+    const loadingDiv = document.getElementById('students-loading');
+    
+    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i><br>Chargement des étudiants...';
+    
+    try {
+        const response = await fetch(`/teacher/modules/${moduleId}/students/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            allStudents = data.students || [];
+            renderStudents(allStudents);
+        } else {
+            throw new Error('Erreur lors du chargement des étudiants');
+        }
+    } catch (error) {
+        console.error('Error loading students:', error);
+        loadingDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i><br>Erreur lors du chargement des étudiants';
+    }
+}
+
+// Render students in the list
+function renderStudents(students) {
+    const studentsContainer = document.getElementById('students-container');
+    
+    if (students.length === 0) {
+        studentsContainer.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                <i class="fas fa-user-slash" style="font-size: 2em; margin-bottom: 8px; opacity: 0.5;"></i>
+                <br>
+                Aucun étudiant inscrit à ce module
+            </div>
+        `;
+        return;
+    }
+    
+    const studentsHTML = students.map(student => `
+        <div class="assignment-item student-item" data-student-id="${student.id}" data-student-name="${(student.full_name || student.username).toLowerCase()}">
+            <div class="assignment-info">
+                <div class="assignment-icon student">
+                    ${student.initials}
+                </div>
+                <div class="assignment-content">
+                    <div class="assignment-title">
+                        ${student.full_name || student.username}
+                    </div>
+                    <div class="assignment-meta">
+                        <span class="assignment-meta-item">
+                            <i class="fas fa-id-card"></i>
+                            ${student.student_id}
+                        </span>
+                        <span class="assignment-meta-item">
+                            <i class="fas fa-graduation-cap"></i>
+                            ${student.year_display}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="assignment-actions">
+                <input type="checkbox" 
+                       class="student-checkbox-inline" 
+                       value="${student.id}"
+                       onchange="toggleStudentInline(this)"
+                       style="width: 20px; height: 20px; accent-color: var(--accent-primary);">
+            </div>
+        </div>
+    `).join('');
+    
+    studentsContainer.innerHTML = studentsHTML;
+    updateStudentSelectionCount();
+}
+
+// Filter students based on search
+function filterStudents(searchTerm) {
+    const studentItems = document.querySelectorAll('.student-item');
+    const term = searchTerm.toLowerCase();
+    
+    studentItems.forEach(item => {
+        const studentName = item.dataset.studentName || '';
+        if (studentName.includes(term)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Select all visible students
+function selectAllInlineStudents() {
+    const checkboxes = document.querySelectorAll('.student-checkbox-inline');
+    const visibleCheckboxes = Array.from(checkboxes).filter(cb => {
+        const item = cb.closest('.student-item');
+        return item.style.display !== 'none';
+    });
+    
+    const selectAllBtn = document.getElementById('select-all-inline-btn');
+    const allChecked = visibleCheckboxes.every(cb => cb.checked);
+    
+    visibleCheckboxes.forEach(checkbox => {
+        checkbox.checked = !allChecked;
+        toggleStudentInline(checkbox);
+    });
+    
+    selectAllBtn.innerHTML = allChecked ? 
+        '<i class="fas fa-check-square"></i> Tout sélectionner' : 
+        '<i class="fas fa-square"></i> Tout désélectionner';
+}
+
+// Clear all selections
+function clearInlineSelection() {
+    const checkboxes = document.querySelectorAll('.student-checkbox-inline');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        toggleStudentInline(checkbox);
+    });
+    
+    const selectAllBtn = document.getElementById('select-all-inline-btn');
+    selectAllBtn.innerHTML = '<i class="fas fa-check-square"></i> Tout sélectionner';
+}
+
+// Toggle individual student selection
+function toggleStudentInline(checkbox) {
+    const studentItem = checkbox.closest('.student-item');
+    const studentId = parseInt(checkbox.value);
+    
+    if (checkbox.checked) {
+        studentItem.style.backgroundColor = 'rgba(79, 70, 229, 0.1)';
+        studentItem.style.borderColor = 'var(--accent-primary)';
+        if (!selectedStudentIds.includes(studentId)) {
+            selectedStudentIds.push(studentId);
+        }
+    } else {
+        studentItem.style.backgroundColor = '';
+        studentItem.style.borderColor = '';
+        selectedStudentIds = selectedStudentIds.filter(id => id !== studentId);
+    }
+    
+    updateStudentSelectionCount();
+}
+
+// Update selection count display
+function updateStudentSelectionCount() {
+    const countElement = document.getElementById('selected-students-count');
+    if (countElement) {
+        countElement.textContent = selectedStudentIds.length;
+    }
+}
+
+// Add selected students as hidden inputs to form
+function addSelectedStudentsToForm() {
+    // Remove any existing hidden student inputs
+    const existingInputs = document.querySelectorAll('input[name="selected_student_ids"]');
+    existingInputs.forEach(input => input.remove());
+    
+    // Add new hidden inputs for selected students
+    const form = document.getElementById('assignment-form');
+    selectedStudentIds.forEach(studentId => {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'selected_student_ids';
+        hiddenInput.value = studentId;
+        form.appendChild(hiddenInput);
+    });
+}
+
+// Form validation function
+function validateForm() {
+    const title = document.getElementById('{{ form.title.id_for_label }}').value.trim();
+    const module = document.getElementById('module').value;
+    const assignmentType = document.getElementById('{{ form.assignment_type.id_for_label }}').value;
+    const isTeamWork = document.getElementById('{{ form.is_team_work.id_for_label }}').checked;
+    const targetSelection = document.getElementById('{{ form.target_selection.id_for_label }}').value;
+    
+    let errors = [];
+    
+    // Basic validation
+    if (!title) errors.push('Le titre est obligatoire');
+    if (!module) errors.push('Vous devez sélectionner un module');
+    if (!deadlineDate.value) errors.push('La date limite est obligatoire');
+    if (!assignmentType) errors.push('Vous devez choisir un type d\'assignation');
+    
+    // Direct assignment validation
+    if (assignmentType === 'direct') {
+        if (targetSelection === 'specific_students' && selectedStudentIds.length === 0) {
+            errors.push('Vous devez sélectionner au moins un étudiant pour l\'assignation directe');
+        }
+    }
+    
+    // Date validation
+    const today = new Date().toISOString().split('T')[0];
+    if (deadlineDate.value <= today) {
+        errors.push('La date limite doit être dans le futur');
+    }
+    
+    // Group work validation
+    if (isTeamWork) {
+        const minSize = parseInt(document.getElementById('{{ form.min_team_size.id_for_label }}').value) || 0;
+        const maxSize = parseInt(document.getElementById('{{ form.max_team_size.id_for_label }}').value) || 0;
+        
+        if (minSize < 2) errors.push('La taille minimale d\'un groupe doit être d\'au moins 2');
+        if (maxSize < minSize) errors.push('La taille maximale doit être supérieure ou égale à la taille minimale');
+        
+        if (groupFormationDate.value && deadlineDate.value) {
+            if (groupFormationDate.value >= deadlineDate.value) {
+                errors.push('La formation des groupes doit se terminer avant la date limite du projet');
+            }
+        }
+    }
+    
+    if (errors.length > 0) {
+        showNotification('Erreurs de validation:\n• ' + errors.join('\n• '), 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 20px;
+        border-radius: 8px;
+        color: white;
+        z-index: 1000;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        max-width: 400px;
+        white-space: pre-line;
+    `;
+    
+    switch(type) {
+        case 'success':
+            notification.style.background = 'var(--success)';
+            break;
+        case 'error':
+            notification.style.background = 'var(--danger)';
+            break;
+        default:
+            notification.style.background = 'var(--accent-primary)';
+            break;
+    }
+    
+    notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${message}`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 5000);
+}
+
+// Additional CSS for form styling
+const additionalStyles = `
+.form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-secondary);
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-help {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.student-item .assignment-icon.student {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.student-item {
+    transition: all 0.3s ease;
+}
+
+.student-item:hover {
+    background: var(--bg-tertiary);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+`;
+
+const styleSheet = document.createElement('style');
+styleSheet.textContent = additionalStyles;
+document.head.appendChild(styleSheet);
+</script>
+{% endblock %}

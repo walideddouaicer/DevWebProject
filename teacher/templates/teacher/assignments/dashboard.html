@@ -1,0 +1,1005 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}ENSA Project Manager - Gestion des Devoirs{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+<style>
+/* Clean, Modern Module Cards - Dark Theme */
+.modules-container {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    margin-top: 32px;
+}
+
+.module-card {
+    background: #1f2937;
+    border-radius: 20px;
+    border: 2px solid #374151;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.module-card:hover {
+    transform: translateY(-8px);
+    border-color: #3b82f6;
+    box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.4), 0 12px 20px -8px rgba(59, 130, 246, 0.2);
+}
+
+/* Module Header with Gradient */
+.module-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #7c3aed 100%);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+}
+
+.module-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.module-info {
+    position: relative;
+    z-index: 2;
+    color: white;
+}
+
+.module-title-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.module-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    backdrop-filter: blur(10px);
+}
+
+.module-title-text {
+    flex: 1;
+}
+
+.module-code {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 8px 16px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: inline-block;
+    backdrop-filter: blur(10px);
+}
+
+.module-name {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.module-description {
+    font-size: 16px;
+    opacity: 0.9;
+    margin: 16px 0 24px 0;
+    line-height: 1.5;
+}
+
+/* Module Statistics Grid */
+.module-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+}
+
+.module-stat {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px 16px;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.module-stat-number {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(45deg, #ffffff, #e0e7ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.module-stat-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+/* Assignments Section */
+.assignments-section {
+    background: #111827;
+    padding: 32px;
+}
+
+.assignments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #374151;
+}
+
+.assignments-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f9fafb;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.assignments-count-badge {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Individual Assignment Items */
+.assignment-item {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.assignment-item:hover {
+    background: #253442;
+    border-color: #3b82f6;
+    transform: translateX(8px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.assignment-item:last-child {
+    margin-bottom: 0;
+}
+
+.assignment-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+}
+
+.assignment-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+}
+
+.assignment-icon.direct {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.assignment-icon.choice_based {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.assignment-content {
+    flex: 1;
+}
+
+.assignment-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.assignment-title a {
+    color: #f9fafb;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.assignment-title a:hover {
+    color: #3b82f6;
+}
+
+.assignment-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    color: #9ca3af;
+}
+
+.assignment-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.assignment-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.assignment-status {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.assignment-status.draft {
+    background: #fbbf24;
+    color: #92400e;
+}
+
+.assignment-status.published {
+    background: #10b981;
+    color: white;
+}
+
+.assignment-status.in_progress {
+    background: #3b82f6;
+    color: white;
+}
+
+.assignment-status.completed {
+    background: #8b5cf6;
+    color: white;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: #374151;
+    color: #f9fafb;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-1px);
+}
+
+/* Show More Section */
+.show-more-section {
+    text-align: center;
+    padding: 24px;
+    border-top: 1px solid #374151;
+    margin-top: 20px;
+}
+
+.btn-outline-primary {
+    background: transparent;
+    color: #3b82f6;
+    border: 2px solid #3b82f6;
+}
+
+.btn-outline-primary:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    color: #9ca3af;
+    border: 2px solid #374151;
+}
+
+.btn-outline-secondary:hover {
+    background: #374151;
+    color: white;
+}
+
+/* Empty States */
+.no-assignments-state {
+    text-align: center;
+    padding: 60px;
+    color: #6b7280;
+}
+
+.no-assignments-icon {
+    font-size: 64px;
+    margin-bottom: 24px;
+    opacity: 0.6;
+}
+
+.no-assignments-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #9ca3af;
+}
+
+.no-assignments-description {
+    font-size: 16px;
+    margin-bottom: 24px;
+    opacity: 0.8;
+}
+
+.no-modules-state {
+    text-align: center;
+    padding: 80px 40px;
+    background: #1f2937;
+    border-radius: 20px;
+    border: 2px solid #374151;
+}
+
+.no-modules-icon {
+    font-size: 80px;
+    margin-bottom: 32px;
+    opacity: 0.6;
+}
+
+.no-modules-title {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #f9fafb;
+}
+
+.no-modules-description {
+    font-size: 18px;
+    color: #9ca3af;
+    max-width: 600px;
+    margin: 0 auto 32px auto;
+    line-height: 1.6;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    padding: 14px 28px;
+    font-size: 16px;
+    border-radius: 12px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(-20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+@keyframes fadeOut {
+    from { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+    to { 
+        opacity: 0; 
+        transform: translateY(-20px); 
+    }
+}
+
+.hidden-assignment {
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .module-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .assignment-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    .module-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .assignment-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .assignment-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<span class="breadcrumb-current">Gestion des Devoirs</span>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-tasks"></i>
+        Gestion des Devoirs
+    </h1>
+    <div class="top-actions">
+        <a href="{% url 'teacher:assignment_create' %}" class="action-btn primary">
+            <i class="fas fa-plus"></i>
+            Créer un Devoir
+        </a>
+    </div>
+</div>
+
+<!-- Assignments Overview Statistics -->
+<div class="assignments-overview">
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #3b82f6, #2563eb);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Total Devoirs</h3>
+                <div class="assignment-stat-value">{{ total_assignments }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-tasks"></i>
+                    Tous statuts confondus
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <i class="fas fa-tasks"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #10b981, #059669);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Actifs</h3>
+                <div class="assignment-stat-value">{{ active_assignments }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-play-circle"></i>
+                    En cours ou publiés
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-play-circle"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #f59e0b, #d97706);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Brouillons</h3>
+                <div class="assignment-stat-value">{{ draft_assignments }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-edit"></i>
+                    En préparation
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="fas fa-edit"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Terminés</h3>
+                <div class="assignment-stat-value">{{ completed_assignments }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-check-circle"></i>
+                    Complétés
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #dc2626, #b91c1c);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>À Évaluer</h3>
+                <div class="assignment-stat-value">{{ ungraded_projects_count|default:0 }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-clipboard-check"></i>
+                    Projets soumis
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #ea580c, #c2410c);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Échéances Urgentes</h3>
+                <div class="assignment-stat-value">{{ urgent_deadlines_count|default:0 }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Prochains 7 jours
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #ea580c, #c2410c);">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Module Approval Alert -->
+{% if pending_module_approvals > 0 %}
+<div class="alert alert-warning" style="margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="fas fa-clock" style="font-size: 20px;"></i>
+        <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">
+                Modules en attente d'approbation
+            </div>
+            <div style="font-size: 14px; opacity: 0.9;">
+                {{ pending_module_approvals }} module{{ pending_module_approvals|pluralize }} créé{{ pending_module_approvals|pluralize }} par vous en attente de validation administrative
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Urgent Items -->
+{% if urgent_assignments %}
+<div class="urgent-items">
+    <div class="urgent-items-title">
+        <i class="fas fa-exclamation-triangle"></i>
+        Échéances Urgentes
+    </div>
+    {% for urgent in urgent_assignments %}
+    <div class="urgent-item">
+        <div class="urgent-item-info">
+            <div class="urgent-item-title">
+                <a href="{% url 'teacher:assignment_detail' urgent.assignment.id %}">
+                    {{ urgent.assignment.title }}
+                </a>
+            </div>
+            <div class="urgent-item-meta">
+                {{ urgent.type }} • {{ urgent.assignment.module.code }}
+            </div>
+        </div>
+        <div class="urgent-item-deadline">
+            {% if urgent.days_left == 0 %}
+                Aujourd'hui
+            {% elif urgent.days_left == 1 %}
+                Demain
+            {% else %}
+                {{ urgent.days_left }} jours
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Search and Filter -->
+<div class="content-card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-search"></i>
+            Rechercher et Filtrer
+        </h2>
+        <span id="results-count" style="color: var(--text-muted); font-size: 14px;">
+            {{ total_assignments }} résultat(s)
+        </span>
+    </div>
+    <div class="card-content">
+        <div class="form-row">
+            <div class="form-group">
+                <input type="text" id="assignment-search" class="form-input" 
+                       placeholder="Rechercher par titre..."
+                       value="{{ filter_form.search.value|default:'' }}">
+            </div>
+            <div class="form-group">
+                <select id="status-filter" class="form-select filter-select">
+                    <option value="">Tous les statuts</option>
+                    {% for value, label in filter_form.status.field.choices %}
+                        {% if value %}
+                        <option value="{{ value }}" {% if filter_form.status.value == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="type-filter" class="form-select filter-select">
+                    <option value="">Tous les types</option>
+                    {% for value, label in filter_form.assignment_type.field.choices %}
+                        {% if value %}
+                        <option value="{{ value }}" {% if filter_form.assignment_type.value == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="module-filter" class="form-select filter-select">
+                    <option value="">Tous les modules</option>
+                    {% for module in filter_form.module.queryset %}
+                    <option value="{{ module.id }}" {% if filter_form.module.value == module.id|stringformat:"s" %}selected{% endif %}>
+                        {{ module.code }} - {{ module.name|truncatewords:3 }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modules Container -->
+<div class="modules-container">
+    {% if modules_data %}
+        {% for module_data in modules_data %}
+        {% with module=module_data.module assignments_list=module_data.assignments %}
+        <div class="module-card" data-module-id="{{ module.id }}">
+            <!-- Module Header -->
+            <div class="module-header">
+                <div class="module-info">
+                    <div class="module-title-section">
+                        <div class="module-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="module-title-text">
+                            <div class="module-code">{{ module.code }}</div>
+                            <h2 class="module-name">{{ module.name }}</h2>
+                        </div>
+                    </div>
+                    
+                    <p class="module-description">
+                        {{ module.description|truncatewords:20|default:"Module d'enseignement pour développer les compétences techniques et pratiques des étudiants." }}
+                    </p>
+                    
+                    <div class="module-stats-grid">
+                        <div class="module-stat">
+                            <div class="module-stat-number">{{ module_data.total_count }}</div>
+                            <div class="module-stat-label">Devoirs</div>
+                        </div>
+                        <div class="module-stat">
+                            <div class="module-stat-number">{{ module_data.active_count }}</div>
+                            <div class="module-stat-label">Actifs</div>
+                        </div>
+                        <div class="module-stat">
+                            <div class="module-stat-number">{{ module_data.draft_count }}</div>
+                            <div class="module-stat-label">Brouillons</div>
+                        </div>
+                        <div class="module-stat">
+                            <div class="module-stat-number">{{ module.get_enrolled_students_count }}</div>
+                            <div class="module-stat-label">Étudiants</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Assignments Section -->
+            <div class="assignments-section">
+                <div class="assignments-header">
+                    <h3 class="assignments-title">
+                        <i class="fas fa-tasks"></i>
+                        Devoirs de ce module
+                        <span class="assignments-count-badge">{{ module_data.total_count }}</span>
+                    </h3>
+                </div>
+                
+                {% if assignments_list %}
+                    <!-- Show first 3 assignments -->
+                    {% for assignment in assignments_list|slice:":3" %}
+                    <div class="assignment-item" data-status="{{ assignment.status }}" data-type="{{ assignment.assignment_type }}">
+                        <div class="assignment-left">
+                            <div class="assignment-icon {{ assignment.assignment_type }}">
+                                {% if assignment.assignment_type == 'direct' %}
+                                    <i class="fas fa-user-check"></i>
+                                {% else %}
+                                    <i class="fas fa-list-ul"></i>
+                                {% endif %}
+                            </div>
+                            <div class="assignment-content">
+                                <div class="assignment-title">
+                                    <a href="{% url 'teacher:assignment_detail' assignment.id %}">
+                                        {{ assignment.title }}
+                                    </a>
+                                </div>
+                                <div class="assignment-meta">
+                                    <span class="assignment-meta-item">
+                                        <i class="fas fa-calendar"></i>
+                                        {{ assignment.deadline|date:"d M Y H:i" }}
+                                    </span>
+                                    <span class="assignment-meta-item">
+                                        <i class="fas fa-{% if assignment.assignment_type == 'direct' %}user-check{% else %}list-ul{% endif %}"></i>
+                                        {% if assignment.assignment_type == 'direct' %}Assignation directe{% else %}Choix multiple{% endif %}
+                                    </span>
+                                    {% if assignment.is_group_work %}
+                                    <span class="assignment-meta-item">
+                                        <i class="fas fa-users"></i>
+                                        Travail en groupe
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="assignment-right">
+                            <span class="assignment-status {{ assignment.status }}">
+                                {{ assignment.get_status_display }}
+                            </span>
+                            <a href="{% url 'teacher:assignment_detail' assignment.id %}" class="btn btn-secondary">
+                                <i class="fas fa-eye"></i>
+                                Voir
+                            </a>
+                            {% if assignment.status == 'draft' %}
+                            <a href="{% url 'teacher:assignment_edit' assignment.id %}" class="btn btn-secondary">
+                                <i class="fas fa-edit"></i>
+                                Modifier
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Hidden assignments (for show more functionality) -->
+                    {% for assignment in assignments_list|slice:"3:" %}
+                    <div class="assignment-item hidden-assignment-{{ module.id }}" style="display: none;" data-status="{{ assignment.status }}" data-type="{{ assignment.assignment_type }}">
+                        <div class="assignment-left">
+                            <div class="assignment-icon {{ assignment.assignment_type }}">
+                                {% if assignment.assignment_type == 'direct' %}
+                                    <i class="fas fa-user-check"></i>
+                                {% else %}
+                                    <i class="fas fa-list-ul"></i>
+                                {% endif %}
+                            </div>
+                            <div class="assignment-content">
+                                <div class="assignment-title">
+                                    <a href="{% url 'teacher:assignment_detail' assignment.id %}">
+                                        {{ assignment.title }}
+                                    </a>
+                                </div>
+                                <div class="assignment-meta">
+                                    <span class="assignment-meta-item">
+                                        <i class="fas fa-calendar"></i>
+                                        {{ assignment.deadline|date:"d M Y H:i" }}
+                                    </span>
+                                    <span class="assignment-meta-item">
+                                        <i class="fas fa-{% if assignment.assignment_type == 'direct' %}user-check{% else %}list-ul{% endif %}"></i>
+                                        {% if assignment.assignment_type == 'direct' %}Assignation directe{% else %}Choix multiple{% endif %}
+                                    </span>
+                                    {% if assignment.is_group_work %}
+                                    <span class="assignment-meta-item">
+                                        <i class="fas fa-users"></i>
+                                        Travail en groupe
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="assignment-right">
+                            <span class="assignment-status {{ assignment.status }}">
+                                {{ assignment.get_status_display }}
+                            </span>
+                            <a href="{% url 'teacher:assignment_detail' assignment.id %}" class="btn btn-secondary">
+                                <i class="fas fa-eye"></i>
+                                Voir
+                            </a>
+                            {% if assignment.status == 'draft' %}
+                            <a href="{% url 'teacher:assignment_edit' assignment.id %}" class="btn btn-secondary">
+                                <i class="fas fa-edit"></i>
+                                Modifier
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Show More Button for this module -->
+                    {% if module_data.total_count > 3 %}
+                    <div class="show-more-section">
+                        <button type="button" class="btn btn-outline-primary show-more-btn" 
+                                data-module-id="{{ module.id }}"
+                                onclick="showMoreAssignments({{ module.id }})">
+                            <i class="fas fa-chevron-down"></i>
+                            <span>Voir tous les devoirs ({{ module_data.total_count }})</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary show-less-btn" 
+                                data-module-id="{{ module.id }}"
+                                onclick="showLessAssignments({{ module.id }})" 
+                                style="display: none;">
+                            <i class="fas fa-chevron-up"></i>
+                            <span>Voir moins</span>
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                {% else %}
+                    <div class="no-assignments-state">
+                        <div class="no-assignments-icon">📝</div>
+                        <div class="no-assignments-title">Aucun devoir créé pour ce module</div>
+                        <div class="no-assignments-description">
+                            Commencez par créer votre premier devoir pour les étudiants de ce module.
+                        </div>
+                        <a href="{% url 'teacher:assignment_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Créer un devoir
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    {% else %}
+        <div class="no-modules-state">
+            <div class="no-modules-icon">📚</div>
+            <h2 class="no-modules-title">Aucun devoir créé</h2>
+            <p class="no-modules-description">
+                Vous n'avez encore créé aucun devoir. Commencez par créer votre premier devoir pour engager vos étudiants dans des projets passionnants et enrichissants.
+            </p>
+            <a href="{% url 'teacher:assignment_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Créer mon premier devoir
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'teacher/js/assignments.js' %}"></script>
+<script>
+// Show more assignments functionality for individual modules
+function showMoreAssignments(moduleId) {
+    const hiddenAssignments = document.querySelectorAll(`.hidden-assignment-${moduleId}`);
+    const showMoreBtn = document.querySelector(`.show-more-btn[data-module-id="${moduleId}"]`);
+    const showLessBtn = document.querySelector(`.show-less-btn[data-module-id="${moduleId}"]`);
+    
+    // Show all hidden assignments for this module
+    hiddenAssignments.forEach((assignment, index) => {
+        setTimeout(() => {
+            assignment.style.display = 'flex';
+            assignment.style.animation = 'fadeIn 0.4s ease-out';
+        }, index * 100); // Stagger animation
+    });
+    
+    // Toggle buttons
+    showMoreBtn.style.display = 'none';
+    showLessBtn.style.display = 'inline-flex';
+}
+
+function showLessAssignments(moduleId) {
+    const hiddenAssignments = document.querySelectorAll(`.hidden-assignment-${moduleId}`);
+    const showMoreBtn = document.querySelector(`.show-more-btn[data-module-id="${moduleId}"]`);
+    const showLessBtn = document.querySelector(`.show-less-btn[data-module-id="${moduleId}"]`);
+    
+    // Hide assignments with animation
+    hiddenAssignments.forEach((assignment, index) => {
+        setTimeout(() => {
+            assignment.style.animation = 'fadeOut 0.4s ease-out';
+            setTimeout(() => {
+                assignment.style.display = 'none';
+            }, 400);
+        }, index * 50);
+    });
+    
+    // Toggle buttons
+    setTimeout(() => {
+        showMoreBtn.style.display = 'inline-flex';
+        showLessBtn.style.display = 'none';
+    }, 600);
+    
+    // Scroll back to module card
+    const moduleCard = document.querySelector(`[data-module-id="${moduleId}"]`);
+    if (moduleCard) {
+        moduleCard.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize filter functionality
+    if (typeof initializeSearchAndFilter === 'function') {
+        initializeSearchAndFilter();
+    }
+    
+    // Auto-refresh urgent items every 5 minutes
+    setInterval(function() {
+        console.log('Auto-refresh urgent items');
+    }, 5 * 60 * 1000);
+    
+    // Add smooth hover effects to module cards
+    const moduleCards = document.querySelectorAll('.module-card');
+    moduleCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Add loading states for buttons
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            if (!this.classList.contains('show-more-btn') && !this.classList.contains('show-less-btn')) {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chargement...';
+                
+                // Reset after 2 seconds (for demo purposes)
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                }, 2000);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

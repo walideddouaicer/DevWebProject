@@ -1,0 +1,1063 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Mes Modules - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+<style>
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.module-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.module-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--card-accent, var(--accent-primary));
+}
+
+.module-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.module-card.pending {
+    opacity: 0.7;
+    border-style: dashed;
+}
+
+.module-card.pending::before {
+    background: var(--warning);
+}
+
+.module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.module-code {
+    font-family: 'Courier New', monospace;
+    background: var(--accent-primary);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.module-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.module-status.active {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success);
+}
+
+.module-status.pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--warning);
+}
+
+.module-title {
+    font-size: 1.3em;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.module-meta {
+    display: flex;
+    gap: 16px;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.module-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.module-description {
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.module-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.module-stat {
+    text-align: center;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.module-stat-value {
+    font-size: 1.5em;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.module-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* NEW: Students Preview Styles */
+.students-preview {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-secondary);
+}
+
+.students-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.students-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.students-count {
+    background: var(--accent-primary);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.students-avatars {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.student-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-secondary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.student-avatar:hover {
+    transform: scale(1.1);
+    z-index: 2;
+}
+
+.student-avatar.more {
+    background: var(--text-muted);
+    font-size: 10px;
+}
+
+.students-list {
+    max-height: 120px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.student-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-tertiary);
+}
+
+.student-item:last-child {
+    border-bottom: none;
+}
+
+.student-info {
+    flex: 1;
+}
+
+.student-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.student-details {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.student-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.module-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.empty-state-modules {
+    background: var(--bg-card);
+    border: 2px dashed var(--border-secondary);
+    border-radius: 16px;
+    padding: 60px 40px;
+    text-align: center;
+    margin-top: 24px;
+}
+
+.pending-modules-notice {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+    border: 1px solid var(--warning);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.modules-filter {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* NEW: Info Panel Styles */
+.info-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    margin-top: 32px;
+    overflow: hidden;
+}
+
+.info-header {
+    display: flex;
+    gap: 20px;
+    padding: 24px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+}
+
+.info-icon {
+    font-size: 2.5em;
+    opacity: 0.8;
+}
+
+.info-content h3 {
+    font-size: 1.4em;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 24px;
+}
+
+.info-item {
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    border: 1px solid var(--border-secondary);
+}
+
+.info-item strong {
+    display: block;
+    color: var(--accent-primary);
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+.info-item p {
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modules-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modules-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .module-stats {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+    <span style="color: var(--text-muted);"> / </span>
+    <span>Mes Modules</span>
+{% endblock %}
+
+{% block content %}
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-book"></i>
+            Mes Modules d'Enseignement
+        </h1>
+        <div class="top-actions">
+            <a href="{% url 'teacher:create_teacher_module' %}" class="action-btn primary">
+                <i class="fas fa-plus"></i>
+                Créer un Module
+            </a>
+            <button onclick="window.location.reload()" class="action-btn">
+                <i class="fas fa-sync-alt"></i>
+                Actualiser
+            </button>
+        </div>
+    </div>
+
+    <!-- Welcome Section -->
+    <div class="assignment-detail-header">
+        <div class="assignment-detail-content">
+            <div class="assignment-detail-title">Centre de Gestion des Modules</div>
+            <p style="opacity: 0.9; font-size: 1.1em; margin-bottom: 20px;">
+                Gérez vos modules d'enseignement, créez des devoirs et suivez les progrès de vos étudiants.
+            </p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 20px;">
+                <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 4px;">Modules Assignés</div>
+                    <div style="font-weight: 700; font-size: 1.2em;">{{ modules_with_stats|length }}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 4px;">Total Étudiants</div>
+                    <div style="font-weight: 700; font-size: 1.2em;">
+                        {% widthratio modules_with_stats|length 1 0 as total_students %}
+                        {% for module_data in modules_with_stats %}
+                            {% widthratio total_students 1 module_data.enrolled_count as total_students %}
+                        {% endfor %}
+                        {{ total_students|default:0 }}
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 4px;">Devoirs Créés</div>
+                    <div style="font-weight: 700; font-size: 1.2em;">
+                        {% widthratio modules_with_stats|length 1 0 as total_assignments %}
+                        {% for module_data in modules_with_stats %}
+                            {% widthratio total_assignments 1 module_data.project_assignments_count as total_assignments %}
+                        {% endfor %}
+                        {{ total_assignments|default:0 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Modules Notice -->
+    {% if pending_modules_count > 0 %}
+    <div class="pending-modules-notice">
+        <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <div style="color: var(--warning); font-size: 2em;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <h3 style="color: var(--warning); font-weight: 700; margin-bottom: 12px; font-size: 1.2em;">
+                    ⏳ Modules en Attente d'Approbation
+                </h3>
+                <div style="color: var(--text-primary); line-height: 1.6;">
+                    Vous avez <strong>{{ pending_modules_count }} module{{ pending_modules_count|pluralize }}</strong> 
+                    en attente d'approbation administrative. Ces modules apparaîtront dans votre liste une fois approuvés.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Modules Filter -->
+    <div class="modules-filter">
+        <div style="flex: 1;">
+            <input type="text" id="moduleSearch" placeholder="Rechercher un module par code ou nom..." 
+                   class="form-input" style="margin: 0; width: 100%;">
+        </div>
+        <div>
+            <select id="yearFilter" class="form-select" style="margin: 0;">
+                <option value="">Toutes les années</option>
+                <option value="2024-2025">2024-2025</option>
+                <option value="2023-2024">2023-2024</option>
+                <option value="2022-2023">2022-2023</option>
+            </select>
+        </div>
+        <div>
+            <select id="semesterFilter" class="form-select" style="margin: 0;">
+                <option value="">Tous les semestres</option>
+                <option value="S1">Semestre 1</option>
+                <option value="S2">Semestre 2</option>
+                <option value="Summer">Session d'été</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Modules Grid -->
+    {% if modules_with_stats %}
+    <div class="modules-grid" id="modulesGrid">
+        {% for module_data in modules_with_stats %}
+        <div class="module-card {% if not module_data.module.is_active %}pending{% endif %}" 
+             data-code="{{ module_data.module.code }}" 
+             data-name="{{ module_data.module.name }}"
+             data-year="{{ module_data.module.academic_year }}"
+             data-semester="{{ module_data.module.semester }}">
+            
+            <div class="module-header">
+                <div class="module-code">{{ module_data.module.code }}</div>
+                <div class="module-status {% if module_data.module.is_active %}active{% else %}pending{% endif %}">
+                    {% if module_data.module.is_active %}Actif{% else %}En Attente{% endif %}
+                </div>
+            </div>
+            
+            <div class="module-title">{{ module_data.module.name }}</div>
+            
+            <div class="module-meta">
+                <div class="module-meta-item">
+                    <i class="fas fa-calendar"></i>
+                    {{ module_data.module.academic_year }}
+                </div>
+                <div class="module-meta-item">
+                    <i class="fas fa-clock"></i>
+                    {{ module_data.module.get_semester_display }}
+                </div>
+                {% if module_data.module.classroom %}
+                <div class="module-meta-item">
+                    <i class="fas fa-door-open"></i>
+                    {{ module_data.module.classroom }}
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if module_data.module.description %}
+            <div class="module-description">
+                {{ module_data.module.description|truncatewords:20 }}
+            </div>
+            {% else %}
+            <div class="module-description" style="font-style: italic; color: var(--text-muted);">
+                Aucune description disponible
+            </div>
+            {% endif %}
+            
+            <div class="module-stats">
+                <div class="module-stat">
+                    <div class="module-stat-value">{{ module_data.enrolled_count }}</div>
+                    <div class="module-stat-label">Étudiants</div>
+                </div>
+                <div class="module-stat">
+                    <div class="module-stat-value">{{ module_data.project_assignments_count }}</div>
+                    <div class="module-stat-label">Devoirs</div>
+                </div>
+                <div class="module-stat">
+                    <div class="module-stat-value">{{ module_data.total_projects_count }}</div>
+                    <div class="module-stat-label">Projets</div>
+                </div>
+            </div>
+            
+            <!-- NEW: Students Preview Section -->
+            {% if module_data.module.is_active %}
+            <div class="students-preview">
+                <div class="students-header">
+                    <div class="students-title">
+                        <i class="fas fa-users"></i>
+                        Étudiants Inscrits
+                    </div>
+                    <div class="students-count">{{ module_data.enrolled_count }}</div>
+                </div>
+                
+                {% if module_data.recent_students %}
+                <div class="students-avatars">
+                    {% for enrollment in module_data.recent_students|slice:":6" %}
+                    <div class="student-avatar" 
+                         title="{{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}">
+                        {% if enrollment.student.user.first_name and enrollment.student.user.last_name %}
+                            {{ enrollment.student.user.first_name.0 }}{{ enrollment.student.user.last_name.0 }}
+                        {% else %}
+                            {{ enrollment.student.user.username.0|upper }}{{ enrollment.student.user.username.1|upper|default:"" }}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% if module_data.enrolled_count > 6 %}
+                    <div class="student-avatar more">+{{ module_data.enrolled_count|add:"-6" }}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Detailed Students List (Collapsible) -->
+                {% if module_data.recent_students|length > 6 %}
+                <details style="margin-top: 12px;">
+                    <summary style="cursor: pointer; color: var(--accent-primary); font-size: 12px; font-weight: 600;">
+                        <i class="fas fa-chevron-down"></i> Voir tous les étudiants
+                    </summary>
+                    <div class="students-list" style="margin-top: 8px;">
+                        {% for enrollment in module_data.recent_students %}
+                        <div class="student-item">
+                            <div class="student-info">
+                                <div class="student-name">
+                                    {{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}
+                                </div>
+                                <div class="student-details">
+                                    {{ enrollment.student.student_id }} • {{ enrollment.student.department }}
+                                </div>
+                            </div>
+                            <div class="student-date">
+                                {{ enrollment.enrolled_at|date:"d/m" }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </details>
+                {% endif %}
+                {% else %}
+                <div style="text-align: center; padding: 16px; color: var(--text-muted);">
+                    <i class="fas fa-user-plus" style="font-size: 1.5em; margin-bottom: 8px; opacity: 0.5;"></i>
+                    <p style="margin: 0; font-size: 12px;">Aucun étudiant inscrit</p>
+                    <p style="margin: 4px 0 0 0; font-size: 11px; opacity: 0.8;">
+                        Code: <strong>{{ module_data.module.code }}</strong>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            {% if module_data.module.is_active %}
+            <div class="module-actions">
+                <a href="{% url 'teacher:module_detail' module_data.module.id %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-eye"></i>
+                    Détails
+                </a>
+                <a href="{% url 'teacher:module_projects' module_data.module.id %}" class="btn btn-sm btn-secondary">
+                    <i class="fas fa-project-diagram"></i>
+                    Projets
+                </a>
+                <a href="{% url 'teacher:assignments_dashboard' %}?module={{ module_data.module.id }}" class="btn btn-sm" style="background: var(--accent-secondary); color: white;">
+                    <i class="fas fa-tasks"></i>
+                    Devoirs
+                </a>
+            </div>
+            {% else %}
+            <div class="module-actions">
+                <button class="btn btn-sm btn-secondary" disabled>
+                    <i class="fas fa-hourglass-half"></i>
+                    En Attente d'Approbation
+                </button>
+            </div>
+            {% endif %}
+            
+            <!-- Assignment Date -->
+            <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-primary); font-size: 12px; color: var(--text-muted);">
+                <i class="fas fa-calendar-plus"></i>
+                Assigné le {{ module_data.assignment.assigned_at|date:"d/m/Y" }}
+                {% if module_data.assignment.assigned_by %}
+                    par {{ module_data.assignment.assigned_by.get_full_name|default:module_data.assignment.assigned_by.username }}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state-modules">
+        <div style="font-size: 4em; margin-bottom: 20px; opacity: 0.3;">📚</div>
+        <h2 style="color: var(--text-primary); font-weight: 700; margin-bottom: 16px;">
+            Aucun Module Assigné
+        </h2>
+        <p style="color: var(--text-secondary); line-height: 1.6; max-width: 500px; margin: 0 auto 24px;">
+            Vous n'avez actuellement aucun module assigné. Contactez l'administration pour obtenir des assignations 
+            de modules ou créez votre propre module d'enseignement.
+        </p>
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'teacher:create_teacher_module' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i>
+                Créer mon Premier Module
+            </a>
+            <button onclick="window.location.reload()" class="btn btn-secondary">
+                <i class="fas fa-sync-alt"></i>
+                Actualiser la Liste
+            </button>
+        </div>
+        
+        <div style="margin-top: 32px; padding: 20px; background: rgba(79, 70, 229, 0.1); border-radius: 12px; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <h4 style="color: var(--accent-primary); font-weight: 600; margin-bottom: 12px;">
+                <i class="fas fa-info-circle"></i>
+                Comment obtenir des modules ?
+            </h4>
+            <ul style="color: var(--text-secondary); line-height: 1.6; text-align: left; margin-left: 20px;">
+                <li><strong>Assignation Administrative :</strong> L'administrateur vous assigne des modules existants</li>
+                <li><strong>Création Personnelle :</strong> Créez vos propres modules (nécessite une approbation)</li>
+                <li><strong>Collaboration :</strong> Rejoignez des modules créés par d'autres enseignants</li>
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions Panel -->
+    <div class="content-card" style="margin-top: 32px;">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-bolt"></i>
+                Actions Rapides
+            </h3>
+        </div>
+        <div class="card-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                <a href="{% url 'teacher:create_teacher_module' %}" class="action-card" style="text-decoration: none; color: inherit;">
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px; border: 1px solid var(--border-primary); transition: all 0.3s ease;">
+                        <div style="color: var(--success); font-size: 2em; margin-bottom: 12px;">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <h4 style="color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">
+                            Créer un Nouveau Module
+                        </h4>
+                        <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5;">
+                            Créez et configurez un nouveau module d'enseignement
+                        </p>
+                    </div>
+                </a>
+                
+                <a href="{% url 'teacher:assignments_dashboard' %}" class="action-card" style="text-decoration: none; color: inherit;">
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px; border: 1px solid var(--border-primary); transition: all 0.3s ease;">
+                        <div style="color: var(--accent-primary); font-size: 2em; margin-bottom: 12px;">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h4 style="color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">
+                            Gérer les Devoirs
+                        </h4>
+                        <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5;">
+                            Créez et suivez les devoirs de vos modules
+                        </p>
+                    </div>
+                </a>
+                
+                <a href="{% url 'teacher:student_projects' %}" class="action-card" style="text-decoration: none; color: inherit;">
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px; border: 1px solid var(--border-primary); transition: all 0.3s ease;">
+                        <div style="color: var(--warning); font-size: 2em; margin-bottom: 12px;">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <h4 style="color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">
+                            Évaluer les Projets
+                        </h4>
+                        <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5;">
+                            Examinez et évaluez les projets soumis
+                        </p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Information Panel -->
+    <div class="info-panel">
+        <div class="info-header">
+            <div class="info-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="info-content">
+                <h3>Guide de Gestion des Modules</h3>
+                <p style="opacity: 0.9; margin: 0;">
+                    Tout ce que vous devez savoir sur la gestion de vos modules d'enseignement
+                </p>
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-item">
+                <strong><i class="fas fa-key"></i> Code d'Inscription</strong>
+                <p>Les étudiants utilisent le code du module pour s'inscrire automatiquement à vos cours. Partagez ce code avec vos étudiants.</p>
+            </div>
+            <div class="info-item">
+                <strong><i class="fas fa-plus-circle"></i> Créer des Modules</strong>
+                <p>Créez vos propres modules d'enseignement. Ils nécessitent une approbation administrative avant activation.</p>
+            </div>
+            <div class="info-item">
+                <strong><i class="fas fa-users"></i> Gestion des Étudiants</strong>
+                <p>Suivez les inscriptions et gérez les projets de vos étudiants depuis chaque module. Voir les détails de chaque étudiant.</p>
+            </div>
+            <div class="info-item">
+                <strong><i class="fas fa-tasks"></i> Créer des Devoirs</strong>
+                <p>Créez des devoirs directement depuis vos modules. Choisissez entre assignation directe ou choix multiple pour vos étudiants.</p>
+            </div>
+            <div class="info-item">
+                <strong><i class="fas fa-clipboard-check"></i> Évaluations</strong>
+                <p>Accédez rapidement aux projets nécessitant une évaluation depuis le centre d'évaluation ou la page du module.</p>
+            </div>
+            <div class="info-item">
+                <strong><i class="fas fa-chart-line"></i> Suivi des Progrès</strong>
+                <p>Surveillez les progrès de vos étudiants avec des statistiques détaillées sur les projets et les soumissions.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    {% if modules_with_stats %}
+    <div class="content-card" style="margin-top: 24px;">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-chart-pie"></i>
+                Résumé Statistique
+            </h3>
+        </div>
+        <div class="card-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
+                {% widthratio modules_with_stats|length 1 0 as total_students %}
+                {% widthratio modules_with_stats|length 1 0 as total_assignments %}
+                {% for module_data in modules_with_stats %}
+                    {% widthratio total_students 1 module_data.enrolled_count as total_students %}
+                    {% widthratio total_assignments 1 module_data.project_assignments_count as total_assignments %}
+                {% endfor %}
+                
+                <div style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="font-size: 2em; font-weight: 800; color: var(--accent-primary); margin-bottom: 8px;">
+                        {{ modules_with_stats|length }}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Total Modules</div>
+                </div>
+                
+                <div style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="font-size: 2em; font-weight: 800; color: var(--success); margin-bottom: 8px;">
+                        {{ total_students|default:0 }}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Total Étudiants</div>
+                </div>
+                
+                <div style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="font-size: 2em; font-weight: 800; color: var(--warning); margin-bottom: 8px;">
+                        {{ total_assignments|default:0 }}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Total Devoirs</div>
+                </div>
+                
+                <div style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="font-size: 2em; font-weight: 800; color: var(--info); margin-bottom: 8px;">
+                        {% if modules_with_stats|length > 0 %}
+                            {% widthratio total_students modules_with_stats|length 1 %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Moy. Étudiants/Module</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const moduleSearch = document.getElementById('moduleSearch');
+    const yearFilter = document.getElementById('yearFilter');
+    const semesterFilter = document.getElementById('semesterFilter');
+    const modulesGrid = document.getElementById('modulesGrid');
+    const moduleCards = document.querySelectorAll('.module-card');
+    
+    // Filter functionality
+    function filterModules() {
+        const searchTerm = moduleSearch.value.toLowerCase();
+        const selectedYear = yearFilter.value;
+        const selectedSemester = semesterFilter.value;
+        
+        let visibleCount = 0;
+        
+        moduleCards.forEach(card => {
+            const code = card.dataset.code.toLowerCase();
+            const name = card.dataset.name.toLowerCase();
+            const year = card.dataset.year;
+            const semester = card.dataset.semester;
+            
+            const matchesSearch = !searchTerm || code.includes(searchTerm) || name.includes(searchTerm);
+            const matchesYear = !selectedYear || year === selectedYear;
+            const matchesSemester = !selectedSemester || semester === selectedSemester;
+            
+            if (matchesSearch && matchesYear && matchesSemester) {
+                card.style.display = 'block';
+                card.style.animation = 'fadeInUp 0.3s ease-out';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Show/hide empty state message
+        updateEmptyState(visibleCount);
+    }
+    
+    function updateEmptyState(visibleCount) {
+        let emptyMessage = document.getElementById('filterEmptyMessage');
+        
+        if (visibleCount === 0 && moduleCards.length > 0) {
+            if (!emptyMessage) {
+                emptyMessage = document.createElement('div');
+                emptyMessage.id = 'filterEmptyMessage';
+                emptyMessage.className = 'empty-state-modules';
+                emptyMessage.innerHTML = `
+                    <div style="font-size: 3em; margin-bottom: 20px; opacity: 0.3;">🔍</div>
+                    <h3 style="color: var(--text-primary); font-weight: 600; margin-bottom: 12px;">
+                        Aucun module trouvé
+                    </h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Aucun module ne correspond à vos critères de recherche.
+                    </p>
+                    <button onclick="clearFilters()" class="btn btn-primary">
+                        <i class="fas fa-times"></i>
+                        Effacer les Filtres
+                    </button>
+                `;
+                modulesGrid.parentNode.appendChild(emptyMessage);
+            }
+            emptyMessage.style.display = 'block';
+        } else if (emptyMessage) {
+            emptyMessage.style.display = 'none';
+        }
+    }
+    
+    // Global function for clear filters button
+    window.clearFilters = function() {
+        moduleSearch.value = '';
+        yearFilter.value = '';
+        semesterFilter.value = '';
+        filterModules();
+    };
+    
+    // Event listeners
+    moduleSearch.addEventListener('input', filterModules);
+    yearFilter.addEventListener('change', filterModules);
+    semesterFilter.addEventListener('change', filterModules);
+    
+    // Add hover effects to action cards
+    const actionCards = document.querySelectorAll('.action-card > div');
+    actionCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        });
+    });
+    
+    // Add click tracking for modules
+    moduleCards.forEach(card => {
+        const detailsLink = card.querySelector('a[href*="module_detail"]');
+        if (detailsLink) {
+            card.addEventListener('click', function(e) {
+                // Only navigate if clicking on the card itself, not on buttons
+                if (e.target === card || e.target.closest('.module-title') || e.target.closest('.module-description')) {
+                    window.location.href = detailsLink.href;
+                }
+            });
+            
+            card.style.cursor = 'pointer';
+        }
+    });
+    
+    // Auto-refresh for pending modules (every 30 seconds)
+    const hasPendingModules = document.querySelectorAll('.module-card.pending').length > 0;
+    if (hasPendingModules) {
+        setTimeout(() => {
+            window.location.reload();
+        }, 30000);
+        
+        // Add a subtle indicator for auto-refresh
+        const refreshIndicator = document.createElement('div');
+        refreshIndicator.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--warning);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            animation: pulse 2s infinite;
+        `;
+        refreshIndicator.innerHTML = '<i class="fas fa-sync-alt"></i> Auto-actualisation...';
+        document.body.appendChild(refreshIndicator);
+    }
+    
+    // Search highlighting
+    moduleSearch.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        moduleCards.forEach(card => {
+            const title = card.querySelector('.module-title');
+            const code = card.querySelector('.module-code');
+            
+            // Remove previous highlights
+            title.innerHTML = title.textContent;
+            code.innerHTML = code.textContent;
+            
+            if (searchTerm) {
+                // Highlight matching text
+                const titleText = title.textContent;
+                const codeText = code.textContent;
+                
+                if (titleText.toLowerCase().includes(searchTerm)) {
+                    const regex = new RegExp(`(${searchTerm})`, 'gi');
+                    title.innerHTML = titleText.replace(regex, '<mark style="background: var(--warning); color: white; padding: 2px 4px; border-radius: 3px;">$1</mark>');
+                }
+                
+                if (codeText.toLowerCase().includes(searchTerm)) {
+                    const regex = new RegExp(`(${searchTerm})`, 'gi');
+                    code.innerHTML = codeText.replace(regex, '<mark style="background: rgba(255,255,255,0.3); padding: 2px 4px; border-radius: 3px;">$1</mark>');
+                }
+            }
+        });
+    });
+    
+    // Student avatar tooltips
+    const studentAvatars = document.querySelectorAll('.student-avatar[title]');
+    studentAvatars.forEach(avatar => {
+        avatar.addEventListener('mouseenter', function() {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'student-tooltip';
+            tooltip.textContent = this.getAttribute('title');
+            tooltip.style.cssText = `
+                position: absolute;
+                background: var(--bg-primary);
+                color: var(--text-primary);
+                padding: 6px 10px;
+                border-radius: 6px;
+                font-size: 12px;
+                white-space: nowrap;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                border: 1px solid var(--border-primary);
+                pointer-events: none;
+                transform: translateX(-50%) translateY(-100%);
+                top: -8px;
+                left: 50%;
+            `;
+            this.appendChild(tooltip);
+        });
+        
+        avatar.addEventListener('mouseleave', function() {
+            const tooltip = this.querySelector('.student-tooltip');
+            if (tooltip) {
+                tooltip.remove();
+            }
+        });
+    });
+});
+
+// CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    .module-card {
+        animation: fadeInUp 0.3s ease-out;
+    }
+    
+    .module-card:nth-child(even) {
+        animation-delay: 0.1s;
+    }
+    
+    .module-card:nth-child(3n) {
+        animation-delay: 0.2s;
+    }
+    
+    .student-avatar {
+        position: relative;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

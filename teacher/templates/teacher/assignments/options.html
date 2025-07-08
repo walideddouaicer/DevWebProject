@@ -1,0 +1,384 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Options de Projets - {{ assignment.title }} - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<a href="{% url 'teacher:assignments_dashboard' %}" style="color: var(--accent-primary); text-decoration: none;">Gestion des Devoirs</a>
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<a href="{% url 'teacher:assignment_detail' assignment.id %}" style="color: var(--accent-primary); text-decoration: none;">{{ assignment.title|truncatewords:3 }}</a>
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<span class="breadcrumb-current">Options de Projets</span>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-list-ul"></i>
+        Options de Projets
+    </h1>
+    <div class="top-actions">
+        <a href="{% url 'teacher:assignment_detail' assignment.id %}" class="action-btn">
+            <i class="fas fa-arrow-left"></i>
+            Retour au Devoir
+        </a>
+    </div>
+</div>
+
+<!-- Assignment Info Banner -->
+<div style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); color: white; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2 style="margin: 0 0 8px 0; font-size: 1.5em;">{{ assignment.title }}</h2>
+            <div style="opacity: 0.9;">
+                {{ assignment.module.code }} • {{ assignment.get_assignment_type_display }} • 
+                Échéance: {{ assignment.deadline|date:"d M Y H:i" }}
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 1.8em; font-weight: 700;">{{ project_options.count }}</div>
+            <div style="opacity: 0.8; font-size: 0.9em;">Option{{ project_options.count|pluralize }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Add New Option Form -->
+<div class="content-card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-plus-circle"></i>
+            Ajouter une Nouvelle Option
+        </h2>
+    </div>
+    <div class="card-content">
+        <form method="post" class="option-add-form" style="border: none; background: transparent; padding: 0;">
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">
+                        {{ form.title.label }}
+                        <span style="color: var(--error);">*</span>
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.help_text %}
+                        <div class="form-help">{{ form.title.help_text }}</div>
+                    {% endif %}
+                    {% if form.title.errors %}
+                        {% for error in form.title.errors %}
+                            <div style="color: var(--error); font-size: 12px; margin-top: 4px;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.estimated_difficulty.id_for_label }}" class="form-label">
+                        {{ form.estimated_difficulty.label }}
+                    </label>
+                    {{ form.estimated_difficulty }}
+                    {% if form.estimated_difficulty.help_text %}
+                        <div class="form-help">{{ form.estimated_difficulty.help_text }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                    {{ form.description.label }}
+                    <span style="color: var(--error);">*</span>
+                </label>
+                {{ form.description }}
+                {% if form.description.help_text %}
+                    <div class="form-help">{{ form.description.help_text }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.requirements.id_for_label }}" class="form-label">
+                    {{ form.requirements.label }}
+                </label>
+                {{ form.requirements }}
+                {% if form.requirements.help_text %}
+                    <div class="form-help">{{ form.requirements.help_text }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                        {{ form.is_unique }}
+                        {{ form.is_unique.label }}
+                    </label>
+                    {% if form.is_unique.help_text %}
+                        <div class="form-help">{{ form.is_unique.help_text }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group" id="max-teams-field" style="display: none;">
+                    <label for="{{ form.max_teams.id_for_label }}" class="form-label">
+                        {{ form.max_teams.label }}
+                    </label>
+                    {{ form.max_teams }}
+                    {% if form.max_teams.help_text %}
+                        <div class="form-help">{{ form.max_teams.help_text }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                <button type="reset" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i>
+                    Réinitialiser
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Ajouter Option
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Debug Form Errors -->
+{% if form.errors or form.non_field_errors %}
+<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+    <h4 style="color: var(--error); margin: 0 0 12px 0;">
+        <i class="fas fa-exclamation-circle"></i>
+        Erreurs de Validation
+    </h4>
+    
+    {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+            <div style="color: var(--error); margin-bottom: 8px;">• {{ error }}</div>
+        {% endfor %}
+    {% endif %}
+    
+    {% for field, errors in form.errors.items %}
+        {% for error in errors %}
+            <div style="color: var(--error); margin-bottom: 8px;">• <strong>{{ field }}:</strong> {{ error }}</div>
+        {% endfor %}
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Existing Options List -->
+<div class="content-card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-list"></i>
+            Options Disponibles ({{ project_options.count }})
+        </h2>
+    </div>
+    <div class="card-content">
+        {% if project_options %}
+            <div class="project-options-list">
+                {% for option in project_options %}
+                <div class="project-option-item">
+                    <div class="project-option-header">
+                        <div style="flex: 1;">
+                            <div class="project-option-title">
+                                {{ option.title }}
+                                {% if not option.is_available %}
+                                    <span style="color: var(--error); font-size: 12px; font-weight: 500; margin-left: 8px;">(Désactivée)</span>
+                                {% endif %}
+                            </div>
+                            <div class="project-option-meta">
+                                <span style="display: flex; align-items: center; gap: 4px;">
+                                    <i class="fas fa-signal"></i>
+                                    <span style="padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; 
+                                        {% if option.estimated_difficulty == 'easy' %}background: rgba(16, 185, 129, 0.2); color: var(--success);
+                                        {% elif option.estimated_difficulty == 'medium' %}background: rgba(245, 158, 11, 0.2); color: var(--warning);
+                                        {% else %}background: rgba(239, 68, 68, 0.2); color: var(--error);{% endif %}">
+                                        {{ option.get_estimated_difficulty_display }}
+                                    </span>
+                                </span>
+                                <span>
+                                    <i class="fas fa-users"></i>
+                                    {{ option.get_availability_text }}
+                                </span>
+                                <span>
+                                    <i class="fas fa-sort-numeric-up"></i>
+                                    Position {{ option.order }}
+                                </span>
+                                <span>
+                                    <i class="fas fa-calendar"></i>
+                                    {{ option.created_at|date:"d M Y" }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="project-option-actions">
+                            {% if option.current_groups == 0 %}
+                            <a href="{% url 'teacher:option_delete' assignment.id option.id %}" 
+                               class="btn btn-sm" 
+                               style="background: var(--error); color: white;"
+                               onclick="return confirm('Supprimer cette option ? Cette action est irréversible.')">
+                                <i class="fas fa-trash"></i>
+                                Supprimer
+                            </a>
+                            {% else %}
+                            <span style="color: var(--text-muted); font-size: 12px;">
+                                Utilisée par {{ option.current_groups }} groupe{{ option.current_groups|pluralize }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="project-option-description">
+                        {{ option.description|linebreaks }}
+                    </div>
+                    
+                    {% if option.requirements %}
+                    <div class="project-option-requirements">
+                        <strong><i class="fas fa-tools"></i> Compétences et Exigences :</strong><br>
+                        {{ option.requirements|linebreaks }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Selection Status -->
+                    {% if option.current_groups > 0 %}
+                    <div style="background: rgba(79, 70, 229, 0.1); padding: 12px; border-radius: 8px; margin-top: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--accent-primary); font-weight: 600; margin-bottom: 4px;">
+                            <i class="fas fa-users"></i>
+                            Sélectionnée par {{ option.current_groups }} groupe{{ option.current_groups|pluralize }}
+                        </div>
+                        {% if option.is_unique and option.current_groups > 0 %}
+                        <div style="color: var(--text-muted); font-size: 12px;">
+                            Cette option unique a été sélectionnée et n'est plus disponible.
+                        </div>
+                        {% elif not option.is_unique %}
+                        <div style="color: var(--text-muted); font-size: 12px;">
+                            {{ option.max_teams|add:"-"|add:option.current_groups }} place{{ option.max_teams|add:"-"|add:option.current_groups|pluralize }} restante{{ option.max_teams|add:"-"|add:option.current_groups|pluralize }}.
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <div class="empty-title">Aucune Option de Projet</div>
+                <div class="empty-description">
+                    Ajoutez au moins une option de projet pour que vos étudiants puissent faire un choix. 
+                    Plus vous offrez d'options, plus vos étudiants pourront trouver un projet qui les passionne.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Publishing Status -->
+{% if assignment.status == 'draft' %}
+<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 12px; padding: 20px; margin-top: 24px;">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <i class="fas fa-exclamation-triangle" style="color: var(--warning); font-size: 1.5em;"></i>
+        <h3 style="margin: 0; color: var(--warning);">Devoir en Brouillon</h3>
+    </div>
+    <p style="margin: 0 0 16px 0; color: var(--text-secondary); line-height: 1.5;">
+        Ce devoir n'est pas encore publié. Les étudiants ne peuvent pas le voir. 
+        {% if project_options.count > 0 %}
+            Vous avez {{ project_options.count }} option{{ project_options.count|pluralize }} configurée{{ project_options.count|pluralize }}. 
+            Vous pouvez maintenant publier le devoir.
+        {% else %}
+            Ajoutez au moins une option de projet avant de pouvoir publier.
+        {% endif %}
+    </p>
+    
+    <div style="display: flex; gap: 12px;">
+        <a href="{% url 'teacher:assignment_detail' assignment.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Retour au Devoir
+        </a>
+        
+        {% if project_options.count > 0 %}
+        <form method="post" action="{% url 'teacher:assignment_publish' assignment.id %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Publier ce devoir maintenant ? Les étudiants pourront le voir immédiatement.')">
+                <i class="fas fa-rocket"></i>
+                Publier le Devoir
+            </button>
+        </form>
+        {% else %}
+        <button class="btn btn-primary" disabled style="opacity: 0.5;">
+            <i class="fas fa-rocket"></i>
+            Publier le Devoir
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Help Section -->
+<div class="content-card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-question-circle"></i>
+            Conseils pour Créer de Bonnes Options
+        </h3>
+    </div>
+    <div class="card-content">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 12px; border-left: 4px solid var(--success);">
+                <h4 style="color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-lightbulb"></i>
+                    Diversité des Projets
+                </h4>
+                <p style="color: var(--text-secondary); margin: 0; font-size: 14px; line-height: 1.5;">
+                    Proposez des projets de différents niveaux de difficulté et domaines pour que chaque étudiant trouve son compte.
+                </p>
+            </div>
+            
+            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 12px; border-left: 4px solid var(--info);">
+                <h4 style="color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-users"></i>
+                    Gestion des Groupes
+                </h4>
+                <p style="color: var(--text-secondary); margin: 0; font-size: 14px; line-height: 1.5;">
+                    Pour les projets populaires, permettez à plusieurs groupes de les choisir en désactivant l'option "unique".
+                </p>
+            </div>
+            
+            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 12px; border-left: 4px solid var(--warning);">
+                <h4 style="color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-tools"></i>
+                    Compétences Requises
+                </h4>
+                <p style="color: var(--text-secondary); margin: 0; font-size: 14px; line-height: 1.5;">
+                    Spécifiez clairement les technologies et compétences nécessaires pour aider les étudiants à choisir.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'teacher/js/assignments.js' %}"></script>
+<script>
+// Show/hide max_teams field based on is_unique checkbox
+function toggleMaxTeams(isUniqueChecked) {
+    const maxTeamsField = document.getElementById('max-teams-field');
+    if (isUniqueChecked) {
+        maxTeamsField.style.display = 'none';
+    } else {
+        maxTeamsField.style.display = 'block';
+    }
+}
+// Initialize on page load
+window.addEventListener('DOMContentLoaded', function() {
+    const isUniqueCheckbox = document.getElementById('{{ form.is_unique.id_for_label }}');
+    if (isUniqueCheckbox) {
+        toggleMaxTeams(isUniqueCheckbox.checked);
+        isUniqueCheckbox.addEventListener('change', function() {
+            toggleMaxTeams(this.checked);
+        });
+    }
+});
+</script>
+{% endblock %}

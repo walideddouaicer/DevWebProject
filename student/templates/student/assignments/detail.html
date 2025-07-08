@@ -1,0 +1,561 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}{{ assignment_data.assignment.title }} - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Assignment Header -->
+<div class="assignment-detail-header">
+    <div class="assignment-detail-content">
+        <div class="assignment-detail-title">
+            {{ assignment_data.assignment.title }}
+        </div>
+        <p>{{ assignment_data.assignment.description }}</p>
+        
+        <div class="assignment-detail-meta">
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Module</div>
+                <div class="assignment-detail-meta-value">
+                    {{ assignment_data.assignment.module.code }} - {{ assignment_data.assignment.module.name }}
+                </div>
+            </div>
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Type</div>
+                <div class="assignment-detail-meta-value">
+                    {% if assignment_data.assignment.assignment_type == 'direct' %}
+                        🎯 Assignation Directe
+                    {% else %}
+                        🎲 Choix Multiple
+                    {% endif %}
+                    {% if assignment_data.assignment.is_group_work %}
+                        👥 (Travail en Équipe)
+                    {% endif %}
+                </div>
+            </div>
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Date Limite</div>
+                <div class="assignment-detail-meta-value">
+                    📅 {{ assignment_data.assignment.deadline|date:"d M Y à H:i" }}
+                </div>
+            </div>
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Enseignant</div>
+                <div class="assignment-detail-meta-value">
+                    👨‍🏫 {{ assignment_data.assignment.teacher.user.get_full_name }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Instructions -->
+{% if assignment_data.assignment.instructions %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h3>📋 Instructions</h3>
+    </div>
+    <div class="card-body">
+        <div class="assignment-instructions">
+            {{ assignment_data.assignment.instructions|linebreaks }}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Current Status & Actions -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        
+        <!-- PROJECT EXISTS - Show project info and team -->
+        {% if assignment_data.project %}
+            <div class="success-state">
+                <div class="success-icon">🚀</div>
+                <div class="success-title">
+                    {% if assignment_data.assignment.is_group_work %}
+                        Projet d'Équipe Créé
+                    {% else %}
+                        Projet Créé
+                    {% endif %}
+                </div>
+                <div class="success-description">
+                    Votre projet "{{ assignment_data.project.title }}" est en cours.
+                    <br>Statut: 
+                    {% if assignment_data.project.status == 'validated' %}
+                        <strong style="color: var(--success);">✅ Validé</strong>
+                    {% elif assignment_data.project.status == 'submitted' %}
+                        <strong style="color: var(--warning);">📤 Soumis pour évaluation</strong>
+                    {% else %}
+                        <strong style="color: var(--info);">🔄 En cours de développement</strong>
+                    {% endif %}
+                </div>
+                
+                <!-- NEW: Team Information -->
+                {% if assignment_data.assignment.is_group_work %}
+                <div class="team-info-card mt-3">
+                    <h4>👥 Équipe de Travail</h4>
+                    <div class="team-members">
+                        {% for member in assignment_data.project.get_team_members %}
+                        <div class="team-member">
+                            <div class="team-member-avatar">
+                                {{ member.user.first_name.0|default:member.user.username.0 }}{{ member.user.last_name.0|default:"" }}
+                            </div>
+                            <div class="team-member-info">
+                                <div class="team-member-name">{{ member.get_full_name }}</div>
+                                <div class="team-member-role">
+                                    {% if member == assignment_data.project.student %}
+                                        👑 Responsable du projet
+                                    {% else %}
+                                        👤 Collaborateur
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="team-size-status mt-2">
+                        {% with size_status=assignment_data.project.get_team_size_status %}
+                        <span class="team-size-badge {{ size_status.status }}">
+                            {{ assignment_data.project.get_team_size }}/{{ assignment_data.assignment.max_group_size }} membres
+                        </span>
+                        <span class="team-size-message">{{ size_status.message }}</span>
+                        {% endwith %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Project Options Info for Choice-Based -->
+                {% if assignment_data.project.selected_option %}
+                <div class="selected-option-info mt-3">
+                    <h4>🎯 Option Sélectionnée</h4>
+                    <div class="option-card mini">
+                        <div class="option-title">{{ assignment_data.project.selected_option.title }}</div>
+                        <div class="option-description">{{ assignment_data.project.selected_option.description|truncatewords:20 }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div style="margin-top: 16px;">
+                    <a href="{% url 'student:project_detail' assignment_data.project.id %}" class="btn btn-primary">
+                        🔍 Gérer le Projet
+                    </a>
+                    {% if assignment_data.project.status == 'in_progress' and assignment_data.project.can_be_submitted_for_assignment %}
+                        <a href="{% url 'student:project_submit_confirmation' assignment_data.project.id %}" class="btn btn-success">
+                            📤 Soumettre le Projet
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+        <!-- NO PROJECT YET - Show creation options -->
+        {% else %}
+            
+            <!-- DIRECT ASSIGNMENT -->
+            {% if assignment_data.assignment.assignment_type == 'direct' %}
+                {% if assignment_data.can_create_project %}
+                    <div class="project-creation-card">
+                        <h3>🚀 Prêt à Commencer</h3>
+                        <p>
+                            {% if assignment_data.assignment.is_group_work %}
+                                Créez votre projet d'équipe pour ce devoir. Vous pourrez inviter des collaborateurs après la création.
+                            {% else %}
+                                Créez votre projet pour ce devoir.
+                            {% endif %}
+                        </p>
+                        
+                        {% if assignment_data.assignment.is_group_work %}
+                        <div class="team-size-info">
+                            <strong>Taille d'équipe requise:</strong> 
+                            {{ assignment_data.assignment.min_group_size }} - {{ assignment_data.assignment.max_group_size }} membres
+                        </div>
+                        {% endif %}
+                        
+                        <a href="{% url 'student:create_assignment_project_direct' assignment_data.assignment.id %}" class="btn btn-primary">
+                            📝 Créer le Projet
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <h4>ℹ️ Information</h4>
+                        <p>{{ assignment_data.action_needed|default:"Ce devoir ne vous a pas encore été assigné ou n'est pas encore disponible." }}</p>
+                    </div>
+                {% endif %}
+
+            <!-- CHOICE-BASED ASSIGNMENT -->
+            {% else %}
+                {% if assignment_data.can_create_project %}
+                    <div class="project-creation-card">
+                        <h3>🎯 Choisir et Créer un Projet</h3>
+                        <p>
+                            {% if assignment_data.assignment.is_group_work %}
+                                Sélectionnez une option de projet et créez votre équipe de travail.
+                            {% else %}
+                                Sélectionnez une option de projet parmi celles proposées par votre enseignant.
+                            {% endif %}
+                        </p>
+                        
+                        {% if assignment_data.assignment.is_group_work %}
+                        <div class="team-size-info">
+                            <strong>Taille d'équipe requise:</strong> 
+                            {{ assignment_data.assignment.min_group_size }} - {{ assignment_data.assignment.max_group_size }} membres
+                        </div>
+                        {% endif %}
+                        
+                        <div class="project-options-summary mb-3">
+                            <strong>{{ available_options|length }} option{{ available_options|pluralize }} disponible{{ available_options|pluralize }}</strong>
+                        </div>
+                        
+                        <a href="{% url 'student:select_project_option_direct' assignment_data.assignment.id %}" class="btn btn-primary">
+                            🎯 Choisir un Projet
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <h4>⚠️ Non Disponible</h4>
+                        <p>{{ assignment_data.action_needed|default:"La période de sélection est terminée ou ce devoir n'est plus disponible." }}</p>
+                    </div>
+                {% endif %}
+            {% endif %}
+            
+        {% endif %}
+    </div>
+
+    <!-- Sidebar Information -->
+    <div class="col-lg-4">
+        <!-- Deadlines Card -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4>📅 Échéances</h4>
+            </div>
+            <div class="card-body">
+                {% if assignment_data.assignment.selection_deadline and assignment_data.assignment.assignment_type == 'choice_based' %}
+                <div class="deadline-item mb-3">
+                    <div class="deadline-label">Sélection des Projets</div>
+                    <div class="deadline-value {% if assignment_data.assignment.selection_deadline|timeuntil == '' %}text-danger{% endif %}">
+                        {{ assignment_data.assignment.selection_deadline|date:"d M Y H:i" }}
+                    </div>
+                    <div class="deadline-countdown">
+                        {% if assignment_data.assignment.selection_deadline|timeuntil %}
+                            ⏰ Dans {{ assignment_data.assignment.selection_deadline|timeuntil }}
+                        {% else %}
+                            🚨 Échéance passée
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="deadline-item">
+                    <div class="deadline-label">Rendu Final</div>
+                    <div class="deadline-value {% if assignment_data.assignment.deadline|timeuntil == '' %}text-danger{% endif %}">
+                        {{ assignment_data.assignment.deadline|date:"d M Y H:i" }}
+                    </div>
+                    <div class="deadline-countdown">
+                        {% if assignment_data.assignment.deadline|timeuntil %}
+                            ⏰ Dans {{ assignment_data.assignment.deadline|timeuntil }}
+                        {% else %}
+                            🚨 Échéance passée
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Info -->
+        <div class="card">
+            <div class="card-header">
+                <h4>ℹ️ Informations</h4>
+            </div>
+            <div class="card-body">
+                <div class="info-item">
+                    <strong>Statut:</strong>
+                    <span class="badge badge-{{ assignment_data.assignment.status }}">
+                        {% if assignment_data.assignment.status == 'published' %}
+                            📢 Publié
+                        {% elif assignment_data.assignment.status == 'in_progress' %}
+                            🔄 En cours
+                        {% else %}
+                            {{ assignment_data.assignment.get_status_display }}
+                        {% endif %}
+                    </span>
+                </div>
+
+                {% if assignment_data.assignment.is_group_work %}
+                <div class="info-item">
+                    <strong>Travail d'Équipe:</strong>
+                    👥 {{ assignment_data.assignment.min_group_size }} - {{ assignment_data.assignment.max_group_size }} membres
+                </div>
+                {% else %}
+                <div class="info-item">
+                    <strong>Type:</strong>
+                    👤 Travail individuel
+                </div>
+                {% endif %}
+
+                <div class="info-item">
+                    <strong>Créé le:</strong>
+                    {{ assignment_data.assignment.created_at|date:"d M Y" }}
+                </div>
+
+                {% if assignment_data.assignment.published_at %}
+                <div class="info-item">
+                    <strong>Publié le:</strong>
+                    {{ assignment_data.assignment.published_at|date:"d M Y à H:i" }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Options (for choice-based assignments) -->
+{% if assignment_data.assignment.assignment_type == 'choice_based' and project_options %}
+<div class="card">
+    <div class="card-header">
+        <h3>🎯 Options de Projets Disponibles</h3>
+        <p class="card-subtitle">Aperçu des projets proposés par votre enseignant</p>
+    </div>
+    <div class="card-body">
+        <div class="project-options-grid">
+            {% for option in project_options %}
+            <div class="project-option-card {% if not option.is_selectable %}unavailable{% endif %}">
+                <div class="project-option-header">
+                    <div class="project-option-title">{{ option.title }}</div>
+                    <div class="project-option-difficulty {{ option.estimated_difficulty }}">
+                        {% if option.estimated_difficulty == 'easy' %}
+                            😊 Facile
+                        {% elif option.estimated_difficulty == 'medium' %}
+                            🤔 Moyen
+                        {% else %}
+                            😰 Difficile
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="project-option-description">
+                    {{ option.description|truncatewords:30 }}
+                </div>
+                
+                {% if option.requirements %}
+                <div class="project-option-requirements">
+                    <strong>Compétences requises:</strong>
+                    {{ option.requirements|truncatewords:15 }}
+                </div>
+                {% endif %}
+                
+                <div class="project-option-availability">
+                    <span>Disponibilité:</span>
+                    <span class="{% if option.is_selectable %}text-success{% else %}text-danger{% endif %}">
+                        {{ option.get_availability_text }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if not assignment_data.project %}
+        <div class="text-center mt-4">
+            <a href="{% url 'student:select_project_option_direct' assignment_data.assignment.id %}" class="btn btn-primary">
+                🎯 Sélectionner et Créer un Projet
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Back Navigation -->
+<div class="mt-4">
+    <a href="{% url 'student:assignments_dashboard' %}" class="btn btn-secondary">
+        ← Retour aux Devoirs
+    </a>
+</div>
+
+<!-- NEW STYLES for team management -->
+<style>
+.project-creation-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #0ea5e9;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.project-creation-card h3 {
+    color: #0c4a6e;
+    margin-bottom: 1rem;
+}
+
+.team-info-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.team-members {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.team-member {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.team-member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.team-member-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.team-member-role {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.team-size-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.team-size-badge.optimal {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.team-size-badge.too_small {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.team-size-badge.too_large {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.team-size-badge.full {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.team-size-message {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-left: 0.5rem;
+}
+
+.team-size-info {
+    background: #f1f5f9;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    font-size: 0.875rem;
+    border-left: 4px solid #3b82f6;
+}
+
+.selected-option-info {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.option-card.mini {
+    background: white;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #d1fae5;
+}
+
+.option-card.mini .option-title {
+    font-weight: 600;
+    color: #059669;
+    margin-bottom: 0.25rem;
+}
+
+.option-card.mini .option-description {
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.deadline-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-primary);
+}
+.deadline-item:last-child {
+    border-bottom: none;
+}
+.deadline-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+.deadline-value {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+.deadline-countdown {
+    font-size: 12px;
+    font-style: italic;
+    color: var(--text-muted);
+}
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-primary);
+}
+.info-item:last-child {
+    border-bottom: none;
+}
+.assignment-instructions {
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .team-members {
+        gap: 0.5rem;
+    }
+    
+    .team-member {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .team-member-avatar {
+        align-self: center;
+    }
+}
+</style>
+
+{% endblock %}

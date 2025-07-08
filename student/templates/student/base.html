@@ -73,6 +73,10 @@ Enhanced Base template with modern UI, theme toggle, and modular CSS
                             <span class="nav-badge">{{ unread_notifications_count }}</span>
                         {% endif %}
                     </a>
+                    <a href="{% url 'student:assignments_dashboard' %}" class="nav-item {% if 'assignment' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-tasks nav-icon"></i>
+                        <span class="nav-text">Devoirs</span>
+                    </a>
                 </div>
 
                 <div class="nav-section">

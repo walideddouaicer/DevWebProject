@@ -1,0 +1,685 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Progression - {{ assignment.title }} - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<a href="{% url 'teacher:assignments_dashboard' %}" style="color: var(--accent-primary); text-decoration: none;">Devoirs</a>
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<a href="{% url 'teacher:assignment_detail' assignment.id %}" style="color: var(--accent-primary); text-decoration: none;">{{ assignment.title|truncatewords:3 }}</a>
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<span class="breadcrumb-current">Progression</span>
+{% endblock %}
+
+{% block content %}
+<!-- Assignment Header -->
+<div class="assignment-detail-header">
+    <div class="assignment-detail-content">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+            <div>
+                <h1 class="assignment-detail-title">Suivi de Progression</h1>
+                <div style="font-size: 1.1em; opacity: 0.9;">
+                    {{ assignment.title }} - {{ assignment.module.code }}
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 2em; font-weight: 700;">{{ completion_rate }}%</div>
+                <div style="opacity: 0.8;">Complété</div>
+            </div>
+        </div>
+        
+        <div class="assignment-detail-meta">
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Type</div>
+                <div class="assignment-detail-meta-value">
+                    {% if assignment.assignment_type == 'direct' %}
+                        <i class="fas fa-user-check"></i> Assignation directe
+                    {% else %}
+                        <i class="fas fa-list-ul"></i> Choix multiple
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Date limite</div>
+                <div class="assignment-detail-meta-value">
+                    {% now "Y-m-d H:i:s" as current_time %}
+                    {% if assignment.deadline|date:'Y-m-d H:i:s' > current_time %}
+                        {{ assignment.deadline|date:"d M Y H:i" }}
+                    {% else %}
+                        <span style="color: rgba(239, 68, 68, 1);">{{ assignment.deadline|date:"d M Y H:i" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Participants</div>
+                <div class="assignment-detail-meta-value">
+                    {{ total_expected }} attendu{{ total_expected|pluralize }}
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Taux de soumission</div>
+                <div class="assignment-detail-meta-value">
+                    {% if total_expected > 0 %}
+                        {% widthratio submitted_count total_expected 100 %}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deadline Alert -->
+{% now "Y-m-d H:i:s" as current_time %}
+{% if assignment.deadline and assignment.deadline|date:'Y-m-d H:i:s' <= current_time %}
+<div class="urgent-items">
+    <div class="urgent-items-title">
+        <i class="fas fa-exclamation-triangle"></i>
+        Délai dépassé
+    </div>
+    <div class="urgent-item">
+        <div class="urgent-item-info">
+            <div class="urgent-item-title">Date limite de soumission</div>
+            <div class="urgent-item-meta">
+                {{ assignment.deadline|date:"d M Y H:i" }} - Délai dépassé depuis {{ assignment.deadline|timesince }}
+            </div>
+        </div>
+        <div class="urgent-item-deadline" style="color: var(--danger);">
+            Terminé
+        </div>
+    </div>
+</div>
+{% elif assignment.deadline %}
+<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; gap: 12px; color: var(--warning);">
+        <i class="fas fa-clock" style="font-size: 20px;"></i>
+        <div>
+            <div style="font-weight: 600; margin-bottom: 4px;">
+                Date limite: {{ assignment.deadline|date:"d M Y H:i" }}
+            </div>
+            <div style="font-size: 14px; opacity: 0.9;">
+                {{ assignment.deadline|timeuntil }} restant pour les soumissions
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Statistics Overview -->
+<div class="assignments-overview">
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #3b82f6, #2563eb);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Total Attendu</h3>
+                <div class="assignment-stat-value">{{ total_expected }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-users"></i>
+                    {% if assignment.assignment_type == 'direct' %}Étudiants assignés{% else %}Participants{% endif %}
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #10b981, #059669);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Soumis</h3>
+                <div class="assignment-stat-value">{{ submitted_count }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-paper-plane"></i>
+                    Projets reçus
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-paper-plane"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Validés</h3>
+                <div class="assignment-stat-value">{{ validated_count }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-check-circle"></i>
+                    Projets approuvés
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #ef4444, #dc2626);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>En Attente</h3>
+                <div class="assignment-stat-value">
+                    {% if total_expected > submitted_count %}
+                        {{ total_expected|add:"-"|add:submitted_count }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-clock"></i>
+                    Non soumis
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <i class="fas fa-clock"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="content-card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-search"></i>
+            Rechercher et Filtrer
+        </h2>
+        <span id="results-count" style="color: var(--text-muted); font-size: 14px;">
+            {% if page_obj %}{{ page_obj.paginator.count }}{% else %}0{% endif %} projet{{ page_obj.paginator.count|pluralize }}
+        </span>
+    </div>
+    <div class="card-content">
+        <form method="get" class="form-row">
+            <div class="form-group">
+                <input type="text" name="search" value="{{ search_query|default:'' }}" 
+                       class="form-input" placeholder="Rechercher par nom d'étudiant, titre de projet...">
+            </div>
+            
+            <div class="form-group">
+                <select name="status" class="form-select filter-select">
+                    <option value="">Tous les statuts</option>
+                    {% for status_code, status_label in status_choices %}
+                    <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                        {{ status_label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <select name="sort" class="form-select filter-select">
+                    <option value="-updated_at">Plus récent</option>
+                    <option value="updated_at">Plus ancien</option>
+                    <option value="title">Titre A-Z</option>
+                    <option value="-title">Titre Z-A</option>
+                    <option value="status">Statut</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                    Filtrer
+                </button>
+                {% if search_query or status_filter %}
+                <a href="{% url 'teacher:assignment_progress' assignment.id %}" class="btn btn-secondary" style="margin-left: 8px;">
+                    <i class="fas fa-times"></i>
+                    Effacer
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Projects List -->
+<div class="assignments-list">
+    <div class="assignments-list-header">
+        <h2 class="assignments-list-title">
+            <i class="fas fa-list"></i>
+            Projets Soumis
+            {% if page_obj.paginator.count > 0 %}
+            <span style="color: var(--text-muted); font-size: 14px; font-weight: normal;">
+                {% if page_obj.has_other_pages %}
+                    ({{ page_obj.start_index }}-{{ page_obj.end_index }} sur {{ page_obj.paginator.count }})
+                {% else %}
+                    ({{ page_obj.paginator.count }} total)
+                {% endif %}
+            </span>
+            {% endif %}
+        </h2>
+        <div class="card-action" style="display: flex; gap: 8px;">
+            <button type="button" onclick="exportData()" class="btn btn-secondary btn-sm">
+                <i class="fas fa-download"></i>
+                Exporter
+            </button>
+            <button type="button" onclick="refreshProjects()" class="btn btn-secondary btn-sm">
+                <i class="fas fa-sync-alt"></i>
+                Actualiser
+            </button>
+        </div>
+    </div>
+    
+    {% if page_obj %}
+        {% for project in page_obj %}
+        <div class="assignment-item project-item">
+            <div class="assignment-info">
+                <div class="assignment-icon {{ project.status }}">
+                    {% if project.status == 'in_progress' %}
+                        <i class="fas fa-cog"></i>
+                    {% elif project.status == 'submitted' %}
+                        <i class="fas fa-paper-plane"></i>
+                    {% elif project.status == 'validated' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% else %}
+                        <i class="fas fa-file-alt"></i>
+                    {% endif %}
+                </div>
+                <div class="assignment-content">
+                    <div class="assignment-title">
+                        <a href="{% url 'teacher:project_review' project.id %}">
+                            {{ project.title|truncatewords:8 }}
+                        </a>
+                    </div>
+                    <div class="assignment-meta">
+                        <span class="assignment-meta-item">
+                            <i class="fas fa-user"></i>
+                            {{ project.student.user.get_full_name|default:project.student.user.username }}
+                        </span>
+                        {% if project.collaborators.exists %}
+                        <span class="assignment-meta-item">
+                            <i class="fas fa-users"></i>
+                            +{{ project.collaborators.count }} collaborateur{{ project.collaborators.count|pluralize }}
+                        </span>
+                        {% endif %}
+                        {% if project.assigned_group %}
+                        <span class="assignment-meta-item">
+                            <i class="fas fa-users"></i>
+                            {{ project.assigned_group.group_name }}
+                        </span>
+                        {% endif %}
+                        <span class="assignment-meta-item">
+                            <i class="fas fa-calendar"></i>
+                            {% if project.assignment_submitted_at %}
+                                Soumis {{ project.assignment_submitted_at|date:"d M Y H:i" }}
+                            {% else %}
+                                Modifié {{ project.updated_at|date:"d M Y H:i" }}
+                            {% endif %}
+                        </span>
+                        <span class="assignment-meta-item">
+                            <i class="fas fa-tag"></i>
+                            {% if project.assignment_source == 'teacher_assigned' %}
+                                Devoir assigné
+                            {% else %}
+                                Projet personnel
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <!-- Collaborators List -->
+                    {% if project.collaborators.exists %}
+                    <div style="margin-top: 8px;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            {% for collaborator in project.collaborators.all|slice:":3" %}
+                            <div style="display: flex; align-items: center; gap: 4px; background: var(--bg-tertiary); padding: 2px 6px; border-radius: 8px; font-size: 11px;">
+                                <span style="color: var(--text-secondary);">
+                                    {{ collaborator.user.get_full_name|default:collaborator.user.username|truncatewords:2 }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                            {% if project.collaborators.count > 3 %}
+                            <div style="color: var(--text-muted); font-size: 11px; padding: 2px 6px;">
+                                +{{ project.collaborators.count|add:"-3" }} autres
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="assignment-actions">
+                <span class="assignment-status {{ project.status }}">
+                    {{ project.get_status_display }}
+                </span>
+                
+                <a href="{% url 'teacher:project_review' project.id %}" class="btn btn-sm btn-secondary">
+                    <i class="fas fa-eye"></i>
+                    Examiner
+                </a>
+                
+                {% if project.status == 'submitted' %}
+                <a href="{% url 'teacher:approve_project' project.id %}" 
+                   class="btn btn-sm btn-success" 
+                   onclick="return confirm('Valider ce projet ?')"
+                   title="Valider le projet">
+                    <i class="fas fa-check"></i>
+                    Valider
+                </a>
+                <button onclick="showRejectModal('{{ project.id }}', '{{ project.title|escapejs }}')" 
+                        class="btn btn-sm btn-danger"
+                        title="Rejeter le projet">
+                    <i class="fas fa-times"></i>
+                    Rejeter
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <div class="empty-title">Aucun projet trouvé</div>
+            <div class="empty-description">
+                {% if search_query or status_filter %}
+                    Aucun projet ne correspond à vos critères de recherche.
+                {% else %}
+                    Aucun projet n'a encore été soumis pour ce devoir.
+                {% endif %}
+            </div>
+            {% if not search_query and not status_filter %}
+            <div style="margin-top: 16px; color: var(--text-muted); font-size: 14px;">
+                Les projets soumis par vos étudiants apparaîtront ici automatiquement.
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div style="display: flex; justify-content: center; align-items: center; gap: 8px; padding: 24px; border-top: 1px solid var(--border-primary);">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="btn btn-sm btn-secondary">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="btn btn-sm btn-secondary">
+                <i class="fas fa-angle-left"></i>
+            </a>
+            {% endif %}
+            
+            <span style="color: var(--text-muted); font-size: 14px; margin: 0 16px;">
+                Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="btn btn-sm btn-secondary">
+                <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="btn btn-sm btn-secondary">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<!-- Reject Project Modal -->
+<div id="reject-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: var(--bg-card); border-radius: 16px; padding: 24px; max-width: 500px; margin: 20px; border: 1px solid var(--border-primary); box-shadow: 0 8px 25px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: var(--text-primary);">Rejeter le Projet</h3>
+            <button onclick="closeRejectModal()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        <div id="reject-content">
+            <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                Êtes-vous sûr de vouloir rejeter ce projet ? Cette action nécessite une justification.
+            </p>
+            <form id="reject-form" method="post" action="">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Raison du rejet</label>
+                    <textarea name="rejection_reason" class="form-textarea" rows="4" 
+                              placeholder="Expliquez pourquoi ce projet est rejeté..." required></textarea>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                    <button type="button" onclick="closeRejectModal()" class="btn btn-secondary">
+                        Annuler
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times"></i>
+                        Rejeter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'teacher/js/assignments.js' %}"></script>
+<script>
+function showRejectModal(projectId, projectTitle) {
+    const modal = document.getElementById('reject-modal');
+    const form = document.getElementById('reject-form');
+    
+    if (modal && form) {
+        form.action = `/teacher/project/${projectId}/reject/`; // Update with your actual URL
+        modal.style.display = 'flex';
+        
+        // Update title to include project name
+        const title = modal.querySelector('h3');
+        if (title) {
+            title.textContent = `Rejeter "${projectTitle}"`;
+        }
+    }
+}
+
+function closeRejectModal() {
+    const modal = document.getElementById('reject-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        // Reset form
+        const form = document.getElementById('reject-form');
+        if (form) {
+            form.reset();
+        }
+    }
+}
+
+function refreshProjects() {
+    // Show loading state
+    const container = document.querySelector('.assignments-list');
+    if (container) {
+        container.style.opacity = '0.6';
+        
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    }
+}
+
+function exportData() {
+    // Prepare export data
+    const exportInfo = {
+        assignment: '{{ assignment.title|escapejs }}',
+        module: '{{ assignment.module.code|escapejs }}',
+        totalExpected: {{ total_expected }},
+        submitted: {{ submitted_count }},
+        validated: {{ validated_count }},
+        completionRate: {{ completion_rate }}
+    };
+    
+    showNotification('Génération de l\'export en cours...', 'info');
+    
+    // Simulate export process
+    setTimeout(() => {
+        const exportContent = `Rapport de Progression - ${exportInfo.assignment}
+Module: ${exportInfo.module}
+Date: ${new Date().toLocaleDateString('fr-FR')}
+
+STATISTIQUES:
+- Total attendu: ${exportInfo.totalExpected}
+- Projets soumis: ${exportInfo.submitted}
+- Projets validés: ${exportInfo.validated}
+- Taux de completion: ${exportInfo.completionRate}%
+
+Ce rapport contient les détails de progression pour le devoir assigné.`;
+        
+        // Create and download file
+        const blob = new Blob([exportContent], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `progression_${exportInfo.assignment.replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showNotification('Export téléchargé avec succès', 'success');
+    }, 1500);
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        z-index: 1000;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    `;
+    
+    switch(type) {
+        case 'success':
+            notification.style.background = 'var(--success)';
+            break;
+        case 'error':
+            notification.style.background = 'var(--danger)';
+            break;
+        case 'info':
+        default:
+            notification.style.background = 'var(--accent-primary)';
+            break;
+    }
+    
+    notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${message}`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 3000);
+}
+
+// Close modal when clicking outside
+document.getElementById('reject-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeRejectModal();
+    }
+});
+
+// Handle reject form submission
+document.getElementById('reject-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const reason = formData.get('rejection_reason');
+    
+    if (!reason || reason.trim().length < 10) {
+        showNotification('La raison du rejet doit contenir au moins 10 caractères', 'error');
+        return;
+    }
+    
+    // Here you would normally submit via AJAX
+    showNotification('Projet rejeté avec succès', 'success');
+    closeRejectModal();
+    
+    // Refresh the page after a short delay
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+});
+
+// Additional CSS for project-specific styling
+const additionalStyles = `
+.project-item .assignment-icon.in_progress {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.project-item .assignment-icon.submitted {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.project-item .assignment-icon.validated {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.project-item .assignment-icon.rejected {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.assignment-status.in_progress { 
+    background: rgba(245, 158, 11, 0.2); 
+    color: var(--warning); 
+}
+
+.assignment-status.submitted { 
+    background: rgba(59, 130, 246, 0.2); 
+    color: var(--info); 
+}
+
+.assignment-status.validated { 
+    background: rgba(16, 185, 129, 0.2); 
+    color: var(--success); 
+}
+
+.assignment-status.rejected { 
+    background: rgba(239, 68, 68, 0.2); 
+    color: var(--danger); 
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.form-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+`;
+
+const styleSheet = document.createElement('style');
+styleSheet.textContent = additionalStyles;
+document.head.appendChild(styleSheet);
+
+// Auto-refresh every 5 minutes to check for new submissions
+setInterval(function() {
+    const pendingCount = {{ total_expected }} - {{ submitted_count }};
+    if (pendingCount > 0) {
+        console.log('Auto-checking for new project submissions...');
+        // In production, you would make an AJAX call to check for updates
+    }
+}, 300000); // 5 minutes
+</script>
+{% endblock %}

@@ -1,0 +1,990 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Modifier - {{ assignment.title }} - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+<style>
+    .form-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    
+    .form-section-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        color: var(--text-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+    
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid var(--border-primary);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+    }
+    
+    .form-input:disabled, .form-select:disabled, .form-textarea:disabled {
+        background: var(--bg-tertiary);
+        color: var(--text-muted);
+        cursor: not-allowed;
+    }
+    
+    .form-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .form-help {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+    }
+    
+    .form-error {
+        color: var(--error);
+        font-size: 12px;
+        margin-top: 4px;
+    }
+    
+    .form-warning {
+        color: var(--warning);
+        font-size: 12px;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .conditional-fields {
+        border: 2px solid var(--border-secondary);
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 16px;
+        background: rgba(59, 130, 246, 0.05);
+    }
+    
+    .conditional-fields h3 {
+        margin-bottom: 16px;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        border: 2px solid var(--border-primary);
+        border-radius: 8px;
+        background: var(--bg-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .checkbox-group:hover {
+        border-color: var(--accent-primary);
+        background: rgba(59, 130, 246, 0.05);
+    }
+    
+    .checkbox-group.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .status-banner {
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+    }
+    
+    .status-banner.warning {
+        background: linear-gradient(135deg, var(--warning), #d97706);
+    }
+    
+    .status-banner.success {
+        background: linear-gradient(135deg, var(--success), #059669);
+    }
+    
+    .locked-field {
+        position: relative;
+    }
+    
+    .locked-field::after {
+        content: '🔒';
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: 16px;
+        opacity: 0.7;
+    }
+    
+    /* Student Management Styles */
+    .student-card-inline {
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border-secondary);
+        border-radius: 8px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        display: block;
+    }
+    
+    .student-card-inline:hover {
+        border-color: var(--accent-primary);
+        transform: translateY(-1px);
+    }
+    
+    .student-card-inline.selected {
+        border-color: var(--accent-primary);
+        background: rgba(79, 70, 229, 0.1);
+    }
+    
+    .student-card-inline.assigned {
+        border-color: var(--success);
+        background: rgba(16, 185, 129, 0.1);
+    }
+    
+    .student-checkbox-inline {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 16px;
+        height: 16px;
+        accent-color: var(--accent-primary);
+    }
+    
+    .student-info-inline {
+        margin-right: 30px;
+    }
+    
+    .student-avatar-inline {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .student-name-inline {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 14px;
+        margin-bottom: 4px;
+        line-height: 1.2;
+    }
+    
+    .student-meta-inline {
+        color: var(--text-muted);
+        font-size: 11px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .student-meta-inline span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .student-meta-inline i {
+        width: 12px;
+        opacity: 0.7;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: var(--accent-primary);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--accent-primary-dark);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 2px solid var(--border-primary);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--border-primary);
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 16px;
+        justify-content: flex-end;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 2px solid var(--border-primary);
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<a href="{% url 'teacher:assignments_dashboard' %}" style="color: var(--accent-primary); text-decoration: none;">Gestion des Devoirs</a>
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<a href="{% url 'teacher:assignment_detail' assignment.id %}" style="color: var(--accent-primary); text-decoration: none;">{{ assignment.title|truncatewords:3 }}</a>
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<span class="breadcrumb-current">Modifier</span>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-edit"></i>
+        Modifier le Devoir
+    </h1>
+    <div class="top-actions">
+        <a href="{% url 'teacher:assignment_detail' assignment.id %}" class="action-btn">
+            <i class="fas fa-arrow-left"></i>
+            Retour au Devoir
+        </a>
+    </div>
+</div>
+
+<!-- Status Banner -->
+<div class="status-banner {% if assignment.status == 'draft' %}{% elif assignment.status == 'published' %}warning{% else %}success{% endif %}">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2 style="margin: 0 0 8px 0; font-size: 1.5em;">{{ assignment.title }}</h2>
+            <div style="opacity: 0.9;">
+                {{ assignment.module.code }} • {{ assignment.get_assignment_type_display }} • 
+                Statut: {{ assignment.get_status_display }}
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 1.8em; font-weight: 700;">
+                {% if assignment.status == 'draft' %}✏️{% elif assignment.status == 'published' %}📢{% else %}✅{% endif %}
+            </div>
+        </div>
+    </div>
+    
+    {% if assignment.status != 'draft' %}
+    <div style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.2); border-radius: 8px; font-size: 0.9em;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Modification limitée:</strong> Ce devoir est déjà publié. Certains paramètres ne peuvent plus être modifiés pour préserver l'intégrité du devoir en cours.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Edit Form -->
+<form id="assignment-form" method="post" class="assignment-form">
+    {% csrf_token %}
+    
+    <!-- Display form errors -->
+    {% if form.non_field_errors %}
+        <div style="background: var(--error-bg); border: 1px solid var(--error); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+            <div style="color: var(--error); font-weight: 600; margin-bottom: 8px;">
+                <i class="fas fa-exclamation-triangle"></i>
+                Erreurs de validation
+            </div>
+            {% for error in form.non_field_errors %}
+                <div style="color: var(--error); font-size: 14px;">{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <!-- Basic Information Section -->
+    <div class="form-section">
+        <h2 class="form-section-title">
+            <i class="fas fa-info-circle"></i>
+            Informations Générales
+        </h2>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}" class="form-label">
+                    {{ form.title.label }}
+                </label>
+                {{ form.title }}
+                {% if form.title.help_text %}
+                    <div class="form-help">{{ form.title.help_text }}</div>
+                {% endif %}
+                {% if form.title.errors %}
+                    {% for error in form.title.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.assignment_type.id_for_label }}" class="form-label">
+                    {{ form.assignment_type.label }}
+                </label>
+                {% if assignment.status != 'draft' %}
+                    <div class="locked-field">
+                        {{ form.assignment_type }}
+                    </div>
+                    <div class="form-warning">
+                        <i class="fas fa-lock"></i>
+                        Le type ne peut plus être modifié après publication
+                    </div>
+                {% else %}
+                    {{ form.assignment_type }}
+                    {% if form.assignment_type.help_text %}
+                        <div class="form-help">{{ form.assignment_type.help_text }}</div>
+                    {% endif %}
+                {% endif %}
+                {% if form.assignment_type.errors %}
+                    {% for error in form.assignment_type.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}" class="form-label">
+                {{ form.description.label }}
+            </label>
+            {{ form.description }}
+            {% if form.description.help_text %}
+                <div class="form-help">{{ form.description.help_text }}</div>
+            {% endif %}
+            {% if form.description.errors %}
+                {% for error in form.description.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.instructions.id_for_label }}" class="form-label">
+                {{ form.instructions.label }}
+            </label>
+            {{ form.instructions }}
+            {% if form.instructions.help_text %}
+                <div class="form-help">{{ form.instructions.help_text }}</div>
+            {% endif %}
+            {% if form.instructions.errors %}
+                {% for error in form.instructions.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Assignment Configuration Section -->
+    <div class="form-section">
+        <h2 class="form-section-title">
+            <i class="fas fa-cogs"></i>
+            Configuration du Devoir
+        </h2>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="deadline_date" class="form-label">
+                    Date Limite de Rendu
+                </label>
+                <input type="datetime-local" id="deadline_date" name="deadline_date" class="form-input" 
+                       value="{{ assignment.deadline|date:'Y-m-d\TH:i' }}" required>
+                <div class="form-help">Vous pouvez ajuster la date limite si nécessaire</div>
+                {% if form.deadline.errors %}
+                    {% for error in form.deadline.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.target_selection.id_for_label }}" class="form-label">
+                    {{ form.target_selection.label }}
+                </label>
+                {% if assignment.status != 'draft' %}
+                    <div class="locked-field">
+                        {{ form.target_selection }}
+                    </div>
+                    <div class="form-warning">
+                        <i class="fas fa-lock"></i>
+                        Ne peut plus être modifié après publication
+                    </div>
+                {% else %}
+                    {{ form.target_selection }}
+                    {% if form.target_selection.help_text %}
+                        <div class="form-help">{{ form.target_selection.help_text }}</div>
+                    {% endif %}
+                {% endif %}
+                {% if form.target_selection.errors %}
+                    {% for error in form.target_selection.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Group Work Configuration -->
+        <div class="form-group">
+            <label class="checkbox-group {% if assignment.status != 'draft' %}disabled{% endif %}">
+                {{ form.is_group_work }}
+                <span>{{ form.is_group_work.label }}</span>
+            </label>
+            {% if assignment.status != 'draft' %}
+                <div class="form-warning">
+                    <i class="fas fa-lock"></i>
+                    Les paramètres de groupe ne peuvent plus être modifiés après publication
+                </div>
+            {% elif form.is_group_work.help_text %}
+                <div class="form-help">{{ form.is_group_work.help_text }}</div>
+            {% endif %}
+            {% if form.is_group_work.errors %}
+                {% for error in form.is_group_work.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        
+        <!-- Group Options (conditional) -->
+        <div id="group-options" class="conditional-fields" style="display: {% if assignment.is_group_work %}block{% else %}none{% endif %};">
+            <h3>
+                <i class="fas fa-users"></i>
+                Configuration des Groupes
+            </h3>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.min_group_size.id_for_label }}" class="form-label">
+                        {{ form.min_group_size.label }}
+                    </label>
+                    {{ form.min_group_size }}
+                    {% if form.min_group_size.help_text %}
+                        <div class="form-help">{{ form.min_group_size.help_text }}</div>
+                    {% endif %}
+                    {% if form.min_group_size.errors %}
+                        {% for error in form.min_group_size.errors %}
+                            <div class="form-error">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.max_group_size.id_for_label }}" class="form-label">
+                        {{ form.max_group_size.label }}
+                    </label>
+                    {{ form.max_group_size }}
+                    {% if form.max_group_size.help_text %}
+                        <div class="form-help">{{ form.max_group_size.help_text }}</div>
+                    {% endif %}
+                    {% if form.max_group_size.errors %}
+                        {% for error in form.max_group_size.errors %}
+                            <div class="form-error">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="group_formation_deadline_date" class="form-label">
+                    Date Limite de Formation des Groupes
+                </label>
+                <input type="datetime-local" id="group_formation_deadline_date" name="group_formation_deadline_date" class="form-input"
+                       value="{% if assignment.group_formation_deadline %}{{ assignment.group_formation_deadline|date:'Y-m-d\TH:i' }}{% endif %}">
+                {% if form.group_formation_deadline.help_text %}
+                    <div class="form-help">{{ form.group_formation_deadline.help_text }}</div>
+                {% endif %}
+                {% if form.group_formation_deadline.errors %}
+                    {% for error in form.group_formation_deadline.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Choice-Based Assignment Options -->
+        <div id="choice-based-options" class="conditional-fields" style="display: {% if assignment.assignment_type == 'choice_based' %}block{% else %}none{% endif %};">
+            <h3>
+                <i class="fas fa-list-ul"></i>
+                Choix Multiple
+            </h3>
+            
+            <div class="form-group">
+                <label for="selection_deadline_date" class="form-label">
+                    Date Limite de Sélection des Projets
+                </label>
+                <input type="datetime-local" id="selection_deadline_date" name="selection_deadline_date" class="form-input"
+                       value="{% if assignment.selection_deadline %}{{ assignment.selection_deadline|date:'Y-m-d\TH:i' }}{% endif %}">
+                {% if form.selection_deadline.help_text %}
+                    <div class="form-help">{{ form.selection_deadline.help_text }}</div>
+                {% endif %}
+                {% if form.selection_deadline.errors %}
+                    {% for error in form.selection_deadline.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Student Management Section (for Direct Assignments) -->
+    {% if assignment.assignment_type == 'direct' %}
+    <div class="form-section">
+        <h2 class="form-section-title">
+            <i class="fas fa-users"></i>
+            Gestion des Étudiants Assignés
+        </h2>
+        
+        <!-- Current Assignment Statistics -->
+        <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 2em; font-weight: 700; color: var(--accent-primary);">{{ total_assigned }}</div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">Étudiants Assignés</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2em; font-weight: 700; color: var(--success);">{{ total_enrolled }}</div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">Inscrits au Module</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2em; font-weight: 700; color: var(--info);">{{ unassigned_count }}</div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">Non Assignés</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Student Management Interface -->
+        <div id="student-management-section">
+            <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center;">
+                <div style="flex: 1;">
+                    <input type="text" id="student-search-edit" class="form-input" 
+                           placeholder="Rechercher un étudiant..." style="margin: 0;">
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="selectAllEditStudents()" id="select-all-edit-btn">
+                    <i class="fas fa-check-square"></i>
+                    Tout sélectionner
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="clearEditSelection()">
+                    <i class="fas fa-times"></i>
+                    Effacer
+                </button>
+            </div>
+            
+            <!-- Students Grid -->
+            <div id="students-edit-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; max-height: 400px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: 8px; padding: 16px;">
+                {% for student in form.selected_students.field.queryset %}
+                <label for="student-edit-{{ student.id }}" class="student-card-inline 
+                    {% if student in assigned_students_list %}assigned{% endif %}"
+                    data-student-id="{{ student.id }}"
+                    data-student-name="{{ student.user.get_full_name|default:student.user.username|lower }}">
+                    
+                    <input type="checkbox" 
+                           class="student-checkbox-inline" 
+                           name="selected_students"
+                           value="{{ student.id }}"
+                           id="student-edit-{{ student.id }}"
+                           {% if student in assigned_students_list %}checked{% endif %}
+                           onchange="toggleStudentEdit(this)">
+                    
+                    <div class="student-info-inline">
+                        <div class="student-avatar-inline">
+                            {% if student.user.first_name %}
+                                {{ student.user.first_name|first }}{{ student.user.last_name|first|default:'' }}
+                            {% else %}
+                                {{ student.user.username|first }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="student-name-inline">
+                            {{ student.user.get_full_name|default:student.user.username }}
+                            {% if student in assigned_students_list %}
+                                <span style="color: var(--success); font-size: 12px; font-weight: 500; margin-left: 8px;">
+                                    (Assigné)
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="student-meta-inline">
+                            <span>
+                                <i class="fas fa-id-card"></i>
+                                {{ student.student_id }}
+                            </span>
+                            <span>
+                                <i class="fas fa-graduation-cap"></i>
+                                {{ student.get_year_of_study_display }}
+                            </span>
+                        </div>
+                        
+                        {% if student.user.email %}
+                        <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">
+                            <i class="fas fa-envelope"></i>
+                            {{ student.user.email }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </label>
+                {% empty %}
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <div class="empty-icon">👨‍🎓</div>
+                    <div class="empty-title">Aucun Étudiant Disponible</div>
+                    <div class="empty-description">
+                        Aucun étudiant n'est inscrit à ce module.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Selection Summary -->
+            <div style="margin-top: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-secondary);">Étudiants sélectionnés:</span>
+                <span id="selected-students-edit-count" style="font-weight: 700; color: var(--accent-primary);">
+                    {{ total_assigned }}
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Hidden datetime fields for backend compatibility -->
+    <input type="hidden" name="deadline" id="deadline_hidden">
+    <input type="hidden" name="group_formation_deadline" id="group_formation_deadline_hidden">
+    <input type="hidden" name="selection_deadline" id="selection_deadline_hidden">
+    
+    <!-- Form Actions -->
+    <div class="form-actions">
+        <a href="{% url 'teacher:assignment_detail' assignment.id %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i>
+            Annuler
+        </a>
+        
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i>
+            Sauvegarder les Modifications
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables for student management
+let selectedStudentIds = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get form elements
+    const assignmentTypeSelect = document.getElementById('{{ form.assignment_type.id_for_label }}');
+    const isGroupWorkCheckbox = document.getElementById('{{ form.is_group_work.id_for_label }}');
+    
+    // Date inputs
+    const deadlineDate = document.getElementById('deadline_date');
+    const groupFormationDate = document.getElementById('group_formation_deadline_date');
+    const selectionDate = document.getElementById('selection_deadline_date');
+    
+    // Hidden inputs
+    const deadlineHidden = document.getElementById('deadline_hidden');
+    const groupFormationHidden = document.getElementById('group_formation_deadline_hidden');
+    const selectionHidden = document.getElementById('selection_deadline_hidden');
+    
+    // Check if assignment is published (certain fields should be disabled)
+    const isPublished = '{{ assignment.status }}' !== 'draft';
+    
+    if (isPublished) {
+        // Disable form elements that can't be changed after publication
+        assignmentTypeSelect.disabled = true;
+        isGroupWorkCheckbox.disabled = true;
+        document.getElementById('{{ form.target_selection.id_for_label }}').disabled = true;
+        
+        // Disable group size fields if they exist
+        const minGroupSize = document.getElementById('{{ form.min_group_size.id_for_label }}');
+        const maxGroupSize = document.getElementById('{{ form.max_group_size.id_for_label }}');
+        if (minGroupSize) minGroupSize.disabled = true;
+        if (maxGroupSize) maxGroupSize.disabled = true;
+    }
+    
+    // Initialize selected students from current assignments
+    const selectedCheckboxes = document.querySelectorAll('.student-checkbox-inline:checked');
+    selectedStudentIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+    updateStudentEditCount();
+    
+    // Convert datetime-local to hidden datetime fields
+    function convertDateTimeToBackend(dateTimeValue) {
+        if (!dateTimeValue) return '';
+        return dateTimeValue + ':00';  // Add seconds
+    }
+    
+    // Update hidden fields when date inputs change
+    if (deadlineDate) {
+        deadlineDate.addEventListener('change', function() {
+            deadlineHidden.value = convertDateTimeToBackend(this.value);
+        });
+        // Set initial value
+        deadlineHidden.value = convertDateTimeToBackend(deadlineDate.value);
+    }
+    
+    if (groupFormationDate) {
+        groupFormationDate.addEventListener('change', function() {
+            groupFormationHidden.value = convertDateTimeToBackend(this.value);
+        });
+        // Set initial value
+        groupFormationHidden.value = convertDateTimeToBackend(groupFormationDate.value);
+    }
+    
+    if (selectionDate) {
+        selectionDate.addEventListener('change', function() {
+            selectionHidden.value = convertDateTimeToBackend(this.value);
+        });
+        // Set initial value
+        selectionHidden.value = convertDateTimeToBackend(selectionDate.value);
+    }
+    
+    // Toggle assignment type specific options
+    function toggleAssignmentOptions(value) {
+        const choiceOptions = document.getElementById('choice-based-options');
+        
+        if (value === 'choice_based') {
+            choiceOptions.style.display = 'block';
+        } else {
+            choiceOptions.style.display = 'none';
+        }
+    }
+    
+    // Toggle group work options
+    function toggleGroupOptions(isChecked) {
+        const groupOptions = document.getElementById('group-options');
+        groupOptions.style.display = isChecked ? 'block' : 'none';
+    }
+    
+    // Set up event listeners (only if not published)
+    if (!isPublished) {
+        if (assignmentTypeSelect) {
+            assignmentTypeSelect.addEventListener('change', function(e) {
+                toggleAssignmentOptions(e.target.value);
+            });
+        }
+        
+        if (isGroupWorkCheckbox) {
+            isGroupWorkCheckbox.addEventListener('change', function(e) {
+                toggleGroupOptions(e.target.checked);
+            });
+        }
+    }
+    
+    // Initialize on page load
+    if (assignmentTypeSelect) {
+        toggleAssignmentOptions(assignmentTypeSelect.value);
+    }
+    if (isGroupWorkCheckbox) {
+        toggleGroupOptions(isGroupWorkCheckbox.checked);
+    }
+    
+    // Student search functionality
+    const studentSearchEdit = document.getElementById('student-search-edit');
+    if (studentSearchEdit) {
+        studentSearchEdit.addEventListener('input', function(e) {
+            filterEditStudents(e.target.value);
+        });
+    }
+    
+    // Form submission
+    const form = document.getElementById('assignment-form');
+    form.addEventListener('submit', function(e) {
+        // Update hidden datetime fields
+        if (deadlineDate) deadlineHidden.value = convertDateTimeToBackend(deadlineDate.value);
+        if (groupFormationDate) groupFormationHidden.value = convertDateTimeToBackend(groupFormationDate.value);
+        if (selectionDate) selectionHidden.value = convertDateTimeToBackend(selectionDate.value);
+        
+        if (!validateEditForm()) {
+            e.preventDefault();
+        }
+    });
+});
+
+// Student Management Functions
+
+function toggleStudentEdit(checkbox) {
+    const studentCard = checkbox.closest('.student-card-inline');
+    const studentId = parseInt(checkbox.value);
+    
+    if (checkbox.checked) {
+        studentCard.classList.add('selected');
+        if (!selectedStudentIds.includes(studentId)) {
+            selectedStudentIds.push(studentId);
+        }
+    } else {
+        studentCard.classList.remove('selected');
+        selectedStudentIds = selectedStudentIds.filter(id => id !== studentId);
+    }
+    
+    updateStudentEditCount();
+}
+
+function selectAllEditStudents() {
+    const checkboxes = document.querySelectorAll('.student-checkbox-inline:not([style*="display: none"])');
+    const selectAllBtn = document.getElementById('select-all-edit-btn');
+    
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(checkbox => {
+        const studentCard = checkbox.closest('.student-card-inline');
+        if (studentCard.style.display !== 'none') {
+            checkbox.checked = !allChecked;
+            toggleStudentEdit(checkbox);
+        }
+    });
+    
+    selectAllBtn.innerHTML = allChecked ? 
+        '<i class="fas fa-check-square"></i> Tout sélectionner' : 
+        '<i class="fas fa-square"></i> Tout désélectionner';
+}
+
+function clearEditSelection() {
+    const checkboxes = document.querySelectorAll('.student-checkbox-inline');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        toggleStudentEdit(checkbox);
+    });
+    
+    const selectAllBtn = document.getElementById('select-all-edit-btn');
+    selectAllBtn.innerHTML = '<i class="fas fa-check-square"></i> Tout sélectionner';
+}
+
+function filterEditStudents(searchTerm) {
+    const studentCards = document.querySelectorAll('.student-card-inline');
+    const term = searchTerm.toLowerCase();
+    
+    studentCards.forEach(card => {
+        const studentName = card.dataset.studentName || '';
+        if (studentName.includes(term)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function updateStudentEditCount() {
+    const countElement = document.getElementById('selected-students-edit-count');
+    if (countElement) {
+        countElement.textContent = selectedStudentIds.length;
+    }
+}
+
+// Form validation
+function validateEditForm() {
+    const deadlineDate = document.getElementById('deadline_date');
+    const isGroupWorkCheckbox = document.getElementById('{{ form.is_group_work.id_for_label }}');
+    const assignmentTypeSelect = document.getElementById('{{ form.assignment_type.id_for_label }}');
+    
+    let errors = [];
+    
+    // Date validation
+    if (deadlineDate && deadlineDate.value) {
+        const deadline = new Date(deadlineDate.value);
+        const now = new Date();
+        
+        if (deadline <= now) {
+            errors.push('La date limite doit être dans le futur.');
+        }
+    }
+    
+    // Group work validation
+    if (isGroupWorkCheckbox && isGroupWorkCheckbox.checked) {
+        const minSizeInput = document.getElementById('{{ form.min_group_size.id_for_label }}');
+        const maxSizeInput = document.getElementById('{{ form.max_group_size.id_for_label }}');
+        const groupFormationDate = document.getElementById('group_formation_deadline_date');
+        
+        if (minSizeInput && maxSizeInput) {
+            const minSize = parseInt(minSizeInput.value) || 0;
+            const maxSize = parseInt(maxSizeInput.value) || 0;
+            
+            if (minSize < 2) errors.push('La taille minimale d\'un groupe doit être d\'au moins 2.');
+            if (maxSize < minSize) errors.push('La taille maximale doit être supérieure ou égale à la taille minimale.');
+        }
+        
+        if (groupFormationDate && groupFormationDate.value && deadlineDate && deadlineDate.value) {
+            if (new Date(groupFormationDate.value) >= new Date(deadlineDate.value)) {
+                errors.push('La formation des groupes doit se terminer avant la date limite du projet.');
+            }
+        }
+    }
+    
+    // Choice-based validation
+    if (assignmentTypeSelect && assignmentTypeSelect.value === 'choice_based') {
+        const selectionDate = document.getElementById('selection_deadline_date');
+        
+        if (selectionDate && selectionDate.value && deadlineDate && deadlineDate.value) {
+            if (new Date(selectionDate.value) >= new Date(deadlineDate.value)) {
+                errors.push('La sélection des projets doit se terminer avant la date limite du projet.');
+            }
+        }
+    }
+    
+    if (errors.length > 0) {
+        alert('Erreurs de validation :\n' + errors.join('\n'));
+        return false;
+    }
+    
+    return true;
+}
+</script>
+{% endblock %}

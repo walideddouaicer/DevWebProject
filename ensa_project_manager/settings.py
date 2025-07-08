@@ -73,6 +73,8 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 'student.context_processors.student_context',
+                'teacher.context_processors.teacher_context',
+                'administrator.context_processors.admin_context',
             ],
         },
     },

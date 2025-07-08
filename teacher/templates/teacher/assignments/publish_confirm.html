@@ -1,0 +1,502 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Publier le Devoir - {{ assignment.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+<style>
+.publish-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+    border: 2px solid var(--warning);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.publish-checklist {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.checklist-item:last-child {
+    border-bottom: none;
+}
+
+.checklist-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.checklist-icon.success {
+    background: var(--success);
+    color: white;
+}
+
+.checklist-icon.warning {
+    background: var(--warning);
+    color: white;
+}
+
+.checklist-icon.error {
+    background: var(--error);
+    color: white;
+}
+
+.checklist-content {
+    flex: 1;
+}
+
+.checklist-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.checklist-description {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.confirmation-actions {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+}
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+    <span style="color: var(--text-muted);"> / </span>
+    <a href="{% url 'teacher:assignments_dashboard' %}" style="color: var(--accent-primary); text-decoration: none;">Devoirs</a>
+    <span style="color: var(--text-muted);"> / </span>
+    <a href="{% url 'teacher:assignment_detail' assignment.id %}" style="color: var(--accent-primary); text-decoration: none;">{{ assignment.title|truncatewords:3 }}</a>
+    <span style="color: var(--text-muted);"> / </span>
+    <span>Publier</span>
+{% endblock %}
+
+{% block content %}
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-bullhorn"></i>
+            Publier le Devoir
+        </h1>
+        <div class="top-actions">
+            <a href="{% url 'teacher:assignment_detail' assignment.id %}" class="action-btn">
+                <i class="fas fa-arrow-left"></i>
+                Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Assignment Overview -->
+    <div class="assignment-detail-header">
+        <div class="assignment-detail-content">
+            <div class="assignment-detail-title">{{ assignment.title }}</div>
+            <p style="opacity: 0.9; font-size: 1.1em; margin-bottom: 20px;">
+                {{ assignment.module.code }} - {{ assignment.module.name }}
+            </p>
+            
+            <div class="assignment-detail-meta">
+                <div class="assignment-detail-meta-item">
+                    <div class="assignment-detail-meta-label">Type</div>
+                    <div class="assignment-detail-meta-value">{{ assignment.get_assignment_type_display }}</div>
+                </div>
+                <div class="assignment-detail-meta-item">
+                    <div class="assignment-detail-meta-label">Date Limite</div>
+                    <div class="assignment-detail-meta-value">{{ assignment.deadline|date:"d/m/Y H:i" }}</div>
+                </div>
+                <div class="assignment-detail-meta-item">
+                    <div class="assignment-detail-meta-label">Travail en Groupe</div>
+                    <div class="assignment-detail-meta-value">
+                        {% if assignment.is_group_work %}
+                            Oui ({{ assignment.min_group_size }}-{{ assignment.max_group_size }} membres)
+                        {% else %}
+                            Non (Individuel)
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="assignment-detail-meta-item">
+                    <div class="assignment-detail-meta-label">Statut Actuel</div>
+                    <div class="assignment-detail-meta-value">
+                        <span class="assignment-status {{ assignment.status }}">{{ assignment.get_status_display }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Publication Warning -->
+    <div class="publish-warning">
+        <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <div style="color: var(--warning); font-size: 2.5em;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h3 style="color: var(--warning); font-weight: 700; margin-bottom: 12px; font-size: 1.3em;">
+                    ⚠️ Attention - Publication du Devoir
+                </h3>
+                <div style="color: var(--text-primary); line-height: 1.6; margin-bottom: 16px;">
+                    Une fois publié, ce devoir sera <strong>visible et accessible</strong> par tous les étudiants du module 
+                    <strong>{{ assignment.module.code }}</strong>. Cette action déclenchera :
+                </div>
+                <ul style="color: var(--text-secondary); line-height: 1.6; margin-left: 20px;">
+                    <li>✉️ Des notifications automatiques à tous les étudiants concernés</li>
+                    <li>🚀 Le démarrage officiel du processus de devoir</li>
+                    {% if assignment.is_group_work %}
+                    <li>👥 L'ouverture de la phase de formation des groupes</li>
+                    {% endif %}
+                    {% if assignment.assignment_type == 'choice_based' %}
+                    <li>📋 La mise en ligne des options de projets pour sélection</li>
+                    {% endif %}
+                    <li>⏰ L'activation des délais et échéances</li>
+                </ul>
+                <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; margin-top: 16px; font-size: 14px;">
+                    <strong>Important :</strong> Certains paramètres ne pourront plus être modifiés après publication.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pre-Publication Checklist -->
+    <div class="publish-checklist">
+        <h3 style="color: var(--text-primary); font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+            <i class="fas fa-checklist"></i>
+            Vérification Pré-Publication
+        </h3>
+        
+        <!-- Basic Information Check -->
+        <div class="checklist-item">
+            <div class="checklist-icon success">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="checklist-content">
+                <div class="checklist-title">Informations de base complètes</div>
+                <div class="checklist-description">
+                    Titre, description et instructions sont renseignés. Date limite configurée.
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Type Check -->
+        {% if assignment.assignment_type == 'choice_based' %}
+            {% if assignment.project_options.exists %}
+            <div class="checklist-item">
+                <div class="checklist-icon success">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="checklist-content">
+                    <div class="checklist-title">Options de projets disponibles</div>
+                    <div class="checklist-description">
+                        {{ assignment.project_options.count }} option{{ assignment.project_options.count|pluralize }} de projet{{ assignment.project_options.count|pluralize }} configurée{{ assignment.project_options.count|pluralize }}.
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="checklist-item">
+                <div class="checklist-icon error">
+                    <i class="fas fa-times"></i>
+                </div>
+                <div class="checklist-content">
+                    <div class="checklist-title">Aucune option de projet configurée</div>
+                    <div class="checklist-description">
+                        Les devoirs à choix multiple nécessitent au moins une option de projet.
+                        <a href="{% url 'teacher:assignment_options' assignment.id %}" style="color: var(--accent-primary);">
+                            Ajouter des options →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <!-- Direct Assignment Check -->
+            <div class="checklist-item">
+                <div class="checklist-icon {% if assignment.direct_assignments.exists %}success{% else %}warning{% endif %}">
+                    <i class="fas fa-{% if assignment.direct_assignments.exists %}check{% else %}exclamation-triangle{% endif %}"></i>
+                </div>
+                <div class="checklist-content">
+                    <div class="checklist-title">Étudiants assignés</div>
+                    <div class="checklist-description">
+                        {% if assignment.direct_assignments.exists %}
+                            {{ assignment.direct_assignments.count }} étudiant{{ assignment.direct_assignments.count|pluralize }} assigné{{ assignment.direct_assignments.count|pluralize }}.
+                        {% else %}
+                            Aucun étudiant assigné. Vous pouvez publier et assigner les étudiants après.
+                            <a href="{% url 'teacher:assignment_students' assignment.id %}" style="color: var(--accent-primary);">
+                                Assigner maintenant →
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Module Students Check -->
+        <div class="checklist-item">
+            <div class="checklist-icon {% if assignment.module.get_enrolled_students_count > 0 %}success{% else %}warning{% endif %}">
+                <i class="fas fa-{% if assignment.module.get_enrolled_students_count > 0 %}check{% else %}exclamation-triangle{% endif %}"></i>
+            </div>
+            <div class="checklist-content">
+                <div class="checklist-title">Étudiants inscrits au module</div>
+                <div class="checklist-description">
+                    {% if assignment.module.get_enrolled_students_count > 0 %}
+                        {{ assignment.module.get_enrolled_students_count }} étudiant{{ assignment.module.get_enrolled_students_count|pluralize }} inscrit{{ assignment.module.get_enrolled_students_count|pluralize }} au module {{ assignment.module.code }}.
+                    {% else %}
+                        Aucun étudiant inscrit au module. Les étudiants doivent s'inscrire pour voir le devoir.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Deadlines Check -->
+        <div class="checklist-item">
+            <div class="checklist-icon success">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="checklist-content">
+                <div class="checklist-title">Échéances configurées</div>
+                <div class="checklist-description">
+                    <strong>Date limite principale :</strong> {{ assignment.deadline|date:"l d F Y à H:i" }}
+                    {% if assignment.is_group_work and assignment.group_formation_deadline %}
+                        <br><strong>Formation des groupes :</strong> {{ assignment.group_formation_deadline|date:"l d F Y à H:i" }}
+                    {% endif %}
+                    {% if assignment.assignment_type == 'choice_based' and assignment.selection_deadline %}
+                        <br><strong>Sélection des projets :</strong> {{ assignment.selection_deadline|date:"l d F Y à H:i" }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Timing Check -->
+        <div class="checklist-item">
+            {% now "Y-m-d H:i:s" as now_time %}
+            {% if assignment.deadline|date:"Y-m-d H:i:s" > now_time %}
+            <div class="checklist-icon success">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="checklist-content">
+                <div class="checklist-title">Date limite valide</div>
+                <div class="checklist-description">
+                    La date limite est dans le futur ({{ assignment.deadline|timeuntil }}).
+                </div>
+            </div>
+            {% else %}
+            <div class="checklist-icon warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="checklist-content">
+                <div class="checklist-title">Date limite dépassée</div>
+                <div class="checklist-description">
+                    La date limite est dans le passé. Les étudiants ne pourront pas soumettre.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Impact Summary -->
+    <div class="content-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-chart-pie"></i>
+                Impact de la Publication
+            </h3>
+        </div>
+        <div class="card-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div style="text-align: center; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 12px;">
+                    <div style="font-size: 2em; font-weight: 800; color: var(--success); margin-bottom: 8px;">
+                        {{ assignment.module.get_enrolled_students_count }}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Étudiants Notifiés</div>
+                </div>
+                
+                {% if assignment.assignment_type == 'choice_based' %}
+                <div style="text-align: center; padding: 20px; background: rgba(139, 92, 246, 0.1); border-radius: 12px;">
+                    <div style="font-size: 2em; font-weight: 800; color: #8b5cf6; margin-bottom: 8px;">
+                        {{ assignment.project_options.count }}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Options Disponibles</div>
+                </div>
+                {% endif %}
+                
+                {% if assignment.is_group_work %}
+                <div style="text-align: center; padding: 20px; background: rgba(245, 158, 11, 0.1); border-radius: 12px;">
+                    <div style="font-size: 2em; font-weight: 800; color: var(--warning); margin-bottom: 8px;">
+                        {{ assignment.min_group_size }}-{{ assignment.max_group_size }}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Taille des Groupes</div>
+                </div>
+                {% endif %}
+                
+                <div style="text-align: center; padding: 20px; background: rgba(59, 130, 246, 0.1); border-radius: 12px;">
+                    <div style="font-size: 2em; font-weight: 800; color: var(--info); margin-bottom: 8px;">
+                        {{ assignment.deadline|timeuntil|truncatewords:2 }}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Temps Disponible</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Actions -->
+    <div class="confirmation-actions">
+        <h3 style="color: var(--text-primary); font-weight: 700; margin-bottom: 20px;">
+            Êtes-vous prêt à publier ce devoir ?
+        </h3>
+        <p style="color: var(--text-muted); margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
+            Cette action notifiera immédiatement tous les étudiants du module et rendra le devoir accessible.
+            Assurez-vous que toutes les informations sont correctes.
+        </p>
+        
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'teacher:assignment_detail' assignment.id %}" class="btn btn-secondary" style="min-width: 150px;">
+                <i class="fas fa-times"></i>
+                Annuler
+            </a>
+            
+            {% if assignment.can_be_published %}
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary" style="min-width: 150px;" 
+                        onclick="return confirm('Êtes-vous sûr de vouloir publier ce devoir ? Cette action enverra des notifications à {{ assignment.module.get_enrolled_students_count }} étudiant{{ assignment.module.get_enrolled_students_count|pluralize }}.')">
+                    <i class="fas fa-bullhorn"></i>
+                    Publier le Devoir
+                </button>
+            </form>
+            {% else %}
+            <button type="button" class="btn btn-primary" disabled style="min-width: 150px;" 
+                    title="Corrigez les problèmes ci-dessus avant de publier">
+                <i class="fas fa-lock"></i>
+                Publication Impossible
+            </button>
+            <div style="margin-top: 12px; color: var(--error); font-size: 14px;">
+                Veuillez corriger les problèmes identifiés ci-dessus avant de publier.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Post-Publication Timeline -->
+    <div class="content-card" style="margin-top: 32px;">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-clock"></i>
+                Chronologie Après Publication
+            </h3>
+        </div>
+        <div class="card-content">
+            <div style="position: relative; padding-left: 30px;">
+                <div style="position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: var(--border-primary);"></div>
+                
+                <div style="position: relative; margin-bottom: 24px;">
+                    <div style="position: absolute; left: -18px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--success);"></div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Immédiatement</div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        • Notifications envoyées aux étudiants<br>
+                        • Devoir visible dans leur interface<br>
+                        {% if assignment.is_group_work %}• Formation des groupes ouverte<br>{% endif %}
+                        {% if assignment.assignment_type == 'choice_based' %}• Options de projets disponibles<br>{% endif %}
+                    </div>
+                </div>
+                
+                {% if assignment.is_group_work and assignment.group_formation_deadline %}
+                <div style="position: relative; margin-bottom: 24px;">
+                    <div style="position: absolute; left: -18px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--warning);"></div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                        {{ assignment.group_formation_deadline|date:"d/m/Y H:i" }}
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        • Fin de la formation des groupes<br>
+                        • Groupes incomplets potentiellement dissous
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if assignment.assignment_type == 'choice_based' and assignment.selection_deadline %}
+                <div style="position: relative; margin-bottom: 24px;">
+                    <div style="position: absolute; left: -18px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--info);"></div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                        {{ assignment.selection_deadline|date:"d/m/Y H:i" }}
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        • Fin de la sélection des projets<br>
+                        • Options non sélectionnées deviennent indisponibles
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div style="position: relative;">
+                    <div style="position: absolute; left: -18px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--error);"></div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                        {{ assignment.deadline|date:"d/m/Y H:i" }}
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">
+                        • Date limite de soumission<br>
+                        • Début de la phase d'évaluation<br>
+                        • Projets non soumis marqués en retard
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add countdown if deadline is approaching
+    const deadline = new Date('{{ assignment.deadline|date:"c" }}');
+    const now = new Date();
+    const timeLeft = deadline - now;
+    
+    if (timeLeft > 0 && timeLeft < 7 * 24 * 60 * 60 * 1000) { // Less than 7 days
+        const days = Math.floor(timeLeft / (24 * 60 * 60 * 1000));
+        const hours = Math.floor((timeLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+        
+        if (days < 3) {
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'alert alert-warning';
+            warningDiv.innerHTML = `
+                <i class="fas fa-clock"></i>
+                <strong>Attention :</strong> Il ne reste que ${days} jour${days > 1 ? 's' : ''} et ${hours} heure${hours > 1 ? 's' : ''} avant la date limite !
+            `;
+            
+            const firstCard = document.querySelector('.content-card');
+            firstCard.parentNode.insertBefore(warningDiv, firstCard);
+        }
+    }
+    
+    // Smooth scroll to checklist on page load if there are errors
+    const errorItems = document.querySelectorAll('.checklist-icon.error');
+    if (errorItems.length > 0) {
+        setTimeout(() => {
+            document.querySelector('.publish-checklist').scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }, 500);
+    }
+});
+</script>
+{% endblock %}

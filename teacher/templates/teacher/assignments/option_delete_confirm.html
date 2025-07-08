@@ -1,0 +1,488 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Supprimer l'Option - {{ option.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+<style>
+.delete-warning {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+    border: 2px solid var(--error);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.option-preview {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    position: relative;
+    opacity: 0.7;
+}
+
+.option-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(239, 68, 68, 0.1) 10px,
+        rgba(239, 68, 68, 0.1) 20px
+    );
+    border-radius: 12px;
+    pointer-events: none;
+}
+
+.confirmation-actions {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+}
+
+.impact-list {
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 4px solid var(--error);
+    padding: 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+}
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+    <span style="color: var(--text-muted);"> / </span>
+    <a href="{% url 'teacher:assignments_dashboard' %}" style="color: var(--accent-primary); text-decoration: none;">Devoirs</a>
+    <span style="color: var(--text-muted);"> / </span>
+    <a href="{% url 'teacher:assignment_detail' assignment.id %}" style="color: var(--accent-primary); text-decoration: none;">{{ assignment.title|truncatewords:3 }}</a>
+    <span style="color: var(--text-muted);"> / </span>
+    <a href="{% url 'teacher:assignment_options' assignment.id %}" style="color: var(--accent-primary); text-decoration: none;">Options</a>
+    <span style="color: var(--text-muted);"> / </span>
+    <span>Supprimer</span>
+{% endblock %}
+
+{% block content %}
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-trash-alt"></i>
+            Supprimer l'Option de Projet
+        </h1>
+        <div class="top-actions">
+            <a href="{% url 'teacher:assignment_options' assignment.id %}" class="action-btn">
+                <i class="fas fa-arrow-left"></i>
+                Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Delete Warning -->
+    <div class="delete-warning">
+        <div style="display: flex; align-items: flex-start; gap: 16px;">
+            <div style="color: var(--error); font-size: 2.5em;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h3 style="color: var(--error); font-weight: 700; margin-bottom: 12px; font-size: 1.3em;">
+                    ⚠️ Suppression Définitive
+                </h3>
+                <div style="color: var(--text-primary); line-height: 1.6; margin-bottom: 16px;">
+                    Vous êtes sur le point de supprimer définitivement l'option de projet 
+                    <strong>"{{ option.title }}"</strong> du devoir <strong>"{{ assignment.title }}"</strong>.
+                </div>
+                <div style="color: var(--text-secondary); line-height: 1.6;">
+                    <strong>Cette action est irréversible</strong> et peut avoir des conséquences importantes 
+                    si des étudiants ont déjà interagi avec cette option.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Option Preview -->
+    <div class="option-preview">
+        <div style="position: relative; z-index: 2;">
+            <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 16px;">
+                <h3 style="color: var(--text-primary); font-weight: 700; font-size: 1.3em; margin-bottom: 8px;">
+                    {{ option.title }}
+                </h3>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <span class="project-option-difficulty {{ option.estimated_difficulty }}">
+                        {{ option.get_estimated_difficulty_display }}
+                    </span>
+                    <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
+                        Ordre: {{ option.order }}
+                    </div>
+                </div>
+            </div>
+            
+            <div style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
+                {{ option.description }}
+            </div>
+            
+            {% if option.requirements %}
+            <div style="background: rgba(79, 70, 229, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-size: 14px;">
+                    <i class="fas fa-list-ul"></i> Exigences
+                </div>
+                <div style="color: var(--text-secondary); font-size: 13px; line-height: 1.5;">
+                    {{ option.requirements }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-top: 16px;">
+                <div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-size: 14px;">
+                        Type
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 13px;">
+                        {% if option.is_unique %}
+                            <i class="fas fa-crown" style="color: var(--warning);"></i> Unique
+                        {% else %}
+                            <i class="fas fa-users"></i> Multiple (max {{ option.max_groups }})
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-size: 14px;">
+                        Groupes Actuels
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 13px;">
+                        {{ option.current_groups }} / {% if option.is_unique %}1{% else %}{{ option.max_groups }}{% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-size: 14px;">
+                        Statut
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 13px;">
+                        {% if option.is_available %}
+                            <i class="fas fa-check-circle" style="color: var(--success);"></i> Disponible
+                        {% else %}
+                            <i class="fas fa-times-circle" style="color: var(--error);"></i> Indisponible
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-size: 14px;">
+                        Sélectionnable
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 13px;">
+                        {% if option.is_selectable %}
+                            <i class="fas fa-check" style="color: var(--success);"></i> Oui
+                        {% else %}
+                            <i class="fas fa-times" style="color: var(--error);"></i> Non
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Impact Analysis -->
+    <div class="content-card">
+        <div class="card-header">
+            <h3 style="color: var(--text-primary); font-weight: 700; display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-chart-line"></i>
+                Analyse d'Impact
+            </h3>
+        </div>
+        <div class="card-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                <div style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="font-size: 2em; font-weight: 800; color: var(--info); margin-bottom: 8px;">
+                        {{ option.current_groups }}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Groupes Assignés</div>
+                </div>
+                
+                <div style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="font-size: 2em; font-weight: 800; color: var(--warning); margin-bottom: 8px;">
+                        {{ assignment.project_options.count|add:"-1" }}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Options Restantes</div>
+                </div>
+                
+                <div style="text-align: center; padding: 16px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="font-size: 2em; font-weight: 800; color: {% if option.current_groups > 0 %}var(--error){% else %}var(--success){% endif %}; margin-bottom: 8px;">
+                        {% if option.current_groups > 0 %}ÉLEVÉ{% else %}FAIBLE{% endif %}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 14px;">Niveau de Risque</div>
+                </div>
+            </div>
+            
+            {% if option.current_groups > 0 %}
+            <div class="impact-list">
+                <div style="font-weight: 600; color: var(--error); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Conséquences de la Suppression
+                </div>
+                <ul style="color: var(--text-primary); line-height: 1.6; margin-left: 20px;">
+                    <li>{{ option.current_groups }} groupe{{ option.current_groups|pluralize }} perdra{{ option.current_groups|pluralize:"nt," }} son option sélectionnée</li>
+                    <li>Les étudiants de ces groupes devront choisir une nouvelle option</li>
+                    <li>Possible confusion et frustration des étudiants concernés</li>
+                    <li>Nécessité de communiquer le changement aux groupes affectés</li>
+                    {% if assignment.status != 'draft' %}
+                    <li style="color: var(--error);">⚠️ Le devoir est déjà publié - impact immédiat sur les étudiants</li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% else %}
+            <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--success); padding: 16px; border-radius: 0 8px 8px 0;">
+                <div style="font-weight: 600; color: var(--success); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-check-circle"></i>
+                    Suppression Sécurisée
+                </div>
+                <div style="color: var(--text-secondary); line-height: 1.6;">
+                    Aucun groupe n'a sélectionné cette option. La suppression n'aura aucun impact sur les étudiants.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Related Groups (if any) -->
+    {% if option.chosen_by_groups.exists %}
+    <div class="content-card">
+        <div class="card-header">
+            <h3 style="color: var(--text-primary); font-weight: 700; display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-users"></i>
+                Groupes Affectés
+            </h3>
+        </div>
+        <div class="card-content">
+            <p style="color: var(--text-muted); margin-bottom: 20px;">
+                Les groupes suivants ont sélectionné cette option et seront directement impactés par sa suppression :
+            </p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+                {% for group in option.chosen_by_groups.all %}
+                <div style="background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 16px;">
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
+                        <i class="fas fa-users"></i> {{ group.group_name }}
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">
+                        {{ group.members.count }} membre{{ group.members.count|pluralize }} • 
+                        Créé le {{ group.created_at|date:"d/m/Y" }}
+                    </div>
+                    <div style="font-size: 12px;">
+                        <strong>Membres :</strong>
+                        {% for member in group.members.all %}
+                            {{ member.user.get_full_name|default:member.user.username }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 8px; padding: 16px; margin-top: 20px;">
+                <div style="font-weight: 600; color: var(--warning); margin-bottom: 8px;">
+                    <i class="fas fa-info-circle"></i> Recommandation
+                </div>
+                <div style="color: var(--text-secondary); line-height: 1.6;">
+                    Avant de supprimer cette option, nous recommandons fortement de :
+                </div>
+                <ul style="color: var(--text-secondary); line-height: 1.6; margin-left: 20px; margin-top: 8px;">
+                    <li>Contacter les groupes concernés pour les informer du changement</li>
+                    <li>S'assurer qu'il existe des alternatives viables</li>
+                    <li>Fixer une nouvelle date limite si nécessaire</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Confirmation Actions -->
+    <div class="confirmation-actions">
+        <h3 style="color: var(--error); font-weight: 700; margin-bottom: 20px;">
+            Confirmer la Suppression
+        </h3>
+        <p style="color: var(--text-muted); margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto;">
+            {% if option.current_groups > 0 %}
+                Cette suppression affectera {{ option.current_groups }} groupe{{ option.current_groups|pluralize }} et ne peut pas être annulée.
+                Assurez-vous d'avoir prévenu les étudiants concernés.
+            {% else %}
+                Cette option peut être supprimée en toute sécurité car aucun groupe ne l'a sélectionnée.
+            {% endif %}
+        </p>
+        
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'teacher:assignment_options' assignment.id %}" class="btn btn-secondary" style="min-width: 150px;">
+                <i class="fas fa-times"></i>
+                Annuler
+            </a>
+            
+            {% if option.current_groups > 0 %}
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn" style="background: var(--error); color: white; min-width: 150px;" 
+                        onclick="return confirm('ATTENTION: Cette suppression affectera {{ option.current_groups }} groupe{{ option.current_groups|pluralize }}.\n\nTapez le nom de l\'option pour confirmer :\n\n{{ option.title }}') && prompt('Pour confirmer, tapez exactement le nom de l\'option :') === '{{ option.title }}'">
+                    <i class="fas fa-trash-alt"></i>
+                    Supprimer Quand Même
+                </button>
+            </form>
+            {% else %}
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn" style="background: var(--error); color: white; min-width: 150px;" 
+                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer définitivement l\'option « {{ option.title }} » ?')">
+                    <i class="fas fa-trash-alt"></i>
+                    Supprimer l'Option
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        
+        {% if option.current_groups > 0 %}
+        <div style="margin-top: 20px; padding: 16px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <div style="font-weight: 600; color: var(--error); margin-bottom: 8px; font-size: 14px;">
+                <i class="fas fa-shield-alt"></i> Mesures de Sécurité Supplémentaires
+            </div>
+            <div style="color: var(--text-secondary); font-size: 13px; line-height: 1.5;">
+                En raison de l'impact sur les groupes existants, une confirmation supplémentaire vous sera demandée.
+                Vous devrez taper exactement le nom de l'option pour procéder à la suppression.
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Alternative Actions -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 12px; padding: 24px; margin-top: 32px;">
+        <h3 style="color: var(--text-primary); font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+            <i class="fas fa-lightbulb"></i>
+            Alternatives à la Suppression
+        </h3>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">
+            Plutôt que de supprimer cette option, vous pourriez considérer ces alternatives :
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
+                    <i class="fas fa-eye-slash"></i> Masquer l'Option
+                </div>
+                <div style="color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                    Désactiver la disponibilité sans supprimer. Les groupes existants ne sont pas affectés.
+                </div>
+            </div>
+            
+            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
+                    <i class="fas fa-edit"></i> Modifier l'Option
+                </div>
+                <div style="color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                    Ajuster le titre, la description ou les exigences selon vos besoins.
+                </div>
+            </div>
+            
+            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
+                    <i class="fas fa-users"></i> Limiter l'Accès
+                </div>
+                <div style="color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+                    Réduire le nombre maximum de groupes ou la rendre unique.
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{% url 'teacher:assignment_options' assignment.id %}" class="btn btn-primary">
+                <i class="fas fa-cog"></i>
+                Explorer les Alternatives
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add warning animation to impacted groups
+    const impactedGroups = document.querySelectorAll('[data-group]');
+    impactedGroups.forEach(group => {
+        group.style.animation = 'pulse 2s infinite';
+    });
+    
+    // Enhanced confirmation for options with groups
+    const hasGroups = {{ option.current_groups }} > 0;
+    
+    if (hasGroups) {
+        const deleteForm = document.querySelector('form[method="post"]');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const optionName = '{{ option.title|escapejs }}';
+                const groupCount = {{ option.current_groups }};
+                
+                const confirmed = confirm(
+                    `ATTENTION: Cette suppression affectera ${groupCount} groupe${groupCount > 1 ? 's' : ''}.\n\n` +
+                    `Cette action est irréversible et peut causer des problèmes pour les étudiants.\n\n` +
+                    `Êtes-vous absolument certain de vouloir continuer ?`
+                );
+                
+                if (confirmed) {
+                    const typedName = prompt(
+                        `Pour confirmer la suppression, tapez exactement le nom de l'option :\n\n"${optionName}"`
+                    );
+                    
+                    if (typedName === optionName) {
+                        const finalConfirm = confirm(
+                            `Dernière confirmation :\n\n` +
+                            `Vous allez supprimer définitivement l'option "${optionName}" ` +
+                            `et affecter ${groupCount} groupe${groupCount > 1 ? 's' : ''}.\n\n` +
+                            `Cette action NE PEUT PAS être annulée.\n\n` +
+                            `Continuer ?`
+                        );
+                        
+                        if (finalConfirm) {
+                            this.submit();
+                        }
+                    } else if (typedName !== null) {
+                        alert('Le nom tapé ne correspond pas. Suppression annulée.');
+                    }
+                }
+            });
+        }
+    }
+    
+    // Add warning for low number of remaining options
+    const remainingOptions = {{ assignment.project_options.count|add:"-1" }};
+    if (remainingOptions < 2) {
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'alert alert-warning';
+        warningDiv.style.marginBottom = '24px';
+        warningDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Attention :</strong> Après suppression, il ne restera que ${remainingOptions} option${remainingOptions > 1 ? 's' : ''} disponible${remainingOptions > 1 ? 's' : ''} pour ce devoir.
+            ${remainingOptions === 0 ? ' Les étudiants ne pourront plus choisir de projet !' : ''}
+        `;
+        
+        const firstCard = document.querySelector('.content-card');
+        firstCard.parentNode.insertBefore(warningDiv, firstCard);
+    }
+});
+
+// CSS animation for pulse effect
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

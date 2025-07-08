@@ -36,7 +36,7 @@ Base template for the teacher app - Modern Dark/Light Theme with Sidebar
                         <i class="fas fa-chart-pie"></i>
                         <span>Tableau de Bord</span>
                     </a>
-                    <a href="{% url 'teacher:modules_list' %}" class="nav-item {% if 'module' in request.resolver_match.url_name %}active{% endif %}">
+                    <a href="{% url 'teacher:my_modules' %}" class="nav-item {% if 'my_modules' in request.resolver_match.url_name %}active{% endif %}">
                         <i class="fas fa-book"></i>
                         <span>Mes Modules</span>
                     </a>
@@ -47,6 +47,10 @@ Base template for the teacher app - Modern Dark/Light Theme with Sidebar
                         {% if pending_projects > 0 %}
                         <span class="nav-badge">{{ pending_projects }}</span>
                         {% endif %}
+                    </a>
+                    <a href="{% url 'teacher:assignments_dashboard' %}" class="nav-item {% if 'assignments' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-tasks"></i>
+                        <span>Devoirs</span>
                     </a>
                 </div>
 
@@ -102,7 +106,7 @@ Base template for the teacher app - Modern Dark/Light Theme with Sidebar
                         Accueil
                     </a>
                     
-                    <a href="{% url 'teacher:modules_list' %}" class="action-btn">
+                    <a href="{% url 'teacher:my_modules' %}" class="action-btn">
                         <i class="fas fa-book"></i>
                         Modules
                     </a>

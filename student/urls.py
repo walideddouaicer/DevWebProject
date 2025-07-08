@@ -1,8 +1,7 @@
-
-
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
+from . import assignment_views  # Import the new assignment views
 
 app_name = 'student'
 
@@ -47,7 +46,6 @@ urlpatterns = [
     path('projects/<int:project_id>/make-public/', views.make_project_public, name='make_project_public'),
     path('projects/<int:project_id>/make-private/', views.make_project_private, name='make_project_private'),
 
-
      # Profile Management URLs
     path('profile/', views.profile_view, name='profile_view'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
@@ -64,4 +62,23 @@ urlpatterns = [
     path('password/change/done/', auth_views.PasswordChangeDoneView.as_view(
         template_name='student/password_change_done.html'
     ), name='password_change_done'),
+
+    # FIXED: Assignment System URLs with correct function names
+    path('assignments/', assignment_views.assignments_dashboard, name='assignments_dashboard'),
+    path('assignments/<int:assignment_id>/', assignment_views.assignment_detail, name='assignment_detail'),
+    
+    # FIXED: Use the correct function name that exists in assignment_views.py
+    path('assignments/<int:assignment_id>/create-project/', 
+         assignment_views.create_assignment_project_direct, 
+         name='create_assignment_project'),
+    
+    # Direct Assignment Project Creation (primary method)
+    path('assignments/<int:assignment_id>/create-project-direct/', 
+         assignment_views.create_assignment_project_direct, 
+         name='create_assignment_project_direct'),
+    
+    # Project option selection for choice-based assignments
+    path('assignments/<int:assignment_id>/select-option/', 
+         assignment_views.select_project_option_direct, 
+         name='select_project_option_direct'),
 ]

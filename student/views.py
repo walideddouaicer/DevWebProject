@@ -16,6 +16,8 @@ from django.db.models import Q, OuterRef, Case, When
 from django.utils import timezone
 from .models import Notification
 from .forms import StudentProfileForm, AccountSettingsForm
+from .assignment_views import *
+from teacher.models import DirectStudentAssignment  # Add this import at the top
 
 # Add these stub functions for the new URL patterns
 @login_required
@@ -37,8 +39,22 @@ def project_submit(request, project_id):
         messages.warning(request, "Seuls les projets en cours peuvent être soumis.")
         return redirect('student:project_detail', project_id=project.id)
 
+    # ENHANCED: Check assignment submission requirements
+    if project.is_assignment_project():
+        if not project.can_be_submitted_for_assignment():
+            team_status = project.get_team_size_status()
+            if team_status['status'] in ['too_small', 'too_large']:
+                messages.error(request, f"Impossible de soumettre: {team_status['message']}")
+            elif project.is_overdue():
+                messages.error(request, "Impossible de soumettre: la date limite est dépassée.")
+            else:
+                messages.error(request, "Le projet ne peut pas être soumis pour ce devoir.")
+            return redirect('student:project_detail', project_id=project.id)
+
     # Change status to 'submitted'
     project.status = 'submitted'
+    if project.is_assignment_project():
+        project.assignment_submitted_at = timezone.now()
     project.save()
 
     # Record activity
@@ -48,6 +64,28 @@ def project_submit(request, project_id):
         activity_type='status_changed',
         description="Le projet a été soumis pour évaluation"
     )
+
+    # ENHANCED: Update assignment status if applicable
+    if project.is_assignment_project():
+        assignment = project.project_assignment
+        if assignment.assignment_type == 'direct':
+            # Update direct assignment status
+            DirectStudentAssignment.objects.filter(
+                assignment=assignment,
+                student=student
+            ).update(status='submitted')
+        
+        # Notify all team members for assignment projects
+        team_members = project.get_team_members()
+        for member in team_members:
+            if member != student:  # Don't notify the submitter
+                Notification.objects.create(
+                    recipient=member,
+                    project=project,
+                    project_assignment=assignment,
+                    notification_type='project_update',
+                    message=f"Le projet '{project.title}' a été soumis par {student.get_full_name()}"
+                )
 
     messages.success(request, "Votre projet a été soumis avec succès.")
     return redirect('student:project_detail', project_id=project.id)
@@ -65,7 +103,7 @@ def project_approve(request, project_id):
         messages.warning(request, "Seuls les projets soumis peuvent être approuvés.")
         return redirect('student:project_detail', project_id=project_id)
 
-    project.status = 'validated'  # Changed from 'in_progress' to 'validated'
+    project.status = 'validated'
     project.save()
 
     # Record activity
@@ -76,22 +114,40 @@ def project_approve(request, project_id):
         description="Projet validé"
     )
 
-    # Notify student with project name
-    Notification.objects.create(
-        recipient=project.student,
-        project=project,
-        notification_type='project_update',
-        message=f"Votre projet '{project.title}' a été validé"
-    )
-
-    # Notify collaborators too
-    for collaborator in project.collaborators.all():
+    # ENHANCED: Notify all team members for assignment projects
+    if project.is_assignment_project():
+        team_members = project.get_team_members()
+        for member in team_members:
+            Notification.objects.create(
+                recipient=member,
+                project=project,
+                project_assignment=project.project_assignment,
+                notification_type='project_update',
+                message=f"Le projet '{project.title}' a été validé"
+            )
+        
+        # Update assignment status
+        if project.project_assignment.assignment_type == 'direct':
+            DirectStudentAssignment.objects.filter(
+                assignment=project.project_assignment,
+                student__in=[member.id for member in team_members]
+            ).update(status='validated')
+    else:
+        # Notify project owner and collaborators
         Notification.objects.create(
-            recipient=collaborator,
+            recipient=project.student,
             project=project,
             notification_type='project_update',
-            message=f"Le projet '{project.title}' a été validé"
+            message=f"Votre projet '{project.title}' a été validé"
         )
+
+        for collaborator in project.collaborators.all():
+            Notification.objects.create(
+                recipient=collaborator,
+                project=project,
+                notification_type='project_update',
+                message=f"Le projet '{project.title}' a été validé"
+            )
 
     messages.success(request, "Projet validé avec succès.")
     return redirect('student:project_detail', project_id=project.id)
@@ -120,13 +176,25 @@ def project_reject(request, project_id):
         description="Projet rejeté - révisions nécessaires"
     )
 
-    # Notify student with project name
-    Notification.objects.create(
-        recipient=project.student,
-        project=project,
-        notification_type='project_update',
-        message=f"Votre projet '{project.title}' a été rejeté. Veuillez consulter les commentaires et resoumettre."
-    )
+    # ENHANCED: Notify all team members for assignment projects
+    if project.is_assignment_project():
+        team_members = project.get_team_members()
+        for member in team_members:
+            Notification.objects.create(
+                recipient=member,
+                project=project,
+                project_assignment=project.project_assignment,
+                notification_type='project_update',
+                message=f"Le projet '{project.title}' a été rejeté. Veuillez consulter les commentaires et resoumettre."
+            )
+    else:
+        # Notify project owner
+        Notification.objects.create(
+            recipient=project.student,
+            project=project,
+            notification_type='project_update',
+            message=f"Votre projet '{project.title}' a été rejeté. Veuillez consulter les commentaires et resoumettre."
+        )
 
     messages.info(request, "Projet rejeté. L'étudiant peut maintenant le modifier et resoumettre.")
     return redirect('student:project_detail', project_id=project.id)
@@ -163,6 +231,7 @@ def complete_milestone(request, milestone_id):
 
 @login_required
 def add_collaborator(request, project_id):
+    """ENHANCED: Add collaborator with full assignment constraint checking"""
     student = get_object_or_404(StudentProfile, user=request.user)
     project = get_object_or_404(Project, id=project_id, student=student)
 
@@ -176,10 +245,23 @@ def add_collaborator(request, project_id):
         messages.warning(request, "Vous ne pouvez ajouter des collaborateurs qu'aux projets en cours.")
         return redirect('student:project_detail', project_id=project.id)
 
+    # ENHANCED: Check assignment constraints
+    if project.is_assignment_project():
+        if not project.can_invite_more_collaborators():
+            team_status = project.get_team_size_status()
+            messages.error(request, f"Impossible d'ajouter des collaborateurs: {team_status['message']}")
+            return redirect('student:project_detail', project_id=project.id)
+
     if request.method == 'POST':
-        # Check if the maximum number of collaborators has been reached
-        if project.collaborators.count() >= 10:
-            messages.warning(request, "Vous avez atteint le nombre maximum de collaborateurs (10) pour ce projet.")
+        # ENHANCED: Enhanced validation for assignment projects
+        if project.is_assignment_project() and not project.project_assignment.is_team_work:
+            messages.error(request, "Ce devoir doit être fait individuellement - aucun collaborateur autorisé.")
+            return redirect('student:project_detail', project_id=project.id)
+        
+        # Check if at maximum capacity (before processing invitation)
+        remaining_slots = project.get_remaining_team_slots()
+        if remaining_slots <= 0:
+            messages.warning(request, "Votre équipe a atteint la taille maximale autorisée.")
             return redirect('student:project_detail', project_id=project.id)
             
         collaborator_id = request.POST.get('collaborator')
@@ -191,6 +273,38 @@ def add_collaborator(request, project_id):
                 if project.collaborators.filter(id=recipient.id).exists():
                     messages.info(request, f"{recipient} est déjà un collaborateur de ce projet.")
                     return redirect('student:project_detail', project_id=project.id)
+
+                # ENHANCED: For assignment projects, verify recipient eligibility
+                if project.is_assignment_project():
+                    assignment = project.project_assignment
+                    
+                    # Check if recipient is enrolled in the module
+                    if not recipient.module_enrollments.filter(
+                        module=assignment.module,
+                        is_active=True
+                    ).exists():
+                        messages.error(request, f"{recipient} n'est pas inscrit au module {assignment.module.code}.")
+                        return redirect('student:project_detail', project_id=project.id)
+                    
+                    # For direct assignments, check if recipient is also assigned
+                    if assignment.assignment_type == 'direct':
+                        if not DirectStudentAssignment.objects.filter(
+                            assignment=assignment,
+                            student=recipient
+                        ).exists():
+                            messages.error(request, f"{recipient} n'est pas assigné à ce devoir.")
+                            return redirect('student:project_detail', project_id=project.id)
+                    
+                    # Check if recipient is already working on this assignment
+                    existing_assignment_project = Project.objects.filter(
+                        project_assignment=assignment
+                    ).filter(
+                        Q(student=recipient) | Q(collaborators=recipient)
+                    ).exclude(id=project.id).first()
+                    
+                    if existing_assignment_project:
+                        messages.error(request, f"{recipient} travaille déjà sur ce devoir dans un autre projet.")
+                        return redirect('student:project_detail', project_id=project.id)
 
                 # Use get_or_create to handle existing invitations
                 invitation, created = CollaborationInvitation.objects.get_or_create(
@@ -206,14 +320,28 @@ def add_collaborator(request, project_id):
                 if created:
                     # New invitation created
                     send_invitation_email(invitation)
+                    
+                    # ENHANCED: Assignment-specific notification message
+                    if project.is_assignment_project():
+                        notification_msg = (
+                            f"{student.user.get_full_name() or student.user.username} vous invite à collaborer "
+                            f"sur le projet '{project.title}' pour le devoir '{project.project_assignment.title}'"
+                        )
+                    else:
+                        notification_msg = (
+                            f"{student.user.get_full_name() or student.user.username} vous invite à collaborer "
+                            f"sur le projet '{project.title}'"
+                        )
+                    
                     messages.success(request, f"Invitation envoyée à {recipient}.")
                     
                     # Create notification for the recipient
                     Notification.objects.create(
                         recipient=recipient,
                         project=project,
+                        project_assignment=project.project_assignment,  # Link to assignment if exists
                         notification_type='invitation',
-                        message=f"{student.user.get_full_name() or student.user.username} vous invite à collaborer sur le projet '{project.title}'"
+                        message=notification_msg
                     )
                 else:
                     # Invitation already exists - update it
@@ -230,11 +358,23 @@ def add_collaborator(request, project_id):
                         messages.success(request, f"Nouvelle invitation envoyée à {recipient}.")
                         
                         # Create notification for the recipient
+                        if project.is_assignment_project():
+                            notification_msg = (
+                                f"{student.user.get_full_name() or student.user.username} vous invite à collaborer "
+                                f"sur le projet '{project.title}' pour le devoir '{project.project_assignment.title}'"
+                            )
+                        else:
+                            notification_msg = (
+                                f"{student.user.get_full_name() or student.user.username} vous invite à collaborer "
+                                f"sur le projet '{project.title}'"
+                            )
+                        
                         Notification.objects.create(
                             recipient=recipient,
                             project=project,
+                            project_assignment=project.project_assignment,
                             notification_type='invitation',
-                            message=f"{student.user.get_full_name() or student.user.username} vous invite à collaborer sur le projet '{project.title}'"
+                            message=notification_msg
                         )
 
             except StudentProfile.DoesNotExist:
@@ -486,50 +626,103 @@ def project_edit(request, project_id):
 
 @login_required
 def project_detail(request, project_id):
-    """View to display detailed information about a specific project"""
+    """Enhanced project detail view with assignment context and team info"""
     student = get_object_or_404(StudentProfile, user=request.user)
     
-    # First, get the project by its ID. This should always return at most one object.
+    # Get the project with related data
     project = get_object_or_404(
-        Project,
+        Project.objects.select_related('module', 'project_assignment', 'selected_option'),
         id=project_id,
     )
 
-    # Now, check if the requesting user is either the owner or a collaborator.
+    # Check if the requesting user is either the owner or a collaborator
     is_owner = (project.student == student)
-    is_collaborator = project.collaborators.filter(user=request.user).exists()
+    is_collaborator = project.collaborators.filter(id=student.id).exists()
 
-    # If the user is neither, deny access.
+    # If the user is neither, deny access
     if not is_owner and not is_collaborator:
         messages.error(request, "Vous n'avez pas l'autorisation de voir ce projet.")
-        return redirect('student:dashboard') # Redirect to dashboard or another appropriate page
+        return redirect('student:dashboard')
 
-    # If authorized, proceed to fetch related data and render the template.
+    # Get basic project data
     deliverables = ProjectDeliverable.objects.filter(project=project)
-    # collaborators = project.collaborators.all() # Collaborators are already part of the project object fetched
     milestones = ProjectMilestone.objects.filter(project=project)
-
-    # Get project activities
     project_activities = ProjectActivity.objects.filter(project=project)
-
-    # Get comments with select_related('author')
     comments = project.comments.all().select_related('author')
+
+    # ENHANCED: Assignment-specific context
+    assignment_context = {}
+    if project.is_assignment_project():
+        assignment = project.project_assignment
+        team_info = project.get_assignment_team_info()
+        
+        assignment_context = {
+            'assignment': assignment,
+            'is_assignment_project': True,
+            'assignment_type': assignment.assignment_type,
+            'team_info': team_info,
+            'selected_option': project.selected_option,
+            'deadline_info': {
+                'assignment_deadline': assignment.deadline,
+                'is_overdue': project.is_overdue(),
+                'can_submit': project.can_be_submitted_for_assignment(),
+            }
+        }
+    else:
+        assignment_context = {
+            'is_assignment_project': False,
+            'team_info': {
+                'team_members': project.get_team_members(),
+                'team_size': project.get_team_size(),
+                'size_status': {'status': 'unlimited', 'message': 'Projet personnel', 'can_invite': True},
+                'display_name': None,
+            }
+        }
 
     # For project owners, get available students for collaboration
     available_students = []
     if is_owner and project.status == 'in_progress':
-        # Get students who are not already collaborators and not the owner
+        # Base query: exclude owner and current collaborators
+        base_exclusions = Q(id=student.id) | Q(id__in=project.collaborators.values_list('id', flat=True))
+        
         # Also exclude students who have pending invitations
         invited_student_ids = CollaborationInvitation.objects.filter(
             project=project,
             status='pending'
         ).values_list('recipient_id', flat=True)
+        base_exclusions |= Q(id__in=invited_student_ids)
 
-        available_students = StudentProfile.objects.exclude(
-            Q(id=student.id) |
-            Q(id__in=project.collaborators.values_list('id', flat=True)) |
-            Q(id__in=invited_student_ids)
-        )
+        if project.is_assignment_project():
+            assignment = project.project_assignment
+            
+            # For assignment projects, only show students from the same module
+            available_students = StudentProfile.objects.filter(
+                module_enrollments__module=assignment.module,
+                module_enrollments__is_active=True
+            ).exclude(base_exclusions)
+            
+            # For direct assignments, further filter to only assigned students
+            if assignment.assignment_type == 'direct':
+                assigned_student_ids = DirectStudentAssignment.objects.filter(
+                    assignment=assignment
+                ).values_list('student_id', flat=True)
+                available_students = available_students.filter(id__in=assigned_student_ids)
+            
+            # Exclude students already working on this assignment in other projects
+            students_in_other_projects = Project.objects.filter(
+                project_assignment=assignment
+            ).exclude(id=project.id).values_list('student_id', flat=True)
+            
+            collaborators_in_other_projects = Project.objects.filter(
+                project_assignment=assignment
+            ).exclude(id=project.id).values_list('collaborators__id', flat=True)
+            
+            available_students = available_students.exclude(
+                Q(id__in=students_in_other_projects) | Q(id__in=collaborators_in_other_projects)
+            )
+        else:
+            # For personal projects, show all students except exclusions
+            available_students = StudentProfile.objects.exclude(base_exclusions)
 
     # For project owners, show pending invitations
     pending_invitations = []
@@ -537,12 +730,43 @@ def project_detail(request, project_id):
         pending_invitations = CollaborationInvitation.objects.filter(
             project=project,
             status='pending'
+        ).select_related('recipient__user')
+
+    # ENHANCED: Assignment-specific action buttons
+    available_actions = {
+        'can_edit': is_owner and project.status not in ['validated'],
+        'can_delete': is_owner and project.status == 'in_progress' and not project.is_assignment_project(),
+        'can_submit': is_owner and project.status == 'in_progress',
+        'can_invite_collaborators': (
+            is_owner and 
+            project.status == 'in_progress' and 
+            assignment_context.get('team_info', {}).get('size_status', {}).get('can_invite', True)
+        ),
+        'can_add_deliverables': (is_owner or is_collaborator) and project.status != 'validated',
+        'can_add_milestones': (is_owner or is_collaborator) and project.status != 'validated',
+        'can_comment': True,  # Everyone can comment
+    }
+
+    # Assignment submission validation
+    if project.is_assignment_project():
+        available_actions['can_submit'] = (
+            is_owner and 
+            project.can_be_submitted_for_assignment()
         )
+        if not available_actions['can_submit'] and is_owner:
+            # Provide specific reason why can't submit
+            team_status = project.get_team_size_status()
+            if team_status['status'] in ['too_small', 'too_large']:
+                available_actions['submit_blocked_reason'] = team_status['message']
+            elif not project.is_team_size_valid():
+                available_actions['submit_blocked_reason'] = "Taille d'équipe invalide"
+            elif project.is_overdue():
+                available_actions['submit_blocked_reason'] = "Date limite dépassée"
 
     context = {
         'project': project,
         'deliverables': deliverables,
-        'collaborators': project.collaborators.all(), # Use the collaborators from the fetched project
+        'collaborators': project.collaborators.all(),
         'milestones': milestones,
         'available_students': available_students,
         'pending_invitations': pending_invitations,
@@ -550,6 +774,8 @@ def project_detail(request, project_id):
         'is_collaborator': is_collaborator,
         'project_activities': project_activities,
         'comments': comments,
+        'assignment_context': assignment_context,  # ENHANCED
+        'available_actions': available_actions,     # ENHANCED
     }
 
     return render(request, 'student/project_detail.html', context)
@@ -601,7 +827,7 @@ def project_change_status(request, project_id, new_status):
 def upload_deliverable(request, project_id):
     """View to upload a deliverable file for a project"""
     student = get_object_or_404(StudentProfile, user=request.user)
-    project = get_object_or_404(Project, id=project_id, student=student)
+    project = get_object_or_404(Project, Q(id=project_id) & (Q(student=student) | Q(collaborators=student)))
     
     # Don't allow uploads for validated projects
     if project.status == 'validated':
@@ -795,7 +1021,7 @@ def invitations_list(request):
 
 @login_required
 def respond_to_invitation(request, invitation_id, response):
-    """View to accept or reject a collaboration invitation"""
+    """ENHANCED: Accept/reject invitation with assignment constraint validation"""
     student = get_object_or_404(StudentProfile, user=request.user)
     invitation = get_object_or_404(
         CollaborationInvitation,
@@ -805,24 +1031,85 @@ def respond_to_invitation(request, invitation_id, response):
     )
     
     if response == 'accept':
-        # Add student as collaborator
-        invitation.project.collaborators.add(student)
-        invitation.status = 'accepted'
-        invitation.save()
+        # ENHANCED: Additional validation for assignment projects
+        project = invitation.project
         
-        # Record activity
-        ProjectActivity.objects.create(
-            project=invitation.project,
-            user=request.user,
-            activity_type='collaborator_added',
-            description=f"{student.user.get_full_name() or student.user.username} a rejoint le projet en tant que collaborateur"
-        )
+        if project.is_assignment_project():
+            assignment = project.project_assignment
+            
+            # Check if recipient can still join (assignment constraints)
+            if not project.can_invite_more_collaborators():
+                messages.error(request, "Cette équipe a atteint sa taille maximale.")
+                invitation.status = 'rejected'
+                invitation.save()
+                return redirect('student:invitations_list')
+            
+            # Check if recipient is already working on this assignment
+            existing_assignment_project = Project.objects.filter(
+                project_assignment=assignment
+            ).filter(
+                Q(student=student) | Q(collaborators=student)
+            ).exclude(id=project.id).first()
+            
+            if existing_assignment_project:
+                messages.error(request, f"Vous travaillez déjà sur ce devoir dans le projet '{existing_assignment_project.title}'.")
+                invitation.status = 'rejected'
+                invitation.save()
+                return redirect('student:invitations_list')
+            
+            # Verify still enrolled in module
+            if not student.module_enrollments.filter(
+                module=assignment.module,
+                is_active=True
+            ).exists():
+                messages.error(request, f"Vous n'êtes plus inscrit au module {assignment.module.code}.")
+                invitation.status = 'rejected'
+                invitation.save()
+                return redirect('student:invitations_list')
+            
+            # For direct assignments, verify student is assigned
+            if assignment.assignment_type == 'direct':
+                if not DirectStudentAssignment.objects.filter(
+                    assignment=assignment,
+                    student=student
+                ).exists():
+                    messages.error(request, f"Vous n'êtes pas assigné à ce devoir.")
+                    invitation.status = 'rejected'
+                    invitation.save()
+                    return redirect('student:invitations_list')
         
-        messages.success(request, f"Vous êtes maintenant collaborateur sur le projet {invitation.project.title}.")
+        # Proceed with standard acceptance using the enhanced method
+        try:
+            project.add_assignment_collaborator(student)
+            invitation.status = 'accepted'
+            invitation.save()
+            
+            # Record activity
+            ProjectActivity.objects.create(
+                project=project,
+                user=request.user,
+                activity_type='collaborator_added',
+                description=f"{student.user.get_full_name() or student.user.username} a rejoint le projet en tant que collaborateur"
+            )
+            
+            # ENHANCED: Assignment-specific success message
+            if project.is_assignment_project():
+                messages.success(request, 
+                    f"Vous avez rejoint l'équipe pour le projet '{project.title}' "
+                    f"(devoir: {project.project_assignment.title})."
+                )
+            else:
+                messages.success(request, f"Vous êtes maintenant collaborateur sur le projet '{project.title}'.")
+                
+        except ValidationError as e:
+            messages.error(request, str(e))
+            invitation.status = 'rejected'
+            invitation.save()
+            
     elif response == 'reject':
         invitation.status = 'rejected'
         invitation.save()
-        messages.info(request, f"Vous avez refusé l'invitation pour le projet {invitation.project.title}.")
+        messages.info(request, f"Vous avez refusé l'invitation pour le projet '{invitation.project.title}'.")
     
     return redirect('student:invitations_list')
 
@@ -848,13 +1135,15 @@ def remove_collaborator(request, project_id, collaborator_id):
     
     try:
         collaborator = StudentProfile.objects.get(id=collaborator_id)
-        if project.collaborators.filter(id=collaborator.id).exists():
-            project.collaborators.remove(collaborator)
-            messages.success(request, f"{collaborator} a été retiré des collaborateurs du projet.")
-        else:
-            messages.warning(request, "Cet étudiant n'est pas un collaborateur du projet.")
+        
+        # ENHANCED: Use the assignment-aware removal method
+        project.remove_assignment_collaborator(collaborator)
+        messages.success(request, f"{collaborator} a été retiré des collaborateurs du projet.")
+        
     except StudentProfile.DoesNotExist:
         messages.error(request, "Étudiant non trouvé.")
+    except ValidationError as e:
+        messages.error(request, str(e))
     
     return redirect('student:project_detail', project_id=project.id)
 

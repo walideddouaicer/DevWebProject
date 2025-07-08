@@ -1,0 +1,789 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}{{ assignment.title }} - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+<style>
+/* Enhanced styles for option status display */
+.option-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.option-status-badge.available {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.option-status-badge.taken {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.option-status-badge.full {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.teams-using-option {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-primary);
+}
+
+.team-using-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.team-using-item:last-child {
+    border-bottom: none;
+}
+
+.team-using-info {
+    flex: 1;
+}
+
+.team-using-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.team-using-members {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.project-selected-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+</style>
+{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<a href="{% url 'teacher:assignments_dashboard' %}" style="color: var(--accent-primary); text-decoration: none;">Gestion des Devoirs</a>
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<span class="breadcrumb-current">{{ assignment.title|truncatewords:3 }}</span>
+{% endblock %}
+
+{% block content %}
+<!-- Assignment Header -->
+<div class="assignment-detail-header">
+    <div class="assignment-detail-content">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+            <div>
+                <h1 class="assignment-detail-title">{{ assignment.title }}</h1>
+                <div style="font-size: 1.1em; opacity: 0.9;">{{ assignment.module.code }} - {{ assignment.module.name }}</div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                {% if assignment.status == 'draft' %}
+                <a href="{% url 'teacher:assignment_edit' assignment.id %}" class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                    <i class="fas fa-edit"></i>
+                    Modifier
+                </a>
+                {% endif %}
+                
+                {% if assignment.status == 'draft' and assignment.can_be_published %}
+                <a href="{% url 'teacher:assignment_publish' assignment.id %}" class="btn" style="background: rgba(16, 185, 129, 0.9); color: white;">
+                    <i class="fas fa-rocket"></i>
+                    Publier
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="assignment-detail-meta">
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Type</div>
+                <div class="assignment-detail-meta-value">
+                    {% if assignment.assignment_type == 'direct' %}
+                        <i class="fas fa-user-check"></i> Assignation directe
+                    {% else %}
+                        <i class="fas fa-list-ul"></i> Choix multiple
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Date limite</div>
+                <div class="assignment-detail-meta-value">
+                    {{ assignment.deadline|date:"d M Y H:i" }}
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Statut</div>
+                <div class="assignment-detail-meta-value">
+                    {% if assignment.status == 'published' %}
+                      <span class="badge badge-success">Published - Students Active</span>
+                    {% elif assignment.status == 'in_progress' %}
+                      <span class="badge badge-info">In Progress</span>
+                    {% elif assignment.status == 'completed' %}
+                      <span class="badge badge-secondary">Completed</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if assignment.is_team_work %}
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Travail d'équipe</div>
+                <div class="assignment-detail-meta-value">
+                    <i class="fas fa-users"></i> {{ assignment.min_team_size }} - {{ assignment.max_team_size }} membres
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if assignment.assignment_type == 'choice_based' and assignment.selection_deadline %}
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Sélection avant</div>
+                <div class="assignment-detail-meta-value">
+                    {{ assignment.selection_deadline|date:"d M Y H:i" }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Progress Overview -->
+<div class="progress-overview">
+    {% if assignment.assignment_type == 'direct' %}
+        <div class="progress-card">
+            <div class="progress-value">{{ progress_data.total_assigned }}</div>
+            <div class="progress-label">Étudiants Assignés</div>
+        </div>
+        <div class="progress-card">
+            <div class="progress-value">{{ progress_data.submitted }}</div>
+            <div class="progress-label">Projets Soumis</div>
+        </div>
+        <div class="progress-card">
+            <div class="progress-value">{{ progress_data.validated }}</div>
+            <div class="progress-label">Projets Validés</div>
+        </div>
+        <div class="progress-card">
+            <div class="progress-value">
+                {% if progress_data.total_assigned > 0 %}
+                    {{ progress_data.submitted|floatformat:0 }}/{{ progress_data.total_assigned }}
+                {% else %}
+                    0%
+                {% endif %}
+            </div>
+            <div class="progress-label">Taux de Soumission</div>
+        </div>
+    {% else %}
+        <div class="progress-card">
+            <div class="progress-value">{{ progress_data.total_teams }}</div>
+            <div class="progress-label">Équipes Formées</div>
+        </div>
+        <div class="progress-card">
+            <div class="progress-value">{{ progress_data.total_teams }}</div>
+            <div class="progress-label">Projets Sélectionnés</div>
+        </div>
+        <div class="progress-card">
+            <div class="progress-value">{{ progress_data.submitted }}</div>
+            <div class="progress-label">Projets Soumis</div>
+        </div>
+        <div class="progress-card">
+            <div class="progress-value">{{ progress_data.validated }}</div>
+            <div class="progress-label">Projets Validés</div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Tab Navigation -->
+<div style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 16px 16px 0 0; margin-bottom: 0; overflow: hidden;">
+    <div style="display: flex; border-bottom: 1px solid var(--border-primary);">
+        <button class="tab-btn active" onclick="showTab('overview')">
+            <i class="fas fa-chart-pie"></i>
+            Vue d'ensemble
+        </button>
+        
+        {% if assignment.assignment_type == 'choice_based' %}
+        <button class="tab-btn" onclick="showTab('options')">
+            <i class="fas fa-list-ul"></i>
+            Options de Projets
+        </button>
+        {% endif %}
+        
+        {% if assignment.is_team_work %}
+        <button class="tab-btn" onclick="showTab('teams')">
+            <i class="fas fa-users"></i>
+            Équipes
+        </button>
+        {% endif %}
+        
+        <button class="tab-btn" onclick="showTab('progress')">
+            <i class="fas fa-chart-line"></i>
+            Suivi des Projets
+        </button>
+        
+        {% if assignment.assignment_type == 'direct' %}
+        <button class="tab-btn" onclick="showTab('students')">
+            <i class="fas fa-user-graduate"></i>
+            Étudiants Assignés
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<div style="background: var(--bg-card); border: 1px solid var(--border-primary); border-top: none; border-radius: 0 0 16px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    
+    <!-- Overview Tab -->
+    <div id="overview-tab" class="tab-content active" style="padding: 24px;">
+        <h3 style="margin-bottom: 20px; color: var(--text-primary);">
+            <i class="fas fa-info-circle"></i>
+            Description du Devoir
+        </h3>
+        <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px; border-left: 4px solid var(--accent-primary); margin-bottom: 24px;">
+            <p style="margin: 0; line-height: 1.6; color: var(--text-secondary);">
+                {{ assignment.description|linebreaks }}
+            </p>
+        </div>
+        
+        {% if assignment.instructions %}
+        <h3 style="margin-bottom: 20px; color: var(--text-primary);">
+            <i class="fas fa-clipboard-list"></i>
+            Instructions Détaillées
+        </h3>
+        <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px; border-left: 4px solid var(--info); margin-bottom: 24px;">
+            <div style="line-height: 1.6; color: var(--text-secondary);">
+                {{ assignment.instructions|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Assignment Settings Summary -->
+        <h3 style="margin-bottom: 20px; color: var(--text-primary);">
+            <i class="fas fa-cogs"></i>
+            Configuration
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 12px;">
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Type d'assignation</div>
+                <div style="color: var(--text-secondary);">
+                    {% if assignment.assignment_type == 'direct' %}
+                        Assignation directe - Vous assignez le projet
+                    {% else %}
+                        Choix multiple - Les étudiants choisissent
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 12px;">
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Mode de travail</div>
+                <div style="color: var(--text-secondary);">
+                    {% if assignment.is_team_work %}
+                        Travail en équipe ({{ assignment.min_team_size }}-{{ assignment.max_team_size }} membres)
+                    {% else %}
+                        Travail individuel
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 12px;">
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Sélection étudiants</div>
+                <div style="color: var(--text-secondary);">
+                    {% if assignment.target_selection == 'all_students' %}
+                        Tous les étudiants du module
+                    {% else %}
+                        Étudiants spécifiques
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ENHANCED: Project Options Tab (for choice-based assignments) -->
+    {% if assignment.assignment_type == 'choice_based' %}
+    <div id="options-tab" class="tab-content" style="padding: 24px; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h3 style="margin: 0; color: var(--text-primary);">
+                <i class="fas fa-list-ul"></i>
+                Options de Projets & Sélections
+                <span style="font-size: 14px; font-weight: normal; color: var(--text-muted);">
+                    ({{ progress_data.project_options|length }} option{{ progress_data.project_options|length|pluralize }})
+                </span>
+            </h3>
+            <a href="{% url 'teacher:assignment_options' assignment.id %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Gérer les Options
+            </a>
+        </div>
+        
+        {% if progress_data.project_options %}
+            <div style="display: grid; gap: 20px;">
+                {% for option_data in progress_data.project_options %}
+                <div class="project-option-item" style="background: var(--bg-tertiary); border: 1px solid var(--border-secondary); border-radius: 12px; padding: 20px;">
+                    <div class="project-option-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                        <div style="flex: 1;">
+                            <div class="project-option-title" style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
+                                {{ option_data.option.title }}
+                            </div>
+                            <div class="project-option-meta" style="display: flex; gap: 16px; align-items: center; color: var(--text-muted); font-size: 13px;">
+                                <span><i class="fas fa-signal"></i> {{ option_data.option.get_estimated_difficulty_display }}</span>
+                                <span><i class="fas fa-calendar"></i> Créé le {{ option_data.option.created_at|date:"d M Y" }}</span>
+                                {% if option_data.option.is_unique %}
+                                <span><i class="fas fa-crown"></i> Unique</span>
+                                {% else %}
+                                <span><i class="fas fa-users"></i> Max {{ option_data.option.max_teams }} équipes</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                            <!-- Enhanced Status Badge -->
+                            {% if option_data.projects_count == 0 %}
+                                <span class="option-status-badge available">
+                                    <i class="fas fa-check-circle"></i>
+                                    Disponible
+                                </span>
+                            {% elif option_data.is_available %}
+                                <span class="option-status-badge taken">
+                                    <i class="fas fa-users"></i>
+                                    {{ option_data.projects_count }}/{{ option_data.option.max_teams }} Pris
+                                </span>
+                            {% else %}
+                                <span class="option-status-badge full">
+                                    <i class="fas fa-ban"></i>
+                                    Complet
+                                </span>
+                            {% endif %}
+                            
+                            <!-- Team Count -->
+                            {% if option_data.projects_count > 0 %}
+                            <div style="font-size: 12px; color: var(--text-muted);">
+                                {{ option_data.projects_count }} équipe{{ option_data.projects_count|pluralize }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="project-option-description" style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
+                        {{ option_data.option.description }}
+                    </div>
+                    
+                    {% if option_data.option.requirements %}
+                    <div class="project-option-requirements" style="background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                        <strong style="color: var(--text-primary);">Compétences requises :</strong><br>
+                        <span style="color: var(--text-secondary);">{{ option_data.option.requirements }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- ENHANCED: Teams Using This Option -->
+                    {% if option_data.teams_using %}
+                    <div class="teams-using-option">
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-users"></i>
+                            Équipes ayant sélectionné cette option:
+                        </div>
+                        {% for team_info in option_data.teams_using %}
+                        <div class="team-using-item">
+                            <div class="team-using-info">
+                                <div class="team-using-name">
+                                    <a href="{% url 'teacher:project_review' team_info.project.id %}" style="color: var(--text-primary); text-decoration: none;">
+                                        {{ team_info.project.title }}
+                                    </a>
+                                </div>
+                                <div class="team-using-members">
+                                    {{ team_info.team_display }}
+                                    {% if team_info.submitted_at %}
+                                    • Soumis le {{ team_info.submitted_at|date:"d M Y H:i" }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="status-badge status-{{ team_info.status }}">
+                                {{ team_info.project.get_status_display }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <div class="empty-title">Aucune option de projet</div>
+                <div class="empty-description">
+                    Ajoutez des options de projets pour que vos étudiants puissent choisir.
+                </div>
+                <a href="{% url 'teacher:assignment_options' assignment.id %}" class="btn btn-primary" style="margin-top: 16px;">
+                    <i class="fas fa-plus"></i>
+                    Ajouter des Options
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Teams Tab (for team assignments) -->
+    {% if assignment.is_team_work %}
+    <div id="teams-tab" class="tab-content" style="padding: 24px; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h3 style="margin: 0; color: var(--text-primary);">
+                <i class="fas fa-users"></i>
+                Équipes d'Étudiants
+            </h3>
+            <a href="{% url 'teacher:assignment_teams' assignment.id %}" class="btn btn-primary">
+                <i class="fas fa-users-cog"></i>
+                Voir Toutes les Équipes
+            </a>
+        </div>
+        
+        {% if progress_data.teams_data %}
+            <div class="teams-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+                {% for team_info in progress_data.teams_data|slice:":6" %}
+                <div class="team-card" style="background: var(--bg-tertiary); border: 1px solid var(--border-secondary); border-radius: 12px; padding: 20px;">
+                    <div class="team-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                        <div class="team-name" style="font-size: 16px; font-weight: 700; color: var(--text-primary);">
+                            <a href="{% url 'teacher:project_review' team_info.project.id %}" style="color: inherit; text-decoration: none;">
+                                {{ team_info.project.title }}
+                            </a>
+                        </div>
+                        <span class="team-status status-{{ team_info.status }}" style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                            {{ team_info.project.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="team-members" style="margin-bottom: 16px;">
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-size: 14px;">
+                            Membres ({{ team_info.size }})
+                        </div>
+                        {% for member in team_info.members %}
+                        <div class="team-member" style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+                            <div class="team-member-avatar" style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">
+                                {% if member.user.first_name %}
+                                    {{ member.user.first_name|first }}{{ member.user.last_name|first|default:'' }}
+                                {% else %}
+                                    {{ member.user.username|first }}
+                                {% endif %}
+                            </div>
+                            <span style="font-size: 13px; color: var(--text-secondary);">
+                                {{ member.user.get_full_name|default:member.user.username }}
+                                {% if member == team_info.leader %}
+                                    <span style="color: var(--accent-primary); font-size: 11px;">(Chef)</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if team_info.selected_option %}
+                    <div class="team-project" style="background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                        <div class="team-project-title" style="font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;">
+                            📋 {{ team_info.selected_option.title }}
+                        </div>
+                        <div class="team-project-meta" style="font-size: 11px; color: var(--text-muted);">
+                            Option sélectionnée • {{ team_info.selected_option.get_estimated_difficulty_display }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div style="display: flex; gap: 8px; margin-top: 12px;">
+                        <a href="{% url 'teacher:project_review' team_info.project.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i> Voir
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if progress_data.teams_data|length > 6 %}
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="{% url 'teacher:assignment_teams' assignment.id %}" class="btn btn-secondary">
+                    <i class="fas fa-plus"></i>
+                    Voir les {{ progress_data.teams_data|length|add:"-6" }} autres équipes
+                </a>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <div class="empty-title">Aucune équipe formée</div>
+                <div class="empty-description">
+                    Les équipes apparaîtront ici une fois que les étudiants commenceront à créer des projets et collaborer.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- ENHANCED: Progress Tab -->
+    <div id="progress-tab" class="tab-content" style="padding: 24px; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h3 style="margin: 0; color: var(--text-primary);">
+                <i class="fas fa-chart-line"></i>
+                Suivi des Projets Soumis
+            </h3>
+            <a href="{% url 'teacher:assignment_progress' assignment.id %}" class="btn btn-primary">
+                <i class="fas fa-external-link-alt"></i>
+                Vue Détaillée
+            </a>
+        </div>
+        
+        {% if progress_data.projects %}
+            <div style="display: grid; gap: 16px;">
+                {% for project in progress_data.projects|slice:":10" %}
+                <div style="background: var(--bg-tertiary); border: 1px solid var(--border-secondary); border-radius: 12px; padding: 16px; transition: all 0.3s ease;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                                <a href="{% url 'teacher:project_review' project.id %}" style="color: inherit; text-decoration: none;">
+                                    {{ project.title }}
+                                </a>
+                                <!-- ENHANCED: Show Selected Option -->
+                                {% if project.selected_option %}
+                                <span class="project-selected-option">
+                                    <i class="fas fa-tag"></i>
+                                    {{ project.selected_option.title|truncatewords:3 }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div style="color: var(--text-muted); font-size: 13px;">
+                                {{ project.get_assignment_team_display|default:project.student.user.get_full_name }}
+                                • Mis à jour {{ project.updated_at|timesince }}
+                                {% if project.assignment_submitted_at %}
+                                • Soumis {{ project.assignment_submitted_at|timesince }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="status-badge status-{{ project.status }}">
+                            {{ project.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    {% if project.collaborators.exists %}
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Collaborateurs:</div>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                            {% for collaborator in project.collaborators.all %}
+                            <span style="background: var(--bg-secondary); padding: 2px 8px; border-radius: 12px; font-size: 11px; color: var(--text-secondary);">
+                                {{ collaborator.user.get_full_name|default:collaborator.user.username }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div style="display: flex; gap: 8px;">
+                        <a href="{% url 'teacher:project_review' project.id %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-eye"></i>
+                            Voir
+                        </a>
+                        {% if project.status == 'submitted' %}
+                        <a href="{% url 'teacher:approve_project' project.id %}" class="btn btn-sm" style="background: var(--success); color: white;" onclick="return confirm('Valider ce projet ?')">
+                            <i class="fas fa-check"></i>
+                            Valider
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if progress_data.projects.count > 10 %}
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="{% url 'teacher:assignment_progress' assignment.id %}" class="btn btn-secondary">
+                    <i class="fas fa-plus"></i>
+                    Voir les {{ progress_data.projects.count|add:"-10" }} autres projets
+                </a>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <div class="empty-title">Aucun projet soumis</div>
+                <div class="empty-description">
+                    Les projets soumis par vos étudiants apparaîtront ici.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Students Tab (for direct assignments) -->
+    {% if assignment.assignment_type == 'direct' %}
+    <div id="students-tab" class="tab-content" style="padding: 24px; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h3 style="margin: 0; color: var(--text-primary);">
+                <i class="fas fa-user-graduate"></i>
+                Étudiants Assignés
+            </h3>
+            <a href="{% url 'teacher:assignment_students' assignment.id %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i>
+                Gérer les Assignations
+            </a>
+        </div>
+        
+        {% if progress_data.student_progress %}
+            <div style="display: grid; gap: 12px;">
+                {% for student_info in progress_data.student_progress %}
+                <div style="background: var(--bg-tertiary); border: 1px solid var(--border-secondary); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 12px;">
+                            {{ student_info.student.user.get_full_name|default:student_info.student.user.username }}
+                            {% if student_info.project %}
+                            <a href="{% url 'teacher:project_review' student_info.project.id %}" style="color: var(--accent-primary); text-decoration: none; font-size: 13px;">
+                                → {{ student_info.project.title|truncatewords:4 }}
+                            </a>
+                            {% endif %}
+                            <!-- ENHANCED: Show Selected Option for Direct Assignments -->
+                            {% if student_info.selected_option %}
+                            <span class="project-selected-option">
+                                <i class="fas fa-tag"></i>
+                                {{ student_info.selected_option.title|truncatewords:2 }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 13px;">
+                            {{ student_info.student.student_id }} 
+                            {% if student_info.project %}
+                            • Équipe de {{ student_info.team_size }} membre{{ student_info.team_size|pluralize }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="status-badge status-{{ student_info.assignment_status }}">
+                        {% if student_info.project %}
+                            {{ student_info.project.get_status_display }}
+                        {% else %}
+                            {{ student_info.assignment_status|title }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">👨‍🎓</div>
+                <div class="empty-title">Aucun étudiant assigné</div>
+                <div class="empty-description">
+                    Assignez des étudiants à ce devoir pour qu'ils puissent commencer à travailler.
+                </div>
+                <a href="{% url 'teacher:assignment_students' assignment.id %}" class="btn btn-primary" style="margin-top: 16px;">
+                    <i class="fas fa-user-plus"></i>
+                    Assigner des Étudiants
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'teacher/js/assignments.js' %}"></script>
+<script>
+// Tab functionality
+function showTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    const selectedTab = document.getElementById(tabName + '-tab');
+    if (selectedTab) {
+        selectedTab.style.display = 'block';
+    }
+    
+    // Add active class to clicked tab button
+    event.target.classList.add('active');
+}
+
+// Tab button styles
+const tabStyles = `
+.tab-btn {
+    padding: 16px 24px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    color: var(--accent-primary);
+    background: var(--bg-tertiary);
+    border-bottom-color: var(--accent-primary);
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.status-in_progress { background: rgba(107, 114, 128, 0.2); color: #6b7280; }
+.status-badge.status-submitted { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.status-badge.status-validated { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.status-badge.status-rejected { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.status-badge.status-assigned { background: rgba(99, 102, 241, 0.2); color: #6366f1; }
+.status-badge.status-started { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+`;
+
+// Add styles to page
+const styleSheet = document.createElement('style');
+styleSheet.textContent = tabStyles;
+document.head.appendChild(styleSheet);
+
+// Initialize first tab as active
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if there's a hash in URL to show specific tab
+    const hash = window.location.hash.substring(1);
+    if (hash && document.getElementById(hash + '-tab')) {
+        showTab(hash);
+        // Update active button
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent.toLowerCase().includes(hash)) {
+                btn.classList.add('active');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

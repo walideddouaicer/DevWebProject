@@ -2,7 +2,10 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect
+from .assignment_views import *
 from .models import TeacherProfile, Module, ModuleAssignment, ModuleEnrollment
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 
 @login_required
 def dashboard(request):
@@ -540,3 +543,61 @@ def add_teacher_comment(request, project_id):
         messages.error(request, "Le commentaire ne peut pas être vide.")
     
     return redirect('teacher:project_review', project_id=project.id)
+
+@login_required
+@require_http_methods(["GET"])
+def get_module_students(request, module_id):
+    """API endpoint to get students for a module"""
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+        
+        # Verify teacher has access to this module
+        module_assignment = ModuleAssignment.objects.get(
+            teacher=teacher,
+            module_id=module_id,
+            is_active=True
+        )
+        module = module_assignment.module
+        
+        # Get enrolled students
+        enrollments = ModuleEnrollment.objects.filter(
+            module=module,
+            is_active=True
+        ).select_related('student__user')
+        
+        students_data = []
+        for enrollment in enrollments:
+            student = enrollment.student
+            students_data.append({
+                'id': student.id,
+                'username': student.user.username,
+                'full_name': student.user.get_full_name(),
+                'student_id': student.student_id,
+                'year_display': student.get_year_of_study_display(),
+                'initials': (
+                    (student.user.first_name[:1] + student.user.last_name[:1])
+                    if student.user.first_name and student.user.last_name
+                    else student.user.username[:2]
+                ).upper()
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'students': students_data,
+            'module': {
+                'id': module.id,
+                'code': module.code,
+                'name': module.name
+            }
+        })
+        
+    except (TeacherProfile.DoesNotExist, ModuleAssignment.DoesNotExist):
+        return JsonResponse({
+            'success': False,
+            'error': 'Module non trouvé ou accès non autorisé'
+        }, status=403)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

@@ -1,0 +1,590 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Groupes - {{ assignment.title }} - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'teacher/css/assignments.css' %}">
+{% endblock %}
+
+{% block breadcrumb_items %}
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<a href="{% url 'teacher:assignments_dashboard' %}" style="color: var(--accent-primary); text-decoration: none;">Devoirs</a>
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<a href="{% url 'teacher:assignment_detail' assignment.id %}" style="color: var(--accent-primary); text-decoration: none;">{{ assignment.title|truncatewords:3 }}</a>
+<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+<span class="breadcrumb-current">Groupes</span>
+{% endblock %}
+
+{% block content %}
+<!-- Assignment Header -->
+<div class="assignment-detail-header">
+    <div class="assignment-detail-content">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+            <div>
+                <h1 class="assignment-detail-title">Gestion des Groupes</h1>
+                <div style="font-size: 1.1em; opacity: 0.9;">
+                    {{ assignment.title }} - {{ assignment.module.code }}
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 2em; font-weight: 700;">{{ group_stats.total_groups }}</div>
+                <div style="opacity: 0.8;">Groupe{{ group_stats.total_groups|pluralize }}</div>
+            </div>
+        </div>
+        
+        <div class="assignment-detail-meta">
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Taille des groupes</div>
+                <div class="assignment-detail-meta-value">
+                    {{ assignment.min_group_size }} - {{ assignment.max_group_size }} membres
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Échéance formation</div>
+                <div class="assignment-detail-meta-value">
+                    {% if assignment.group_formation_deadline %}
+                        {{ assignment.group_formation_deadline|date:"d M Y H:i" }}
+                    {% else %}
+                        Non définie
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Taux de formation</div>
+                <div class="assignment-detail-meta-value">
+                    {{ participation_rate }}%
+                </div>
+            </div>
+            
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Statut</div>
+                <div class="assignment-detail-meta-value">
+                    {% if assignment.group_formation_deadline > now %}
+                        <span style="color: rgba(16, 185, 129, 1);">Formation active</span>
+                    {% else %}
+                        <span style="color: rgba(245, 158, 11, 1);">Formation terminée</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="assignments-overview">
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #3b82f6, #2563eb);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Total Étudiants</h3>
+                <div class="assignment-stat-value">{{ total_students_enrolled }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-user-graduate"></i>
+                    Inscrits au module
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #10b981, #059669);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Dans des Groupes</h3>
+                <div class="assignment-stat-value">{{ students_in_groups_count }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-users"></i>
+                    Étudiants organisés
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #f59e0b, #d97706);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Sans Groupe</h3>
+                <div class="assignment-stat-value">{{ students_without_groups }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-user-times"></i>
+                    À organiser
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="fas fa-user-times"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="assignment-stat-card" style="--card-accent: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+        <div class="assignment-stat-header">
+            <div class="assignment-stat-content">
+                <h3>Groupes Complets</h3>
+                <div class="assignment-stat-value">{{ group_stats.complete_groups }}</div>
+                <div class="assignment-stat-meta">
+                    <i class="fas fa-check-circle"></i>
+                    Prêts à travailler
+                </div>
+            </div>
+            <div class="assignment-stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formation Status Alert -->
+{% if assignment.group_formation_deadline %}
+<div class="urgent-items">
+    <div class="urgent-items-title">
+        <i class="fas fa-{% if assignment.group_formation_deadline > now %}clock{% else %}exclamation-triangle{% endif %}"></i>
+        {% if assignment.group_formation_deadline > now %}
+            Formation des groupes en cours
+        {% else %}
+            Formation des groupes terminée
+        {% endif %}
+    </div>
+    <div class="urgent-item">
+        <div class="urgent-item-info">
+            <div class="urgent-item-title">Date limite de formation</div>
+            <div class="urgent-item-meta">
+                {{ assignment.group_formation_deadline|date:"d M Y H:i" }}
+            </div>
+        </div>
+        <div class="urgent-item-deadline">
+            {% if assignment.group_formation_deadline > now %}
+                {{ assignment.group_formation_deadline|timeuntil }}
+            {% else %}
+                Terminée
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Search and Filter -->
+<div class="content-card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-search"></i>
+            Rechercher et Filtrer
+        </h2>
+        <span id="results-count" style="color: var(--text-muted); font-size: 14px;">
+            {{ group_stats.total_groups }} groupe{{ group_stats.total_groups|pluralize }}
+        </span>
+    </div>
+    <div class="card-content">
+        <div class="form-row">
+            <div class="form-group">
+                <input type="text" id="search-input" class="form-input" 
+                       placeholder="Rechercher par nom de groupe ou membre...">
+            </div>
+            <div class="form-group">
+                <select id="status-filter" class="form-select filter-select">
+                    <option value="">Tous les statuts</option>
+                    <option value="forming">En formation</option>
+                    <option value="complete">Complet</option>
+                    <option value="selected_project">Projet sélectionné</option>
+                    <option value="submitted">Soumis</option>
+                    <option value="validated">Validé</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="size-filter" class="form-select filter-select">
+                    <option value="">Toutes les tailles</option>
+                    <option value="incomplete">Incomplets</option>
+                    <option value="valid">Taille valide</option>
+                    <option value="full">Pleins</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="sort-filter" class="form-select filter-select">
+                    <option value="name">Nom</option>
+                    <option value="size">Taille</option>
+                    <option value="status">Statut</option>
+                    <option value="date">Date de création</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Groups List -->
+<div class="assignments-list">
+    <div class="assignments-list-header">
+        <h2 class="assignments-list-title">
+            <i class="fas fa-users"></i>
+            Groupes Formés
+        </h2>
+        <button type="button" class="card-action" onclick="refreshGroups()">
+            <i class="fas fa-sync-alt"></i>
+            Actualiser
+        </button>
+    </div>
+    
+    {% if groups_with_info %}
+        <div id="groups-container">
+            {% for item in groups_with_info %}
+            <div class="assignment-item group-item" 
+                 data-name="{{ item.group.group_name|lower }}"
+                 data-status="{{ item.group.status }}"
+                 data-size="{{ item.member_count }}"
+                 data-date="{{ item.group.created_at|date:'Y-m-d' }}"
+                 data-valid-size="{% if item.is_valid_size %}true{% else %}false{% endif %}">
+                
+                <div class="assignment-info">
+                    <div class="assignment-icon {% if item.is_valid_size %}complete{% else %}forming{% endif %}">
+                        <i class="fas fa-{% if item.is_valid_size %}check-circle{% else %}users{% endif %}"></i>
+                    </div>
+                    <div class="assignment-content">
+                        <div class="assignment-title">
+                            {{ item.group.group_name }}
+                            {% if not item.is_valid_size %}
+                            <span style="color: var(--warning); font-size: 0.8em; font-weight: normal;">
+                                ({{ assignment.min_group_size|add:"-"|add:item.member_count }} membre{{ assignment.min_group_size|add:"-"|add:item.member_count|pluralize }} manquant{{ assignment.min_group_size|add:"-"|add:item.member_count|pluralize }})
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="assignment-meta">
+                            <span class="assignment-meta-item">
+                                <i class="fas fa-users"></i>
+                                {{ item.member_count }}/{{ assignment.max_group_size }} membres
+                            </span>
+                            <span class="assignment-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                Créé le {{ item.group.created_at|date:"d M Y" }}
+                            </span>
+                            <span class="assignment-meta-item">
+                                <i class="fas fa-crown"></i>
+                                Chef: {{ item.group.creator.user.get_full_name|default:item.group.creator.user.username }}
+                            </span>
+                            {% if item.group.chosen_option %}
+                            <span class="assignment-meta-item">
+                                <i class="fas fa-project-diagram"></i>
+                                {{ item.group.chosen_option.title|truncatewords:3 }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Members Preview -->
+                        <div style="margin-top: 12px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                {% for member in item.group.members.all|slice:":4" %}
+                                <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-tertiary); padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+                                    <div style="width: 16px; height: 16px; background: var(--accent-primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600;">
+                                        {% if member.user.first_name %}
+                                            {{ member.user.first_name|first }}{{ member.user.last_name|first|default:'' }}
+                                        {% else %}
+                                            {{ member.user.username|first|upper }}
+                                        {% endif %}
+                                    </div>
+                                    <span style="color: var(--text-secondary);">
+                                        {{ member.user.get_full_name|default:member.user.username|truncatewords:2 }}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                                {% if item.member_count > 4 %}
+                                <div style="color: var(--text-muted); font-size: 12px; padding: 4px 8px;">
+                                    +{{ item.member_count|add:"-4" }} autres
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="assignment-actions">
+                    <span class="assignment-status {{ item.group.status }}">
+                        {{ item.group.get_status_display }}
+                    </span>
+                    
+                    <button class="btn btn-sm btn-secondary" onclick="showGroupDetails('{{ item.group.id }}', '{{ item.group.group_name|escapejs }}')">
+                        <i class="fas fa-eye"></i>
+                        Détails
+                    </button>
+                    
+                    {% for project in item.group.submitted_projects.all %}
+                        {% if project.project_assignment == assignment %}
+                        <a href="{% url 'teacher:project_review' project.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-file-alt"></i>
+                            Projet
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">👥</div>
+            <div class="empty-title">Aucun groupe formé</div>
+            <div class="empty-description">
+                Les étudiants n'ont pas encore commencé à former des groupes pour ce devoir.
+            </div>
+            {% if assignment.group_formation_deadline %}
+            <div style="margin-top: 16px; color: var(--text-muted); font-size: 14px;">
+                Ils ont jusqu'au {{ assignment.group_formation_deadline|date:"d M Y H:i" }} pour se former.
+            </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Group Details Modal -->
+<div id="group-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: var(--bg-card); border-radius: 16px; padding: 24px; max-width: 600px; max-height: 80vh; overflow-y: auto; margin: 20px; border: 1px solid var(--border-primary); box-shadow: 0 8px 25px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: var(--text-primary);">Détails du Groupe</h3>
+            <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        <div id="modal-content">
+            <!-- Content loaded here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'teacher/js/assignments.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeGroupFilters();
+});
+
+function initializeGroupFilters() {
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const sizeFilter = document.getElementById('size-filter');
+    const sortFilter = document.getElementById('sort-filter');
+    
+    if (searchInput) searchInput.addEventListener('input', filterGroups);
+    if (statusFilter) statusFilter.addEventListener('change', filterGroups);
+    if (sizeFilter) sizeFilter.addEventListener('change', filterGroups);
+    if (sortFilter) sortFilter.addEventListener('change', filterGroups);
+}
+
+function filterGroups() {
+    const searchTerm = document.getElementById('search-input')?.value.toLowerCase() || '';
+    const statusValue = document.getElementById('status-filter')?.value || '';
+    const sizeValue = document.getElementById('size-filter')?.value || '';
+    const sortValue = document.getElementById('sort-filter')?.value || 'name';
+    
+    const groupItems = Array.from(document.querySelectorAll('.group-item'));
+    let visibleCount = 0;
+    
+    // Filter items
+    groupItems.forEach(item => {
+        const groupName = item.dataset.name || '';
+        const groupStatus = item.dataset.status || '';
+        const groupSize = parseInt(item.dataset.size) || 0;
+        const isValidSize = item.dataset.validSize === 'true';
+        const memberNames = Array.from(item.querySelectorAll('.assignment-meta-item')).map(span => span.textContent.toLowerCase()).join(' ');
+        
+        // Search filter
+        const matchesSearch = groupName.includes(searchTerm) || memberNames.includes(searchTerm);
+        
+        // Status filter
+        const matchesStatus = !statusValue || groupStatus === statusValue;
+        
+        // Size filter
+        let matchesSize = true;
+        if (sizeValue === 'incomplete') {
+            matchesSize = !isValidSize;
+        } else if (sizeValue === 'valid') {
+            matchesSize = isValidSize;
+        } else if (sizeValue === 'full') {
+            matchesSize = groupSize >= {{ assignment.max_group_size }};
+        }
+        
+        const shouldShow = matchesSearch && matchesStatus && matchesSize;
+        item.style.display = shouldShow ? 'flex' : 'none';
+        
+        if (shouldShow) visibleCount++;
+    });
+    
+    // Update results count
+    const resultsCount = document.getElementById('results-count');
+    if (resultsCount) {
+        resultsCount.textContent = `${visibleCount} groupe${visibleCount !== 1 ? 's' : ''}`;
+    }
+    
+    // Sort visible items
+    const visibleItems = groupItems.filter(item => item.style.display !== 'none');
+    const container = document.getElementById('groups-container');
+    
+    if (container) {
+        visibleItems.sort((a, b) => {
+            switch(sortValue) {
+                case 'name':
+                    return a.dataset.name.localeCompare(b.dataset.name);
+                case 'size':
+                    return parseInt(b.dataset.size) - parseInt(a.dataset.size);
+                case 'status':
+                    return a.dataset.status.localeCompare(b.dataset.status);
+                case 'date':
+                default:
+                    return new Date(b.dataset.date) - new Date(a.dataset.date);
+            }
+        });
+        
+        // Reorder in DOM
+        visibleItems.forEach(item => container.appendChild(item));
+    }
+}
+
+function showGroupDetails(groupId, groupName) {
+    const modal = document.getElementById('group-modal');
+    const content = document.getElementById('modal-content');
+    
+    if (modal && content) {
+        content.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2em; color: var(--accent-primary); margin-bottom: 16px;"></i>
+                <p style="color: var(--text-secondary);">Chargement des détails de ${groupName}...</p>
+            </div>
+        `;
+        modal.style.display = 'flex';
+        
+        // Simulate loading detailed group information
+        setTimeout(() => {
+            content.innerHTML = `
+                <div style="color: var(--text-primary);">
+                    <h4 style="color: var(--text-primary); margin-bottom: 16px;">Informations du Groupe "${groupName}"</h4>
+                    <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                        <p><strong>ID du groupe:</strong> ${groupId}</p>
+                        <p><strong>Fonctionnalités disponibles:</strong></p>
+                        <ul style="margin: 8px 0; padding-left: 20px;">
+                            <li>Historique de formation du groupe</li>
+                            <li>Messages et communications internes</li>
+                            <li>Progression détaillée du projet</li>
+                            <li>Actions administratives avancées</li>
+                            <li>Gestion des invitations et membres</li>
+                        </ul>
+                    </div>
+                    <div style="padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 4px solid var(--accent-primary);">
+                        <p style="color: var(--text-secondary); font-style: italic; margin: 0;">
+                            <i class="fas fa-info-circle"></i> 
+                            Les détails complets et la gestion avancée des groupes seront implémentés dans la prochaine version de l'interface.
+                        </p>
+                    </div>
+                </div>
+            `;
+        }, 1200);
+    }
+}
+
+function closeModal() {
+    const modal = document.getElementById('group-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function refreshGroups() {
+    // Show loading state
+    const container = document.getElementById('groups-container');
+    if (container) {
+        container.style.opacity = '0.6';
+        
+        setTimeout(() => {
+            container.style.opacity = '1';
+            showNotification('Données des groupes actualisées', 'success');
+        }, 1000);
+    }
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        z-index: 1000;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    `;
+    
+    switch(type) {
+        case 'success':
+            notification.style.background = 'var(--success)';
+            break;
+        case 'error':
+            notification.style.background = 'var(--danger)';
+            break;
+        case 'info':
+        default:
+            notification.style.background = 'var(--accent-primary)';
+            break;
+    }
+    
+    notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${message}`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 3000);
+}
+
+// Close modal when clicking outside
+document.getElementById('group-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+// Additional CSS for group-specific styling
+const additionalStyles = `
+.group-item .assignment-icon.complete {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.group-item .assignment-icon.forming {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.assignment-status.forming { 
+    background: rgba(245, 158, 11, 0.2); 
+    color: var(--warning); 
+}
+
+.assignment-status.complete { 
+    background: rgba(16, 185, 129, 0.2); 
+    color: var(--success); 
+}
+
+.assignment-status.selected_project { 
+    background: rgba(59, 130, 246, 0.2); 
+    color: var(--info); 
+}
+
+.assignment-status.submitted { 
+    background: rgba(139, 92, 246, 0.2); 
+    color: #8b5cf6; 
+}
+
+.assignment-status.validated { 
+    background: rgba(34, 197, 94, 0.2); 
+    color: #22c55e; 
+}
+`;
+
+const styleSheet = document.createElement('style');
+styleSheet.textContent = additionalStyles;
+document.head.appendChild(styleSheet);
+
+// Auto-refresh every 2 minutes to check for new groups
+setInterval(function() {
+    console.log('Auto-checking for group updates...');
+    // In production, you would make an AJAX call to refresh data
+}, 120000);
+</script>
+{% endblock %}

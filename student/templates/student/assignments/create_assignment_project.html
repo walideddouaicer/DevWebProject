@@ -1,0 +1,515 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}Créer un Projet - {{ assignment.title }} - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'student/css/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">🚀 Créer un Projet</h1>
+        <p class="page-subtitle">
+            {% if assignment.is_group_work %}
+                Créez votre projet d'équipe pour le devoir: <strong>{{ assignment.title }}</strong>
+            {% else %}
+                Créez votre projet pour le devoir: <strong>{{ assignment.title }}</strong>
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<!-- Assignment Info Banner -->
+<div class="assignment-detail-header mb-4">
+    <div class="assignment-detail-content">
+        <div class="assignment-detail-title">{{ assignment.title }}</div>
+        <p>{{ assignment.description|truncatewords:30 }}</p>
+        
+        <div class="assignment-detail-meta">
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Module</div>
+                <div class="assignment-detail-meta-value">
+                    {{ assignment.module.code }} - {{ assignment.module.name }}
+                </div>
+            </div>
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Date Limite</div>
+                <div class="assignment-detail-meta-value">
+                    📅 {{ assignment.deadline|date:"d M Y à H:i" }}
+                </div>
+            </div>
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Type</div>
+                <div class="assignment-detail-meta-value">
+                    {% if assignment.assignment_type == 'direct' %}
+                        🎯 Assignation Directe
+                    {% else %}
+                        🎲 Projet Sélectionné
+                    {% endif %}
+                    {% if assignment.is_group_work %}
+                        👥 (Travail d'Équipe)
+                    {% endif %}
+                </div>
+            </div>
+            <!-- NEW: Show selected option for choice-based -->
+            {% if selected_option %}
+            <div class="assignment-detail-meta-item">
+                <div class="assignment-detail-meta-label">Option Choisie</div>
+                <div class="assignment-detail-meta-value">
+                    🎯 {{ selected_option.title }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Project Creation Form -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>📝 Informations du Projet</h3>
+                <p class="card-subtitle">
+                    {% if assignment.is_group_work %}
+                        Remplissez les détails de votre projet d'équipe. Vous pourrez inviter des collaborateurs après la création.
+                    {% else %}
+                        Remplissez les détails de votre projet
+                    {% endif %}
+                </p>
+            </div>
+            <div class="card-body">
+                <form method="post" class="project-form">
+                    {% csrf_token %}
+                    
+                    <!-- Selected Option Info (for choice-based) -->
+                    {% if selected_option %}
+                    <div class="selected-option-banner mb-4">
+                        <div class="selected-option-header">
+                            <h4>🎯 Option Sélectionnée</h4>
+                        </div>
+                        <div class="selected-option-content">
+                            <div class="selected-option-title">{{ selected_option.title }}</div>
+                            <div class="selected-option-description">{{ selected_option.description }}</div>
+                            {% if selected_option.requirements %}
+                            <div class="selected-option-requirements">
+                                <strong>Compétences requises:</strong> {{ selected_option.requirements }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Title Field -->
+                    <div class="form-group mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            <strong>{{ form.title.label }}</strong>
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if selected_option %}
+                            <div class="form-help">Titre pré-rempli basé sur l'option sélectionnée. Vous pouvez le modifier si nécessaire.</div>
+                        {% endif %}
+                        {% if form.title.errors %}
+                            <div class="form-errors">
+                                {% for error in form.title.errors %}
+                                    <div class="error-message">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Description Field -->
+                    <div class="form-group mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            <strong>{{ form.description.label }}</strong>
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.description }}
+                        {% if selected_option %}
+                            <div class="form-help">Description pré-remplie basée sur l'option sélectionnée. Vous pouvez l'adapter à votre vision du projet.</div>
+                        {% else %}
+                            <div class="form-help">Décrivez votre projet en détail.</div>
+                        {% endif %}
+                        {% if form.description.errors %}
+                            <div class="form-errors">
+                                {% for error in form.description.errors %}
+                                    <div class="error-message">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Project Type Field (read-only for assignments) -->
+                    <div class="form-group mb-3">
+                        <label for="{{ form.project_type.id_for_label }}" class="form-label">
+                            <strong>{{ form.project_type.label }}</strong>
+                        </label>
+                        {{ form.project_type }}
+                        <div class="form-help">Ce type est défini automatiquement car c'est un projet d'assignation.</div>
+                        {% if form.project_type.errors %}
+                            <div class="form-errors">
+                                {% for error in form.project_type.errors %}
+                                    <div class="error-message">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Module Field (read-only for assignments) -->
+                    <div class="form-group mb-3">
+                        <label for="{{ form.module.id_for_label }}" class="form-label">
+                            <strong>{{ form.module.label }}</strong>
+                        </label>
+                        {{ form.module }}
+                        <div class="form-help">Module défini par l'assignation.</div>
+                        {% if form.module.errors %}
+                            <div class="form-errors">
+                                {% for error in form.module.errors %}
+                                    <div class="error-message">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Module or Company Field -->
+                    <div class="form-group mb-3">
+                        <label for="{{ form.module_or_company.id_for_label }}" class="form-label">
+                            <strong>{{ form.module_or_company.label }}</strong>
+                        </label>
+                        {{ form.module_or_company }}
+                        {% if form.module_or_company.help_text %}
+                            <div class="form-help">{{ form.module_or_company.help_text }}</div>
+                        {% endif %}
+                        {% if form.module_or_company.errors %}
+                            <div class="form-errors">
+                                {% for error in form.module_or_company.errors %}
+                                    <div class="error-message">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Technologies Field -->
+                    <div class="form-group mb-3">
+                        <label for="{{ form.technologies.id_for_label }}" class="form-label">
+                            <strong>{{ form.technologies.label }}</strong>
+                        </label>
+                        {{ form.technologies }}
+                        {% if form.technologies.help_text %}
+                            <div class="form-help">{{ form.technologies.help_text }}</div>
+                        {% endif %}
+                        {% if form.technologies.errors %}
+                            <div class="form-errors">
+                                {% for error in form.technologies.errors %}
+                                    <div class="error-message">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Dates -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.start_date.id_for_label }}" class="form-label">
+                                    <strong>{{ form.start_date.label }}</strong>
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.start_date }}
+                                {% if form.start_date.help_text %}
+                                    <div class="form-help">{{ form.start_date.help_text }}</div>
+                                {% endif %}
+                                {% if form.start_date.errors %}
+                                    <div class="form-errors">
+                                        {% for error in form.start_date.errors %}
+                                            <div class="error-message">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.end_date.id_for_label }}" class="form-label">
+                                    <strong>{{ form.end_date.label }}</strong>
+                                </label>
+                                {{ form.end_date }}
+                                <div class="form-help">Doit être avant ou égale à la date limite du devoir ({{ assignment.deadline|date:"d M Y" }})</div>
+                                {% if form.end_date.errors %}
+                                    <div class="form-errors">
+                                        {% for error in form.end_date.errors %}
+                                            <div class="error-message">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- REMOVED: Collaborators field - will be handled after project creation -->
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            🚀 Créer le Projet
+                            {% if assignment.is_group_work %}d'Équipe{% endif %}
+                        </button>
+                        <a href="{% url 'student:assignment_detail' assignment.id %}" class="btn btn-secondary">
+                            ← Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Assignment Summary -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4>📋 Résumé du Devoir</h4>
+            </div>
+            <div class="card-body">
+                <div class="assignment-summary">
+                    <div class="summary-item">
+                        <strong>Enseignant:</strong>
+                        <span>{{ assignment.teacher.user.get_full_name }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Date limite:</strong>
+                        <span class="{% if assignment.deadline|timeuntil == '' %}text-danger{% else %}text-success{% endif %}">
+                            {{ assignment.deadline|date:"d M Y à H:i" }}
+                        </span>
+                    </div>
+                    {% if assignment.deadline|timeuntil %}
+                    <div class="summary-item">
+                        <strong>Temps restant:</strong>
+                        <span class="text-warning">⏰ {{ assignment.deadline|timeuntil }}</span>
+                    </div>
+                    {% else %}
+                    <div class="summary-item text-danger">
+                        <strong>⚠️ Échéance dépassée</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: Team Requirements Card (for group work) -->
+        {% if assignment.is_group_work %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4>👥 Exigences d'Équipe</h4>
+            </div>
+            <div class="card-body">
+                <div class="team-requirements">
+                    <div class="summary-item">
+                        <strong>Taille d'équipe:</strong>
+                        <span>{{ assignment.min_group_size }} - {{ assignment.max_group_size }} membres</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Votre rôle:</strong>
+                        <span>👑 Responsable du projet</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Après création:</strong>
+                        <span>Vous pourrez inviter des collaborateurs</span>
+                    </div>
+                </div>
+                
+                <div class="team-help-info">
+                    <div class="help-icon">💡</div>
+                    <div class="help-content">
+                        <strong>Comment ça marche?</strong>
+                        <p>Après avoir créé votre projet, utilisez le bouton "Inviter Collaborateur" pour former votre équipe. Les collaborateurs que vous invitez formeront automatiquement votre équipe pour ce devoir.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Instructions Panel -->
+        {% if assignment.instructions %}
+        <div class="card">
+            <div class="card-header">
+                <h4>📖 Instructions</h4>
+            </div>
+            <div class="card-body">
+                <div class="instructions-summary">
+                    {{ assignment.instructions|truncatewords:50|linebreaks }}
+                </div>
+                {% if assignment.instructions|wordcount > 50 %}
+                <div class="mt-2">
+                    <a href="{% url 'student:assignment_detail' assignment.id %}" class="btn btn-outline-info btn-sm">
+                        📖 Lire toutes les instructions
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.project-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.form-help {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.form-errors {
+    margin-top: 0.25rem;
+}
+
+.error-message {
+    color: var(--error);
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-primary);
+}
+
+.assignment-summary {
+    space-y: 0.75rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-primary);
+    gap: 1rem;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-item strong {
+    flex-shrink: 0;
+    color: var(--text-primary);
+}
+
+.summary-item span {
+    text-align: right;
+    color: var(--text-secondary);
+}
+
+.instructions-summary {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* NEW: Selected option banner */
+.selected-option-banner {
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+    border: 2px solid #a7f3d0;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.selected-option-header h4 {
+    color: #059669;
+    margin-bottom: 0.75rem;
+}
+
+.selected-option-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #065f46;
+    margin-bottom: 0.5rem;
+}
+
+.selected-option-description {
+    color: #374151;
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+}
+
+.selected-option-requirements {
+    font-size: 0.875rem;
+    color: #6b7280;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+}
+
+/* NEW: Team requirements styling */
+.team-requirements {
+    margin-bottom: 1rem;
+}
+
+.team-help-info {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    border-left: 4px solid #3b82f6;
+}
+
+.help-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.help-content strong {
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.help-content p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .summary-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .summary-item span {
+        text-align: left;
+    }
+    
+    .team-help-info {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>
+
+{% endblock %}
