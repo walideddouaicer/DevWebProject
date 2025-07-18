@@ -1087,3 +1087,135 @@ def export_users(request):
     # This is a placeholder - we'll implement this later
     messages.info(request, "Fonctionnalité d'export des utilisateurs en cours de développement.")
     return redirect('administrator:users_list')
+
+# Optional Monitoring/Admin Views
+
+@admin_required
+def recent_module_activity(request):
+    """Monitor recent module creation activity"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+    
+    # Get recently created modules (last 30 days)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    recent_modules = Module.objects.filter(
+        created_at__gte=thirty_days_ago
+    ).select_related('primary_teacher__user').order_by('-created_at')
+    
+    # Separate teacher-created vs admin-created
+    teacher_created = recent_modules.filter(created_by_teacher=True)
+    admin_created = recent_modules.filter(created_by_teacher=False)
+    
+    # Get most active teachers
+    active_teachers = TeacherProfile.objects.filter(
+        primary_modules__created_at__gte=thirty_days_ago,
+        primary_modules__created_by_teacher=True
+    ).annotate(
+        modules_created=Count('primary_modules')
+    ).order_by('-modules_created')[:5]
+    
+    context = {
+        'admin': admin,
+        'recent_modules': recent_modules,
+        'teacher_created': teacher_created,
+        'admin_created': admin_created,
+        'active_teachers': active_teachers,
+        'total_recent': recent_modules.count(),
+    }
+    
+    return render(request, 'administrator/recent_module_activity.html', context)
+
+
+@admin_required  
+def module_oversight(request):
+    """Admin can review and manage all modules (without approval bottleneck)"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+    
+    # Get all modules with filters
+    modules = Module.objects.select_related('primary_teacher__user').order_by('-created_at')
+    
+    # Apply filters
+    creation_source = request.GET.get('source', '')
+    teacher_filter = request.GET.get('teacher', '')
+    year_filter = request.GET.get('year', '')
+    
+    if creation_source == 'teacher':
+        modules = modules.filter(created_by_teacher=True)
+    elif creation_source == 'admin':
+        modules = modules.filter(created_by_teacher=False)
+        
+    if teacher_filter:
+        modules = modules.filter(primary_teacher_id=teacher_filter)
+        
+    if year_filter:
+        modules = modules.filter(academic_year=year_filter)
+    
+    # Calculate stats
+    total_modules = modules.count()
+    teacher_created_count = modules.filter(created_by_teacher=True).count()
+    admin_created_count = modules.filter(created_by_teacher=False).count()
+    
+    # Pagination
+    paginator = Paginator(modules, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # For filters
+    teachers = TeacherProfile.objects.filter(
+        primary_modules__isnull=False
+    ).distinct().select_related('user').order_by('user__first_name')
+    
+    years = Module.objects.values_list('academic_year', flat=True).distinct()
+    
+    context = {
+        'admin': admin,
+        'page_obj': page_obj,
+        'teachers': teachers,
+        'years': years,
+        'creation_source': creation_source,
+        'teacher_filter': teacher_filter,
+        'year_filter': year_filter,
+        'total_modules': total_modules,
+        'teacher_created_count': teacher_created_count,
+        'admin_created_count': admin_created_count,
+        # Admin can still deactivate problematic modules if needed
+        'can_manage': True,
+    }
+    
+    return render(request, 'administrator/module_oversight.html', context)
+
+
+# Optional: Allow admin to deactivate modules if needed (rare cases)
+@admin_required
+def toggle_module_status(request, module_id):
+    """Admin can activate/deactivate modules if needed"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+    module = get_object_or_404(Module, id=module_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        reason = request.POST.get('reason', '').strip()
+        
+        if action == 'deactivate' and module.is_active:
+            module.is_active = False
+            module.save()
+            
+            # Log the action
+            messages.success(
+                request, 
+                f"Module '{module.code}' désactivé. Raison: {reason or 'Non spécifiée'}"
+            )
+            
+        elif action == 'activate' and not module.is_active:
+            module.is_active = True
+            module.save()
+            
+            messages.success(request, f"Module '{module.code}' réactivé.")
+        
+        return redirect('administrator:module_oversight')
+    
+    context = {
+        'admin': admin,
+        'module': module,
+    }
+    
+    return render(request, 'administrator/module_status_confirm.html', context)

@@ -18,7 +18,7 @@ class TeacherProfile(models.Model):
         verbose_name_plural = "Teacher Profiles"
 
 
-# Module model - core of the system (ENHANCED)
+# Module model - core of the system (SIMPLIFIED)
 class Module(models.Model):
     name = models.CharField(max_length=200)
     code = models.CharField(max_length=10, unique=True, help_text="Unique code for students to join (e.g., CS101, MATH204)")
@@ -32,7 +32,7 @@ class Module(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
-    # NEW FIELDS for teacher assignment system
+    # Teacher assignment system
     primary_teacher = models.ForeignKey(
         'TeacherProfile', 
         on_delete=models.SET_NULL, 
@@ -40,36 +40,29 @@ class Module(models.Model):
         related_name='primary_modules',
         help_text="Main teacher responsible for this module"
     )
-    
     classroom = models.CharField(
         max_length=50, 
         blank=True,
         help_text="Physical classroom/location"
     )
     
-    # Module creation permissions
+    # Simplified creation tracking
     created_by_teacher = models.BooleanField(
         default=False,
         help_text="True if created by teacher, False if by admin"
     )
     
-    requires_approval = models.BooleanField(
-        default=True,
-        help_text="Teacher-created modules need admin approval"
-    )
-    
-    approved_by = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, blank=True,
-        related_name='approved_modules',
-        help_text="Admin who approved this module"
-    )
-    
-    approved_at = models.DateTimeField(null=True, blank=True)
+    # REMOVED: These fields are no longer needed
+    # requires_approval = models.BooleanField(default=True)
+    # approved_by = models.ForeignKey(User, ...)
+    # approved_at = models.DateTimeField(null=True, blank=True)
     
     def __str__(self):
         return f"{self.code} - {self.name}"
+    
+    def get_creation_source(self):
+        """Get human-readable creation source"""
+        return "Créé par enseignant" if self.created_by_teacher else "Créé par admin"
     
     def get_enrolled_students_count(self):
         return self.enrollments.filter(is_active=True).count()

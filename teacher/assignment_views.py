@@ -40,7 +40,7 @@ def check_teacher_module_access(teacher, module):
 
 @login_required
 def assignments_dashboard(request):
-    """Main dashboard for teacher assignments - UPDATED FOR TEAM-BASED SYSTEM"""
+    """Main dashboard for teacher assignments - UPDATED FOR NO APPROVAL SYSTEM"""
     teacher = get_teacher_or_error(request)
     if not teacher:
         return redirect('login')
@@ -71,7 +71,7 @@ def assignments_dashboard(request):
         if search:
             assignments = assignments.filter(title__icontains=search)
         
-        # Enhanced deadline filtering (team-based, no group_formation_deadline)
+        # Enhanced deadline filtering
         if deadline_filter:
             now = timezone.now()
             if deadline_filter == 'upcoming':
@@ -147,13 +147,8 @@ def assignments_dashboard(request):
     # Sort by urgency (days left)
     urgent_assignments.sort(key=lambda x: x['days_left'])
     
-    # Count pending module approvals
-    pending_module_approvals = Module.objects.filter(
-        primary_teacher=teacher,
-        created_by_teacher=True,
-        requires_approval=True,
-        approved_by__isnull=True
-    ).count()
+    # ❌ REMOVED: No more pending module approvals
+    # pending_module_approvals = 0  # No approval system anymore
     
     # Count ungraded projects
     ungraded_projects_count = Project.objects.filter(
@@ -171,7 +166,7 @@ def assignments_dashboard(request):
         'draft_assignments': draft_assignments,
         'completed_assignments': completed_assignments,
         'urgent_assignments': urgent_assignments[:10],
-        'pending_module_approvals': pending_module_approvals,
+        # ❌ REMOVED: 'pending_module_approvals': 0,
         'ungraded_projects_count': ungraded_projects_count,
         'urgent_deadlines_count': len(urgent_assignments),
     }
@@ -1036,14 +1031,8 @@ def create_teacher_module(request):
                         is_active=True
                     )
                     
-                    # Optional: Create an activity log for admin monitoring
-                    from student.models import ProjectActivity
-                    ProjectActivity.objects.create(
-                        project=None,  # No specific project
-                        user=teacher.user,
-                        activity_type='created',
-                        description=f"Module '{module.code} - {module.name}' créé par {teacher.user.get_full_name()}"
-                    )
+                    # ❌ REMOVED: ProjectActivity creation (was causing the error)
+                    # No need to log module creation as project activity
                     
                     messages.success(
                         request, 

@@ -39,15 +39,6 @@
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
-.module-card.pending {
-    opacity: 0.7;
-    border-style: dashed;
-}
-
-.module-card.pending::before {
-    background: var(--warning);
-}
-
 .module-header {
     display: flex;
     justify-content: space-between;
@@ -268,14 +259,6 @@
     margin-top: 24px;
 }
 
-.pending-modules-notice {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
-    border: 1px solid var(--warning);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 24px;
-}
-
 .modules-filter {
     background: var(--bg-card);
     border: 1px solid var(--border-primary);
@@ -429,26 +412,6 @@
         </div>
     </div>
 
-    <!-- Pending Modules Notice -->
-    {% if pending_modules_count > 0 %}
-    <div class="pending-modules-notice">
-        <div style="display: flex; align-items: flex-start; gap: 16px;">
-            <div style="color: var(--warning); font-size: 2em;">
-                <i class="fas fa-clock"></i>
-            </div>
-            <div>
-                <h3 style="color: var(--warning); font-weight: 700; margin-bottom: 12px; font-size: 1.2em;">
-                    ⏳ Modules en Attente d'Approbation
-                </h3>
-                <div style="color: var(--text-primary); line-height: 1.6;">
-                    Vous avez <strong>{{ pending_modules_count }} module{{ pending_modules_count|pluralize }}</strong> 
-                    en attente d'approbation administrative. Ces modules apparaîtront dans votre liste une fois approuvés.
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
     <!-- Modules Filter -->
     <div class="modules-filter">
         <div style="flex: 1;">
@@ -477,7 +440,7 @@
     {% if modules_with_stats %}
     <div class="modules-grid" id="modulesGrid">
         {% for module_data in modules_with_stats %}
-        <div class="module-card {% if not module_data.module.is_active %}pending{% endif %}" 
+        <div class="module-card" 
              data-code="{{ module_data.module.code }}" 
              data-name="{{ module_data.module.name }}"
              data-year="{{ module_data.module.academic_year }}"
@@ -485,8 +448,8 @@
             
             <div class="module-header">
                 <div class="module-code">{{ module_data.module.code }}</div>
-                <div class="module-status {% if module_data.module.is_active %}active{% else %}pending{% endif %}">
-                    {% if module_data.module.is_active %}Actif{% else %}En Attente{% endif %}
+                <div class="module-status active">
+                    Actif
                 </div>
             </div>
             
