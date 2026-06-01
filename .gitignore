@@ -13,4 +13,8 @@ djangoenv/
 db.sqlite3
 media
 staticfiles
-local_settings.py 
+local_settings.py
+
+# IDEs
+.idea/
+.vscode/ 
