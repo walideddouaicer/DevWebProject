@@ -40,7 +40,6 @@ urlpatterns = [
     path('administrator/', include('administrator.urls', namespace='administrator')),
     path('search/', include('search.urls', namespace='search')),
     path('accounts/', include('accounts.urls', namespace='accounts')),
-    path('projects/', include('projects.urls', namespace='projects')),
 ]
 
 if settings.DEBUG:
