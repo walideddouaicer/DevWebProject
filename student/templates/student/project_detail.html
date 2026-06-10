@@ -49,6 +49,7 @@
                             {% if project.status == 'draft' %}25%
                             {% elif project.status == 'in_progress' %}50%
                             {% elif project.status == 'submitted' %}75%
+                            {% elif project.status == 'revision_requested' %}60%
                             {% elif project.status == 'validated' %}100%
                             {% elif project.status == 'rejected' %}25%
                             {% endif %}
@@ -164,6 +165,27 @@
                             </form>
                         {% endif %}
                         
+                    {% elif project.status == 'revision_requested' %}
+                        <div class="status-message rejected">
+                            <div class="status-icon">🔄</div>
+                            <div class="status-content">
+                                <h4>Révision Demandée</h4>
+                                <p>L'enseignant demande des modifications avant validation. Consultez ses commentaires (projet et livrables), apportez les corrections, puis resoumettez.</p>
+                            </div>
+                        </div>
+
+                        {% if is_owner %}
+                            <a href="{% url 'student:project_edit' project.id %}" class="action-btn primary">
+                                ✏️ Modifier le Projet
+                            </a>
+                            <a href="{% url 'student:project_submit_confirmation' project.id %}" class="action-btn success">
+                                🚀 Resoumettre pour Validation
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'student:upload_deliverable' project.id %}" class="action-btn primary">
+                            📎 Ajouter un Livrable
+                        </a>
+
                     {% else %}
                         <!-- Fallback message -->
                         <div class="status-message default">
@@ -464,6 +486,39 @@
                                         📥 Télécharger
                                     </a>
                                 </div>
+
+                                <!-- Feedback enseignant sur ce livrable -->
+                                {% with feedbacks=deliverable.feedback_comments.all %}
+                                {% if feedbacks or is_owner or is_collaborator %}
+                                <div style="margin-top: var(--space-4); border-top: 1px solid var(--border-color); padding-top: var(--space-3);">
+                                    <div style="font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-2);">
+                                        💬 Feedback sur ce livrable ({{ feedbacks|length }})
+                                    </div>
+                                    {% for fb in feedbacks %}
+                                    <div style="margin-bottom: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: 8px; background: var(--bg-secondary); {% if fb.is_teacher_comment %}border-left: 3px solid var(--accent-primary);{% endif %}">
+                                        <div style="display: flex; justify-content: space-between; font-size: var(--text-xs); color: var(--text-muted); margin-bottom: var(--space-1);">
+                                            <span>
+                                                {% if fb.is_teacher_comment %}👨‍🏫{% else %}🎓{% endif %}
+                                                <strong>{{ fb.author.get_full_name|default:fb.author.username }}</strong>
+                                                {% if fb.is_teacher_comment %}(Enseignant){% endif %}
+                                            </span>
+                                            <span>{{ fb.created_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                        <div style="font-size: var(--text-sm); color: var(--text-primary);">{{ fb.content|linebreaksbr }}</div>
+                                    </div>
+                                    {% endfor %}
+                                    {% if is_owner or is_collaborator %}
+                                    <form method="post" action="{% url 'student:add_deliverable_comment' deliverable.id %}" style="margin-top: var(--space-2);">
+                                        {% csrf_token %}
+                                        <textarea name="content" rows="2" required style="width: 100%;" placeholder="Répondre au feedback..."></textarea>
+                                        <button type="submit" class="action-btn primary" style="margin-top: var(--space-2); padding: var(--space-2) var(--space-3); font-size: var(--text-xs);">
+                                            💬 Répondre
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                {% endwith %}
                             </div>
                             {% endfor %}
                         </div>
@@ -472,7 +527,7 @@
                             <div class="empty-state-icon">📎</div>
                             <h3>Aucun livrable</h3>
                             <p>Uploadez vos documents, rapports et présentations.</p>
-                            {% if project.status == 'in_progress' %}
+                            {% if project.status == 'in_progress' or project.status == 'revision_requested' %}
                             <a href="{% url 'student:upload_deliverable' project.id %}" class="action-btn primary">📎 Ajouter le Premier Livrable</a>
                             {% endif %}
                         </div>

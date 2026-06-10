@@ -26,6 +26,7 @@
                         {% if project.status == 'submitted' %}⏳
                         {% elif project.status == 'validated' %}✅
                         {% elif project.status == 'rejected' %}❌
+                        {% elif project.status == 'revision_requested' %}🔄
                         {% else %}📝{% endif %}
                         {{ project.get_status_display }}
                     </span>
@@ -100,6 +101,33 @@
                     Rejeter le Projet
                 </button>
             </form>
+        </div>
+        <details class="revision-request" style="margin-top: var(--space-4);">
+            <summary style="cursor: pointer; color: var(--accent-primary); font-weight: 600;">
+                <i class="fas fa-undo"></i>
+                Demander des révisions (sans rejeter)
+            </summary>
+            <form method="post" action="{% url 'teacher:request_revision' project.id %}" style="margin-top: var(--space-3);">
+                {% csrf_token %}
+                <textarea name="content" rows="3" required style="width: 100%;"
+                          placeholder="Décrivez les modifications attendues avant validation (ex: compléter le rapport, corriger la section 3, ajouter les sources)..."></textarea>
+                <button type="submit" class="eval-btn" style="margin-top: var(--space-2);">
+                    <i class="fas fa-undo"></i>
+                    Demander une Révision
+                </button>
+            </form>
+        </details>
+    </div>
+    {% endif %}
+
+    {% if project.status == 'revision_requested' %}
+    <div class="evaluation-panel">
+        <div class="eval-header">
+            <div class="eval-icon">🔄</div>
+            <div class="eval-content">
+                <h3>Révision en cours</h3>
+                <p>Vous avez demandé des révisions sur ce projet. L'étudiant peut le modifier et le resoumettre.</p>
+            </div>
         </div>
     </div>
     {% endif %}
@@ -209,6 +237,35 @@
                                 <i class="fas fa-download"></i>
                                 Télécharger
                             </a>
+
+                            <!-- Per-deliverable feedback thread -->
+                            <div class="deliverable-feedback" style="margin-top: var(--space-3); border-top: 1px solid var(--border-color); padding-top: var(--space-3);">
+                                {% for fb in deliverable.feedback_comments.all %}
+                                <div class="comment-item {% if fb.is_teacher_comment %}teacher-comment{% else %}student-comment{% endif %}" style="margin-bottom: var(--space-2);">
+                                    <div class="comment-header">
+                                        <div class="comment-author">
+                                            {% if fb.is_teacher_comment %}
+                                                <i class="fas fa-chalkboard-teacher"></i>
+                                            {% else %}
+                                                <i class="fas fa-user-graduate"></i>
+                                            {% endif %}
+                                            {{ fb.author.get_full_name|default:fb.author.username }}
+                                        </div>
+                                        <div class="comment-date">{{ fb.created_at|date:"d/m/Y H:i" }}</div>
+                                    </div>
+                                    <div class="comment-content">{{ fb.content|linebreaks }}</div>
+                                </div>
+                                {% endfor %}
+                                <form method="post" action="{% url 'teacher:add_deliverable_comment' deliverable.id %}">
+                                    {% csrf_token %}
+                                    <textarea name="content" rows="2" required style="width: 100%;"
+                                              placeholder="Feedback sur ce livrable..."></textarea>
+                                    <button type="submit" class="download-btn" style="margin-top: var(--space-2);">
+                                        <i class="fas fa-comment"></i>
+                                        Commenter ce livrable
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                         {% endfor %}
                     </div>

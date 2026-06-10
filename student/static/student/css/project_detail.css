@@ -85,6 +85,12 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
+.status-revision_requested {
+    background: rgba(168, 85, 247, 0.2);
+    color: #9333ea;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
 .status-draft {
     background: rgba(107, 114, 128, 0.2);
     color: #4b5563;

@@ -220,6 +220,12 @@
                 {% endif %}
             </div>
             <div class="table-actions">
+                {% if user_type == 'students' %}
+                <a href="{% url 'administrator:import_students' %}" class="bulk-action-btn" style="text-decoration: none;">
+                    <i class="fas fa-file-excel"></i>
+                    Importer des Étudiants (Excel)
+                </a>
+                {% endif %}
                 <button class="bulk-action-btn" onclick="refreshTable()">
                     <i class="fas fa-sync-alt"></i>
                     Actualiser

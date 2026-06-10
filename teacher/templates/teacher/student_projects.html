@@ -887,6 +887,7 @@
                 <option value="">Tous les statuts</option>
                 <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>📝 En cours</option>
                 <option value="submitted" {% if status_filter == 'submitted' %}selected{% endif %}>⏳ Soumis</option>
+                <option value="revision_requested" {% if status_filter == 'revision_requested' %}selected{% endif %}>🔄 Révision demandée</option>
                 <option value="validated" {% if status_filter == 'validated' %}selected{% endif %}>✅ Validé</option>
                 <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>❌ Rejeté</option>
             </select>
@@ -990,6 +991,7 @@
                         {% if project.status == 'submitted' %}⏳
                         {% elif project.status == 'validated' %}✅
                         {% elif project.status == 'rejected' %}❌
+                        {% elif project.status == 'revision_requested' %}🔄
                         {% else %}📝{% endif %}
                         {{ project.get_status_display }}
                     </div>

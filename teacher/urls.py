@@ -18,7 +18,9 @@ urlpatterns = [
     path('projects/<int:project_id>/', views.project_review, name='project_review'),
     path('projects/<int:project_id>/approve/', views.approve_project, name='approve_project'),
     path('projects/<int:project_id>/reject/', views.reject_project, name='reject_project'),
+    path('projects/<int:project_id>/request-revision/', views.request_revision, name='request_revision'),
     path('projects/<int:project_id>/comment/', views.add_teacher_comment, name='add_teacher_comment'),
+    path('deliverables/<int:deliverable_id>/comment/', views.add_deliverable_comment, name='add_deliverable_comment'),
     
     # NEW: Teacher Module Creation
     path('modules/create/', assignment_views.create_teacher_module, name='create_teacher_module'),

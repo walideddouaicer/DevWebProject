@@ -1,0 +1,225 @@
+{% extends 'administrator/base.html' %}
+{% load static %}
+
+{% block title %}Import d'Étudiants - ENSA Project Manager{% endblock %}
+
+{% block breadcrumb_items %}
+    <span class="breadcrumb-separator">›</span>
+    <a href="{% url 'administrator:users_list' %}">Gestion des Utilisateurs</a>
+    <span class="breadcrumb-separator">›</span>
+    <span>Import d'Étudiants</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .import-header {
+        margin-bottom: 24px;
+    }
+    .import-card {
+        background: var(--bg-secondary, #fff);
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    .import-card h3 {
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .import-form .form-group {
+        margin-bottom: 16px;
+    }
+    .import-form label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+    .import-form input[type="file"],
+    .import-form select {
+        width: 100%;
+        max-width: 480px;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 8px;
+        background: var(--bg-primary, #fff);
+        color: var(--text-primary, #111827);
+    }
+    .help-text {
+        font-size: 13px;
+        color: var(--text-muted, #6b7280);
+        margin-top: 4px;
+    }
+    .btn-import {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        background: var(--accent-primary, #2563eb);
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .btn-template {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border: 1px solid var(--accent-primary, #2563eb);
+        border-radius: 8px;
+        color: var(--accent-primary, #2563eb);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+    }
+    .results-table th, .results-table td {
+        border: 1px solid var(--border-color, #e5e7eb);
+        padding: 8px 12px;
+        text-align: left;
+        font-size: 14px;
+    }
+    .results-table th {
+        background: var(--bg-tertiary, #f3f4f6);
+    }
+    .password-cell {
+        font-family: monospace;
+        font-weight: 600;
+    }
+    .import-warning {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        color: #b45309;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="import-header">
+        <h1>
+            <i class="fas fa-file-excel"></i>
+            Import d'Étudiants depuis Excel
+        </h1>
+        <p>Créez plusieurs comptes étudiants en une seule fois à partir d'une liste de classe (.xlsx), avec inscription optionnelle à un module.</p>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="import-card">
+        <h3><i class="fas fa-upload"></i> 1. Téléverser la liste</h3>
+        <p class="help-text" style="margin-bottom: 16px;">
+            Colonnes attendues (première ligne): <strong>Prénom, Nom, Email, ID Étudiant, Année (3/4/5), Département</strong>.
+            <a href="{% url 'administrator:student_import_template' %}">Télécharger le modèle Excel</a> pour partir du bon format.
+        </p>
+        <form method="post" enctype="multipart/form-data" class="import-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="excel_file">Fichier Excel (.xlsx) <span style="color: var(--error, #dc2626);">*</span></label>
+                <input type="file" id="excel_file" name="excel_file" accept=".xlsx" required>
+            </div>
+            <div class="form-group">
+                <label for="module_id">Inscrire les étudiants à un module (optionnel)</label>
+                <select id="module_id" name="module_id">
+                    <option value="">— Aucun module —</option>
+                    {% for module in modules %}
+                    <option value="{{ module.id }}">{{ module.code }} - {{ module.name }} ({{ module.academic_year }})</option>
+                    {% endfor %}
+                </select>
+                <div class="help-text">Tous les étudiants importés seront inscrits à ce module.</div>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 20px;">
+                <button type="submit" class="btn-import">
+                    <i class="fas fa-users"></i>
+                    Importer les Étudiants
+                </button>
+                <a href="{% url 'administrator:student_import_template' %}" class="btn-template">
+                    <i class="fas fa-download"></i>
+                    Télécharger le Modèle
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results -->
+    {% if import_done %}
+    <div class="import-card">
+        <h3><i class="fas fa-clipboard-check"></i> 2. Résultats de l'import</h3>
+
+        {% if created %}
+        <div class="import-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Important:</strong> les mots de passe ci-dessous sont générés aléatoirement et affichés une seule fois.
+            Copiez-les ou imprimez cette page avant de quitter, puis distribuez-les aux étudiants
+            (ils pourront les changer dans leurs paramètres).
+        </div>
+        <h4 style="color: var(--success, #059669);">✅ {{ created|length }} compte(s) créé(s)</h4>
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>ID Étudiant</th>
+                    <th>Email</th>
+                    <th>Nom d'utilisateur</th>
+                    <th>Mot de passe initial</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in created %}
+                <tr>
+                    <td>{{ account.name }}</td>
+                    <td>{{ account.student_id }}</td>
+                    <td>{{ account.email }}</td>
+                    <td>{{ account.username }}</td>
+                    <td class="password-cell">{{ account.password }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if skipped %}
+        <h4 style="color: #b45309; margin-top: 24px;">⚠️ {{ skipped|length }} ligne(s) ignorée(s)</h4>
+        <table class="results-table">
+            <thead>
+                <tr><th>Ligne</th><th>Identifiant</th><th>Raison</th></tr>
+            </thead>
+            <tbody>
+                {% for item in skipped %}
+                <tr><td>{{ item.row }}</td><td>{{ item.identity }}</td><td>{{ item.reason }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if errors %}
+        <h4 style="color: var(--error, #dc2626); margin-top: 24px;">❌ {{ errors|length }} ligne(s) en erreur</h4>
+        <table class="results-table">
+            <thead>
+                <tr><th>Ligne</th><th>Raison</th></tr>
+            </thead>
+            <tbody>
+                {% for item in errors %}
+                <tr><td>{{ item.row }}</td><td>{{ item.reason }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <div style="margin-top: 24px;">
+            <a href="{% url 'administrator:users_list' %}?type=students" class="btn-template">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la Liste des Étudiants
+            </a>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}

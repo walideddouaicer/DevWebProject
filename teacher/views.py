@@ -371,7 +371,7 @@ def project_review(request, project_id):
     )
     
     # Get project details - FIXED: Remove the problematic select_related calls
-    deliverables = project.deliverables.all()
+    deliverables = project.deliverables.all().prefetch_related('feedback_comments__author')
     milestones = project.milestones.all()
     comments = project.comments.all().select_related('author')  # Fixed: now just 'author' since it's User
     activities = project.activities.all().select_related('user')
@@ -481,6 +481,123 @@ def reject_project(request, project_id):
     
     messages.success(request, f"Projet '{project.title}' rejeté. L'étudiant peut maintenant le modifier et resoumettre.")
     return redirect('teacher:project_review', project_id=project.id)
+
+@login_required
+def request_revision(request, project_id):
+    """Teacher requests revisions on a submitted project (between approve and reject)"""
+    if request.method != 'POST':
+        return redirect('teacher:project_review', project_id=project_id)
+
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+
+    # Get teacher's modules
+    teacher_modules = ModuleAssignment.objects.filter(
+        teacher=teacher,
+        is_active=True
+    ).values_list('module', flat=True)
+
+    # Import here
+    from student.models import Project, ProjectComment, ProjectActivity, Notification
+
+    project = get_object_or_404(
+        Project,
+        id=project_id,
+        module__in=teacher_modules,
+        status='submitted'
+    )
+
+    content = request.POST.get('content', '').strip()
+    if not content:
+        messages.error(request, "Veuillez préciser les modifications attendues avant de demander une révision.")
+        return redirect('teacher:project_review', project_id=project.id)
+
+    teacher_name = teacher.user.get_full_name() or teacher.user.username
+
+    project.status = 'revision_requested'
+    project.save()
+
+    # The requested changes are recorded as a project comment
+    ProjectComment.objects.create(
+        project=project,
+        author=request.user,
+        content=f"[RÉVISION DEMANDÉE]\n{content}"
+    )
+
+    # Record activity
+    ProjectActivity.objects.create(
+        project=project,
+        user=request.user,
+        activity_type='status_changed',
+        description=f"Révision demandée par {teacher_name}"
+    )
+
+    # Notify the whole team
+    for member in project.get_team_members():
+        Notification.objects.create(
+            recipient=member,
+            project=project,
+            notification_type='project_update',
+            message=f"{teacher_name} demande des révisions sur le projet '{project.title}'. Consultez ses commentaires puis resoumettez."
+        )
+
+    messages.success(request, f"Révision demandée pour '{project.title}'. L'étudiant a été notifié.")
+    return redirect('teacher:project_review', project_id=project.id)
+
+
+@login_required
+def add_deliverable_comment(request, deliverable_id):
+    """Teacher adds feedback on a specific deliverable"""
+    from student.models import ProjectDeliverable, DeliverableComment, Notification
+
+    deliverable = get_object_or_404(ProjectDeliverable, id=deliverable_id)
+    project = deliverable.project
+
+    if request.method != 'POST':
+        return redirect('teacher:project_review', project_id=project.id)
+
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+
+    # Verify the deliverable belongs to a project in the teacher's modules
+    teacher_modules = ModuleAssignment.objects.filter(
+        teacher=teacher,
+        is_active=True
+    ).values_list('module', flat=True)
+
+    if project.module_id not in teacher_modules:
+        messages.error(request, "Vous n'avez pas accès à ce projet.")
+        return redirect('teacher:student_projects')
+
+    content = request.POST.get('content', '').strip()
+    if not content:
+        messages.error(request, "Le commentaire ne peut pas être vide.")
+        return redirect('teacher:project_review', project_id=project.id)
+
+    DeliverableComment.objects.create(
+        deliverable=deliverable,
+        author=request.user,
+        content=content
+    )
+
+    teacher_name = teacher.user.get_full_name() or teacher.user.username
+    for member in project.get_team_members():
+        Notification.objects.create(
+            recipient=member,
+            project=project,
+            notification_type='deliverable',
+            message=f"{teacher_name} a commenté le livrable '{deliverable.name}' du projet '{project.title}'"
+        )
+
+    messages.success(request, f"Commentaire ajouté sur le livrable '{deliverable.name}'.")
+    return redirect('teacher:project_review', project_id=project.id)
+
 
 @login_required
 def add_teacher_comment(request, project_id):

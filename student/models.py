@@ -76,6 +76,7 @@ class Project(models.Model):
     STATUS_CHOICES = [
         ('in_progress', 'En cours'),  # Default status when created
         ('submitted', 'Soumis'),       # When student submits for review
+        ('revision_requested', 'Révision demandée'),  # Teacher asks for changes before validating
         ('validated', 'Validé'),       # When teacher approves
         ('rejected', 'Rejeté'),        # When teacher rejects
     ]
@@ -467,6 +468,7 @@ class Project(models.Model):
         status_weights = {
             'in_progress': 50,
             'submitted': 80,
+            'revision_requested': 60,
             'validated': 100,
             'rejected': 20
         }
@@ -584,9 +586,29 @@ class ProjectDeliverable(models.Model):
     file_type = models.CharField(max_length=20, choices=DELIVERABLE_TYPES)
     name = models.CharField(max_length=200)
     upload_date = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return f"{self.name} - {self.project.title}"
+
+
+class DeliverableComment(models.Model):
+    """Feedback attached to a specific deliverable (teacher feedback + student replies)"""
+    deliverable = models.ForeignKey(ProjectDeliverable, on_delete=models.CASCADE, related_name='feedback_comments')
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Feedback by {self.author} on {self.deliverable.name}"
+
+    @property
+    def is_teacher_comment(self):
+        """Check if this comment was made by a teacher"""
+        from teacher.models import TeacherProfile
+        return TeacherProfile.objects.filter(user=self.author).exists()
 
 
 class ProjectMilestone(models.Model):

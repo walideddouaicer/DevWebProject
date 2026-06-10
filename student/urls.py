@@ -33,6 +33,7 @@ urlpatterns = [
     path('projects/<int:project_id>/collaborator/<int:collaborator_id>/remove/', views.remove_collaborator, name='remove_collaborator'),
     
     path('projects/<int:project_id>/comment/', views.add_comment, name='add_comment'),
+    path('deliverables/<int:deliverable_id>/comment/', views.add_deliverable_comment, name='add_deliverable_comment'),
     
     path('notifications/', views.notifications, name='notifications'),
     path('notifications/<int:notification_id>/read/', views.mark_notification_read, name='mark_notification_read'),
