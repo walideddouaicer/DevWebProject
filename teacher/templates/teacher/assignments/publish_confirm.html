@@ -130,8 +130,8 @@
                 <div class="assignment-detail-meta-item">
                     <div class="assignment-detail-meta-label">Travail en Groupe</div>
                     <div class="assignment-detail-meta-value">
-                        {% if assignment.is_group_work %}
-                            Oui ({{ assignment.min_group_size }}-{{ assignment.max_group_size }} membres)
+                        {% if assignment.is_team_work %}
+                            Oui ({{ assignment.min_team_size }}-{{ assignment.max_team_size }} membres)
                         {% else %}
                             Non (Individuel)
                         {% endif %}
@@ -164,7 +164,7 @@
                 <ul style="color: var(--text-secondary); line-height: 1.6; margin-left: 20px;">
                     <li>✉️ Des notifications automatiques à tous les étudiants concernés</li>
                     <li>🚀 Le démarrage officiel du processus de devoir</li>
-                    {% if assignment.is_group_work %}
+                    {% if assignment.is_team_work %}
                     <li>👥 L'ouverture de la phase de formation des groupes</li>
                     {% endif %}
                     {% if assignment.assignment_type == 'choice_based' %}
@@ -277,7 +277,7 @@
                 <div class="checklist-title">Échéances configurées</div>
                 <div class="checklist-description">
                     <strong>Date limite principale :</strong> {{ assignment.deadline|date:"l d F Y à H:i" }}
-                    {% if assignment.is_group_work and assignment.group_formation_deadline %}
+                    {% if assignment.is_team_work and assignment.group_formation_deadline %}
                         <br><strong>Formation des groupes :</strong> {{ assignment.group_formation_deadline|date:"l d F Y à H:i" }}
                     {% endif %}
                     {% if assignment.assignment_type == 'choice_based' and assignment.selection_deadline %}
@@ -340,10 +340,10 @@
                 </div>
                 {% endif %}
                 
-                {% if assignment.is_group_work %}
+                {% if assignment.is_team_work %}
                 <div style="text-align: center; padding: 20px; background: rgba(245, 158, 11, 0.1); border-radius: 12px;">
                     <div style="font-size: 2em; font-weight: 800; color: var(--warning); margin-bottom: 8px;">
-                        {{ assignment.min_group_size }}-{{ assignment.max_group_size }}
+                        {{ assignment.min_team_size }}-{{ assignment.max_team_size }}
                     </div>
                     <div style="color: var(--text-muted); font-size: 14px;">Taille des Groupes</div>
                 </div>
@@ -415,12 +415,12 @@
                     <div style="color: var(--text-secondary); font-size: 14px;">
                         • Notifications envoyées aux étudiants<br>
                         • Devoir visible dans leur interface<br>
-                        {% if assignment.is_group_work %}• Formation des groupes ouverte<br>{% endif %}
+                        {% if assignment.is_team_work %}• Formation des groupes ouverte<br>{% endif %}
                         {% if assignment.assignment_type == 'choice_based' %}• Options de projets disponibles<br>{% endif %}
                     </div>
                 </div>
                 
-                {% if assignment.is_group_work and assignment.group_formation_deadline %}
+                {% if assignment.is_team_work and assignment.group_formation_deadline %}
                 <div style="position: relative; margin-bottom: 24px;">
                     <div style="position: absolute; left: -18px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--warning);"></div>
                     <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">

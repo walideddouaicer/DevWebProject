@@ -31,7 +31,7 @@
                     {% else %}
                         🎲 Choix Multiple
                     {% endif %}
-                    {% if assignment_data.assignment.is_group_work %}
+                    {% if assignment_data.assignment.is_team_work %}
                         👥 (Travail en Équipe)
                     {% endif %}
                 </div>
@@ -75,7 +75,7 @@
             <div class="success-state">
                 <div class="success-icon">🚀</div>
                 <div class="success-title">
-                    {% if assignment_data.assignment.is_group_work %}
+                    {% if assignment_data.assignment.is_team_work %}
                         Projet d'Équipe Créé
                     {% else %}
                         Projet Créé
@@ -94,7 +94,7 @@
                 </div>
                 
                 <!-- NEW: Team Information -->
-                {% if assignment_data.assignment.is_group_work %}
+                {% if assignment_data.assignment.is_team_work %}
                 <div class="team-info-card mt-3">
                     <h4>👥 Équipe de Travail</h4>
                     <div class="team-members">
@@ -120,7 +120,7 @@
                     <div class="team-size-status mt-2">
                         {% with size_status=assignment_data.project.get_team_size_status %}
                         <span class="team-size-badge {{ size_status.status }}">
-                            {{ assignment_data.project.get_team_size }}/{{ assignment_data.assignment.max_group_size }} membres
+                            {{ assignment_data.project.get_team_size }}/{{ assignment_data.assignment.max_team_size }} membres
                         </span>
                         <span class="team-size-message">{{ size_status.message }}</span>
                         {% endwith %}
@@ -160,23 +160,28 @@
                     <div class="project-creation-card">
                         <h3>🚀 Prêt à Commencer</h3>
                         <p>
-                            {% if assignment_data.assignment.is_group_work %}
+                            {% if assignment_data.assignment.is_team_work %}
                                 Créez votre projet d'équipe pour ce devoir. Vous pourrez inviter des collaborateurs après la création.
                             {% else %}
                                 Créez votre projet pour ce devoir.
                             {% endif %}
                         </p>
                         
-                        {% if assignment_data.assignment.is_group_work %}
+                        {% if assignment_data.assignment.is_team_work %}
                         <div class="team-size-info">
                             <strong>Taille d'équipe requise:</strong> 
-                            {{ assignment_data.assignment.min_group_size }} - {{ assignment_data.assignment.max_group_size }} membres
+                            {{ assignment_data.assignment.min_team_size }} - {{ assignment_data.assignment.max_team_size }} membres
                         </div>
                         {% endif %}
                         
                         <a href="{% url 'student:create_assignment_project_direct' assignment_data.assignment.id %}" class="btn btn-primary">
                             📝 Créer le Projet
                         </a>
+                        {% if assignment_data.assignment.is_team_work %}
+                        <a href="{% url 'student:teammates_board' assignment_data.assignment.id %}" class="btn btn-secondary" style="margin-left: 8px;">
+                            🤝 Trouver des Équipiers
+                        </a>
+                        {% endif %}
                     </div>
                 {% else %}
                     <div class="alert alert-info">
@@ -191,17 +196,17 @@
                     <div class="project-creation-card">
                         <h3>🎯 Choisir et Créer un Projet</h3>
                         <p>
-                            {% if assignment_data.assignment.is_group_work %}
+                            {% if assignment_data.assignment.is_team_work %}
                                 Sélectionnez une option de projet et créez votre équipe de travail.
                             {% else %}
                                 Sélectionnez une option de projet parmi celles proposées par votre enseignant.
                             {% endif %}
                         </p>
                         
-                        {% if assignment_data.assignment.is_group_work %}
+                        {% if assignment_data.assignment.is_team_work %}
                         <div class="team-size-info">
                             <strong>Taille d'équipe requise:</strong> 
-                            {{ assignment_data.assignment.min_group_size }} - {{ assignment_data.assignment.max_group_size }} membres
+                            {{ assignment_data.assignment.min_team_size }} - {{ assignment_data.assignment.max_team_size }} membres
                         </div>
                         {% endif %}
                         
@@ -212,6 +217,11 @@
                         <a href="{% url 'student:select_project_option_direct' assignment_data.assignment.id %}" class="btn btn-primary">
                             🎯 Choisir un Projet
                         </a>
+                        {% if assignment_data.assignment.is_team_work %}
+                        <a href="{% url 'student:teammates_board' assignment_data.assignment.id %}" class="btn btn-secondary" style="margin-left: 8px;">
+                            🤝 Trouver des Équipiers
+                        </a>
+                        {% endif %}
                     </div>
                 {% else %}
                     <div class="alert alert-warning">
@@ -283,10 +293,10 @@
                     </span>
                 </div>
 
-                {% if assignment_data.assignment.is_group_work %}
+                {% if assignment_data.assignment.is_team_work %}
                 <div class="info-item">
                     <strong>Travail d'Équipe:</strong>
-                    👥 {{ assignment_data.assignment.min_group_size }} - {{ assignment_data.assignment.max_group_size }} membres
+                    👥 {{ assignment_data.assignment.min_team_size }} - {{ assignment_data.assignment.max_team_size }} membres
                 </div>
                 {% else %}
                 <div class="info-item">

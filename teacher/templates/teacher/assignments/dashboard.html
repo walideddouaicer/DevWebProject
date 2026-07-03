@@ -776,7 +776,7 @@
                                         <i class="fas fa-{% if assignment.assignment_type == 'direct' %}user-check{% else %}list-ul{% endif %}"></i>
                                         {% if assignment.assignment_type == 'direct' %}Assignation directe{% else %}Choix multiple{% endif %}
                                     </span>
-                                    {% if assignment.is_group_work %}
+                                    {% if assignment.is_team_work %}
                                     <span class="assignment-meta-item">
                                         <i class="fas fa-users"></i>
                                         Travail en groupe
@@ -829,7 +829,7 @@
                                         <i class="fas fa-{% if assignment.assignment_type == 'direct' %}user-check{% else %}list-ul{% endif %}"></i>
                                         {% if assignment.assignment_type == 'direct' %}Assignation directe{% else %}Choix multiple{% endif %}
                                     </span>
-                                    {% if assignment.is_group_work %}
+                                    {% if assignment.is_team_work %}
                                     <span class="assignment-meta-item">
                                         <i class="fas fa-users"></i>
                                         Travail en groupe

@@ -12,7 +12,7 @@
     <div class="page-header-content">
         <h1 class="page-title">🚀 Créer un Projet</h1>
         <p class="page-subtitle">
-            {% if assignment.is_group_work %}
+            {% if assignment.is_team_work %}
                 Créez votre projet d'équipe pour le devoir: <strong>{{ assignment.title }}</strong>
             {% else %}
                 Créez votre projet pour le devoir: <strong>{{ assignment.title }}</strong>
@@ -48,7 +48,7 @@
                     {% else %}
                         🎲 Projet Sélectionné
                     {% endif %}
-                    {% if assignment.is_group_work %}
+                    {% if assignment.is_team_work %}
                         👥 (Travail d'Équipe)
                     {% endif %}
                 </div>
@@ -73,7 +73,7 @@
             <div class="card-header">
                 <h3>📝 Informations du Projet</h3>
                 <p class="card-subtitle">
-                    {% if assignment.is_group_work %}
+                    {% if assignment.is_team_work %}
                         Remplissez les détails de votre projet d'équipe. Vous pourrez inviter des collaborateurs après la création.
                     {% else %}
                         Remplissez les détails de votre projet
@@ -255,7 +255,7 @@
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">
                             🚀 Créer le Projet
-                            {% if assignment.is_group_work %}d'Équipe{% endif %}
+                            {% if assignment.is_team_work %}d'Équipe{% endif %}
                         </button>
                         <a href="{% url 'student:assignment_detail' assignment.id %}" class="btn btn-secondary">
                             ← Annuler
@@ -300,7 +300,7 @@
         </div>
 
         <!-- NEW: Team Requirements Card (for group work) -->
-        {% if assignment.is_group_work %}
+        {% if assignment.is_team_work %}
         <div class="card mb-3">
             <div class="card-header">
                 <h4>👥 Exigences d'Équipe</h4>
@@ -309,7 +309,7 @@
                 <div class="team-requirements">
                     <div class="summary-item">
                         <strong>Taille d'équipe:</strong>
-                        <span>{{ assignment.min_group_size }} - {{ assignment.max_group_size }} membres</span>
+                        <span>{{ assignment.min_team_size }} - {{ assignment.max_team_size }} membres</span>
                     </div>
                     <div class="summary-item">
                         <strong>Votre rôle:</strong>

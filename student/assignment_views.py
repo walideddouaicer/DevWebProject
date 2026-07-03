@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from functools import wraps
 from django.urls import reverse
 
-from .models import StudentProfile, Project, ProjectActivity, Notification, CollaborationInvitation
+from .models import StudentProfile, Project, ProjectActivity, Notification, CollaborationInvitation, TeammateRequest
 from teacher.models import (
     ProjectAssignment, ProjectOption, 
     DirectStudentAssignment, Module
@@ -398,7 +398,12 @@ def handle_direct_assignment_project(request, student, assignment):
                         assignment=assignment,
                         student=student
                     ).update(status='started')
-                    
+
+                    # No longer looking for a team
+                    TeammateRequest.objects.filter(
+                        assignment=assignment, student=student
+                    ).update(is_active=False)
+
                     messages.success(request, "Projet créé avec succès à partir du devoir.")
                     return redirect('student:project_detail', project_id=project.id)
                     
@@ -495,7 +500,12 @@ def handle_choice_based_assignment_project(request, student, assignment):
 
                     locked_option.current_teams += 1
                     locked_option.save(update_fields=['current_teams'])
-                    
+
+                    # No longer looking for a team
+                    TeammateRequest.objects.filter(
+                        assignment=assignment, student=student
+                    ).update(is_active=False)
+
                     # Record activity
                     ProjectActivity.objects.create(
                         project=project,
@@ -566,6 +576,129 @@ def handle_choice_based_assignment_project(request, student, assignment):
 
 # COMPATIBILITY: Alias for backward compatibility with existing URLs
 create_assignment_project = create_assignment_project_direct
+
+
+# ---------------------------------------------------------------------------
+# Find-teammates board (ROADMAP #9)
+
+def _students_involved_in_assignment(assignment):
+    """IDs of every student already on a project for this assignment."""
+    projects = Project.objects.filter(project_assignment=assignment)
+    involved = set(projects.values_list('student_id', flat=True))
+    involved.update(projects.values_list('collaborators__id', flat=True))
+    involved.discard(None)
+    return involved
+
+
+@login_required
+def teammates_board(request, assignment_id):
+    """Board where teamless students flag themselves as looking for a team."""
+    student = get_student_or_error(request)
+    if not student:
+        return redirect('login')
+
+    assignment = get_object_or_404(
+        ProjectAssignment.objects.select_related('module'),
+        id=assignment_id,
+        module__enrollments__student=student,
+        module__enrollments__is_active=True,
+        status__in=['published', 'in_progress'],
+        is_team_work=True,
+    )
+
+    involved_ids = _students_involved_in_assignment(assignment)
+
+    # Active requests from students who still have no team
+    open_requests = TeammateRequest.objects.filter(
+        assignment=assignment,
+        is_active=True,
+    ).exclude(
+        student_id__in=involved_ids,
+    ).exclude(
+        student=student,
+    ).select_related('student__user')
+
+    my_request = TeammateRequest.objects.filter(
+        assignment=assignment, student=student, is_active=True
+    ).first()
+
+    # If the viewer owns a project for this assignment with free slots,
+    # they can invite people straight from the board.
+    my_project = Project.objects.filter(
+        project_assignment=assignment, student=student
+    ).first()
+    can_invite = bool(
+        my_project and
+        my_project.status == 'in_progress' and
+        my_project.can_invite_more_collaborators()
+    )
+
+    # Students the viewer already invited (pending) — avoid double invites
+    pending_invited_ids = set()
+    if my_project:
+        pending_invited_ids = set(CollaborationInvitation.objects.filter(
+            project=my_project, status='pending'
+        ).values_list('recipient_id', flat=True))
+
+    has_team = student.id in involved_ids
+
+    context = {
+        'student': student,
+        'assignment': assignment,
+        'open_requests': open_requests,
+        'my_request': my_request,
+        'my_project': my_project,
+        'can_invite': can_invite,
+        'pending_invited_ids': pending_invited_ids,
+        'has_team': has_team,
+    }
+    return render(request, 'student/assignments/teammates_board.html', context)
+
+
+@login_required
+def toggle_teammate_request(request, assignment_id):
+    """Flag/unflag yourself as looking for a team on an assignment."""
+    if request.method != 'POST':
+        return redirect('student:teammates_board', assignment_id=assignment_id)
+
+    student = get_student_or_error(request)
+    if not student:
+        return redirect('login')
+
+    assignment = get_object_or_404(
+        ProjectAssignment,
+        id=assignment_id,
+        module__enrollments__student=student,
+        module__enrollments__is_active=True,
+        status__in=['published', 'in_progress'],
+        is_team_work=True,
+    )
+
+    action = request.POST.get('action', 'flag')
+
+    if action == 'unflag':
+        TeammateRequest.objects.filter(
+            assignment=assignment, student=student
+        ).update(is_active=False)
+        messages.info(request, "Vous n'êtes plus visible sur le tableau des équipiers.")
+        return redirect('student:teammates_board', assignment_id=assignment.id)
+
+    # Flagging: students already on a team have nothing to look for
+    if student.id in _students_involved_in_assignment(assignment):
+        messages.warning(request, "Vous faites déjà partie d'une équipe pour ce devoir.")
+        return redirect('student:teammates_board', assignment_id=assignment.id)
+
+    message = request.POST.get('message', '').strip()[:255]
+    teammate_request, _created = TeammateRequest.objects.update_or_create(
+        assignment=assignment,
+        student=student,
+        defaults={'message': message, 'is_active': True},
+    )
+    messages.success(
+        request,
+        "C'est noté! Les autres étudiants du module peuvent maintenant vous trouver et vous inviter."
+    )
+    return redirect('student:teammates_board', assignment_id=assignment.id)
 
 
 @login_required

@@ -487,26 +487,26 @@
         <!-- Group Work Configuration -->
         <div class="form-group">
             <label class="checkbox-group {% if assignment.status != 'draft' %}disabled{% endif %}">
-                {{ form.is_group_work }}
-                <span>{{ form.is_group_work.label }}</span>
+                {{ form.is_team_work }}
+                <span>{{ form.is_team_work.label }}</span>
             </label>
             {% if assignment.status != 'draft' %}
                 <div class="form-warning">
                     <i class="fas fa-lock"></i>
                     Les paramètres de groupe ne peuvent plus être modifiés après publication
                 </div>
-            {% elif form.is_group_work.help_text %}
-                <div class="form-help">{{ form.is_group_work.help_text }}</div>
+            {% elif form.is_team_work.help_text %}
+                <div class="form-help">{{ form.is_team_work.help_text }}</div>
             {% endif %}
-            {% if form.is_group_work.errors %}
-                {% for error in form.is_group_work.errors %}
+            {% if form.is_team_work.errors %}
+                {% for error in form.is_team_work.errors %}
                     <div class="form-error">{{ error }}</div>
                 {% endfor %}
             {% endif %}
         </div>
         
         <!-- Group Options (conditional) -->
-        <div id="group-options" class="conditional-fields" style="display: {% if assignment.is_group_work %}block{% else %}none{% endif %};">
+        <div id="group-options" class="conditional-fields" style="display: {% if assignment.is_team_work %}block{% else %}none{% endif %};">
             <h3>
                 <i class="fas fa-users"></i>
                 Configuration des Groupes
@@ -514,30 +514,30 @@
             
             <div class="form-row">
                 <div class="form-group">
-                    <label for="{{ form.min_group_size.id_for_label }}" class="form-label">
-                        {{ form.min_group_size.label }}
+                    <label for="{{ form.min_team_size.id_for_label }}" class="form-label">
+                        {{ form.min_team_size.label }}
                     </label>
-                    {{ form.min_group_size }}
-                    {% if form.min_group_size.help_text %}
-                        <div class="form-help">{{ form.min_group_size.help_text }}</div>
+                    {{ form.min_team_size }}
+                    {% if form.min_team_size.help_text %}
+                        <div class="form-help">{{ form.min_team_size.help_text }}</div>
                     {% endif %}
-                    {% if form.min_group_size.errors %}
-                        {% for error in form.min_group_size.errors %}
+                    {% if form.min_team_size.errors %}
+                        {% for error in form.min_team_size.errors %}
                             <div class="form-error">{{ error }}</div>
                         {% endfor %}
                     {% endif %}
                 </div>
                 
                 <div class="form-group">
-                    <label for="{{ form.max_group_size.id_for_label }}" class="form-label">
-                        {{ form.max_group_size.label }}
+                    <label for="{{ form.max_team_size.id_for_label }}" class="form-label">
+                        {{ form.max_team_size.label }}
                     </label>
-                    {{ form.max_group_size }}
-                    {% if form.max_group_size.help_text %}
-                        <div class="form-help">{{ form.max_group_size.help_text }}</div>
+                    {{ form.max_team_size }}
+                    {% if form.max_team_size.help_text %}
+                        <div class="form-help">{{ form.max_team_size.help_text }}</div>
                     {% endif %}
-                    {% if form.max_group_size.errors %}
-                        {% for error in form.max_group_size.errors %}
+                    {% if form.max_team_size.errors %}
+                        {% for error in form.max_team_size.errors %}
                             <div class="form-error">{{ error }}</div>
                         {% endfor %}
                     {% endif %}
@@ -732,7 +732,7 @@ let selectedStudentIds = [];
 document.addEventListener('DOMContentLoaded', function() {
     // Get form elements
     const assignmentTypeSelect = document.getElementById('{{ form.assignment_type.id_for_label }}');
-    const isGroupWorkCheckbox = document.getElementById('{{ form.is_group_work.id_for_label }}');
+    const isGroupWorkCheckbox = document.getElementById('{{ form.is_team_work.id_for_label }}');
     
     // Date inputs
     const deadlineDate = document.getElementById('deadline_date');
@@ -754,8 +754,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('{{ form.target_selection.id_for_label }}').disabled = true;
         
         // Disable group size fields if they exist
-        const minGroupSize = document.getElementById('{{ form.min_group_size.id_for_label }}');
-        const maxGroupSize = document.getElementById('{{ form.max_group_size.id_for_label }}');
+        const minGroupSize = document.getElementById('{{ form.min_team_size.id_for_label }}');
+        const maxGroupSize = document.getElementById('{{ form.max_team_size.id_for_label }}');
         if (minGroupSize) minGroupSize.disabled = true;
         if (maxGroupSize) maxGroupSize.disabled = true;
     }
@@ -932,7 +932,7 @@ function updateStudentEditCount() {
 // Form validation
 function validateEditForm() {
     const deadlineDate = document.getElementById('deadline_date');
-    const isGroupWorkCheckbox = document.getElementById('{{ form.is_group_work.id_for_label }}');
+    const isGroupWorkCheckbox = document.getElementById('{{ form.is_team_work.id_for_label }}');
     const assignmentTypeSelect = document.getElementById('{{ form.assignment_type.id_for_label }}');
     
     let errors = [];
@@ -949,8 +949,8 @@ function validateEditForm() {
     
     // Group work validation
     if (isGroupWorkCheckbox && isGroupWorkCheckbox.checked) {
-        const minSizeInput = document.getElementById('{{ form.min_group_size.id_for_label }}');
-        const maxSizeInput = document.getElementById('{{ form.max_group_size.id_for_label }}');
+        const minSizeInput = document.getElementById('{{ form.min_team_size.id_for_label }}');
+        const maxSizeInput = document.getElementById('{{ form.max_team_size.id_for_label }}');
         const groupFormationDate = document.getElementById('group_formation_deadline_date');
         
         if (minSizeInput && maxSizeInput) {

@@ -37,7 +37,7 @@
             <div class="assignment-detail-meta-item">
                 <div class="assignment-detail-meta-label">Taille des groupes</div>
                 <div class="assignment-detail-meta-value">
-                    {{ assignment.min_group_size }} - {{ assignment.max_group_size }} membres
+                    {{ assignment.min_team_size }} - {{ assignment.max_team_size }} membres
                 </div>
             </div>
             
@@ -248,14 +248,14 @@
                             {{ item.group.group_name }}
                             {% if not item.is_valid_size %}
                             <span style="color: var(--warning); font-size: 0.8em; font-weight: normal;">
-                                ({{ assignment.min_group_size|add:"-"|add:item.member_count }} membre{{ assignment.min_group_size|add:"-"|add:item.member_count|pluralize }} manquant{{ assignment.min_group_size|add:"-"|add:item.member_count|pluralize }})
+                                ({{ assignment.min_team_size|add:"-"|add:item.member_count }} membre{{ assignment.min_team_size|add:"-"|add:item.member_count|pluralize }} manquant{{ assignment.min_team_size|add:"-"|add:item.member_count|pluralize }})
                             </span>
                             {% endif %}
                         </div>
                         <div class="assignment-meta">
                             <span class="assignment-meta-item">
                                 <i class="fas fa-users"></i>
-                                {{ item.member_count }}/{{ assignment.max_group_size }} membres
+                                {{ item.member_count }}/{{ assignment.max_team_size }} membres
                             </span>
                             <span class="assignment-meta-item">
                                 <i class="fas fa-calendar"></i>
@@ -401,7 +401,7 @@ function filterGroups() {
         } else if (sizeValue === 'valid') {
             matchesSize = isValidSize;
         } else if (sizeValue === 'full') {
-            matchesSize = groupSize >= {{ assignment.max_group_size }};
+            matchesSize = groupSize >= {{ assignment.max_team_size }};
         }
         
         const shouldShow = matchesSearch && matchesStatus && matchesSize;

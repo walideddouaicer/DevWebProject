@@ -877,6 +877,30 @@ class ProjectReport(models.Model):
         return f"Report by {self.reporter.username} on {self.project.title}"
 
 
+class TeammateRequest(models.Model):
+    """A student flags themselves as looking for a team on a team assignment (ROADMAP #9)."""
+    assignment = models.ForeignKey(
+        'teacher.ProjectAssignment', on_delete=models.CASCADE, related_name='teammate_requests'
+    )
+    student = models.ForeignKey(
+        StudentProfile, on_delete=models.CASCADE, related_name='teammate_requests'
+    )
+    message = models.CharField(
+        max_length=255, blank=True,
+        help_text="Compétences, disponibilités, idées de projet..."
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('assignment', 'student')
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"{self.student.get_full_name()} cherche une équipe pour {self.assignment.title}"
+
+
 class UserPreferences(models.Model):
     """Store user preferences and settings"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preferences')

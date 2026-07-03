@@ -84,7 +84,15 @@ urlpatterns = [
          name='create_assignment_project_direct'),
     
     # Project option selection for choice-based assignments
-    path('assignments/<int:assignment_id>/select-option/', 
-         assignment_views.select_project_option_direct, 
+    path('assignments/<int:assignment_id>/select-option/',
+         assignment_views.select_project_option_direct,
          name='select_project_option_direct'),
+
+    # Find-teammates board (ROADMAP #9)
+    path('assignments/<int:assignment_id>/teammates/',
+         assignment_views.teammates_board,
+         name='teammates_board'),
+    path('assignments/<int:assignment_id>/teammates/toggle/',
+         assignment_views.toggle_teammate_request,
+         name='toggle_teammate_request'),
 ]

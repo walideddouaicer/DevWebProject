@@ -1125,6 +1125,13 @@ def respond_to_invitation(request, invitation_id, response):
             project.add_assignment_collaborator(student)
             invitation.status = 'accepted'
             invitation.save()
+
+            # Joined a team: stop advertising on the teammates board
+            if project.is_assignment_project():
+                from .models import TeammateRequest
+                TeammateRequest.objects.filter(
+                    assignment=project.project_assignment, student=student
+                ).update(is_active=False)
             
             # Record activity
             ProjectActivity.objects.create(

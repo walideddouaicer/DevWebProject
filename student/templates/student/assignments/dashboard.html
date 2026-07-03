@@ -185,10 +185,10 @@
                             {{ assignment_data.assignment.teacher.user.get_full_name }}
                         </div>
                         <!-- NEW: Show team info if project exists -->
-                        {% if assignment_data.project and assignment_data.assignment.is_group_work %}
+                        {% if assignment_data.project and assignment_data.assignment.is_team_work %}
                         <div class="assignment-meta-item">
                             <span>👥</span>
-                            {{ assignment_data.project.get_team_size }}/{{ assignment_data.assignment.max_group_size }} membres
+                            {{ assignment_data.project.get_team_size }}/{{ assignment_data.assignment.max_team_size }} membres
                         </div>
                         {% endif %}
                         <div class="assignment-deadline {% if assignment_data.is_overdue %}overdue{% elif assignment_data.assignment.is_deadline_approaching %}urgent{% else %}normal{% endif %}">
@@ -268,10 +268,10 @@
                             <span>🎯</span>
                             {{ assignment_data.project.selected_option.title|truncatewords:3 }}
                         </div>
-                        {% if assignment_data.assignment.is_group_work %}
+                        {% if assignment_data.assignment.is_team_work %}
                         <div class="assignment-meta-item">
                             <span>👥</span>
-                            {{ assignment_data.project.get_team_size }}/{{ assignment_data.assignment.max_group_size }} membres
+                            {{ assignment_data.project.get_team_size }}/{{ assignment_data.assignment.max_team_size }} membres
                         </div>
                         {% endif %}
                         {% endif %}
@@ -350,7 +350,7 @@
                         </div>
                         <div class="assignment-meta-item">
                             <span>📊</span>
-                            {{ assignment_data.team_info.size }}/{{ assignment_data.assignment.max_group_size }} membres
+                            {{ assignment_data.team_info.size }}/{{ assignment_data.assignment.max_team_size }} membres
                         </div>
                         {% endif %}
                         <div class="assignment-deadline {% if assignment_data.is_overdue %}overdue{% elif assignment_data.assignment.is_deadline_approaching %}urgent{% else %}normal{% endif %}">

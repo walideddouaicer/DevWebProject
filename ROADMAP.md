@@ -69,10 +69,13 @@ keep it updated every session.
   iCalendar feed (timed deadlines in UTC, all-day milestones/end dates) for
   Google Calendar/Outlook. 6 tests (incl. no-leak of other students' events).
 
-- [ ] **9. Find teammates board** *(students)*
-  For team assignments: students without a team can flag themselves "available",
-  visible to classmates in the same module/assignment (teachers already see
-  `unassigned_students`; students can't).
+- [x] **9. Find teammates board** *(students)* — done 2026-07-03.
+  `TeammateRequest` model + `/student/assignments/<id>/teammates/` board: teamless
+  students flag themselves (with a message); flags auto-deactivate on joining or
+  creating a team; project owners with free slots invite directly from the board.
+  Linked from the assignment detail page. Bonus: fixed stale `is_group_work`/
+  `min|max_group_size` references across 7 templates (team-info UI silently
+  hidden since the group→team rename). 7 tests added.
 
 - [ ] **10. Module announcements** *(teachers)*
   One message broadcast to all enrolled students of a module → in-app notification
