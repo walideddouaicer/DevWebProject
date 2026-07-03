@@ -108,10 +108,16 @@ keep it updated every session.
   email of unread notifications instead of per-event emails. Invitation,
   announcement and reminder emails all skip digest users. 4 tests added.
 
-- [ ] **15. Test suite expansion** *(dev)*
-  Only 11 tests exist. Priorities: assignment/team-size logic, registration approval
-  flow, option-selection race, submission workflow, then each new feature above as
-  it lands.
+- [x] **15. Test suite expansion** *(dev)* — done 2026-07-03.
+  Suite grew from 11 to **87 tests** across the roadmap (every feature landed with
+  tests) plus a dedicated `student/test_workflows.py` covering the priorities:
+  team-size validation edge cases (min/max/full/individual), unique-option
+  claiming and release, registration-approval atomicity (no orphan users),
+  and the submission workflow rules (deadline, double-submit, missing option,
+  undersized team).
+
+**🎉 ROADMAP COMPLETE — all 15 features shipped (2026-07-03).**
+Future ideas can be appended below as a new phase.
 
 ## Done
 
