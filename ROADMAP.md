@@ -62,9 +62,12 @@ keep it updated every session.
 
 ## Phase 3 — Collaboration & visibility
 
-- [ ] **8. Calendar view + .ics export** *(students)*
-  One calendar of assignment deadlines, selection deadlines, milestones, and project
-  end dates. `.ics` feed/download so students can subscribe from Google Calendar.
+- [x] **8. Calendar view + .ics export** *(students)* — done 2026-07-03.
+  `/student/calendar/`: month grid + "30 prochains jours" panel of assignment
+  deadlines, selection deadlines, incomplete milestones and project end dates,
+  with month navigation and nav link. `/student/calendar.ics` downloads an
+  iCalendar feed (timed deadlines in UTC, all-day milestones/end dates) for
+  Google Calendar/Outlook. 6 tests (incl. no-leak of other students' events).
 
 - [ ] **9. Find teammates board** *(students)*
   For team assignments: students without a team can flag themselves "available",

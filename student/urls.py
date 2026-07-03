@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 from . import assignment_views  # Import the new assignment views
+from . import calendar_views
 
 app_name = 'student'
 
@@ -35,6 +36,10 @@ urlpatterns = [
     path('projects/<int:project_id>/comment/', views.add_comment, name='add_comment'),
     path('deliverables/<int:deliverable_id>/comment/', views.add_deliverable_comment, name='add_deliverable_comment'),
     
+    # Calendar (ROADMAP #8)
+    path('calendar/', calendar_views.calendar_view, name='calendar'),
+    path('calendar.ics', calendar_views.calendar_ics, name='calendar_ics'),
+
     path('notifications/', views.notifications, name='notifications'),
     path('notifications/<int:notification_id>/read/', views.mark_notification_read, name='mark_notification_read'),
     path('notifications/mark-all-read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),

@@ -77,6 +77,10 @@ Enhanced Base template with modern UI, theme toggle, and modular CSS
                         <i class="fas fa-tasks nav-icon"></i>
                         <span class="nav-text">Devoirs</span>
                     </a>
+                    <a href="{% url 'student:calendar' %}" class="nav-item {% if 'calendar' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-calendar-alt nav-icon"></i>
+                        <span class="nav-text">Calendrier</span>
+                    </a>
                     <a href="{% url 'search:search' %}" class="nav-item">
                         <i class="fas fa-search nav-icon"></i>
                         <span class="nav-text">Recherche</span>

@@ -1,0 +1,157 @@
+{% extends 'student/base.html' %}
+{% load static %}
+
+{% block title %}Calendrier - ENSA Project Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+    @media (max-width: 1000px) { .calendar-layout { grid-template-columns: 1fr; } }
+
+    .calendar-card, .upcoming-card {
+        background: var(--bg-secondary, white);
+        border: 1px solid var(--border-primary, #e2e8f0);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    .calendar-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 18px 22px; border-bottom: 1px solid var(--border-primary, #e2e8f0);
+    }
+    .calendar-header h2 { font-size: 1.3rem; }
+    .calendar-nav { display: flex; gap: 8px; align-items: center; }
+    .calendar-nav a, .calendar-nav .today-link {
+        padding: 8px 14px; border-radius: 8px; text-decoration: none; font-weight: 600;
+        color: var(--accent-primary, #4299e1); border: 1px solid var(--border-primary, #e2e8f0);
+    }
+    .calendar-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .calendar-grid th {
+        padding: 10px 6px; font-size: 0.75rem; text-transform: uppercase;
+        color: var(--text-muted, #718096); border-bottom: 1px solid var(--border-primary, #e2e8f0);
+    }
+    .calendar-grid td {
+        vertical-align: top; height: 96px; padding: 6px;
+        border: 1px solid var(--border-primary, #edf2f7);
+    }
+    .day-number { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary, #4a5568); }
+    .day-out { opacity: 0.35; }
+    .day-today { background: rgba(66, 153, 225, 0.08); }
+    .day-today .day-number {
+        background: var(--accent-primary, #4299e1); color: white;
+        border-radius: 50%; display: inline-flex; width: 22px; height: 22px;
+        align-items: center; justify-content: center;
+    }
+    .cal-event {
+        display: block; margin-top: 4px; padding: 2px 6px; border-radius: 6px;
+        font-size: 0.7rem; font-weight: 600; text-decoration: none;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .cal-event.deadline { background: rgba(229, 62, 62, 0.15); color: #c53030; }
+    .cal-event.selection { background: rgba(214, 158, 46, 0.18); color: #b7791f; }
+    .cal-event.milestone { background: rgba(66, 153, 225, 0.15); color: #2b6cb0; }
+    .cal-event.project_end { background: rgba(72, 187, 120, 0.15); color: #276749; }
+
+    .upcoming-card .upcoming-header {
+        padding: 16px 20px; border-bottom: 1px solid var(--border-primary, #e2e8f0);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .upcoming-item {
+        display: flex; gap: 12px; padding: 12px 20px;
+        border-bottom: 1px solid var(--border-primary, #edf2f7);
+        text-decoration: none; color: inherit;
+    }
+    .upcoming-item:hover { background: var(--bg-tertiary, #f7fafc); }
+    .upcoming-date {
+        min-width: 44px; text-align: center; border-radius: 8px; padding: 4px;
+        background: var(--bg-tertiary, #edf2f7); font-weight: 800; font-size: 0.9rem;
+    }
+    .upcoming-date small { display: block; font-weight: 600; font-size: 0.65rem; text-transform: uppercase; }
+    .upcoming-title { font-weight: 600; font-size: 0.85rem; }
+    .upcoming-sub { color: var(--text-muted, #718096); font-size: 0.75rem; }
+    .ics-btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--accent-primary, #4299e1); color: white; text-decoration: none;
+        padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;
+    }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 12px 22px; font-size: 0.75rem; color: var(--text-muted, #718096); }
+    .legend span::before { content: '●'; margin-right: 4px; }
+    .legend .l-deadline::before { color: #c53030; }
+    .legend .l-selection::before { color: #b7791f; }
+    .legend .l-milestone::before { color: #2b6cb0; }
+    .legend .l-end::before { color: #276749; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-layout">
+    <div class="calendar-card">
+        <div class="calendar-header">
+            <h2>📅 {{ month_name }} {{ year }}</h2>
+            <div class="calendar-nav">
+                <a href="?year={{ prev_year }}&month={{ prev_month }}" title="Mois précédent"><i class="fas fa-chevron-left"></i></a>
+                <a href="{% url 'student:calendar' %}" class="today-link">Aujourd'hui</a>
+                <a href="?year={{ next_year }}&month={{ next_month }}" title="Mois suivant"><i class="fas fa-chevron-right"></i></a>
+            </div>
+        </div>
+
+        <table class="calendar-grid">
+            <thead>
+                <tr>
+                    <th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th><th>Sam</th><th>Dim</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for week in weeks %}
+                <tr>
+                    {% for day in week %}
+                    <td class="{% if not day.in_month %}day-out{% endif %} {% if day.is_today %}day-today{% endif %}">
+                        <span class="day-number">{{ day.date.day }}</span>
+                        {% for event in day.events %}
+                        <a href="{{ event.url }}" class="cal-event {{ event.type }}" title="{{ event.title }}{% if event.subtitle %} — {{ event.subtitle }}{% endif %}">
+                            {{ event.title }}
+                        </a>
+                        {% endfor %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="legend">
+            <span class="l-deadline">Rendu de devoir</span>
+            <span class="l-selection">Sélection de projet</span>
+            <span class="l-milestone">Jalon</span>
+            <span class="l-end">Fin de projet</span>
+        </div>
+    </div>
+
+    <div class="upcoming-card">
+        <div class="upcoming-header">
+            <strong>30 prochains jours</strong>
+            <a href="{% url 'student:calendar_ics' %}" class="ics-btn" title="Importer dans Google Calendar / Outlook">
+                <i class="fas fa-calendar-plus"></i> .ics
+            </a>
+        </div>
+        {% for event in upcoming %}
+        <a href="{{ event.url }}" class="upcoming-item">
+            <span class="upcoming-date">
+                {{ event.date|date:"d" }}
+                <small>{{ event.date|date:"M" }}</small>
+            </span>
+            <span>
+                <span class="upcoming-title">{{ event.title }}</span>
+                <div class="upcoming-sub">
+                    {{ event.subtitle }}{% if event.time %} · {{ event.time|date:"H:i" }}{% endif %}
+                </div>
+            </span>
+        </a>
+        {% empty %}
+        <div style="padding: 24px 20px; color: var(--text-muted, #718096); text-align: center;">
+            <i class="fas fa-mug-hot" style="font-size: 1.6rem; display: block; margin-bottom: 8px;"></i>
+            Rien à l'horizon pour les 30 prochains jours.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
