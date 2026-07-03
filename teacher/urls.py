@@ -19,6 +19,7 @@ urlpatterns = [
     path('projects/<int:project_id>/approve/', views.approve_project, name='approve_project'),
     path('projects/<int:project_id>/reject/', views.reject_project, name='reject_project'),
     path('projects/<int:project_id>/request-revision/', views.request_revision, name='request_revision'),
+    path('projects/<int:project_id>/grade/', views.grade_project, name='grade_project'),
     path('projects/<int:project_id>/comment/', views.add_teacher_comment, name='add_teacher_comment'),
     path('deliverables/<int:deliverable_id>/comment/', views.add_deliverable_comment, name='add_deliverable_comment'),
     
@@ -33,6 +34,7 @@ urlpatterns = [
     path('assignments/<int:assignment_id>/edit/', assignment_views.assignment_edit, name='assignment_edit'),
     path('assignments/<int:assignment_id>/publish/', assignment_views.assignment_publish, name='assignment_publish'),
     path('assignments/<int:assignment_id>/progress/', assignment_views.assignment_progress, name='assignment_progress'),
+    path('assignments/<int:assignment_id>/bulk-action/', views.bulk_project_action, name='bulk_project_action'),
     
     # Assignment Students Management (for direct assignments)
     path('assignments/<int:assignment_id>/students/', assignment_views.assignment_students, name='assignment_students'),

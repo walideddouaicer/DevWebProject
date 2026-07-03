@@ -875,6 +875,8 @@ def assignment_progress(request, assignment_id):
         'page_obj': page_obj,
         'status_filter': status_filter,
         'search_query': search_query,
+        # Drives the bulk-action bar: are there projects awaiting review?
+        'has_submitted_projects': assignment.submitted_projects.filter(status='submitted').exists(),
         'total_expected': total_expected,
         'assigned_count': assigned_count,
         'started_count': started_count,

@@ -1,0 +1,172 @@
+{% extends 'teacher/base.html' %}
+{% load static %}
+
+{% block title %}Noter {{ project.title }} - Évaluation{% endblock %}
+
+{% block breadcrumb_items %}
+<span style="margin: 0 8px; color: var(--text-muted);">></span>
+<a href="{% url 'teacher:student_projects' %}" style="color: var(--accent-primary); text-decoration: none;">Projets & Évaluations</a>
+<span style="margin: 0 8px; color: var(--text-muted);">></span>
+<a href="{% url 'teacher:project_review' project.id %}" style="color: var(--accent-primary); text-decoration: none;">{{ project.title|truncatewords:3 }}</a>
+<span style="margin: 0 8px; color: var(--text-muted);">></span>
+<span style="color: var(--text-primary);">Notation</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .grade-container { max-width: 900px; margin: 0 auto; }
+    .grade-card {
+        background: var(--bg-secondary, white);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 16px;
+        padding: 28px;
+        margin-bottom: 24px;
+    }
+    .grade-card h2 { margin-bottom: 6px; }
+    .grade-card .subtitle { color: var(--text-muted, #718096); margin-bottom: 20px; }
+    .grade-field { margin-bottom: 20px; }
+    .grade-field label { display: block; font-weight: 600; margin-bottom: 6px; }
+    .grade-field input[type="text"],
+    .grade-field input[type="number"],
+    .grade-field textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 8px;
+        background: var(--bg-primary, white);
+        color: inherit;
+        font: inherit;
+    }
+    .score-input { max-width: 140px; font-size: 1.3rem; font-weight: 700; text-align: center; }
+    .score-suffix { font-size: 1.1rem; font-weight: 600; color: var(--text-muted, #718096); margin-left: 8px; }
+    .criteria-table { width: 100%; border-collapse: collapse; }
+    .criteria-table th { text-align: left; padding: 8px; color: var(--text-muted, #718096); font-size: 0.85rem; text-transform: uppercase; }
+    .criteria-table td { padding: 6px 8px; vertical-align: top; }
+    .criteria-table input { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; background: var(--bg-primary, white); color: inherit; font: inherit; }
+    .criteria-table .col-score { width: 110px; }
+    .criteria-table .col-remove { width: 44px; }
+    .remove-row-btn { background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 1rem; padding: 8px; }
+    .add-row-btn {
+        background: none; border: 1px dashed var(--border-color, #cbd5e0); color: var(--accent-primary, #4299e1);
+        border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; margin-top: 8px;
+    }
+    .validate-option {
+        display: flex; align-items: center; gap: 10px;
+        background: rgba(72, 187, 120, 0.08); border: 1px solid rgba(72, 187, 120, 0.35);
+        border-radius: 10px; padding: 14px 16px; margin: 20px 0;
+    }
+    .grade-actions { display: flex; gap: 12px; margin-top: 8px; }
+    .btn-grade-submit {
+        background: var(--accent-primary, #4299e1); color: white; border: none;
+        padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 1rem;
+    }
+    .btn-grade-cancel {
+        background: transparent; color: var(--text-muted, #718096);
+        border: 1px solid var(--border-color, #e2e8f0);
+        padding: 12px 24px; border-radius: 10px; font-weight: 600; text-decoration: none; display: inline-block;
+    }
+    .current-grade-banner {
+        display: flex; align-items: center; gap: 14px;
+        background: rgba(66, 153, 225, 0.08); border: 1px solid rgba(66, 153, 225, 0.35);
+        border-radius: 10px; padding: 14px 16px; margin-bottom: 20px;
+    }
+    .current-grade-banner .big-score { font-size: 1.6rem; font-weight: 800; color: var(--accent-primary, #4299e1); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grade-container">
+    <div class="grade-card">
+        <h2><i class="fas fa-star"></i> Noter le projet</h2>
+        <p class="subtitle">
+            {{ project.title }} — {{ project.student.get_full_name }}
+            {% if project.module %}({{ project.module.code }}){% endif %}
+        </p>
+
+        {% if evaluation %}
+        <div class="current-grade-banner">
+            <span class="big-score">{{ evaluation.score }}/20</span>
+            <span>
+                Note actuelle ({{ evaluation.get_mention }}) — enregistrée le {{ evaluation.updated_at|date:"d/m/Y H:i" }}.
+                Soumettre ce formulaire remplacera cette note.
+            </span>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="grade-field">
+                <label for="score">Note globale *</label>
+                <span>
+                    <input type="number" name="score" id="score" class="score-input"
+                           min="0" max="20" step="0.25" required
+                           value="{{ evaluation.score|default_if_none:'' }}">
+                    <span class="score-suffix">/ 20</span>
+                </span>
+            </div>
+
+            <div class="grade-field">
+                <label>Grille d'évaluation <small style="font-weight: normal; color: var(--text-muted);">(optionnelle — laissez une ligne vide pour l'ignorer)</small></label>
+                <table class="criteria-table" id="criteria-table">
+                    <thead>
+                        <tr>
+                            <th>Critère</th>
+                            <th class="col-score">Note /20</th>
+                            <th>Commentaire</th>
+                            <th class="col-remove"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for criterion in criteria_for_form %}
+                        <tr>
+                            <td><input type="text" name="criterion_name" value="{{ criterion.name }}" placeholder="Nom du critère"></td>
+                            <td class="col-score"><input type="number" name="criterion_score" min="0" max="20" step="0.25" value="{{ criterion.score }}" placeholder="—"></td>
+                            <td><input type="text" name="criterion_comment" value="{{ criterion.comment }}" placeholder="Commentaire (optionnel)"></td>
+                            <td class="col-remove"><button type="button" class="remove-row-btn" onclick="this.closest('tr').remove()" title="Supprimer la ligne"><i class="fas fa-trash"></i></button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" class="add-row-btn" id="add-criterion">
+                    <i class="fas fa-plus"></i> Ajouter un critère
+                </button>
+            </div>
+
+            <div class="grade-field">
+                <label for="comments">Appréciation générale</label>
+                <textarea name="comments" id="comments" rows="4"
+                          placeholder="Points forts, axes d'amélioration, remarques pour l'équipe...">{{ evaluation.comments|default:'' }}</textarea>
+            </div>
+
+            {% if project.status == 'submitted' %}
+            <label class="validate-option">
+                <input type="checkbox" name="validate_project" checked>
+                <span><strong>Valider le projet en même temps</strong> — le projet passera au statut « Validé » et l'équipe sera notifiée.</span>
+            </label>
+            {% endif %}
+
+            <div class="grade-actions">
+                <button type="submit" class="btn-grade-submit">
+                    <i class="fas fa-save"></i>
+                    {% if evaluation %}Mettre à jour la note{% else %}Enregistrer la note{% endif %}
+                </button>
+                <a href="{% url 'teacher:project_review' project.id %}" class="btn-grade-cancel">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('add-criterion').addEventListener('click', function () {
+    const tbody = document.querySelector('#criteria-table tbody');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td><input type="text" name="criterion_name" placeholder="Nom du critère"></td>
+        <td class="col-score"><input type="number" name="criterion_score" min="0" max="20" step="0.25" placeholder="—"></td>
+        <td><input type="text" name="criterion_comment" placeholder="Commentaire (optionnel)"></td>
+        <td class="col-remove"><button type="button" class="remove-row-btn" onclick="this.closest('tr').remove()" title="Supprimer la ligne"><i class="fas fa-trash"></i></button></td>`;
+    tbody.appendChild(row);
+});
+</script>
+{% endblock %}

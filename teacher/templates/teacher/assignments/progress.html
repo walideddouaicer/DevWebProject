@@ -270,10 +270,48 @@
         </div>
     </div>
     
+    {% if has_submitted_projects %}
+    <!-- Bulk actions bar (checkboxes below reference this form via form="bulk-form") -->
+    <form method="post" action="{% url 'teacher:bulk_project_action' assignment.id %}" id="bulk-form"
+          style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 24px; border-bottom: 1px solid var(--border-primary); background: var(--bg-tertiary, rgba(66,153,225,0.05));">
+        {% csrf_token %}
+        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+            <input type="checkbox" id="bulk-select-all">
+            Tout sélectionner (soumis)
+        </label>
+        <span id="bulk-selected-count" style="color: var(--text-muted); font-size: 13px;">0 sélectionné</span>
+        <button type="submit" name="action" value="validate" class="btn btn-sm btn-success"
+                onclick="return bulkConfirm('valider')">
+            <i class="fas fa-check-double"></i>
+            Valider la sélection
+        </button>
+        <details style="position: relative;">
+            <summary class="btn btn-sm btn-secondary" style="cursor: pointer; list-style: none;">
+                <i class="fas fa-undo"></i>
+                Demander révision à la sélection
+            </summary>
+            <div style="position: absolute; z-index: 20; top: 110%; left: 0; min-width: 340px; background: var(--bg-secondary, white); border: 1px solid var(--border-primary); border-radius: 10px; padding: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                <textarea name="content" form="bulk-form" rows="3" style="width: 100%;"
+                          placeholder="Modifications attendues (envoyées à toutes les équipes sélectionnées)..."></textarea>
+                <button type="submit" name="action" value="revision" class="btn btn-sm btn-danger" style="margin-top: 8px;"
+                        onclick="return bulkConfirm('demander une révision à')">
+                    <i class="fas fa-paper-plane"></i>
+                    Envoyer la demande
+                </button>
+            </div>
+        </details>
+    </form>
+    {% endif %}
+
     {% if page_obj %}
         {% for project in page_obj %}
         <div class="assignment-item project-item">
             <div class="assignment-info">
+                {% if project.status == 'submitted' %}
+                <input type="checkbox" name="project_ids" value="{{ project.id }}" form="bulk-form"
+                       class="bulk-check" style="margin-right: 10px; transform: scale(1.3); cursor: pointer;"
+                       title="Sélectionner pour une action groupée">
+                {% endif %}
                 <div class="assignment-icon {{ project.status }}">
                     {% if project.status == 'in_progress' %}
                         <i class="fas fa-cog"></i>
@@ -463,6 +501,34 @@
 {% block extra_js %}
 <script src="{% static 'teacher/js/assignments.js' %}"></script>
 <script>
+// Bulk selection helpers
+function bulkChecked() {
+    return document.querySelectorAll('.bulk-check:checked');
+}
+function updateBulkCount() {
+    const count = bulkChecked().length;
+    const label = document.getElementById('bulk-selected-count');
+    if (label) label.textContent = count + ' sélectionné' + (count > 1 ? 's' : '');
+}
+function bulkConfirm(verb) {
+    const count = bulkChecked().length;
+    if (count === 0) {
+        alert('Sélectionnez au moins un projet soumis.');
+        return false;
+    }
+    return confirm('Voulez-vous ' + verb + ' ' + count + ' projet(s) ?');
+}
+document.addEventListener('DOMContentLoaded', function () {
+    const selectAll = document.getElementById('bulk-select-all');
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            document.querySelectorAll('.bulk-check').forEach(cb => { cb.checked = selectAll.checked; });
+            updateBulkCount();
+        });
+    }
+    document.querySelectorAll('.bulk-check').forEach(cb => cb.addEventListener('change', updateBulkCount));
+});
+
 function showRejectModal(projectId, projectTitle) {
     const modal = document.getElementById('reject-modal');
     const form = document.getElementById('reject-form');

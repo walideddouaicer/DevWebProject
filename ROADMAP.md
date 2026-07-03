@@ -35,15 +35,16 @@ keep it updated every session.
 
 ## Phase 2 — Core academic workflow
 
-- [ ] **4. Grading / evaluation model** *(teachers, students)*
-  Validation is currently pass/fail only. Add rubric + score + per-criterion
-  feedback: `Evaluation` model (project, teacher, overall score /20, comments) +
-  optional `RubricCriterion` scores. Teacher grades from the review page; students
-  see grade + feedback on the project page. Notify team on grading.
+- [x] **4. Grading / evaluation model** *(teachers, students)* — done 2026-07-03.
+  `ProjectEvaluation` (score /20 + mention + appréciation) + `EvaluationCriterion`
+  rubric rows. Teacher grades at `/teacher/projects/<id>/grade/` (linked from the
+  review page, can validate at the same time); students see the grade card on their
+  project page; whole team notified. Registered in Django admin. 7 tests added.
 
-- [ ] **5. Bulk actions on submissions** *(teachers)*
-  Validate / request-revision several projects at once from the assignment progress
-  list (checkboxes + action bar) instead of opening each project.
+- [x] **5. Bulk actions on submissions** *(teachers)* — done 2026-07-03.
+  Checkbox selection + action bar on the assignment progress page: validate or
+  request revision (with shared comment) for many projects at once, with team
+  notifications and direct-assignment sync. 5 tests added.
 
 - [ ] **6. Real search** *(all — empty `search` app)*
   Global role-aware search page: projects, modules, users. Students search their own

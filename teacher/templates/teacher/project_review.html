@@ -87,11 +87,15 @@
             </div>
         </div>
         <div class="evaluation-actions">
+            <a href="{% url 'teacher:grade_project' project.id %}" class="eval-btn validate" style="text-decoration: none;">
+                <i class="fas fa-star"></i>
+                Noter &amp; Valider
+            </a>
             <form method="post" action="{% url 'teacher:approve_project' project.id %}" style="display: inline;">
                 {% csrf_token %}
-                <button type="submit" class="eval-btn validate" onclick="return confirm('Êtes-vous sûr de vouloir valider ce projet?')">
+                <button type="submit" class="eval-btn validate" onclick="return confirm('Êtes-vous sûr de vouloir valider ce projet sans le noter?')">
                     <i class="fas fa-check"></i>
-                    Valider le Projet
+                    Valider sans note
                 </button>
             </form>
             <form method="post" action="{% url 'teacher:reject_project' project.id %}" style="display: inline;">
@@ -128,6 +132,51 @@
                 <h3>Révision en cours</h3>
                 <p>Vous avez demandé des révisions sur ce projet. L'étudiant peut le modifier et le resoumettre.</p>
             </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Grade Panel -->
+    {% if evaluation %}
+    <div class="evaluation-panel">
+        <div class="eval-header">
+            <div class="eval-icon">🎓</div>
+            <div class="eval-content">
+                <h3>Note: {{ evaluation.score }}/20 — {{ evaluation.get_mention }}</h3>
+                <p>Notée par {{ evaluation.teacher.user.get_full_name|default:evaluation.teacher.user.username }} le {{ evaluation.updated_at|date:"d/m/Y H:i" }}</p>
+                {% if evaluation.comments %}
+                <p style="margin-top: 8px; white-space: pre-line;">{{ evaluation.comments }}</p>
+                {% endif %}
+                {% if evaluation.criteria.all %}
+                <ul style="margin-top: 10px; padding-left: 18px;">
+                    {% for criterion in evaluation.criteria.all %}
+                    <li><strong>{{ criterion.name }}:</strong> {{ criterion.score }}/20{% if criterion.comment %} — {{ criterion.comment }}{% endif %}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        <div class="evaluation-actions" style="margin-top: 12px;">
+            <a href="{% url 'teacher:grade_project' project.id %}" class="eval-btn" style="text-decoration: none;">
+                <i class="fas fa-pen"></i>
+                Modifier la note
+            </a>
+        </div>
+    </div>
+    {% elif project.status == 'validated' %}
+    <div class="evaluation-panel">
+        <div class="eval-header">
+            <div class="eval-icon">🎓</div>
+            <div class="eval-content">
+                <h3>Projet validé — pas encore noté</h3>
+                <p>Vous pouvez attribuer une note et une grille d'évaluation à ce projet.</p>
+            </div>
+        </div>
+        <div class="evaluation-actions" style="margin-top: 12px;">
+            <a href="{% url 'teacher:grade_project' project.id %}" class="eval-btn validate" style="text-decoration: none;">
+                <i class="fas fa-star"></i>
+                Noter le projet
+            </a>
         </div>
     </div>
     {% endif %}

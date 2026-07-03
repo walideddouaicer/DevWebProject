@@ -380,6 +380,81 @@ class ProjectOption(models.Model):
         verbose_name_plural = "Project Options"
 
 
+# Grading / evaluation system (ROADMAP #4)
+class ProjectEvaluation(models.Model):
+    """Teacher's graded evaluation of a project: overall score /20 + feedback."""
+    project = models.OneToOneField(
+        'student.Project', on_delete=models.CASCADE, related_name='evaluation'
+    )
+    teacher = models.ForeignKey(
+        TeacherProfile, on_delete=models.SET_NULL, null=True, related_name='evaluations'
+    )
+    score = models.DecimalField(
+        max_digits=4, decimal_places=2,
+        help_text="Note globale sur 20"
+    )
+    comments = models.TextField(blank=True, help_text="Appréciation générale")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = "Project Evaluation"
+        verbose_name_plural = "Project Evaluations"
+
+    def __str__(self):
+        return f"{self.project.title}: {self.score}/20"
+
+    def clean(self):
+        super().clean()
+        if self.score is not None and not (0 <= self.score <= 20):
+            raise ValidationError({'score': "La note doit être comprise entre 0 et 20."})
+
+    def get_mention(self):
+        """French academic mention for the score."""
+        if self.score >= 16:
+            return "Très bien"
+        if self.score >= 14:
+            return "Bien"
+        if self.score >= 12:
+            return "Assez bien"
+        if self.score >= 10:
+            return "Passable"
+        return "Insuffisant"
+
+    def get_mention_css_class(self):
+        """Coarse CSS hook for coloring the grade."""
+        if self.score >= 14:
+            return "grade-good"
+        if self.score >= 10:
+            return "grade-average"
+        return "grade-poor"
+
+
+class EvaluationCriterion(models.Model):
+    """Per-criterion score and comment inside an evaluation (the rubric)."""
+    evaluation = models.ForeignKey(
+        ProjectEvaluation, on_delete=models.CASCADE, related_name='criteria'
+    )
+    name = models.CharField(max_length=100)
+    score = models.DecimalField(max_digits=4, decimal_places=2, help_text="Note sur 20")
+    comment = models.CharField(max_length=255, blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = "Evaluation Criterion"
+        verbose_name_plural = "Evaluation Criteria"
+
+    def __str__(self):
+        return f"{self.name}: {self.score}/20"
+
+    def clean(self):
+        super().clean()
+        if self.score is not None and not (0 <= self.score <= 20):
+            raise ValidationError({'score': "La note doit être comprise entre 0 et 20."})
+
+
 # NEW MODEL: Direct student assignments with better tracking
 class DirectStudentAssignment(models.Model):
     """Track individual students assigned to direct assignments"""

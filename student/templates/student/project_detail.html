@@ -257,6 +257,47 @@
                 </div>
             </div>
 
+            <!-- Teacher Grade -->
+            {% if evaluation %}
+            <div class="section-card" style="border-left: 4px solid #4299e1;">
+                <div class="section-header">
+                    <h2 class="section-title">🎓 Note de l'enseignant</h2>
+                </div>
+                <div class="section-body">
+                    <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+                        <span style="font-size: 2.2rem; font-weight: 800; color: {% if evaluation.score >= 14 %}#38a169{% elif evaluation.score >= 10 %}#d69e2e{% else %}#e53e3e{% endif %};">
+                            {{ evaluation.score }}/20
+                        </span>
+                        <span style="font-weight: 700; color: var(--text-secondary);">{{ evaluation.get_mention }}</span>
+                        <span style="color: var(--text-muted); font-size: var(--text-sm);">
+                            par {{ evaluation.teacher.user.get_full_name|default:evaluation.teacher.user.username }}
+                            le {{ evaluation.updated_at|date:"d/m/Y" }}
+                        </span>
+                    </div>
+
+                    {% if evaluation.criteria.all %}
+                    <div style="margin-top: var(--space-4);">
+                        {% for criterion in evaluation.criteria.all %}
+                        <div style="display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--border-primary);">
+                            <span>
+                                <strong>{{ criterion.name }}</strong>
+                                {% if criterion.comment %}<span style="color: var(--text-muted);"> — {{ criterion.comment }}</span>{% endif %}
+                            </span>
+                            <span style="font-weight: 700; white-space: nowrap;">{{ criterion.score }}/20</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if evaluation.comments %}
+                    <div style="margin-top: var(--space-4); padding: var(--space-3); background: var(--bg-tertiary, rgba(66,153,225,0.06)); border-radius: 8px; line-height: 1.6; white-space: pre-line;">
+                        {{ evaluation.comments }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Project Description -->
             <div class="section-card">
                 <div class="section-header">

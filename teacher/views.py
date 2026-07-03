@@ -383,8 +383,9 @@ def project_review(request, project_id):
         'milestones': milestones,
         'comments': comments,
         'activities': activities,
+        'evaluation': getattr(project, 'evaluation', None),
     }
-    
+
     return render(request, 'teacher/project_review.html', context)
 
 
@@ -680,6 +681,290 @@ def add_teacher_comment(request, project_id):
         messages.error(request, "Le commentaire ne peut pas être vide.")
     
     return redirect('teacher:project_review', project_id=project.id)
+
+# Bulk submission actions (ROADMAP #5)
+
+@login_required
+@require_http_methods(["POST"])
+def bulk_project_action(request, assignment_id):
+    """Validate or request revision on several submitted projects at once."""
+    from .models import ProjectAssignment, DirectStudentAssignment
+    from student.models import Project, ProjectComment, ProjectActivity, Notification
+
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+
+    assignment = get_object_or_404(
+        ProjectAssignment, id=assignment_id, teacher=teacher
+    )
+
+    action = request.POST.get('action')
+    project_ids = request.POST.getlist('project_ids')
+    content = request.POST.get('content', '').strip()
+    teacher_name = teacher.user.get_full_name() or teacher.user.username
+
+    if action not in ('validate', 'revision'):
+        messages.error(request, "Action groupée invalide.")
+        return redirect('teacher:assignment_progress', assignment_id=assignment.id)
+
+    if not project_ids:
+        messages.warning(request, "Aucun projet sélectionné.")
+        return redirect('teacher:assignment_progress', assignment_id=assignment.id)
+
+    if action == 'revision' and not content:
+        messages.error(request, "Veuillez préciser les modifications attendues pour demander une révision groupée.")
+        return redirect('teacher:assignment_progress', assignment_id=assignment.id)
+
+    # Only submitted projects of THIS assignment can be processed
+    projects = Project.objects.filter(
+        id__in=project_ids,
+        project_assignment=assignment,
+        status='submitted'
+    )
+
+    processed = 0
+    for project in projects:
+        if action == 'validate':
+            project.status = 'validated'
+            project.save()
+
+            ProjectActivity.objects.create(
+                project=project,
+                user=request.user,
+                activity_type='status_changed',
+                description=f"Projet validé par {teacher_name} (action groupée)"
+            )
+
+            if project.is_assignment_project() and assignment.assignment_type == 'direct':
+                DirectStudentAssignment.objects.filter(
+                    assignment=assignment,
+                    student__in=[member.id for member in project.get_team_members()]
+                ).update(status='validated')
+
+            for member in project.get_team_members():
+                Notification.objects.create(
+                    recipient=member,
+                    project=project,
+                    notification_type='project_update',
+                    message=f"Le projet '{project.title}' a été validé par {teacher_name}"
+                )
+        else:  # revision
+            project.status = 'revision_requested'
+            project.save()
+
+            ProjectComment.objects.create(
+                project=project,
+                author=request.user,
+                content=f"[RÉVISION DEMANDÉE]\n{content}"
+            )
+            ProjectActivity.objects.create(
+                project=project,
+                user=request.user,
+                activity_type='status_changed',
+                description=f"Révision demandée par {teacher_name} (action groupée)"
+            )
+            for member in project.get_team_members():
+                Notification.objects.create(
+                    recipient=member,
+                    project=project,
+                    notification_type='project_update',
+                    message=f"{teacher_name} demande des révisions sur le projet '{project.title}'. Consultez ses commentaires puis resoumettez."
+                )
+        processed += 1
+
+    skipped = len(project_ids) - processed
+    if action == 'validate':
+        messages.success(request, f"{processed} projet(s) validé(s).")
+    else:
+        messages.success(request, f"Révision demandée pour {processed} projet(s).")
+    if skipped:
+        messages.warning(request, f"{skipped} projet(s) ignoré(s) (non soumis ou hors de ce devoir).")
+
+    return redirect('teacher:assignment_progress', assignment_id=assignment.id)
+
+
+# Grading / evaluation (ROADMAP #4)
+
+DEFAULT_EVALUATION_CRITERIA = [
+    "Qualité technique",
+    "Livrables & documentation",
+    "Respect des délais",
+    "Présentation & clarté",
+]
+
+
+def _parse_score(raw):
+    """Parse a /20 score; accepts French comma decimals. Returns Decimal or None."""
+    from decimal import Decimal, InvalidOperation
+    raw = (raw or '').strip().replace(',', '.')
+    if not raw:
+        return None
+    try:
+        value = Decimal(raw)
+    except InvalidOperation:
+        return None
+    if not (0 <= value <= 20):
+        return None
+    return value
+
+
+@login_required
+def grade_project(request, project_id):
+    """Grade a project: overall score /20, appreciation, per-criterion rubric."""
+    from .models import ProjectEvaluation, EvaluationCriterion, DirectStudentAssignment
+    from student.models import Project, ProjectActivity, Notification
+
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+
+    teacher_modules = ModuleAssignment.objects.filter(
+        teacher=teacher,
+        is_active=True
+    ).values_list('module', flat=True)
+
+    project = get_object_or_404(
+        Project.objects.select_related('student__user', 'module'),
+        id=project_id,
+        module__in=teacher_modules
+    )
+
+    if project.status not in ['submitted', 'validated']:
+        messages.warning(request, "Seuls les projets soumis ou validés peuvent être notés.")
+        return redirect('teacher:project_review', project_id=project.id)
+
+    evaluation = getattr(project, 'evaluation', None)
+    teacher_name = teacher.user.get_full_name() or teacher.user.username
+
+    if request.method == 'POST':
+        score = _parse_score(request.POST.get('score'))
+        comments = request.POST.get('comments', '').strip()
+        validate_project = request.POST.get('validate_project') == 'on'
+
+        # Parse rubric rows (parallel arrays); empty rows are skipped
+        names = request.POST.getlist('criterion_name')
+        scores = request.POST.getlist('criterion_score')
+        criterion_comments = request.POST.getlist('criterion_comment')
+
+        criteria_rows = []
+        errors = []
+        if score is None:
+            errors.append("La note globale est obligatoire et doit être comprise entre 0 et 20.")
+
+        for i, name in enumerate(names):
+            name = name.strip()
+            raw_score = scores[i] if i < len(scores) else ''
+            comment = (criterion_comments[i] if i < len(criterion_comments) else '').strip()
+            if not name and not raw_score.strip():
+                continue  # fully empty row
+            crit_score = _parse_score(raw_score)
+            if not name:
+                errors.append(f"Le critère n°{i + 1} a une note mais pas de nom.")
+            elif crit_score is None:
+                errors.append(f"Le critère '{name}' doit avoir une note entre 0 et 20.")
+            else:
+                criteria_rows.append({'name': name, 'score': crit_score, 'comment': comment})
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+        else:
+            is_new = evaluation is None
+            if evaluation is None:
+                evaluation = ProjectEvaluation(project=project)
+            evaluation.teacher = teacher
+            evaluation.score = score
+            evaluation.comments = comments
+            evaluation.save()
+
+            # Rebuild the rubric to match the submitted rows
+            evaluation.criteria.all().delete()
+            for order, row in enumerate(criteria_rows):
+                EvaluationCriterion.objects.create(
+                    evaluation=evaluation,
+                    name=row['name'],
+                    score=row['score'],
+                    comment=row['comment'],
+                    order=order,
+                )
+
+            # Record activity
+            ProjectActivity.objects.create(
+                project=project,
+                user=request.user,
+                activity_type='status_changed',
+                description=(
+                    f"Projet noté {score}/20 par {teacher_name}"
+                    if is_new else
+                    f"Note mise à jour: {score}/20 par {teacher_name}"
+                )
+            )
+
+            # Optionally validate at the same time (same effects as approve_project)
+            if validate_project and project.status == 'submitted':
+                project.status = 'validated'
+                project.save()
+
+                ProjectActivity.objects.create(
+                    project=project,
+                    user=request.user,
+                    activity_type='status_changed',
+                    description=f"Projet validé par {teacher_name}"
+                )
+
+                if project.is_assignment_project() and project.project_assignment.assignment_type == 'direct':
+                    DirectStudentAssignment.objects.filter(
+                        assignment=project.project_assignment,
+                        student__in=[member.id for member in project.get_team_members()]
+                    ).update(status='validated')
+
+            # Notify the whole team of the grade
+            validated_note = " et validé" if (validate_project and project.status == 'validated') else ""
+            for member in project.get_team_members():
+                Notification.objects.create(
+                    recipient=member,
+                    project=project,
+                    notification_type='project_update',
+                    message=(
+                        f"Le projet '{project.title}' a été noté{validated_note}: "
+                        f"{score}/20 ({evaluation.get_mention()}) par {teacher_name}"
+                    )
+                )
+
+            messages.success(request, f"Note enregistrée: {score}/20 ({evaluation.get_mention()}).")
+            return redirect('teacher:project_review', project_id=project.id)
+
+    # Build the rubric rows shown in the form
+    if evaluation:
+        existing_criteria = list(evaluation.criteria.all())
+    else:
+        existing_criteria = []
+
+    if existing_criteria:
+        criteria_for_form = [
+            {'name': c.name, 'score': c.score, 'comment': c.comment}
+            for c in existing_criteria
+        ]
+    else:
+        criteria_for_form = [
+            {'name': name, 'score': '', 'comment': ''}
+            for name in DEFAULT_EVALUATION_CRITERIA
+        ]
+
+    context = {
+        'teacher': teacher,
+        'project': project,
+        'evaluation': evaluation,
+        'criteria_for_form': criteria_for_form,
+    }
+
+    return render(request, 'teacher/grade_project.html', context)
+
 
 @login_required
 @require_http_methods(["GET"])

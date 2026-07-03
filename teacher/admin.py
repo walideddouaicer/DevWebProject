@@ -1,5 +1,8 @@
 from django.contrib import admin
-from .models import TeacherProfile, ModuleAssignment, ModuleEnrollment, Module
+from .models import (
+    TeacherProfile, ModuleAssignment, ModuleEnrollment, Module,
+    ProjectEvaluation, EvaluationCriterion,
+)
 
 # Add a nice admin interface for TeacherProfile
 class TeacherProfileAdmin(admin.ModelAdmin):
@@ -42,8 +45,20 @@ class ModuleEnrollmentAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'enrolled_at', 'module__academic_year')
     search_fields = ('student__user__username', 'module__code', 'module__name')
 
+# Evaluation admin
+class EvaluationCriterionInline(admin.TabularInline):
+    model = EvaluationCriterion
+    extra = 0
+
+class ProjectEvaluationAdmin(admin.ModelAdmin):
+    list_display = ('project', 'score', 'get_mention', 'teacher', 'updated_at')
+    list_filter = ('updated_at',)
+    search_fields = ('project__title', 'teacher__user__username')
+    inlines = [EvaluationCriterionInline]
+
 # Register all models
 admin.site.register(TeacherProfile, TeacherProfileAdmin)
 admin.site.register(Module, ModuleAdmin)
 admin.site.register(ModuleAssignment, ModuleAssignmentAdmin)
 admin.site.register(ModuleEnrollment, ModuleEnrollmentAdmin)
+admin.site.register(ProjectEvaluation, ProjectEvaluationAdmin)

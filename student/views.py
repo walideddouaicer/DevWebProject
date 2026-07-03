@@ -776,6 +776,7 @@ def project_detail(request, project_id):
         'comments': comments,
         'assignment_context': assignment_context,  # ENHANCED
         'available_actions': available_actions,     # ENHANCED
+        'evaluation': getattr(project, 'evaluation', None),  # Teacher grade (if any)
     }
 
     return render(request, 'student/project_detail.html', context)
