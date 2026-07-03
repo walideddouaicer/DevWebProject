@@ -682,6 +682,65 @@ def add_teacher_comment(request, project_id):
     
     return redirect('teacher:project_review', project_id=project.id)
 
+# Excel exports (ROADMAP #7)
+
+@login_required
+def export_module_roster(request, module_id):
+    """Download the module's enrolled-students list as Excel."""
+    from administrator.exports import build_module_roster_workbook, excel_response
+    from django.utils import timezone
+
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+
+    try:
+        assignment = ModuleAssignment.objects.get(
+            teacher=teacher, module_id=module_id, is_active=True
+        )
+        module = assignment.module
+    except ModuleAssignment.DoesNotExist:
+        messages.error(request, "Vous n'avez pas accès à ce module.")
+        return redirect('teacher:modules_list')
+
+    enrollments = ModuleEnrollment.objects.filter(
+        module=module, is_active=True
+    ).select_related('student__user').order_by('student__user__last_name')
+
+    workbook = build_module_roster_workbook(module, enrollments)
+    filename = f"etudiants_{module.code}_{timezone.now().strftime('%Y%m%d')}.xlsx"
+    return excel_response(workbook, filename)
+
+
+@login_required
+def export_assignment_results(request, assignment_id):
+    """Download an assignment's teams, statuses and grades as Excel."""
+    from administrator.exports import build_assignment_results_workbook, excel_response
+    from .models import ProjectAssignment
+    from django.utils import timezone
+
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+
+    assignment = get_object_or_404(
+        ProjectAssignment, id=assignment_id, teacher=teacher
+    )
+
+    projects = assignment.submitted_projects.select_related(
+        'student__user', 'selected_option'
+    ).prefetch_related('collaborators__user').order_by('student__user__last_name')
+
+    workbook = build_assignment_results_workbook(assignment, projects)
+    safe_title = ''.join(ch if ch.isalnum() else '_' for ch in assignment.title)[:40]
+    filename = f"resultats_{safe_title}_{timezone.now().strftime('%Y%m%d')}.xlsx"
+    return excel_response(workbook, filename)
+
+
 # Bulk submission actions (ROADMAP #5)
 
 @login_required

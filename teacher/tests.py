@@ -379,3 +379,84 @@ class BulkActionTests(TestCase):
         self.assertEqual(response.status_code, 404)
         self.projects[0].refresh_from_db()
         self.assertEqual(self.projects[0].status, 'submitted')
+
+
+class TeacherExportTests(TestCase):
+    def setUp(self):
+        from django.utils import timezone
+        from .models import ProjectAssignment, ProjectEvaluation, ModuleEnrollment
+
+        teacher_user = User.objects.create_user(username='prof', password='profpass')
+        self.teacher = TeacherProfile.objects.create(user=teacher_user, teacher_id='T001')
+
+        self.module = Module.objects.create(name='Programmation Web', code='WEB301')
+        ModuleAssignment.objects.create(teacher=self.teacher, module=self.module, is_active=True)
+
+        student_user = User.objects.create_user(
+            username='etu', password='pass', first_name='Amina', last_name='Benali'
+        )
+        self.student = StudentProfile.objects.create(
+            user=student_user, student_id='E001', year_of_study=3, department='Info'
+        )
+        ModuleEnrollment.objects.create(student=self.student, module=self.module, is_active=True)
+
+        self.assignment = ProjectAssignment.objects.create(
+            teacher=self.teacher, module=self.module,
+            title='Devoir export', description='d',
+            deadline=timezone.now() + timezone.timedelta(days=14),
+            assignment_type='direct', status='published',
+        )
+        self.project = Project.objects.create(
+            title='Projet noté', description='d', project_type='module',
+            student=self.student, module=self.module,
+            start_date=date(2026, 1, 1), status='validated',
+            assignment_source='teacher_assigned', project_assignment=self.assignment,
+        )
+        ProjectEvaluation.objects.create(project=self.project, teacher=self.teacher, score=15)
+
+        self.client.login(username='prof', password='profpass')
+
+    def read_workbook(self, response):
+        from io import BytesIO
+        from openpyxl import load_workbook
+        return load_workbook(BytesIO(response.content))
+
+    def test_module_roster_export(self):
+        response = self.client.get(reverse('teacher:export_module_roster', args=[self.module.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('spreadsheetml', response['Content-Type'])
+
+        sheet = self.read_workbook(response).active
+        rows = list(sheet.iter_rows(values_only=True))
+        self.assertIn('Benali', [row[1] for row in rows[1:]])
+
+    def test_assignment_results_export_includes_grade(self):
+        response = self.client.get(
+            reverse('teacher:export_assignment_results', args=[self.assignment.id])
+        )
+        self.assertEqual(response.status_code, 200)
+
+        sheet = self.read_workbook(response).active
+        rows = list(sheet.iter_rows(values_only=True))
+        data = rows[1]
+        self.assertEqual(data[0], 'Projet noté')
+        self.assertEqual(data[8], 15.0)   # Note /20
+        self.assertEqual(data[9], 'Bien')  # Mention
+
+    def test_roster_export_requires_module_access(self):
+        other_user = User.objects.create_user(username='prof2', password='pass')
+        TeacherProfile.objects.create(user=other_user, teacher_id='T002')
+        self.client.login(username='prof2', password='pass')
+
+        response = self.client.get(reverse('teacher:export_module_roster', args=[self.module.id]))
+        self.assertEqual(response.status_code, 302)  # bounced with an error message
+
+    def test_results_export_requires_own_assignment(self):
+        other_user = User.objects.create_user(username='prof2', password='pass')
+        TeacherProfile.objects.create(user=other_user, teacher_id='T002')
+        self.client.login(username='prof2', password='pass')
+
+        response = self.client.get(
+            reverse('teacher:export_assignment_results', args=[self.assignment.id])
+        )
+        self.assertEqual(response.status_code, 404)

@@ -53,10 +53,12 @@ keep it updated every session.
   enrolled students; admins → everything. Nav links added for students & teachers.
   7 scoping tests (incl. no-leak assertions).
 
-- [ ] **7. Excel/PDF exports** *(teachers, admins)*
-  openpyxl + reportlab already installed; admin export views are placeholders.
-  Exports: module rosters, submission status per assignment, project lists, grades
-  (after #4), user lists. Mirrors the existing student Excel *import*.
+- [x] **7. Excel/PDF exports** *(teachers, admins)* — done 2026-07-03.
+  Admin: projects .xlsx (honours list filters), users .xlsx (2 sheets), statistics
+  PDF report + real exports page (was a missing template → 500). Teacher: module
+  roster .xlsx (module page button) and assignment results .xlsx incl. grades &
+  mentions (progress page button, replaced the fake client-side export). Shared
+  builders in `administrator/exports.py`. 10 tests added.
 
 ## Phase 3 — Collaboration & visibility
 

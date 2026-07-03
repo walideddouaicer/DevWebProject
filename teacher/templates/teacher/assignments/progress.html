@@ -259,10 +259,10 @@
             {% endif %}
         </h2>
         <div class="card-action" style="display: flex; gap: 8px;">
-            <button type="button" onclick="exportData()" class="btn btn-secondary btn-sm">
-                <i class="fas fa-download"></i>
-                Exporter
-            </button>
+            <a href="{% url 'teacher:export_assignment_results' assignment.id %}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-file-excel"></i>
+                Exporter (Excel)
+            </a>
             <button type="button" onclick="refreshProjects()" class="btn btn-secondary btn-sm">
                 <i class="fas fa-sync-alt"></i>
                 Actualiser

@@ -110,3 +110,83 @@ class ImportStudentsTests(TestCase):
         response = self.client.get(reverse('administrator:student_import_template'))
         self.assertEqual(response.status_code, 200)
         self.assertIn('spreadsheetml', response['Content-Type'])
+
+
+class AdminExportTests(TestCase):
+    def setUp(self):
+        from datetime import date
+        from student.models import Project
+        from teacher.models import TeacherProfile
+
+        admin_user = User.objects.create_user(username='admin', password='adminpass')
+        AdminProfile.objects.create(user=admin_user, admin_id='A001')
+
+        student_user = User.objects.create_user(
+            username='etudiant', password='pass', first_name='Amina', last_name='Benali'
+        )
+        self.student = StudentProfile.objects.create(
+            user=student_user, student_id='E001', year_of_study=3, department='Info'
+        )
+        teacher_user = User.objects.create_user(
+            username='prof', password='pass', first_name='Karim', last_name='Alaoui'
+        )
+        TeacherProfile.objects.create(user=teacher_user, teacher_id='T001', department='Info')
+
+        self.module = Module.objects.create(name='Programmation Web', code='WEB301')
+        self.project = Project.objects.create(
+            title='Projet Export', description='d', project_type='module',
+            student=self.student, module=self.module,
+            start_date=date(2026, 1, 1), status='validated',
+        )
+
+        self.client.login(username='admin', password='adminpass')
+
+    def read_workbook(self, response):
+        from openpyxl import load_workbook
+        return load_workbook(BytesIO(response.content))
+
+    def test_export_projects_excel(self):
+        response = self.client.get(reverse('administrator:export_projects'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('spreadsheetml', response['Content-Type'])
+
+        sheet = self.read_workbook(response).active
+        rows = list(sheet.iter_rows(values_only=True))
+        self.assertEqual(rows[0][0], 'Titre')
+        titles = [row[0] for row in rows[1:]]
+        self.assertIn('Projet Export', titles)
+
+    def test_export_projects_respects_status_filter(self):
+        response = self.client.get(reverse('administrator:export_projects'), {'status': 'submitted'})
+        sheet = self.read_workbook(response).active
+        rows = list(sheet.iter_rows(values_only=True))
+        self.assertEqual(len(rows), 1)  # header only, no submitted projects
+
+    def test_export_users_excel_has_both_sheets(self):
+        response = self.client.get(reverse('administrator:export_users'))
+        self.assertEqual(response.status_code, 200)
+        workbook = self.read_workbook(response)
+        self.assertIn('Étudiants', workbook.sheetnames)
+        self.assertIn('Enseignants', workbook.sheetnames)
+
+        student_rows = list(workbook['Étudiants'].iter_rows(values_only=True))
+        self.assertIn('Benali', [row[1] for row in student_rows[1:]])
+        teacher_rows = list(workbook['Enseignants'].iter_rows(values_only=True))
+        self.assertIn('Alaoui', [row[1] for row in teacher_rows[1:]])
+
+    def test_export_statistics_pdf(self):
+        response = self.client.get(reverse('administrator:export_statistics'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertTrue(response.content.startswith(b'%PDF'))
+
+    def test_exports_require_admin(self):
+        self.client.logout()
+        self.client.login(username='etudiant', password='pass')
+        response = self.client.get(reverse('administrator:export_projects'))
+        self.assertEqual(response.status_code, 302)  # bounced to login
+
+    def test_exports_page_renders(self):
+        response = self.client.get(reverse('administrator:exports'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Exports')
