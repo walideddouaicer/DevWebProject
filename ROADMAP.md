@@ -46,10 +46,12 @@ keep it updated every session.
   request revision (with shared comment) for many projects at once, with team
   notifications and direct-assignment sync. 5 tests added.
 
-- [ ] **6. Real search** *(all — empty `search` app)*
-  Global role-aware search page: projects, modules, users. Students search their own
-  scope + public projects; teachers their modules' projects/students; admins
-  everything. Currently the stub views just redirect to the public showcase search.
+- [x] **6. Real search** *(all)* — done 2026-07-03.
+  Role-aware global search at `/search/` (grouped results: projects, vitrine
+  publique, modules, personnes). Anonymous → public projects only; students → own
+  projects + enrolled modules + showcase; teachers → their modules' projects &
+  enrolled students; admins → everything. Nav links added for students & teachers.
+  7 scoping tests (incl. no-leak assertions).
 
 - [ ] **7. Excel/PDF exports** *(teachers, admins)*
   openpyxl + reportlab already installed; admin export views are placeholders.

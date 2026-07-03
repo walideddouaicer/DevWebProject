@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if query %}{{ query }} - {% endif %}Recherche - ENSA Project Manager</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #2d3748; }
+        .search-page { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: #4299e1; text-decoration: none; font-weight: 600; margin-bottom: 1.5rem; }
+        .search-hero { background: white; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 1.5rem; }
+        .search-hero h1 { font-size: 1.6rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+        .search-form { display: flex; gap: 10px; }
+        .search-form input[type="text"] {
+            flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 10px;
+            font-size: 1rem; outline: none;
+        }
+        .search-form input[type="text"]:focus { border-color: #4299e1; }
+        .search-form button {
+            background: #4299e1; color: white; border: none; padding: 12px 22px;
+            border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 1rem;
+        }
+        .search-scope { margin-top: 0.75rem; color: #718096; font-size: 0.85rem; }
+        .results-summary { color: #718096; margin-bottom: 1rem; }
+        .result-section { background: white; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; overflow: hidden; }
+        .result-section-header {
+            background: #4299e1; color: white; padding: 0.9rem 1.5rem;
+            display: flex; align-items: center; gap: 10px; font-weight: 700;
+        }
+        .result-section-header .count { margin-left: auto; font-weight: 600; opacity: 0.9; font-size: 0.9rem; }
+        .result-item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 1.5rem; border-bottom: 1px solid #edf2f7; text-decoration: none; color: inherit; }
+        .result-item:last-child { border-bottom: none; }
+        a.result-item:hover { background: #f7fafc; }
+        .result-title { font-weight: 600; }
+        .result-subtitle { color: #718096; font-size: 0.85rem; margin-top: 2px; }
+        .result-badge { background: #ebf8ff; color: #2b6cb0; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+        .empty-state { text-align: center; padding: 3rem 2rem; color: #718096; background: white; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; color: #cbd5e0; display: block; }
+    </style>
+</head>
+<body>
+    <div class="search-page">
+        <a href="{% if role == 'admin' %}/administrator/dashboard/{% elif role == 'teacher' %}/teacher/dashboard/{% elif role == 'student' %}/student/dashboard/{% else %}/{% endif %}" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            Retour{% if role != 'public' %} au tableau de bord{% else %} à l'accueil{% endif %}
+        </a>
+
+        <div class="search-hero">
+            <h1><i class="fas fa-search" style="color: #4299e1;"></i> Recherche</h1>
+            <form method="get" class="search-form">
+                <input type="text" name="q" value="{{ query }}" placeholder="Projets, modules{% if role == 'teacher' or role == 'admin' %}, étudiants{% endif %}..." autofocus>
+                <button type="submit"><i class="fas fa-search"></i> Rechercher</button>
+            </form>
+            <div class="search-scope">
+                {% if role == 'admin' %}Recherche dans tous les projets, modules et utilisateurs.
+                {% elif role == 'teacher' %}Recherche dans vos modules: projets, étudiants inscrits, et vitrine publique.
+                {% elif role == 'student' %}Recherche dans vos projets, vos modules et la vitrine publique.
+                {% else %}Recherche dans les projets de la vitrine publique. <a href="/login/" style="color:#4299e1;">Connectez-vous</a> pour chercher dans vos propres contenus.
+                {% endif %}
+            </div>
+        </div>
+
+        {% if query %}
+            <div class="results-summary">
+                {{ total_results }} résultat{{ total_results|pluralize }} pour « <strong>{{ query }}</strong> »
+            </div>
+
+            {% for section in sections %}
+            <div class="result-section">
+                <div class="result-section-header">
+                    <i class="fas {{ section.icon }}"></i>
+                    {{ section.title }}
+                    <span class="count">{{ section.items|length }}</span>
+                </div>
+                {% for item in section.items %}
+                    {% if item.url %}
+                    <a href="{{ item.url }}" class="result-item">
+                        <span>
+                            <span class="result-title">{{ item.title }}</span>
+                            <div class="result-subtitle">{{ item.subtitle }}</div>
+                        </span>
+                        {% if item.badge %}<span class="result-badge">{{ item.badge }}</span>{% endif %}
+                    </a>
+                    {% else %}
+                    <div class="result-item">
+                        <span>
+                            <span class="result-title">{{ item.title }}</span>
+                            <div class="result-subtitle">{{ item.subtitle }}</div>
+                        </span>
+                        {% if item.badge %}<span class="result-badge">{{ item.badge }}</span>{% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-search-minus"></i>
+                <h3>Aucun résultat</h3>
+                <p>Aucun résultat pour « {{ query }} ». Essayez d'autres mots-clés.</p>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</body>
+</html>
