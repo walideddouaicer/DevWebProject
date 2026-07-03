@@ -750,6 +750,9 @@ def post_module_announcement(request, module_id):
         prefs = UserPreferences.objects.filter(user=user).first()
         if prefs and not (prefs.email_notifications and prefs.project_notifications):
             continue
+        if prefs and prefs.email_digest:
+            # Digest users get the announcement in their daily summary instead
+            continue
         try:
             send_mail(
                 subject=f"[{module.code}] {title}",

@@ -1638,6 +1638,7 @@ def account_settings(request):
             preferences.email_notifications = form.cleaned_data.get('email_notifications', False)
             preferences.project_notifications = form.cleaned_data.get('project_notifications', False)
             preferences.collaboration_notifications = form.cleaned_data.get('collaboration_notifications', False)
+            preferences.email_digest = request.POST.get('email_digest') == 'on'
             preferences.save()
 
             messages.success(request, "Préférences de notification mises à jour!")

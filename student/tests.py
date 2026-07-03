@@ -107,6 +107,94 @@ class CalendarTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
 
+class DailyDigestTests(TestCase):
+    def setUp(self):
+        from .models import Notification, UserPreferences
+
+        def make_student(name, sid, digest):
+            user = User.objects.create_user(username=name, password='pass', email=f'{name}@x.com')
+            profile = StudentProfile.objects.create(
+                user=user, student_id=sid, year_of_study=3, department='Info'
+            )
+            UserPreferences.objects.create(user=user, email_digest=digest)
+            return profile
+
+        self.digest_student = make_student('digestuser', 'E001', True)
+        self.instant_student = make_student('instantuser', 'E002', False)
+
+        # Unread notifications for both
+        for student in (self.digest_student, self.instant_student):
+            Notification.objects.create(
+                recipient=student, notification_type='project_update',
+                message='Quelque chose est arrivé'
+            )
+            Notification.objects.create(
+                recipient=student, notification_type='project_update',
+                message='Autre événement'
+            )
+
+    def run_digest(self, **kwargs):
+        from django.core.management import call_command
+        from io import StringIO
+        out = StringIO()
+        call_command('send_daily_digest', stdout=out, **kwargs)
+        return out.getvalue()
+
+    def test_digest_sent_only_to_digest_users(self):
+        from django.core import mail
+        self.run_digest()
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ['digestuser@x.com'])
+        self.assertIn('2 notification(s)', message.subject)
+        self.assertIn('Quelque chose est arrivé', message.body)
+
+    def test_no_digest_when_nothing_unread(self):
+        from django.core import mail
+        from .models import Notification
+        Notification.objects.filter(recipient=self.digest_student).update(is_read=True)
+
+        self.run_digest()
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_digest_respects_email_notifications_off(self):
+        from django.core import mail
+        prefs = self.digest_student.user.preferences
+        prefs.email_notifications = False
+        prefs.save()
+
+        self.run_digest()
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_invitation_email_skipped_for_digest_users(self):
+        from django.core import mail
+        from .models import CollaborationInvitation, Project
+        from .utils import send_invitation_email
+
+        project = Project.objects.create(
+            title='P', description='d', project_type='module',
+            student=self.instant_student, start_date=date(2026, 1, 1),
+        )
+        invitation = CollaborationInvitation.objects.create(
+            project=project, sender=self.instant_student,
+            recipient=self.digest_student, status='pending',
+        )
+        result = send_invitation_email(invitation)
+        self.assertFalse(result)
+        self.assertEqual(len(mail.outbox), 0)
+
+        # Instant user still gets the email
+        invitation2 = CollaborationInvitation.objects.create(
+            project=project, sender=self.digest_student,
+            recipient=self.instant_student, status='pending',
+        )
+        # give digest_student a project to invite from is irrelevant here;
+        # we only check the email path
+        self.assertTrue(send_invitation_email(invitation2))
+        self.assertEqual(len(mail.outbox), 1)
+
+
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class DeliverableVersioningTests(TestCase):
     @classmethod

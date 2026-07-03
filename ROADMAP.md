@@ -102,10 +102,11 @@ keep it updated every session.
   badge). Guards: can't deactivate yourself or another admin. Deactivated accounts
   can no longer log in. 4 tests added.
 
-- [ ] **14. Email digests respecting preferences** *(all)*
-  Preferences are saved and honored for invitations; extend to all notification
-  types, with a daily digest option (management command) instead of one email per
-  event.
+- [x] **14. Email digests respecting preferences** *(all)* — done 2026-07-03.
+  `email_digest` preference (toggle in the settings notifications tab) +
+  `manage.py send_daily_digest` (run daily; `--hours`, `--dry-run`): one summary
+  email of unread notifications instead of per-event emails. Invitation,
+  announcement and reminder emails all skip digest users. 4 tests added.
 
 - [ ] **15. Test suite expansion** *(dev)*
   Only 11 tests exist. Priorities: assignment/team-size logic, registration approval

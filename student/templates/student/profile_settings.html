@@ -348,6 +348,16 @@
                                         <p>Recevoir des notifications par email</p>
                                     </div>
                                 </div>
+                                <div class="notification-item">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" name="email_digest" {% if preferences.email_digest %}checked{% endif %}>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <div>
+                                        <strong>Résumé quotidien (digest)</strong>
+                                        <p>Un seul email par jour résumant vos notifications, au lieu d'un email par événement</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

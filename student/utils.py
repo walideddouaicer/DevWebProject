@@ -48,6 +48,9 @@ def send_invitation_email(invitation):
             prefs = recipient_user.preferences
             if not prefs.email_notifications or not prefs.collaboration_notifications:
                 return False
+            if prefs.email_digest:
+                # Digest users get a daily summary instead of per-event emails
+                return False
 
         recipient_email = recipient_user.email
         sender_name = invitation.sender.user.get_full_name() or invitation.sender.user.username

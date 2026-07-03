@@ -923,6 +923,13 @@ class UserPreferences(models.Model):
     assignment_notifications = models.BooleanField(default=True)
     assignment_reminders = models.BooleanField(default=True)
     group_notifications = models.BooleanField(default=True)
+
+    # Digest mode: instead of one email per event, receive a single daily
+    # summary of unread notifications (sent by `send_daily_digest`).
+    email_digest = models.BooleanField(
+        default=False,
+        help_text="Recevoir un résumé quotidien au lieu d'un email par événement"
+    )
     
     # Other preferences
     theme_preference = models.CharField(

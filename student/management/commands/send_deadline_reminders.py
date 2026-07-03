@@ -156,6 +156,9 @@ class Command(BaseCommand):
         prefs = UserPreferences.objects.filter(user=user).first()
         if prefs and not (prefs.email_notifications and prefs.assignment_reminders):
             return
+        if prefs and prefs.email_digest:
+            # Digest users get the reminder in their daily summary instead
+            return
         try:
             send_mail(
                 subject=f"Rappel de date limite — {assignment.title}",
