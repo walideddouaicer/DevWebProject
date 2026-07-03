@@ -644,8 +644,11 @@ def project_detail(request, project_id):
         messages.error(request, "Vous n'avez pas l'autorisation de voir ce projet.")
         return redirect('student:dashboard')
 
-    # Get basic project data
-    deliverables = ProjectDeliverable.objects.filter(project=project).prefetch_related('feedback_comments__author')
+    # Get basic project data (deliverables grouped by name: latest + history)
+    from .utils import group_deliverables
+    deliverables = group_deliverables(
+        ProjectDeliverable.objects.filter(project=project).prefetch_related('feedback_comments__author')
+    )
     milestones = ProjectMilestone.objects.filter(project=project)
     project_activities = ProjectActivity.objects.filter(project=project)
     comments = project.comments.all().select_related('author')
@@ -841,17 +844,23 @@ def upload_deliverable(request, project_id):
         if form.is_valid():
             deliverable = form.save(commit=False)
             deliverable.project = project
+            # Same name on the same project = new version (v1, v2, ...)
+            deliverable.version = ProjectDeliverable.next_version(project, deliverable.name)
             deliverable.save()
-            
+
             # Record activity
+            version_note = f" (v{deliverable.version})" if deliverable.version > 1 else ""
             ProjectActivity.objects.create(
                 project=project,
                 user=request.user,
                 activity_type='deliverable_added',
-                description=f"Livrable ajouté: {deliverable.name}"
+                description=f"Livrable ajouté: {deliverable.name}{version_note}"
             )
-            
-            messages.success(request, "Le livrable a été ajouté avec succès.")
+
+            if deliverable.version > 1:
+                messages.success(request, f"Nouvelle version (v{deliverable.version}) de '{deliverable.name}' ajoutée.")
+            else:
+                messages.success(request, "Le livrable a été ajouté avec succès.")
             return redirect('student:project_detail', project_id=project.id)
     else:
         form = DeliverableForm()

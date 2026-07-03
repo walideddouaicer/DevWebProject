@@ -83,9 +83,11 @@ keep it updated every session.
   in-app notification (new `announcement` type) and an email respecting their
   preferences. Registered in Django admin. 4 tests added.
 
-- [ ] **11. Deliverable versioning** *(students, teachers)*
-  Re-uploading a report currently just adds another file. Group files by deliverable
-  name and show v1/v2/v3 history; review page shows latest with history expandable.
+- [x] **11. Deliverable versioning** *(students, teachers)* — done 2026-07-03.
+  `version` field on `ProjectDeliverable` (auto-incremented per project+name at
+  upload, existing rows backfilled by a data migration). Student, teacher and
+  public project pages now group by name: latest version with a vN badge and an
+  expandable history of older versions. 3 tests added.
 
 ## Phase 4 — Administration & polish
 

@@ -1,12 +1,17 @@
+import shutil
+import tempfile
 from datetime import date, timedelta
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Project, ProjectMilestone, StudentProfile, TeammateRequest
+from .models import Project, ProjectDeliverable, ProjectMilestone, StudentProfile, TeammateRequest
 from teacher.models import Module, ModuleEnrollment, ProjectAssignment, TeacherProfile
+
+TEMP_MEDIA_ROOT = tempfile.mkdtemp()
 
 
 class CalendarTests(TestCase):
@@ -100,6 +105,69 @@ class CalendarTests(TestCase):
         self.client.logout()
         response = self.client.get(reverse('student:calendar'))
         self.assertEqual(response.status_code, 302)
+
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
+class DeliverableVersioningTests(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
+    def setUp(self):
+        user = User.objects.create_user(username='etudiant', password='pass')
+        self.student = StudentProfile.objects.create(
+            user=user, student_id='E001', year_of_study=3, department='Info'
+        )
+        self.project = Project.objects.create(
+            title='Projet versions', description='d', project_type='module',
+            student=self.student, start_date=date(2026, 1, 1), status='in_progress',
+        )
+        self.client.login(username='etudiant', password='pass')
+        self.upload_url = reverse('student:upload_deliverable', args=[self.project.id])
+
+    def upload(self, name):
+        return self.client.post(self.upload_url, {
+            'file': SimpleUploadedFile('rapport.pdf', b'contenu'),
+            'file_type': 'report',
+            'name': name,
+        })
+
+    def test_same_name_increments_version(self):
+        self.upload('Rapport final')
+        self.upload('Rapport final')
+        self.upload('Autre document')
+
+        versions = list(ProjectDeliverable.objects.filter(
+            project=self.project, name='Rapport final'
+        ).order_by('version').values_list('version', flat=True))
+        self.assertEqual(versions, [1, 2])
+
+        other = ProjectDeliverable.objects.get(project=self.project, name='Autre document')
+        self.assertEqual(other.version, 1)
+
+    def test_group_deliverables_returns_latest_with_history(self):
+        from .utils import group_deliverables
+        self.upload('Rapport final')
+        self.upload('Rapport final')
+        self.upload('Rapport final')
+
+        grouped = group_deliverables(ProjectDeliverable.objects.filter(project=self.project))
+        self.assertEqual(len(grouped), 1)
+        latest = grouped[0]
+        self.assertEqual(latest.version, 3)
+        self.assertEqual([d.version for d in latest.history], [2, 1])
+
+    def test_project_page_shows_version_badge_and_history(self):
+        self.upload('Rapport final')
+        self.upload('Rapport final')
+
+        response = self.client.get(reverse('student:project_detail', args=[self.project.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'v2')
+        self.assertContains(response, 'ancienne')
+        # Only one card for the deliverable (grouped), counted once
+        self.assertContains(response, '1 livrable')
 
 
 class TeammatesBoardTests(TestCase):

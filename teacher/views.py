@@ -374,8 +374,11 @@ def project_review(request, project_id):
         module__in=teacher_modules
     )
     
-    # Get project details - FIXED: Remove the problematic select_related calls
-    deliverables = project.deliverables.all().prefetch_related('feedback_comments__author')
+    # Get project details (deliverables grouped by name: latest + history)
+    from student.utils import group_deliverables
+    deliverables = group_deliverables(
+        project.deliverables.all().prefetch_related('feedback_comments__author')
+    )
     milestones = project.milestones.all()
     comments = project.comments.all().select_related('author')  # Fixed: now just 'author' since it's User
     activities = project.activities.all().select_related('user')

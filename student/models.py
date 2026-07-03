@@ -585,10 +585,19 @@ class ProjectDeliverable(models.Model):
     file = models.FileField(upload_to='deliverables/')
     file_type = models.CharField(max_length=20, choices=DELIVERABLE_TYPES)
     name = models.CharField(max_length=200)
+    version = models.PositiveIntegerField(default=1, help_text="Version du livrable (v1, v2, ...)")
     upload_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name} - {self.project.title}"
+        return f"{self.name} (v{self.version}) - {self.project.title}"
+
+    @classmethod
+    def next_version(cls, project, name):
+        """Version number for a new upload of `name` on `project`."""
+        current = cls.objects.filter(project=project, name=name).aggregate(
+            max_version=models.Max('version')
+        )['max_version']
+        return (current or 0) + 1
 
 
 class DeliverableComment(models.Model):

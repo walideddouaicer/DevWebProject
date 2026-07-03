@@ -190,8 +190,9 @@ def public_project_detail(request, project_id):
         # Mark as viewed in session
         request.session[view_key] = True
     
-    # Get deliverables (this is what the user wanted!)
-    deliverables = project.deliverables.all().order_by('-upload_date')
+    # Get deliverables, grouped by name (latest version of each)
+    from student.utils import group_deliverables
+    deliverables = group_deliverables(project.deliverables.all())
     
     # Get public comments
     comments = project.public_comments.filter(

@@ -499,7 +499,7 @@
             <div class="section-card">
                 <div class="section-header">
                     <h2 class="section-title">📎 Livrables</h2>
-                    <span style="font-size: var(--text-sm); color: var(--text-muted);">{{ deliverables.count }} livrable{{ deliverables.count|pluralize }}</span>
+                    <span style="font-size: var(--text-sm); color: var(--text-muted);">{{ deliverables|length }} livrable{{ deliverables|length|pluralize }}</span>
                 </div>
                 <div class="section-body">
                     {% if deliverables %}
@@ -508,7 +508,12 @@
                             <div class="deliverable-card">
                                 <div class="deliverable-header">
                                     <div style="flex: 1;">
-                                        <h4 style="margin: 0 0 var(--space-2) 0; color: var(--accent-primary); font-size: var(--text-lg);">{{ deliverable.name }}</h4>
+                                        <h4 style="margin: 0 0 var(--space-2) 0; color: var(--accent-primary); font-size: var(--text-lg);">
+                                            {{ deliverable.name }}
+                                            {% if deliverable.version > 1 %}
+                                            <span style="background: rgba(66,153,225,0.15); color: var(--accent-primary); font-size: var(--text-xs); font-weight: 700; padding: 2px 8px; border-radius: 999px; vertical-align: middle;">v{{ deliverable.version }}</span>
+                                            {% endif %}
+                                        </h4>
                                         <div style="font-size: var(--text-sm); color: var(--text-muted);">
                                             <strong>Type:</strong> {{ deliverable.get_file_type_display }}<br>
                                             <strong>Uploadé le:</strong> {{ deliverable.upload_date|date:"d/m/Y H:i" }}
@@ -518,7 +523,7 @@
                                 </div>
                                 <div style="margin-top: var(--space-4); display: flex; gap: var(--space-2);">
                                     {% if deliverable.file_type in 'report,presentation' %}
-                                        <button class="action-btn primary" style="padding: var(--space-2) var(--space-3); font-size: var(--text-xs);" 
+                                        <button class="action-btn primary" style="padding: var(--space-2) var(--space-3); font-size: var(--text-xs);"
                                                 onclick="previewFile('{{ deliverable.file.url }}', '{{ deliverable.file_type }}', '{{ deliverable.name }}')">
                                             👁️ Aperçu
                                         </button>
@@ -527,6 +532,21 @@
                                         📥 Télécharger
                                     </a>
                                 </div>
+
+                                <!-- Anciennes versions -->
+                                {% if deliverable.history %}
+                                <details style="margin-top: var(--space-3);">
+                                    <summary style="cursor: pointer; font-size: var(--text-sm); color: var(--text-muted); font-weight: 600;">
+                                        🕘 {{ deliverable.history|length }} ancienne{{ deliverable.history|length|pluralize }} version{{ deliverable.history|length|pluralize }}
+                                    </summary>
+                                    {% for old in deliverable.history %}
+                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--border-color); font-size: var(--text-sm);">
+                                        <span style="color: var(--text-muted);">v{{ old.version }} — {{ old.upload_date|date:"d/m/Y H:i" }}</span>
+                                        <a href="{{ old.file.url }}" target="_blank" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">📥 Télécharger</a>
+                                    </div>
+                                    {% endfor %}
+                                </details>
+                                {% endif %}
 
                                 <!-- Feedback enseignant sur ce livrable -->
                                 {% with feedbacks=deliverable.feedback_comments.all %}
@@ -719,7 +739,7 @@
                             <div class="stat-label">Jalons</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number">{{ deliverables.count }}</div>
+                            <div class="stat-number">{{ deliverables|length }}</div>
                             <div class="stat-label">Livrables</div>
                         </div>
                         <div class="stat-item">

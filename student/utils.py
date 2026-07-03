@@ -6,6 +6,24 @@ from django.utils import timezone
 import logging
 
 
+def group_deliverables(queryset):
+    """Latest deliverable per name, each carrying `.history` (older versions).
+
+    Returns a list of ProjectDeliverable instances (newest version of each
+    name, in recent-first order) with an extra `history` attribute holding
+    the older versions, newest first.
+    """
+    groups = {}
+    for deliverable in queryset.order_by('name', '-version', '-upload_date'):
+        if deliverable.name not in groups:
+            deliverable.history = []
+            groups[deliverable.name] = deliverable
+        else:
+            groups[deliverable.name].history.append(deliverable)
+    # Show most recently updated deliverables first
+    return sorted(groups.values(), key=lambda d: d.upload_date, reverse=True)
+
+
 def clear_student_context_cache(student):
     """Invalidate the cached navbar badge counts for a student.
 

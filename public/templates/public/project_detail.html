@@ -67,7 +67,7 @@
                 <div class="stat-label">Likes</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">{{ deliverables.count }}</div>
+                <div class="stat-number">{{ deliverables|length }}</div>
                 <div class="stat-label">Livrables</div>
             </div>
             <div class="stat-item">
@@ -229,7 +229,7 @@
         <!-- Deliverables -->
         {% if deliverables %}
             <div class="content-section">
-                <h2 class="section-title">📎 Livrables ({{ deliverables.count }})</h2>
+                <h2 class="section-title">📎 Livrables ({{ deliverables|length }})</h2>
                 <div class="deliverables-grid">
                     {% for deliverable in deliverables %}
                         <div class="deliverable-card">

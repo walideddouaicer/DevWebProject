@@ -266,7 +266,7 @@
                         <i class="fas fa-paperclip"></i>
                         Livrables
                     </h2>
-                    <span class="section-count">{{ deliverables.count }}</span>
+                    <span class="section-count">{{ deliverables|length }}</span>
                 </div>
                 {% if deliverables %}
                     <div class="deliverables-grid">
@@ -274,7 +274,12 @@
                         <div class="deliverable-card">
                             <div class="deliverable-header">
                                 <div class="deliverable-info">
-                                    <h4 class="deliverable-title">{{ deliverable.name }}</h4>
+                                    <h4 class="deliverable-title">
+                                        {{ deliverable.name }}
+                                        {% if deliverable.version > 1 %}
+                                        <span style="background: rgba(66,153,225,0.15); color: var(--accent-primary); font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; vertical-align: middle;">v{{ deliverable.version }}</span>
+                                        {% endif %}
+                                    </h4>
                                     <div class="deliverable-meta">
                                         <strong>Type:</strong> {{ deliverable.get_file_type_display }}<br>
                                         <strong>Uploadé le:</strong> {{ deliverable.upload_date|date:"d/m/Y H:i" }}
@@ -286,6 +291,23 @@
                                 <i class="fas fa-download"></i>
                                 Télécharger
                             </a>
+
+                            {% if deliverable.history %}
+                            <details style="margin-top: var(--space-3);">
+                                <summary style="cursor: pointer; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+                                    <i class="fas fa-history"></i>
+                                    {{ deliverable.history|length }} ancienne{{ deliverable.history|length|pluralize }} version{{ deliverable.history|length|pluralize }}
+                                </summary>
+                                {% for old in deliverable.history %}
+                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--border-color); font-size: 0.85rem;">
+                                    <span style="color: var(--text-muted);">v{{ old.version }} — {{ old.upload_date|date:"d/m/Y H:i" }}</span>
+                                    <a href="{{ old.file.url }}" target="_blank" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">
+                                        <i class="fas fa-download"></i> Télécharger
+                                    </a>
+                                </div>
+                                {% endfor %}
+                            </details>
+                            {% endif %}
 
                             <!-- Per-deliverable feedback thread -->
                             <div class="deliverable-feedback" style="margin-top: var(--space-3); border-top: 1px solid var(--border-color); padding-top: var(--space-3);">
