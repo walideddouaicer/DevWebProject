@@ -471,23 +471,30 @@ def handle_choice_based_assignment_project(request, student, assignment):
         if form.is_valid():
             try:
                 with transaction.atomic():
+                    # Atomically claim the option first (prevents two teams
+                    # from taking the same unique option at the same time)
+                    locked_option = ProjectOption.objects.select_for_update().get(
+                        id=selected_option.id
+                    )
+                    if not locked_option.is_selectable():
+                        raise ValidationError("Cette option n'est plus disponible.")
+
                     project = form.save(commit=False)
-                    
+
                     # Set assignment-specific fields
                     project.student = student
                     project.assignment_source = 'teacher_assigned'
                     project.project_assignment = assignment
-                    project.selected_option = selected_option
+                    project.selected_option = locked_option
                     project.assignment_deadline = assignment.deadline
                     project.module = assignment.module
                     project.status = 'in_progress'
-                    
+
                     project.save()
                     form.save_m2m()  # Save collaborators
-                    
-                    # Atomically select the option (prevents race conditions)
-                    selected_option.current_teams += 1
-                    selected_option.save(update_fields=['current_teams'])
+
+                    locked_option.current_teams += 1
+                    locked_option.save(update_fields=['current_teams'])
                     
                     # Record activity
                     ProjectActivity.objects.create(

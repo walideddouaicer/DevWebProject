@@ -1,5 +1,6 @@
 from django import forms
 from .models import Project, ProjectDeliverable, StudentProfile, ProjectMilestone, ProjectReport, PublicProjectComment
+from .validators import validate_deliverable_file, validate_image_file
 
 class ProjectForm(forms.ModelForm):
     
@@ -115,9 +116,7 @@ class DeliverableForm(forms.ModelForm):
     def clean_file(self):
         file = self.cleaned_data.get('file')
         if file:
-            # Limit file size to 10MB
-            if file.size > 10 * 1024 * 1024:  # 10MB in bytes
-                raise forms.ValidationError("Le fichier est trop volumineux. La taille maximale est de 10 Mo.")
+            validate_deliverable_file(file)
         return file
     
 
@@ -190,11 +189,30 @@ class MakeProjectPublicForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         from .models import ShowcaseTag
         self.fields['showcase_tags'].queryset = ShowcaseTag.objects.all()
-    
+        # Pre-select the project's current tags when editing
+        if self.instance and self.instance.pk:
+            self.fields['showcase_tags'].initial = [
+                pst.tag_id for pst in self.instance.showcase_tags.all()
+            ]
+
+    def clean_showcase_tags(self):
+        tags = self.cleaned_data.get('showcase_tags')
+        if tags and len(tags) > 5:
+            raise forms.ValidationError("Vous ne pouvez sélectionner que 5 tags maximum.")
+        return tags
+
+    def save_showcase_tags(self, project):
+        """Persist selected tags through the ProjectShowcaseTag through-model."""
+        from .models import ProjectShowcaseTag
+        tags = self.cleaned_data.get('showcase_tags') or []
+        ProjectShowcaseTag.objects.filter(project=project).exclude(tag__in=tags).delete()
+        for tag in tags:
+            ProjectShowcaseTag.objects.get_or_create(project=project, tag=tag)
+
     def clean_public_cover_image(self):
         image = self.cleaned_data.get('public_cover_image')
-        if image and image.size > 5 * 1024 * 1024:  # 5MB limit
-            raise forms.ValidationError("L'image est trop volumineuse (max 5MB).")
+        if image:
+            validate_image_file(image)
         return image
 
 
@@ -347,14 +365,7 @@ class StudentProfileForm(forms.ModelForm):
         """Validate profile picture"""
         picture = self.cleaned_data.get('profile_picture')
         if picture:
-            # Check file size (5MB max)
-            if picture.size > 5 * 1024 * 1024:
-                raise forms.ValidationError("L'image est trop volumineuse (maximum 5MB).")
-            
-            # Check file type
-            if not picture.content_type.startswith('image/'):
-                raise forms.ValidationError("Le fichier doit être une image.")
-        
+            validate_image_file(picture)
         return picture
     
     def clean_phone_number(self):

@@ -837,50 +837,151 @@ def approve_registration(request, registration_id):
     registration = get_object_or_404(PendingRegistration, id=registration_id, is_approved=False)
     
     if request.method == 'POST':
+        from django.db import transaction
+        from accounts.utils import send_approval_email
+
         try:
-            # Create the actual user account - FIXED VERSION
-            user = User.objects.create(
-                username=registration.username,
-                email=registration.email,
-                first_name=registration.first_name,
-                last_name=registration.last_name,
-                is_active=True  # Make sure user is active
-            )
-            # Set the already hashed password directly
-            user.password = registration.password
-            user.save()
-            
-            # Create appropriate profile
-            if registration.role == 'student':
-                StudentProfile.objects.create(
-                    user=user,
-                    student_id=registration.student_id,
-                    year_of_study=registration.year_of_study,
-                    department=registration.department
+            # All-or-nothing: if profile creation fails (e.g. duplicate
+            # student_id), no orphan User account is left behind.
+            with transaction.atomic():
+                user = User.objects.create(
+                    username=registration.username,
+                    email=registration.email,
+                    first_name=registration.first_name,
+                    last_name=registration.last_name,
+                    is_active=True
                 )
-                profile_type = "étudiant"
-            elif registration.role == 'teacher':
-                TeacherProfile.objects.create(
-                    user=user,
-                    teacher_id=registration.teacher_id or '',
-                    department=registration.department
-                )
-                profile_type = "enseignant"
-            
-            # Mark as approved
-            registration.is_approved = True
-            registration.approved_by = request.user
-            registration.approved_at = timezone.now()
-            registration.save()
-            
+                # Set the already hashed password directly
+                user.password = registration.password
+                user.save()
+
+                # Create appropriate profile
+                if registration.role == 'student':
+                    StudentProfile.objects.create(
+                        user=user,
+                        student_id=registration.student_id,
+                        year_of_study=registration.year_of_study,
+                        department=registration.department
+                    )
+                    profile_type = "étudiant"
+                elif registration.role == 'teacher':
+                    TeacherProfile.objects.create(
+                        user=user,
+                        teacher_id=registration.teacher_id or '',
+                        department=registration.department
+                    )
+                    profile_type = "enseignant"
+                else:
+                    profile_type = registration.get_role_display().lower()
+
+                # Mark as approved
+                registration.is_approved = True
+                registration.approved_by = request.user
+                registration.approved_at = timezone.now()
+                registration.save()
+
             messages.success(request, f"Compte {profile_type} approuvé pour {registration.first_name} {registration.last_name}")
-            
-            # TODO: Send approval email to user
-            
+
+            # Notify the user by email (console backend in dev)
+            send_approval_email(registration)
+
         except Exception as e:
             messages.error(request, f"Erreur lors de l'approbation: {str(e)}")
     
     return redirect('administrator:pending_registrations')
+
+@admin_required
+def reports_moderation(request):
+    """Moderation queue for reported public projects (ROADMAP #2)"""
+    from student.models import ProjectReport
+
+    admin = get_object_or_404(AdminProfile, user=request.user)
+
+    show = request.GET.get('show', 'pending')  # 'pending', 'hidden', 'all'
+
+    projects = Project.objects.filter(
+        reports__isnull=False
+    ).distinct().select_related('student__user', 'module').prefetch_related(
+        'reports__reporter'
+    )
+
+    if show == 'pending':
+        projects = projects.filter(reports__is_reviewed=False).distinct()
+    elif show == 'hidden':
+        projects = projects.filter(is_hidden_by_admin=True)
+
+    projects = projects.order_by('-report_count', '-updated_at')
+
+    # Statistics
+    total_reports = ProjectReport.objects.count()
+    pending_reports = ProjectReport.objects.filter(is_reviewed=False).count()
+    hidden_projects = Project.objects.filter(is_hidden_by_admin=True).count()
+
+    context = {
+        'admin': admin,
+        'projects': projects,
+        'show': show,
+        'total_reports': total_reports,
+        'pending_reports': pending_reports,
+        'hidden_projects': hidden_projects,
+    }
+
+    return render(request, 'administrator/reports_moderation.html', context)
+
+
+@admin_required
+def moderate_project(request, project_id):
+    """Apply a moderation action to a reported project"""
+    from student.models import Notification
+
+    if request.method != 'POST':
+        return redirect('administrator:reports_moderation')
+
+    project = get_object_or_404(Project, id=project_id)
+    action = request.POST.get('action')
+    notes = request.POST.get('admin_notes', '').strip()
+
+    if action == 'hide':
+        project.is_hidden_by_admin = True
+        project.is_public = False
+        project.save(update_fields=['is_hidden_by_admin', 'is_public'])
+        project.reports.filter(is_reviewed=False).update(is_reviewed=True, admin_notes=notes)
+
+        Notification.objects.create(
+            recipient=project.student,
+            project=project,
+            notification_type='project_update',
+            message=(
+                f"Votre projet '{project.title}' a été retiré de la vitrine publique "
+                f"suite à des signalements.{' Motif: ' + notes if notes else ''}"
+            )
+        )
+        messages.success(request, f"Projet '{project.title}' masqué de la vitrine publique.")
+
+    elif action == 'unhide':
+        project.is_hidden_by_admin = False
+        project.is_reported = False
+        project.save(update_fields=['is_hidden_by_admin', 'is_reported'])
+
+        Notification.objects.create(
+            recipient=project.student,
+            project=project,
+            notification_type='project_update',
+            message=f"Votre projet '{project.title}' est de nouveau autorisé sur la vitrine publique."
+        )
+        messages.success(request, f"Projet '{project.title}' réautorisé.")
+
+    elif action == 'dismiss':
+        project.reports.filter(is_reviewed=False).update(is_reviewed=True, admin_notes=notes)
+        project.is_reported = False
+        project.save(update_fields=['is_reported'])
+        messages.success(request, f"Signalements du projet '{project.title}' classés sans suite.")
+
+    else:
+        messages.error(request, "Action de modération invalide.")
+
+    return redirect('administrator:reports_moderation')
+
 
 @admin_required
 def reject_registration(request, registration_id):

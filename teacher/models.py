@@ -160,15 +160,19 @@ class ProjectAssignment(models.Model):
         super().clean()
         errors = {}
         
-        # Validate deadlines are in chronological order
+        # Validate deadlines are in chronological order.
+        # "Deadline in the future" is only enforced when creating a new
+        # assignment; otherwise an assignment whose deadline has passed could
+        # never be saved again (e.g. editing its description afterwards).
         now = timezone.now()
-        
-        if self.deadline and self.deadline <= now:
+        is_new = self.pk is None
+
+        if is_new and self.deadline and self.deadline <= now:
             errors['deadline'] = "La date limite doit être dans le futur."
-        
+
         if self.assignment_type == 'choice_based':
             if self.selection_deadline:
-                if self.selection_deadline <= now:
+                if is_new and self.selection_deadline <= now:
                     errors['selection_deadline'] = "La date limite de sélection doit être dans le futur."
                 if self.deadline and self.selection_deadline >= self.deadline:
                     errors['selection_deadline'] = "La sélection des projets doit se terminer avant la date limite du projet."

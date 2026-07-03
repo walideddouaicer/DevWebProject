@@ -405,17 +405,18 @@ def approve_project(request, project_id):
     
     # Import here
     from student.models import Project, ProjectActivity, Notification
-    
+    from .models import DirectStudentAssignment
+
     project = get_object_or_404(
         Project,
         id=project_id,
         module__in=teacher_modules,
         status='submitted'
     )
-    
+
     project.status = 'validated'
     project.save()
-    
+
     # Record activity
     ProjectActivity.objects.create(
         project=project,
@@ -423,15 +424,25 @@ def approve_project(request, project_id):
         activity_type='status_changed',
         description=f"Projet validé par {teacher.user.get_full_name() or teacher.user.username}"
     )
-    
-    # Notify student
-    Notification.objects.create(
-        recipient=project.student,
-        project=project,
-        notification_type='project_update',
-        message=f"Votre projet '{project.title}' a été validé par {teacher.user.get_full_name() or teacher.user.username}"
-    )
-    
+
+    teacher_name = teacher.user.get_full_name() or teacher.user.username
+
+    # Notify the whole team (owner + collaborators)
+    for member in project.get_team_members():
+        Notification.objects.create(
+            recipient=member,
+            project=project,
+            notification_type='project_update',
+            message=f"Le projet '{project.title}' a été validé par {teacher_name}"
+        )
+
+    # Keep direct-assignment tracking in sync for the whole team
+    if project.is_assignment_project() and project.project_assignment.assignment_type == 'direct':
+        DirectStudentAssignment.objects.filter(
+            assignment=project.project_assignment,
+            student__in=[member.id for member in project.get_team_members()]
+        ).update(status='validated')
+
     messages.success(request, f"Projet '{project.title}' validé avec succès.")
     return redirect('teacher:project_review', project_id=project.id)
 
@@ -452,17 +463,18 @@ def reject_project(request, project_id):
     
     # Import here
     from student.models import Project, ProjectActivity, Notification
-    
+    from .models import DirectStudentAssignment
+
     project = get_object_or_404(
         Project,
         id=project_id,
         module__in=teacher_modules,
         status='submitted'
     )
-    
+
     project.status = 'rejected'
     project.save()
-    
+
     # Record activity
     ProjectActivity.objects.create(
         project=project,
@@ -470,14 +482,22 @@ def reject_project(request, project_id):
         activity_type='status_changed',
         description=f"Projet rejeté par {teacher.user.get_full_name() or teacher.user.username}"
     )
-    
-    # Notify student
-    Notification.objects.create(
-        recipient=project.student,
-        project=project,
-        notification_type='project_update',
-        message=f"Votre projet '{project.title}' a été rejeté. Consultez les commentaires du projet pour plus de détails."
-    )
+
+    # Notify the whole team (owner + collaborators)
+    for member in project.get_team_members():
+        Notification.objects.create(
+            recipient=member,
+            project=project,
+            notification_type='project_update',
+            message=f"Le projet '{project.title}' a été rejeté. Consultez les commentaires du projet pour plus de détails."
+        )
+
+    # The team goes back to work: reset direct-assignment tracking
+    if project.is_assignment_project() and project.project_assignment.assignment_type == 'direct':
+        DirectStudentAssignment.objects.filter(
+            assignment=project.project_assignment,
+            student__in=[member.id for member in project.get_team_members()]
+        ).update(status='started')
     
     messages.success(request, f"Projet '{project.title}' rejeté. L'étudiant peut maintenant le modifier et resoumettre.")
     return redirect('teacher:project_review', project_id=project.id)

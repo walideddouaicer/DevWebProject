@@ -1017,10 +1017,7 @@ def create_teacher_module(request):
                     module = form.save(commit=False)
                     module.primary_teacher = teacher
                     module.created_by_teacher = True
-                    module.requires_approval = False  # CHANGED: No approval needed
-                    module.is_active = True           # CHANGED: Active immediately
-                    module.approved_by = None         # CHANGED: No approval needed
-                    module.approved_at = timezone.now()  # CHANGED: Auto-approved
+                    module.is_active = True  # Active immediately, no approval needed
                     module.save()
                     
                     # Automatically assign the teacher to the module

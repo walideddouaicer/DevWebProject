@@ -9,7 +9,7 @@ from .forms import ProjectDeliverable
 from .forms import MilestoneForm
 from .models import ProjectMilestone
 from .models import CollaborationInvitation
-from .utils import send_invitation_email
+from .utils import send_invitation_email, clear_student_context_cache
 from .models import ProjectComment
 from .models import ProjectActivity
 from django.db.models import Q, OuterRef, Case, When
@@ -93,7 +93,8 @@ def project_submit(request, project_id):
 @login_required
 def project_approve(request, project_id):
     """Teacher approves a submitted project"""
-    if not request.user.is_staff:
+    from teacher.models import TeacherProfile
+    if not TeacherProfile.objects.filter(user=request.user).exists():
         messages.error(request, "Seuls les enseignants peuvent approuver les projets.")
         return redirect('student:project_detail', project_id=project_id)
 
@@ -155,7 +156,8 @@ def project_approve(request, project_id):
 @login_required
 def project_reject(request, project_id):
     """Teacher rejects a submitted project"""
-    if not request.user.is_staff:
+    from teacher.models import TeacherProfile
+    if not TeacherProfile.objects.filter(user=request.user).exists():
         messages.error(request, "Seuls les enseignants peuvent rejeter les projets.")
         return redirect('student:project_detail', project_id=project_id)
 
@@ -213,6 +215,8 @@ def complete_milestone(request, milestone_id):
     # Only mark as completed if it's not already completed
     if not milestone.completed:
         milestone.completed = True
+        milestone.completed_by = request.user
+        milestone.completed_at = timezone.now()
         milestone.save()
         
         # Record activity
@@ -388,24 +392,18 @@ def add_collaborator(request, project_id):
 @login_required
 def add_feedback(request, project_id):
     """Allow teachers to add feedback to projects"""
-    if not request.user.is_staff:
+    from teacher.models import TeacherProfile
+    if not TeacherProfile.objects.filter(user=request.user).exists():
         messages.error(request, "Seuls les enseignants peuvent ajouter des commentaires.")
         return redirect('student:project_detail', project_id=project_id)
     project = get_object_or_404(Project, id=project_id)
     if request.method == 'POST':
         content = request.POST.get('content')
         if content:
-            # Check if teacher has a StudentProfile (they might not)
-            try:
-                author = StudentProfile.objects.get(user=request.user)
-            except StudentProfile.DoesNotExist:
-                # Create a temporary profile for the teacher or handle differently
-                messages.error(request, "Profil enseignant non trouvé. Contactez l'administrateur.")
-                return redirect('student:project_detail', project_id=project_id)
-            # Create a special comment marked as feedback
+            # Create a special comment marked as feedback (author is the User)
             comment = ProjectComment(
                 project=project,
-                author=author,
+                author=request.user,
                 content=f"[FEEDBACK ENSEIGNANT]\n{content}"
             )
             comment.save()
@@ -455,6 +453,7 @@ def mark_notification_read(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, recipient=student)
     notification.is_read = True
     notification.save()
+    clear_student_context_cache(student)
     return redirect('student:notifications')
 
 @login_required
@@ -462,6 +461,7 @@ def mark_all_notifications_read(request):
     """Mark all notifications as read"""
     student = get_object_or_404(StudentProfile, user=request.user)
     Notification.objects.filter(recipient=student, is_read=False).update(is_read=True)
+    clear_student_context_cache(student)
     messages.success(request, "Toutes les notifications ont été marquées comme lues.")
     return redirect('student:notifications')
 
@@ -500,7 +500,7 @@ def dashboard(request):
     total_projects = all_projects.count()
     completed_projects = all_projects.filter(status='validated').count()
     in_progress_projects = all_projects.filter(status='in_progress').count()
-    pending_validation = all_projects.filter(status='pending_validation').count()
+    pending_validation = all_projects.filter(status='submitted').count()
     
     # Get pending invitations count
     pending_invitations_count = CollaborationInvitation.objects.filter(
@@ -1151,7 +1151,8 @@ def respond_to_invitation(request, invitation_id, response):
         invitation.status = 'rejected'
         invitation.save()
         messages.info(request, f"Vous avez refusé l'invitation pour le projet '{invitation.project.title}'.")
-    
+
+    clear_student_context_cache(student)
     return redirect('student:invitations_list')
 
 
@@ -1295,9 +1296,9 @@ def make_project_public(request, project_id):
                 if enhanced_project.make_public():
                     # Now save all the enhanced fields to the database
                     enhanced_project.save()
-                    
-                    # Save many-to-many relationships (tags)
-                    form.save_m2m()
+
+                    # Save selected showcase tags (custom through-model field)
+                    form.save_showcase_tags(enhanced_project)
                     
                     ProjectActivity.objects.create(
                         project=enhanced_project,
@@ -1544,16 +1545,20 @@ def project_submit_confirmation(request, project_id):
 def profile_settings(request):
     """Main profile and settings page with tabs"""
     student = get_object_or_404(StudentProfile, user=request.user)
-    
+
     # Get current tab (default to profile)
     active_tab = request.GET.get('tab', 'profile')
-    
+
+    from .models import UserPreferences
+    preferences, _ = UserPreferences.objects.get_or_create(user=request.user)
+
     context = {
         'student': student,
         'active_tab': active_tab,
         'profile_completion': student.get_profile_completion_percentage(),
+        'preferences': preferences,
     }
-    
+
     return render(request, 'student/profile_settings.html', context)
 
 @login_required
@@ -1600,7 +1605,10 @@ def account_settings(request):
     
     # Check if password was just changed
     password_changed = request.GET.get('changed') == 'true'
-    
+
+    from .models import UserPreferences
+    preferences, _ = UserPreferences.objects.get_or_create(user=request.user)
+
     if request.method == 'POST':
         form = AccountSettingsForm(request.POST)
         if form.is_valid():
@@ -1608,23 +1616,21 @@ def account_settings(request):
             if form.cleaned_data.get('change_password'):
                 # Redirect to password change
                 return redirect('student:password_change')
-            
-            # Handle other settings here
-            messages.success(request, "Paramètres mis à jour avec succès!")
-            return redirect('student:profile_settings')
-    else:
-        form = AccountSettingsForm()
-    
+
+            # Persist notification preferences
+            preferences.email_notifications = form.cleaned_data.get('email_notifications', False)
+            preferences.project_notifications = form.cleaned_data.get('project_notifications', False)
+            preferences.collaboration_notifications = form.cleaned_data.get('collaboration_notifications', False)
+            preferences.save()
+
+            messages.success(request, "Préférences de notification mises à jour!")
+            return redirect('/student/settings/?tab=notifications')
+
+    # The account settings UI lives in the tabbed settings page
+    # (there is no standalone account_settings template).
     if password_changed:
-        messages.success(request, "🎉 Votre mot de passe a été modifié avec succès!")
-    
-    context = {
-        'student': student,
-        'form': form,
-        'password_changed': password_changed,
-    }
-    
-    return render(request, 'student/account_settings.html', context)
+        return redirect('/student/settings/?tab=account&changed=true')
+    return redirect('/student/settings/?tab=account')
 
 @login_required
 def delete_profile_picture(request):

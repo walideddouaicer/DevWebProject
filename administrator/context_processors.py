@@ -22,8 +22,21 @@ def admin_context(request):
                 created_by_teacher=True
             ).count()
             context['recent_modules_count'] = recent_modules
-            # Rest of your existing context... (all zeros for now)
-        except:
+
+            # Real counts for the nav badges
+            from accounts.models import PendingRegistration
+            from student.models import Project
+            context['pending_registrations_count'] = PendingRegistration.objects.filter(
+                is_approved=False
+            ).count()
+            context['reported_projects_count'] = Project.objects.filter(
+                is_reported=True,
+                is_hidden_by_admin=False
+            ).count()
+            context['urgent_admin_tasks_count'] = (
+                context['pending_registrations_count'] + context['reported_projects_count']
+            )
+        except Exception:
             pass
     
     return context 

@@ -132,8 +132,9 @@ def student_context(request):
                 'pending_assignments_count': pending_count,
             })
         
-        # Cache the result for better performance (cache for 30 minutes)
-        cache.set(cache_key, context, 1800)
+        # Cache briefly (5 min) so badges stay responsive; mutation views
+        # also invalidate this via utils.clear_student_context_cache().
+        cache.set(cache_key, context, 300)
         
     except StudentProfile.DoesNotExist:
         # Return default context if student profile doesn't exist

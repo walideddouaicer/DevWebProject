@@ -94,13 +94,6 @@ that priority order). Role is determined by which `*Profile` row a `User` has.
 
 ## Known upgrade backlog (planned with the user)
 
-Ordered roughly by priority. Done items are checked.
-
-- [x] Pin `requirements.txt`; env-based settings + security hardening; remove dead `projects` app.
-- [ ] Build the real **search** feature (the empty `search` app).
-- [ ] File-upload validation (deliverables + images): type/size limits.
-- [ ] Real email notifications (backend is env-ready; wire the sends).
-- [ ] Deadline reminder jobs (`ProjectAssignment.is_deadline_approaching()` exists, nothing triggers it).
-- [ ] PDF/Excel exports (reportlab/openpyxl already installed).
-- [ ] Grading/evaluation model (rubric + score + feedback).
-- [ ] Add a test suite, starting with assignment/team-size logic.
+**See `ROADMAP.md`** — the full prioritized feature backlog lives there (4 phases,
+15 features). Keep it updated as items land; it is the single source of truth for
+what to build next across sessions.

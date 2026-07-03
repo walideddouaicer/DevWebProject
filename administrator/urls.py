@@ -36,6 +36,10 @@ urlpatterns = [
     path('registrations/<int:registration_id>/approve/', views.approve_registration, name='approve_registration'),
     path('registrations/<int:registration_id>/reject/', views.reject_registration, name='reject_registration'),
     
+    # Report Moderation
+    path('moderation/reports/', views.reports_moderation, name='reports_moderation'),
+    path('moderation/projects/<int:project_id>/', views.moderate_project, name='moderate_project'),
+
     # Statistics & Reports
     path('statistics/', views.statistics, name='statistics'),
     path('exports/', views.exports, name='exports'),

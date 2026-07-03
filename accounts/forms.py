@@ -72,7 +72,15 @@ class StudentSignupForm(BaseSignupForm):
     
     class Meta(BaseSignupForm.Meta):
         fields = BaseSignupForm.Meta.fields + ['student_id', 'year_of_study', 'department']
-    
+
+    def clean_student_id(self):
+        student_id = self.cleaned_data.get('student_id')
+        if StudentProfile.objects.filter(student_id=student_id).exists():
+            raise forms.ValidationError("Un compte avec ce numéro d'étudiant existe déjà.")
+        if PendingRegistration.objects.filter(student_id=student_id, is_approved=False).exists():
+            raise forms.ValidationError("Une demande d'inscription avec ce numéro d'étudiant est en attente.")
+        return student_id
+
     def save(self, commit=True):
         registration = super().save(commit=False)
         registration.role = 'student'

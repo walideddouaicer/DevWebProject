@@ -1,0 +1,207 @@
+<!-- administrator/templates/administrator/reports_moderation.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modération des signalements - Administration</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #2d3748; }
+        .admin-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: #2d3748; color: white; padding: 2rem 1rem; }
+        .sidebar h2 { margin-bottom: 2rem; color: #4299e1; }
+        .sidebar ul { list-style: none; }
+        .sidebar li { margin-bottom: 0.5rem; }
+        .sidebar a { color: #e2e8f0; text-decoration: none; padding: 0.75rem; display: block; border-radius: 0.5rem; transition: background 0.3s; }
+        .sidebar a:hover, .sidebar a.active { background: #4a5568; }
+        .main-content { flex: 1; padding: 2rem; }
+        .header { display: flex; align-items: center; margin-bottom: 2rem; background: white; padding: 1.5rem 2rem; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .header h1 { color: #2d3748; font-size: 2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+        .stat-card h3 { font-size: 2rem; color: #4299e1; margin-bottom: 0.5rem; }
+        .stat-card p { color: #718096; }
+        .filter-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .filter-tab { padding: 0.5rem 1.25rem; border-radius: 2rem; text-decoration: none; font-weight: 600; background: white; color: #4a5568; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .filter-tab.active { background: #4299e1; color: white; }
+        .reports-container { background: white; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .reports-header { background: #4299e1; color: white; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .project-card { border-bottom: 1px solid #e2e8f0; padding: 1.5rem 2rem; }
+        .project-card:last-child { border-bottom: none; }
+        .project-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+        .project-name { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .project-name a { color: #2b6cb0; text-decoration: none; }
+        .project-details { color: #718096; font-size: 0.9rem; }
+        .badge { padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+        .badge-reports { background: #fed7d7; color: #c53030; }
+        .badge-hidden { background: #2d3748; color: white; }
+        .badge-public { background: #c6f6d5; color: #276749; }
+        .report-list { margin-top: 1rem; background: #f8fafc; border-radius: 0.5rem; padding: 1rem 1.25rem; }
+        .report-item { padding: 0.5rem 0; border-bottom: 1px dashed #e2e8f0; font-size: 0.9rem; }
+        .report-item:last-child { border-bottom: none; }
+        .report-reason { font-weight: 600; color: #c53030; }
+        .report-reviewed { opacity: 0.55; }
+        .moderation-actions { display: flex; gap: 0.75rem; align-items: flex-start; flex-wrap: wrap; margin-top: 1rem; }
+        .moderation-actions form { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .notes-input { padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; min-width: 240px; font-size: 0.9rem; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s; }
+        .btn-hide { background: #f56565; color: white; }
+        .btn-hide:hover { background: #e53e3e; }
+        .btn-unhide { background: #48bb78; color: white; }
+        .btn-unhide:hover { background: #38a169; }
+        .btn-dismiss { background: #a0aec0; color: white; }
+        .btn-dismiss:hover { background: #718096; }
+        .btn-back { background: #4299e1; color: white; margin-bottom: 2rem; }
+        .btn-back:hover { background: #3182ce; }
+        .empty-state { text-align: center; padding: 3rem 2rem; color: #718096; }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; color: #cbd5e0; }
+        .messages { margin-bottom: 2rem; }
+        .alert { padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 1rem; }
+        .alert-success { background: #c6f6d5; color: #276749; border: 1px solid #9ae6b4; }
+        .alert-error { background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; }
+        .alert-info { background: #bee3f8; color: #2b6cb0; border: 1px solid #90cdf4; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <h2><i class="fas fa-cog"></i> Administration</h2>
+            <ul>
+                <li><a href="{% url 'administrator:dashboard' %}"><i class="fas fa-tachometer-alt"></i> Tableau de bord</a></li>
+                <li><a href="{% url 'administrator:projects_list' %}"><i class="fas fa-project-diagram"></i> Projets</a></li>
+                <li><a href="{% url 'administrator:modules_list' %}"><i class="fas fa-book"></i> Modules</a></li>
+                <li><a href="{% url 'administrator:assignments_management' %}"><i class="fas fa-users-cog"></i> Assignations</a></li>
+                <li><a href="{% url 'administrator:users_overview' %}"><i class="fas fa-users"></i> Utilisateurs</a></li>
+                <li><a href="{% url 'administrator:pending_registrations' %}"><i class="fas fa-user-clock"></i> Inscriptions</a></li>
+                <li><a href="{% url 'administrator:reports_moderation' %}" class="active"><i class="fas fa-flag"></i> Signalements{% if pending_reports %} ({{ pending_reports }}){% endif %}</a></li>
+                <li><a href="{% url 'administrator:statistics' %}"><i class="fas fa-chart-bar"></i> Statistiques</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <a href="{% url 'administrator:dashboard' %}" class="btn btn-back">
+                <i class="fas fa-arrow-left"></i> Retour au tableau de bord
+            </a>
+
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="header">
+                <h1><i class="fas fa-flag"></i> Modération des signalements</h1>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>{{ pending_reports }}</h3>
+                    <p>Signalements à traiter</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ total_reports }}</h3>
+                    <p>Signalements au total</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ hidden_projects }}</h3>
+                    <p>Projets masqués</p>
+                </div>
+            </div>
+
+            <div class="filter-tabs">
+                <a href="?show=pending" class="filter-tab {% if show == 'pending' %}active{% endif %}">À traiter</a>
+                <a href="?show=hidden" class="filter-tab {% if show == 'hidden' %}active{% endif %}">Masqués</a>
+                <a href="?show=all" class="filter-tab {% if show == 'all' %}active{% endif %}">Tous les projets signalés</a>
+            </div>
+
+            <div class="reports-container">
+                <div class="reports-header">
+                    <h2>Projets signalés</h2>
+                    <span>{{ projects|length }} projet{{ projects|length|pluralize }}</span>
+                </div>
+
+                {% if projects %}
+                    {% for project in projects %}
+                    <div class="project-card">
+                        <div class="project-top">
+                            <div>
+                                <div class="project-name">
+                                    <a href="{% url 'administrator:project_detail' project.id %}">{{ project.title }}</a>
+                                </div>
+                                <div class="project-details">
+                                    <strong>Auteur:</strong> {{ project.student.get_full_name }}
+                                    {% if project.module %} — <strong>Module:</strong> {{ project.module.code }}{% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge badge-reports">{{ project.report_count }} signalement{{ project.report_count|pluralize }}</span>
+                                {% if project.is_hidden_by_admin %}
+                                    <span class="badge badge-hidden"><i class="fas fa-eye-slash"></i> Masqué</span>
+                                {% elif project.is_public %}
+                                    <span class="badge badge-public"><i class="fas fa-eye"></i> Public</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="report-list">
+                            {% for report in project.reports.all %}
+                            <div class="report-item {% if report.is_reviewed %}report-reviewed{% endif %}">
+                                <span class="report-reason">{{ report.get_reason_display }}</span>
+                                — {{ report.description }}
+                                <br>
+                                <small>
+                                    Par {{ report.reporter.username }} le {{ report.created_at|date:"d/m/Y H:i" }}
+                                    {% if report.is_reviewed %} · <i class="fas fa-check"></i> Traité{% if report.admin_notes %} ({{ report.admin_notes }}){% endif %}{% endif %}
+                                </small>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="moderation-actions">
+                            {% if not project.is_hidden_by_admin %}
+                            <form method="post" action="{% url 'administrator:moderate_project' project.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="hide">
+                                <input type="text" name="admin_notes" class="notes-input" placeholder="Motif (visible par l'étudiant)...">
+                                <button type="submit" class="btn btn-hide" onclick="return confirm('Masquer ce projet de la vitrine publique ?')">
+                                    <i class="fas fa-eye-slash"></i> Masquer
+                                </button>
+                            </form>
+                            {% else %}
+                            <form method="post" action="{% url 'administrator:moderate_project' project.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="unhide">
+                                <button type="submit" class="btn btn-unhide" onclick="return confirm('Réautoriser ce projet sur la vitrine publique ?')">
+                                    <i class="fas fa-eye"></i> Réautoriser
+                                </button>
+                            </form>
+                            {% endif %}
+                            <form method="post" action="{% url 'administrator:moderate_project' project.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="dismiss">
+                                <input type="text" name="admin_notes" class="notes-input" placeholder="Note interne (optionnel)...">
+                                <button type="submit" class="btn btn-dismiss" onclick="return confirm('Classer les signalements sans suite ?')">
+                                    <i class="fas fa-check"></i> Sans suite
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-shield-check"></i>
+                        <h3>Aucun signalement à traiter</h3>
+                        <p>Tous les signalements ont été examinés.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

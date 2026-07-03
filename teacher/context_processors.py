@@ -61,14 +61,9 @@ def teacher_context(request):
         ).count()
         context['ungraded_projects_count'] = ungraded_projects
         
-        # Count teacher-created modules pending approval
-        pending_modules = Module.objects.filter(
-            primary_teacher=teacher,
-            created_by_teacher=True,
-            requires_approval=True,
-            approved_by__isnull=True
-        ).count()
-        context['pending_module_approvals'] = pending_modules
+        # Module approval system was removed: modules are active immediately,
+        # so there is never anything pending approval.
+        context['pending_module_approvals'] = 0
         
         # FIXED: Count active students across teacher's modules
         teacher_module_ids = ModuleAssignment.objects.filter(
@@ -354,26 +349,8 @@ def teacher_notification_context(request):
         deadline_alerts.sort(key=lambda x: (x['days_left'], x['assignment'].title))
         context['notifications']['deadline_alerts'] = deadline_alerts[:5]  # Top 5
         
-        # System messages (module approvals, etc.)
-        system_messages = []
-        
-        # Check for pending module approvals
-        pending_modules = Module.objects.filter(
-            primary_teacher=teacher,
-            created_by_teacher=True,
-            requires_approval=True,
-            approved_by__isnull=True
-        )
-        
-        for module in pending_modules:
-            system_messages.append({
-                'type': 'module_approval',
-                'message': f"Module '{module.code}' en attente d'approbation",
-                'module': module,
-                'created_at': module.created_at
-            })
-        
-        context['notifications']['system_messages'] = system_messages
+        # System messages (module approval system was removed, nothing pending)
+        context['notifications']['system_messages'] = []
         
         # Student activity alerts (high submission volumes, etc.)
         activity_alerts = []

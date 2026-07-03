@@ -309,49 +309,55 @@
                         <p>Configurez vos préférences de notification.</p>
                     </div>
                     
-                    <div class="notification-settings">
-                        <div class="notification-group">
-                            <h4>Notifications de projets</h4>
-                            <div class="notification-item">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <div>
-                                    <strong>Mises à jour de projets</strong>
-                                    <p>Notifications lors de changements sur vos projets</p>
+                    <form method="post" action="{% url 'student:account_settings' %}">
+                        {% csrf_token %}
+                        <div class="notification-settings">
+                            <div class="notification-group">
+                                <h4>Notifications de projets</h4>
+                                <div class="notification-item">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" name="project_notifications" {% if preferences.project_notifications %}checked{% endif %}>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <div>
+                                        <strong>Mises à jour de projets</strong>
+                                        <p>Notifications lors de changements sur vos projets</p>
+                                    </div>
+                                </div>
+                                <div class="notification-item">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" name="collaboration_notifications" {% if preferences.collaboration_notifications %}checked{% endif %}>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <div>
+                                        <strong>Invitations de collaboration</strong>
+                                        <p>Alertes pour les nouvelles invitations</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="notification-item">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <div>
-                                    <strong>Invitations de collaboration</strong>
-                                    <p>Alertes pour les nouvelles invitations</p>
+
+                            <div class="notification-group">
+                                <h4>Notifications système</h4>
+                                <div class="notification-item">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" name="email_notifications" {% if preferences.email_notifications %}checked{% endif %}>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <div>
+                                        <strong>Notifications par email</strong>
+                                        <p>Recevoir des notifications par email</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="notification-group">
-                            <h4>Notifications système</h4>
-                            <div class="notification-item">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <div>
-                                    <strong>Notifications par email</strong>
-                                    <p>Recevoir des notifications par email</p>
-                                </div>
-                            </div>
+
+                        <div class="form-actions" style="margin-top: 24px;">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Enregistrer les préférences
+                            </button>
                         </div>
-                    </div>
-                    
-                    <div class="section-note">
-                        <p><i class="fas fa-info-circle"></i> Ces paramètres seront bientôt fonctionnels.</p>
-                    </div>
+                    </form>
                 </div>
 
             {% elif active_tab == 'privacy' %}
