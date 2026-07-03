@@ -380,6 +380,26 @@ class ProjectOption(models.Model):
         verbose_name_plural = "Project Options"
 
 
+# Module announcements (ROADMAP #10)
+class ModuleAnnouncement(models.Model):
+    """A teacher broadcast to every student enrolled in a module."""
+    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='announcements')
+    teacher = models.ForeignKey(
+        TeacherProfile, on_delete=models.SET_NULL, null=True, related_name='announcements'
+    )
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Module Announcement"
+        verbose_name_plural = "Module Announcements"
+
+    def __str__(self):
+        return f"[{self.module.code}] {self.title}"
+
+
 # Grading / evaluation system (ROADMAP #4)
 class ProjectEvaluation(models.Model):
     """Teacher's graded evaluation of a project: overall score /20 + feedback."""

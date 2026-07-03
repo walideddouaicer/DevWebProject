@@ -48,6 +48,9 @@ urlpatterns = [
     
     path('modules/<int:module_id>/students/', views.get_module_students, name='get_module_students'),
 
+    # Module announcements
+    path('modules/<int:module_id>/announce/', views.post_module_announcement, name='post_module_announcement'),
+
     # Excel exports
     path('modules/<int:module_id>/export/', views.export_module_roster, name='export_module_roster'),
     path('assignments/<int:assignment_id>/export/', views.export_assignment_results, name='export_assignment_results'),

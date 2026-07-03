@@ -381,6 +381,85 @@ class BulkActionTests(TestCase):
         self.assertEqual(self.projects[0].status, 'submitted')
 
 
+class AnnouncementTests(TestCase):
+    def setUp(self):
+        from .models import ModuleEnrollment
+
+        teacher_user = User.objects.create_user(username='prof', password='profpass')
+        self.teacher = TeacherProfile.objects.create(user=teacher_user, teacher_id='T001')
+
+        self.module = Module.objects.create(name='Programmation Web', code='WEB301')
+        ModuleAssignment.objects.create(teacher=self.teacher, module=self.module, is_active=True)
+
+        # Two enrolled students, one inactive enrollment, one outsider
+        self.enrolled = []
+        for i in range(2):
+            user = User.objects.create_user(username=f'etu{i}', password='pass', email=f'etu{i}@x.com')
+            profile = StudentProfile.objects.create(
+                user=user, student_id=f'E00{i}', year_of_study=3, department='Info'
+            )
+            ModuleEnrollment.objects.create(student=profile, module=self.module, is_active=True)
+            self.enrolled.append(profile)
+
+        inactive_user = User.objects.create_user(username='parti', password='pass')
+        self.inactive = StudentProfile.objects.create(
+            user=inactive_user, student_id='E098', year_of_study=3, department='Info'
+        )
+        ModuleEnrollment.objects.create(student=self.inactive, module=self.module, is_active=False)
+
+        self.url = reverse('teacher:post_module_announcement', args=[self.module.id])
+
+    def test_announcement_notifies_active_students_only(self):
+        from .models import ModuleAnnouncement
+
+        self.client.login(username='prof', password='profpass')
+        response = self.client.post(self.url, {
+            'title': 'Changement de salle',
+            'content': 'Le cours de lundi aura lieu en B204.',
+        })
+        self.assertEqual(response.status_code, 302)
+
+        announcement = ModuleAnnouncement.objects.get(module=self.module)
+        self.assertEqual(announcement.title, 'Changement de salle')
+        self.assertEqual(announcement.teacher, self.teacher)
+
+        notifications = Notification.objects.filter(notification_type='announcement')
+        self.assertEqual(notifications.count(), 2)
+        recipients = {n.recipient_id for n in notifications}
+        self.assertEqual(recipients, {s.id for s in self.enrolled})
+        self.assertNotIn(self.inactive.id, recipients)
+        self.assertIn('B204', notifications.first().message)
+
+    def test_announcement_requires_title_and_content(self):
+        from .models import ModuleAnnouncement
+
+        self.client.login(username='prof', password='profpass')
+        self.client.post(self.url, {'title': '  ', 'content': ''})
+        self.assertEqual(ModuleAnnouncement.objects.count(), 0)
+        self.assertEqual(Notification.objects.count(), 0)
+
+    def test_announcement_requires_module_access(self):
+        from .models import ModuleAnnouncement
+
+        other = User.objects.create_user(username='prof2', password='pass')
+        TeacherProfile.objects.create(user=other, teacher_id='T002')
+        self.client.login(username='prof2', password='pass')
+
+        self.client.post(self.url, {'title': 'Intrusion', 'content': 'x'})
+        self.assertEqual(ModuleAnnouncement.objects.count(), 0)
+
+    def test_announcements_listed_on_module_page(self):
+        from .models import ModuleAnnouncement
+
+        ModuleAnnouncement.objects.create(
+            module=self.module, teacher=self.teacher,
+            title='Rappel examen', content='Réviser les chapitres 1 à 4.',
+        )
+        self.client.login(username='prof', password='profpass')
+        response = self.client.get(reverse('teacher:module_detail', args=[self.module.id]))
+        self.assertContains(response, 'Rappel examen')
+
+
 class TeacherExportTests(TestCase):
     def setUp(self):
         from django.utils import timezone

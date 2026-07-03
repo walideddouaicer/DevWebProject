@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     TeacherProfile, ModuleAssignment, ModuleEnrollment, Module,
-    ProjectEvaluation, EvaluationCriterion,
+    ProjectEvaluation, EvaluationCriterion, ModuleAnnouncement,
 )
 
 # Add a nice admin interface for TeacherProfile
@@ -62,3 +62,11 @@ admin.site.register(Module, ModuleAdmin)
 admin.site.register(ModuleAssignment, ModuleAssignmentAdmin)
 admin.site.register(ModuleEnrollment, ModuleEnrollmentAdmin)
 admin.site.register(ProjectEvaluation, ProjectEvaluationAdmin)
+
+
+class ModuleAnnouncementAdmin(admin.ModelAdmin):
+    list_display = ('title', 'module', 'teacher', 'created_at')
+    list_filter = ('module', 'created_at')
+    search_fields = ('title', 'content', 'module__code')
+
+admin.site.register(ModuleAnnouncement, ModuleAnnouncementAdmin)

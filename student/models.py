@@ -672,6 +672,7 @@ class Notification(models.Model):
         ('group_invitation', 'Invitation de groupe'),
         ('project_selection', 'Sélection de projet'),
         ('assignment_feedback', 'Commentaire sur devoir'),
+        ('announcement', 'Annonce de module'),
     ]
     
     recipient = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='notifications')

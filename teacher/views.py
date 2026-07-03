@@ -137,6 +137,9 @@ def module_detail(request, module_id):
     submitted_projects = module_projects.filter(status='submitted').count()
     validated_projects = module_projects.filter(status='validated').count()
     
+    # Recent announcements for this module
+    announcements = module.announcements.select_related('teacher__user')[:5]
+
     context = {
         'teacher': teacher,
         'module': module,
@@ -147,8 +150,9 @@ def module_detail(request, module_id):
         'total_projects': total_projects,
         'submitted_projects': submitted_projects,
         'validated_projects': validated_projects,
+        'announcements': announcements,
     }
-    
+
     return render(request, 'teacher/module_detail.html', context)
 
 @login_required
@@ -681,6 +685,92 @@ def add_teacher_comment(request, project_id):
         messages.error(request, "Le commentaire ne peut pas être vide.")
     
     return redirect('teacher:project_review', project_id=project.id)
+
+# Module announcements (ROADMAP #10)
+
+@login_required
+@require_http_methods(["POST"])
+def post_module_announcement(request, module_id):
+    """Broadcast an announcement to every active student of a module."""
+    from .models import ModuleAnnouncement
+    from student.models import Notification, UserPreferences
+    from django.core.mail import send_mail
+    from django.conf import settings
+
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect('login')
+
+    try:
+        module_assignment = ModuleAssignment.objects.get(
+            teacher=teacher, module_id=module_id, is_active=True
+        )
+        module = module_assignment.module
+    except ModuleAssignment.DoesNotExist:
+        messages.error(request, "Vous n'avez pas accès à ce module.")
+        return redirect('teacher:modules_list')
+
+    title = request.POST.get('title', '').strip()
+    content = request.POST.get('content', '').strip()
+
+    if not title or not content:
+        messages.error(request, "Le titre et le contenu de l'annonce sont obligatoires.")
+        return redirect('teacher:module_detail', module_id=module.id)
+
+    announcement = ModuleAnnouncement.objects.create(
+        module=module, teacher=teacher, title=title, content=content
+    )
+
+    teacher_name = teacher.user.get_full_name() or teacher.user.username
+    enrollments = ModuleEnrollment.objects.filter(
+        module=module, is_active=True
+    ).select_related('student__user')
+
+    # In-app notifications (bulk)
+    Notification.objects.bulk_create([
+        Notification(
+            recipient=enrollment.student,
+            notification_type='announcement',
+            message=f"📢 [{module.code}] {title} — {content[:180]}{'...' if len(content) > 180 else ''}",
+        )
+        for enrollment in enrollments
+    ])
+
+    # Emails, respecting each student's preferences
+    emailed = 0
+    for enrollment in enrollments:
+        user = enrollment.student.user
+        if not user.email:
+            continue
+        prefs = UserPreferences.objects.filter(user=user).first()
+        if prefs and not (prefs.email_notifications and prefs.project_notifications):
+            continue
+        try:
+            send_mail(
+                subject=f"[{module.code}] {title}",
+                message=(
+                    f"Bonjour {user.first_name or user.username},\n\n"
+                    f"Annonce de {teacher_name} pour le module {module.code} — {module.name}:\n\n"
+                    f"{content}\n\n"
+                    "Cordialement,\nENSA Project Manager"
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=True,
+            )
+            emailed += 1
+        except Exception:
+            pass
+
+    messages.success(
+        request,
+        f"Annonce publiée: {enrollments.count()} étudiant(s) notifié(s)"
+        + (f", {emailed} email(s) envoyé(s)." if emailed else ".")
+    )
+    return redirect('teacher:module_detail', module_id=module.id)
+
 
 # Excel exports (ROADMAP #7)
 

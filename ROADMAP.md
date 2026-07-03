@@ -77,9 +77,11 @@ keep it updated every session.
   `min|max_group_size` references across 7 templates (team-info UI silently
   hidden since the group→team rename). 7 tests added.
 
-- [ ] **10. Module announcements** *(teachers)*
-  One message broadcast to all enrolled students of a module → in-app notification
-  (+ optional email). Notification infrastructure already exists.
+- [x] **10. Module announcements** *(teachers)* — done 2026-07-03.
+  `ModuleAnnouncement` model + broadcast form on the module detail page (title +
+  content, confirm dialog, recent-announcements history). Active enrollees get an
+  in-app notification (new `announcement` type) and an email respecting their
+  preferences. Registered in Django admin. 4 tests added.
 
 - [ ] **11. Deliverable versioning** *(students, teachers)*
   Re-uploading a report currently just adds another file. Group files by deliverable
