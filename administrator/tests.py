@@ -112,6 +112,124 @@ class ImportStudentsTests(TestCase):
         self.assertIn('spreadsheetml', response['Content-Type'])
 
 
+class ImportTeachersTests(TestCase):
+    def setUp(self):
+        admin_user = User.objects.create_user(username='admin', password='adminpass')
+        AdminProfile.objects.create(user=admin_user, admin_id='A001')
+        self.client.login(username='admin', password='adminpass')
+        self.module = Module.objects.create(name='Programmation Web', code='WEB301')
+
+    def build_file(self, rows, headers=None):
+        if headers is None:
+            headers = ['Prénom', 'Nom', 'Email', 'ID Enseignant', 'Département']
+        return build_roster_file(rows, headers=headers)
+
+    def test_import_creates_teachers_and_assignment(self):
+        from teacher.models import TeacherProfile, ModuleAssignment
+
+        roster = self.build_file([
+            ['Karim', 'Alaoui', 'karim.alaoui@example.com', 'T1001', 'Informatique'],
+            ['Salma', 'Bennis', 'salma.bennis@example.com', '', 'Génie Civil'],
+        ])
+        response = self.client.post(reverse('administrator:import_teachers'), {
+            'excel_file': roster,
+            'module_id': self.module.id,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['created']), 2)
+        self.assertEqual(response.context['errors'], [])
+
+        teacher = TeacherProfile.objects.get(teacher_id='T1001')
+        self.assertEqual(teacher.user.email, 'karim.alaoui@example.com')
+        self.assertTrue(ModuleAssignment.objects.filter(
+            teacher=teacher, module=self.module, is_active=True
+        ).exists())
+
+        # teacher_id was optional for the second row
+        self.assertTrue(TeacherProfile.objects.filter(
+            user__email='salma.bennis@example.com', teacher_id__isnull=True
+        ).exists())
+
+        # Generated password logs the teacher in
+        password = response.context['created'][0]['password']
+        username = response.context['created'][0]['username']
+        self.client.logout()
+        self.assertTrue(self.client.login(username=username, password=password))
+
+    def test_import_skips_duplicates(self):
+        from teacher.models import TeacherProfile
+
+        existing = User.objects.create_user(
+            username='karim', email='karim.alaoui@example.com', password='x'
+        )
+        TeacherProfile.objects.create(user=existing, teacher_id='T9999', department='Info')
+
+        roster = self.build_file([
+            ['Karim', 'Alaoui', 'karim.alaoui@example.com', 'T1001', 'Informatique'],  # dup email
+            ['Nadia', 'Cherkaoui', 'nadia.cherkaoui@example.com', 'T9999', 'Info'],     # dup teacher id
+            ['Omar', 'Drissi', 'omar.drissi@example.com', '', 'Info'],                  # valid
+        ])
+        response = self.client.post(reverse('administrator:import_teachers'), {'excel_file': roster})
+
+        self.assertEqual(len(response.context['created']), 1)
+        self.assertEqual(len(response.context['skipped']), 2)
+
+    def test_template_download(self):
+        response = self.client.get(reverse('administrator:teacher_import_template'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('spreadsheetml', response['Content-Type'])
+
+
+class ToggleUserActiveTests(TestCase):
+    def setUp(self):
+        self.admin_user = User.objects.create_user(username='admin', password='adminpass')
+        AdminProfile.objects.create(user=self.admin_user, admin_id='A001')
+
+        student_user = User.objects.create_user(username='etudiant', password='pass')
+        self.student = StudentProfile.objects.create(
+            user=student_user, student_id='E001', year_of_study=3, department='Info'
+        )
+
+        self.client.login(username='admin', password='adminpass')
+
+    def toggle(self, user):
+        return self.client.post(reverse('administrator:toggle_user_active', args=[user.id]))
+
+    def test_deactivate_and_reactivate_student(self):
+        response = self.toggle(self.student.user)
+        self.assertEqual(response.status_code, 302)
+        self.student.user.refresh_from_db()
+        self.assertFalse(self.student.user.is_active)
+
+        # Deactivated account can no longer log in
+        self.assertFalse(self.client.login(username='etudiant', password='pass'))
+
+        self.client.login(username='admin', password='adminpass')
+        self.toggle(self.student.user)
+        self.student.user.refresh_from_db()
+        self.assertTrue(self.student.user.is_active)
+
+    def test_cannot_deactivate_self(self):
+        self.toggle(self.admin_user)
+        self.admin_user.refresh_from_db()
+        self.assertTrue(self.admin_user.is_active)
+
+    def test_cannot_deactivate_other_admin(self):
+        other_admin = User.objects.create_user(username='admin2', password='pass')
+        AdminProfile.objects.create(user=other_admin, admin_id='A002')
+
+        self.toggle(other_admin)
+        other_admin.refresh_from_db()
+        self.assertTrue(other_admin.is_active)
+
+    def test_requires_admin(self):
+        self.client.logout()
+        self.client.login(username='etudiant', password='pass')
+        response = self.toggle(self.admin_user)
+        self.assertEqual(response.status_code, 302)  # bounced to login
+
+
 class AdminExportTests(TestCase):
     def setUp(self):
         from datetime import date

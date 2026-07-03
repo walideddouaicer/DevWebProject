@@ -1408,6 +1408,213 @@ def download_student_import_template(request):
     workbook.save(response)
     return response
 
+# Bulk teacher import from Excel (ROADMAP #12)
+
+TEACHER_IMPORT_HEADER_ALIASES = {
+    'prenom': 'first_name', 'prénom': 'first_name', 'first_name': 'first_name',
+    'nom': 'last_name', 'last_name': 'last_name',
+    'email': 'email', 'e-mail': 'email',
+    'id enseignant': 'teacher_id', 'teacher_id': 'teacher_id', 'id': 'teacher_id',
+    'departement': 'department', 'département': 'department', 'department': 'department',
+}
+
+TEACHER_IMPORT_REQUIRED_FIELDS = ['first_name', 'last_name', 'email', 'department']
+
+
+@admin_required
+def import_teachers(request):
+    """Bulk-create teacher accounts from an Excel (.xlsx) roster"""
+    from django.db import transaction
+    from django.utils.crypto import get_random_string
+    import openpyxl
+
+    admin = get_object_or_404(AdminProfile, user=request.user)
+    modules = Module.objects.filter(is_active=True).order_by('code')
+
+    created = []
+    skipped = []
+    errors = []
+    import_done = False
+
+    if request.method == 'POST':
+        excel_file = request.FILES.get('excel_file')
+        module_id = request.POST.get('module_id', '')
+
+        module = None
+        if module_id:
+            module = get_object_or_404(Module, id=module_id)
+
+        if not excel_file:
+            messages.error(request, "Veuillez sélectionner un fichier Excel (.xlsx).")
+        elif not excel_file.name.lower().endswith('.xlsx'):
+            messages.error(request, "Format non supporté. Utilisez un fichier .xlsx (modèle téléchargeable ci-dessous).")
+        else:
+            try:
+                workbook = openpyxl.load_workbook(excel_file, read_only=True, data_only=True)
+                sheet = workbook.active
+
+                rows = sheet.iter_rows(values_only=True)
+                header_row = next(rows, None)
+                if header_row is None:
+                    messages.error(request, "Le fichier est vide.")
+                    raise StopIteration
+
+                column_map = {}
+                for index, header in enumerate(header_row):
+                    if header is None:
+                        continue
+                    key = str(header).strip().lower()
+                    if key in TEACHER_IMPORT_HEADER_ALIASES:
+                        column_map[index] = TEACHER_IMPORT_HEADER_ALIASES[key]
+
+                missing_columns = [f for f in TEACHER_IMPORT_REQUIRED_FIELDS if f not in column_map.values()]
+                if missing_columns:
+                    messages.error(
+                        request,
+                        "Colonnes manquantes dans le fichier: Prénom, Nom, Email, Département sont requises "
+                        "(ID Enseignant optionnel). Téléchargez le modèle pour voir le format attendu."
+                    )
+                else:
+                    for row_number, row in enumerate(rows, start=2):
+                        if row is None or all(cell is None or str(cell).strip() == '' for cell in row):
+                            continue
+
+                        data = {}
+                        for index, field in column_map.items():
+                            value = row[index] if index < len(row) else None
+                            data[field] = str(value).strip() if value is not None else ''
+
+                        missing = [f for f in TEACHER_IMPORT_REQUIRED_FIELDS if not data.get(f)]
+                        if missing:
+                            errors.append({'row': row_number, 'reason': "Valeurs manquantes (Prénom, Nom, Email et Département sont obligatoires)"})
+                            continue
+
+                        email = data['email'].lower()
+                        teacher_id = data.get('teacher_id', '')
+
+                        if User.objects.filter(email__iexact=email).exists():
+                            skipped.append({'row': row_number, 'identity': email, 'reason': "Email déjà utilisé"})
+                            continue
+                        if teacher_id and TeacherProfile.objects.filter(teacher_id=teacher_id).exists():
+                            skipped.append({'row': row_number, 'identity': teacher_id, 'reason': "ID enseignant déjà utilisé"})
+                            continue
+
+                        password = get_random_string(10)
+                        try:
+                            with transaction.atomic():
+                                user = User.objects.create_user(
+                                    username=_generate_unique_username(email),
+                                    email=email,
+                                    password=password,
+                                    first_name=data['first_name'],
+                                    last_name=data['last_name'],
+                                    is_active=True,
+                                )
+                                teacher = TeacherProfile.objects.create(
+                                    user=user,
+                                    teacher_id=teacher_id or None,
+                                    department=data['department'],
+                                )
+                                if module:
+                                    ModuleAssignment.objects.create(
+                                        teacher=teacher, module=module,
+                                        assigned_by=request.user, is_active=True,
+                                    )
+                        except Exception as e:
+                            errors.append({'row': row_number, 'reason': f"Erreur lors de la création: {str(e)}"})
+                            continue
+
+                        created.append({
+                            'name': f"{data['first_name']} {data['last_name']}",
+                            'teacher_id': teacher_id or '—',
+                            'email': email,
+                            'username': user.username,
+                            'password': password,
+                        })
+
+                    import_done = True
+                    if created:
+                        assigned_note = f" et assignés au module {module.code}" if module else ""
+                        messages.success(
+                            request,
+                            f"{len(created)} enseignant(s) créé(s){assigned_note}. "
+                            "Notez les mots de passe ci-dessous: ils ne seront plus affichés."
+                        )
+                    if skipped:
+                        messages.warning(request, f"{len(skipped)} ligne(s) ignorée(s) (comptes déjà existants).")
+                    if errors:
+                        messages.error(request, f"{len(errors)} ligne(s) en erreur.")
+                    if not created and not skipped and not errors:
+                        messages.info(request, "Aucune ligne de données trouvée dans le fichier.")
+            except StopIteration:
+                pass
+            except Exception as e:
+                messages.error(request, f"Impossible de lire le fichier Excel: {str(e)}")
+
+    context = {
+        'admin': admin,
+        'modules': modules,
+        'created': created,
+        'skipped': skipped,
+        'errors': errors,
+        'import_done': import_done,
+    }
+
+    return render(request, 'administrator/import_teachers.html', context)
+
+
+@admin_required
+def download_teacher_import_template(request):
+    """Downloadable Excel template for the teacher import"""
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Enseignants"
+    sheet.append(['Prénom', 'Nom', 'Email', 'ID Enseignant', 'Département'])
+    sheet.append(['Karim', 'Alaoui', 'karim.alaoui@example.com', 'T1001', 'Informatique'])
+    sheet.append(['Salma', 'Bennis', 'salma.bennis@example.com', '', 'Génie Civil'])
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="modele_import_enseignants.xlsx"'
+    workbook.save(response)
+    return response
+
+
+# Account activation toggle (ROADMAP #13)
+
+@admin_required
+def toggle_user_active(request, user_id):
+    """Activate/deactivate a user account (students and teachers only)."""
+    if request.method != 'POST':
+        return redirect('administrator:users_list')
+
+    target = get_object_or_404(User, id=user_id)
+
+    # Guards: never touch yourself or another administrator
+    if target == request.user:
+        messages.error(request, "Vous ne pouvez pas désactiver votre propre compte.")
+        return redirect('administrator:users_list')
+    if AdminProfile.objects.filter(user=target).exists():
+        messages.error(request, "Les comptes administrateur ne peuvent pas être désactivés ici.")
+        return redirect('administrator:users_list')
+
+    target.is_active = not target.is_active
+    target.save(update_fields=['is_active'])
+
+    name = target.get_full_name() or target.username
+    if target.is_active:
+        messages.success(request, f"Le compte de {name} a été réactivé.")
+    else:
+        messages.success(request, f"Le compte de {name} a été désactivé. Il ne peut plus se connecter.")
+
+    # Back to the right tab
+    user_type = 'teachers' if TeacherProfile.objects.filter(user=target).exists() else 'students'
+    return redirect(f"/administrator/users/list/?type={user_type}")
+
+
 # Optional Monitoring/Admin Views
 
 @admin_required

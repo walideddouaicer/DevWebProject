@@ -91,12 +91,16 @@ keep it updated every session.
 
 ## Phase 4 — Administration & polish
 
-- [ ] **12. Teacher bulk-import (Excel)** *(admins)*
-  Mirror of the existing student import for teacher accounts.
+- [x] **12. Teacher bulk-import (Excel)** *(admins)* — done 2026-07-03.
+  `/administrator/users/teachers/import/` mirroring the student import: header
+  aliases FR/EN, optional teacher ID, optional module assignment, one-time
+  password display, downloadable template. Linked from the teachers tab of the
+  users list. 3 tests added.
 
-- [ ] **13. Account deactivation UI** *(admins)*
-  Disable a departed student/teacher (`user.is_active = False`) from the users list,
-  with confirm + reactivate. Today only possible via Django admin.
+- [x] **13. Account deactivation UI** *(admins)* — done 2026-07-03.
+  Désactiver/Réactiver buttons on each users-list row (confirm dialog, "Désactivé"
+  badge). Guards: can't deactivate yourself or another admin. Deactivated accounts
+  can no longer log in. 4 tests added.
 
 - [ ] **14. Email digests respecting preferences** *(all)*
   Preferences are saved and honored for invitations; extend to all notification

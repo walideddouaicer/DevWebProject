@@ -225,6 +225,11 @@
                     <i class="fas fa-file-excel"></i>
                     Importer des Étudiants (Excel)
                 </a>
+                {% else %}
+                <a href="{% url 'administrator:import_teachers' %}" class="bulk-action-btn" style="text-decoration: none;">
+                    <i class="fas fa-file-excel"></i>
+                    Importer des Enseignants (Excel)
+                </a>
                 {% endif %}
                 <button class="bulk-action-btn" onclick="refreshTable()">
                     <i class="fas fa-sync-alt"></i>
@@ -362,11 +367,34 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="action-buttons">
+                                <div class="action-buttons" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
                                     <button class="btn-view" onclick="viewUserDetails({{ user.id }}, '{{ user_type }}')">
                                         <i class="fas fa-eye"></i>
                                         Voir
                                     </button>
+                                    {% if user.user.is_active %}
+                                    <form method="post" action="{% url 'administrator:toggle_user_active' user.user.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-view" style="color: #e53e3e; border-color: #e53e3e;"
+                                                onclick="return confirm('Désactiver le compte de {{ user.user.get_full_name|default:user.user.username|escapejs }} ? Il ne pourra plus se connecter.')"
+                                                title="Désactiver le compte">
+                                            <i class="fas fa-user-slash"></i>
+                                            Désactiver
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span style="background: #fed7d7; color: #c53030; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">
+                                        Désactivé
+                                    </span>
+                                    <form method="post" action="{% url 'administrator:toggle_user_active' user.user.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-view" style="color: #38a169; border-color: #38a169;"
+                                                title="Réactiver le compte">
+                                            <i class="fas fa-user-check"></i>
+                                            Réactiver
+                                        </button>
+                                    </form>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
