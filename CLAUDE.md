@@ -2,6 +2,13 @@
 
 Guidance for Claude Code when working in this repository.
 
+> **ACTIVE WORK: `PLAN.md` is the master plan (production readiness + full UI revamp).**
+> The user delegated it fully and will only say "continue" / press Enter. On every session:
+> follow `PLAN.md` §0 Session protocol. Work on branch `revamp`, pick the next unchecked task,
+> finish it, `make check`, commit, and update the plan's §1/§9. Don't ask the user anything
+> outside PLAN.md §7. Parts of this file below are stale (e.g. "no test suite", Windows paths);
+> PLAN P0.9 rewrites it.
+
 ## Project
 
 **ENSA Project Manager** — a Django 5.2 web platform for managing engineering-school
