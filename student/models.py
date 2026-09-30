@@ -872,6 +872,8 @@ class Project(models.Model):
             models.Index(
                 fields=["is_public", "is_hidden_by_admin", "status"], name="project_showcase_idx"
             ),
+            # Default ordering; lets paginated lists read the newest rows without a full sort.
+            models.Index(fields=["-created_at"], name="project_created_idx"),
         ]
         ordering = ["-created_at"]
 

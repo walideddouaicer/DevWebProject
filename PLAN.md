@@ -41,7 +41,7 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P7.3 done → P7.4 next (performance)**
+- Phase: **P7.4 done → P7.5 next (E2E happy paths)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
 - Last green `make check`: 2026-09-30 (283 tests)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
@@ -426,7 +426,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   injection in exports → prefix `= + - @` cells with `'`). Fix what's found; add tests.
 - [x] **P7.3 Enforce CSP** (flip report-only → enforce); verify with screens + console-error capture in
   the Playwright harness (fail on any CSP violation or JS error).
-- [ ] **P7.4 Performance pass:** query-budget tests green; Lighthouse-style checks through Playwright
+- [x] **P7.4 Performance pass:** query-budget tests green; Lighthouse-style checks through Playwright
   (page weight < 300 KB for app pages excluding user images, no layout shift from fonts via
   `font-display: swap` + metric fallbacks); DB indexes verified with EXPLAIN on Postgres
   for the heaviest lists.
@@ -792,3 +792,12 @@ Everything else in this plan is decided by Claude.
   attrs) → new test `FormWidgetCSPTests` inspects every form's widget attrs. Harness fixes:
   axe injected via page.evaluate (an injected <script> is now CSP-blocked, which had silently
   disabled the audit); file downloads are skipped, not reported as errors.
+- **2026-09-30** · P7.4 · Page weight (Playwright, uncompressed upper bound): cold landing
+  273 KB (3 fonts), app pages 150–175 KB warm; all < 300 KB before gzip. CLS 0.021 on cold
+  home, 0 elsewhere (font-display: swap already; metric-override fallbacks skipped — guessed
+  values could make it worse). EXPLAIN ANALYZE on Postgres 16 with 20k projects / 200k
+  notifications: showcase, unread badge, inbox, review queue already indexed (≤ 1 ms).
+  Fixed: admin projects list 22 ms → 0.3 ms (new `project_created_idx` on -created_at,
+  migration 0026); `member_projects` OR-join + DISTINCT → `IN (subquery)` 3.5 → 1.2 ms.
+  Full suite green on Postgres; fixed a hardcoded module id in test_query_budget that only
+  passed on SQLite (CI runs Postgres).

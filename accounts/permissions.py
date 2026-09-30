@@ -85,7 +85,10 @@ def member_projects(student, queryset=None):
     from student.models import Project
 
     queryset = Project.objects.all() if queryset is None else queryset
-    return queryset.filter(Q(student=student) | Q(collaborators=student)).distinct()
+    # IN (subquery) instead of an OR across the collaborators join: no DISTINCT needed and
+    # Postgres can combine the two indexes (see PLAN P7.4).
+    team = Project.collaborators.through.objects.filter(studentprofile=student)
+    return queryset.filter(Q(student=student) | Q(pk__in=team.values("project_id")))
 
 
 def get_project_for_member(student, project_id, queryset=None):

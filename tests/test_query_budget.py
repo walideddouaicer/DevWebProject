@@ -40,6 +40,8 @@ class QueryBudgetTests(TestCase):
         call_command("seed_demo", verbosity=0, stdout=open("/dev/null", "w"))
 
     def count(self, username, url):
+        # Ids aren't stable across databases (Postgres sequences survive rollbacks).
+        url = url.replace("{WEB401}", str(Module.objects.get(code="WEB401").id))
         self.client.force_login(User.objects.get(username=username))
         with CaptureQueriesContext(connection) as ctx:
             response = self.client.get(url)
@@ -83,7 +85,7 @@ class QueryBudgetTests(TestCase):
         ("etu.youssef", "/search/?q=extra", 20),
         ("prof.alami", "/teacher/assignments/", 30),
         ("admin", "/projects/", 20),
-        ("prof.alami", "/teacher/modules/1/projects/", 25),
+        ("prof.alami", "/teacher/modules/{WEB401}/projects/", 25),
         ("etu.youssef", "/student/notifications/", 15),
         ("admin", "/administrator/moderation/reports/?show=all", 20),
         ("admin", "/administrator/registrations/pending/", 15),
