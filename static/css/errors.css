@@ -1,0 +1,13 @@
+/* Standalone error pages (PLAN P4.4): no dependency on the app layout or database. */
+:root { --paper: #f6f4ef; --surface: #fff; --ink: #1b1a17; --ink-2: #57534a; --line: #e2ded4; --accent: #1f5c57; }
+@media (prefers-color-scheme: dark) {
+  :root { --paper: #121210; --surface: #1a1a18; --ink: #ece9e1; --ink-2: #a8a396; --line: #2c2b27; --accent: #6cb8ae; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+       background: var(--paper); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 34rem; width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 32px; }
+.code { font: 600 .8125rem/1 ui-monospace, "SFMono-Regular", Menlo, monospace; color: var(--ink-2); letter-spacing: .08em; }
+h1 { font-size: 1.5rem; line-height: 1.25; margin: 8px 0 12px; }
+p { color: var(--ink-2); margin: 0 0 20px; }
+a { color: var(--accent); font-weight: 600; }

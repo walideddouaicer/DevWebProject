@@ -1,0 +1,3 @@
+Contact: mailto:{{ contact }}
+Expires: {{ expires }}
+Preferred-Languages: fr, en

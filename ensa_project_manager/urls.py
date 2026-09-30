@@ -20,10 +20,22 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
+from django.views.generic import TemplateView
 
-from .views import smart_redirect
+from .views import favicon, security_txt, smart_redirect
 
 urlpatterns = [
+    path(
+        "robots.txt",
+        TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
+        name="robots_txt",
+    ),
+    path(".well-known/security.txt", security_txt, name="security_txt"),
+    path(
+        "favicon.ico",
+        favicon,
+        name="favicon",
+    ),
     path("admin/", admin.site.urls),
     path("", include("public.urls", namespace="public")),
     # Authentication URLs

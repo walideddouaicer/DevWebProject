@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /$
+Allow: /projects/
+Allow: /about/
+Allow: /features/
+Disallow: /student/
+Disallow: /teacher/
+Disallow: /administrator/
+Disallow: /accounts/
+Disallow: /search/
+Disallow: /login/
+Disallow: /reset/
+Disallow: /password-reset/

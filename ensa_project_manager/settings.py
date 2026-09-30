@@ -120,6 +120,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "ensa_project_manager.middleware.HealthCheckMiddleware",  # must stay first
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -311,6 +312,7 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
 EMAIL_TIMEOUT = env_int("EMAIL_TIMEOUT", 15)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "ENSA Project Manager <noreply@localhost>")
 SERVER_EMAIL = env("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+SECURITY_CONTACT = env("SECURITY_CONTACT", DEFAULT_FROM_EMAIL.split("<")[-1].rstrip(">").strip())
 
 # "Jane Doe <jane@example.com>, ops@example.com" -> error emails in production
 ADMINS = [
