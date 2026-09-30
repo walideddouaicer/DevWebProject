@@ -45,12 +45,6 @@ ROLES = {
 
 # (role, url name) -> "5xx" or "mutates". Bug ids refer to PLAN.md §3.
 KNOWN_FAILURES = {
-    # B1: owner of a project with >= 2 collaborators
-    ("owner", "student:upload_deliverable"): "5xx",
-    ("owner", "student:add_milestone"): "5xx",
-    ("owner", "student:add_comment"): "5xx",
-    ("owner", "student:project_submit_confirmation"): "5xx",
-    ("owner", "student:project_submit"): "5xx",
     # B7: missing templates
     **{
         (role, "public:explore_projects"): "5xx"

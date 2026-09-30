@@ -5,7 +5,8 @@ from django.db.models import Case, OuterRef, Q, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from teacher.models import DirectStudentAssignment  # Add this import at the top
+from accounts.permissions import get_project_for_member
+from teacher.models import DirectStudentAssignment
 
 from .assignment_views import *  # noqa: F403  (removed in PLAN P3.1)
 from .forms import (
@@ -35,9 +36,7 @@ from .utils import clear_student_context_cache, send_invitation_email
 def project_submit(request, project_id):
     student = get_object_or_404(StudentProfile, user=request.user)
     # Allow both owners and collaborators to access the project
-    project = get_object_or_404(
-        Project, Q(student=student) | Q(collaborators=student), id=project_id
-    )
+    project = get_project_for_member(student, project_id)
 
     # Only the owner can submit
     if project.student != student:
@@ -847,9 +846,7 @@ def project_change_status(request, project_id, new_status):
 def upload_deliverable(request, project_id):
     """View to upload a deliverable file for a project"""
     student = get_object_or_404(StudentProfile, user=request.user)
-    project = get_object_or_404(
-        Project, Q(id=project_id) & (Q(student=student) | Q(collaborators=student))
-    )
+    project = get_project_for_member(student, project_id)
 
     # Don't allow uploads for validated projects
     if project.status == "validated":
@@ -979,11 +976,7 @@ def project_delete(request, project_id):
 @login_required
 def add_milestone(request, project_id):
     student = get_object_or_404(StudentProfile, user=request.user)
-    project = get_object_or_404(
-        Project,
-        Q(student=student) | Q(collaborators=student),
-        id=project_id,
-    )
+    project = get_project_for_member(student, project_id)
 
     if request.method == "POST":
         form = MilestoneForm(request.POST)
@@ -1234,9 +1227,7 @@ def cancel_invitation(request, invitation_id):
 @login_required
 def add_comment(request, project_id):
     student = get_object_or_404(StudentProfile, user=request.user)
-    project = get_object_or_404(
-        Project, Q(student=student) | Q(collaborators=student), id=project_id
-    )
+    project = get_project_for_member(student, project_id)
 
     if request.method == "POST":
         content = request.POST.get("content")
@@ -1474,9 +1465,7 @@ def leave_module(request, module_id):
 def project_submit_confirmation(request, project_id):
     """Show confirmation page before project submission"""
     student = get_object_or_404(StudentProfile, user=request.user)
-    project = get_object_or_404(
-        Project, Q(student=student) | Q(collaborators=student), id=project_id
-    )
+    project = get_project_for_member(student, project_id)
 
     # Only the owner can submit
     if project.student != student:

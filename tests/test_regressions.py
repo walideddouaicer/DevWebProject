@@ -112,7 +112,6 @@ class Fixtures(TestCase):
 
 class RegressionTests(Fixtures):
     # B1 ------------------------------------------------------------------
-    @expectedFailure
     def test_B1_owner_with_two_collaborators_can_open_project_pages(self):
         s = self.students
         project = self.project(s[0], [s[1], s[2]])
