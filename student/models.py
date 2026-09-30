@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -498,6 +498,150 @@ class Project(models.Model):
 
         self.collaborators.remove(student)
         return True
+
+    # ------------------------------------------------------------------ workflow
+    # Every status change goes through these methods (PLAN P1.3). They check that the
+    # transition is legal, record activity, keep DirectStudentAssignment in sync for the
+    # WHOLE team and notify the team. Permission checks (who may call them) stay in views.
+
+    def notify_team(self, message, exclude=None, notification_type="project_update"):
+        """In-app notification to every team member except `exclude` (a StudentProfile)."""
+        from .utils import clear_student_context_cache
+
+        for member in self.get_team_members():
+            if exclude is not None and member.pk == exclude.pk:
+                continue
+            Notification.objects.create(
+                recipient=member,
+                project=self,
+                project_assignment=self.project_assignment,
+                notification_type=notification_type,
+                message=message,
+            )
+            clear_student_context_cache(member)
+
+    def _sync_direct_assignments(self, status):
+        """Mirror the project status onto the team's DirectStudentAssignment rows."""
+        if not self.is_assignment_project() or self.project_assignment.assignment_type != "direct":
+            return
+        from teacher.models import DirectStudentAssignment
+
+        DirectStudentAssignment.objects.filter(
+            assignment=self.project_assignment,
+            student__in=[member.pk for member in self.get_team_members()],
+        ).update(status=status)
+
+    def _log(self, user, activity_type, description):
+        ProjectActivity.objects.create(
+            project=self, user=user, activity_type=activity_type, description=description
+        )
+
+    def get_submission_blockers(self):
+        """Human-readable reasons why the project can't be submitted right now ([] if it can)."""
+        if self.status not in ("in_progress", "revision_requested"):
+            return ["Seuls les projets en cours ou en révision peuvent être soumis."]
+        if not self.is_assignment_project():
+            return []
+        blockers = []
+        assignment = self.project_assignment
+        if assignment.deadline and timezone.now() > assignment.deadline:
+            blockers.append("La date limite du devoir est dépassée.")
+        size_status = self.get_team_size_status()
+        if size_status["status"] in ("too_small", "too_large"):
+            blockers.append(size_status["message"])
+        if assignment.assignment_type == "choice_based" and not self.selected_option_id:
+            blockers.append("Aucune option de projet n'a été sélectionnée.")
+        return blockers
+
+    def submit(self, by):
+        """Owner submits the project for review. `by` is the owner's StudentProfile."""
+        if by.pk != self.student_id:
+            raise ValidationError("Seul le propriétaire du projet peut le soumettre.")
+        blockers = self.get_submission_blockers()
+        if blockers:
+            raise ValidationError(blockers)
+        with transaction.atomic():
+            self.status = "submitted"
+            if self.is_assignment_project():
+                self.assignment_submitted_at = timezone.now()
+            self.save()
+            self._log(
+                by.user,
+                "assignment_submitted" if self.is_assignment_project() else "status_changed",
+                "Le projet a été soumis pour évaluation",
+            )
+            self._sync_direct_assignments("submitted")
+            self.notify_team(
+                f"Le projet « {self.title} » a été soumis par {by.get_full_name()}.", exclude=by
+            )
+
+    def _require_submitted(self):
+        if self.status != "submitted":
+            raise ValidationError("Seuls les projets soumis peuvent être évalués.")
+
+    def validate(self, by):
+        """Teacher validates a submitted project. `by` is a TeacherProfile."""
+        self._require_submitted()
+        name = by.user.get_full_name() or by.user.username
+        with transaction.atomic():
+            self.status = "validated"
+            self.save()
+            self._log(by.user, "assignment_validated", f"Projet validé par {name}")
+            self._sync_direct_assignments("validated")
+            self.notify_team(f"Le projet « {self.title} » a été validé par {name}.")
+
+    def reject(self, by, reason=""):
+        """Teacher rejects a submitted project, optionally explaining why."""
+        self._require_submitted()
+        name = by.user.get_full_name() or by.user.username
+        reason = (reason or "").strip()
+        with transaction.atomic():
+            self.status = "rejected"
+            self.save()
+            if reason:
+                ProjectComment.objects.create(
+                    project=self, author=by.user, content=f"[PROJET REJETÉ]\n{reason}"
+                )
+            self._log(by.user, "assignment_rejected", f"Projet rejeté par {name}")
+            self._sync_direct_assignments("started")
+            self.notify_team(
+                f"Le projet « {self.title} » a été rejeté par {name}. "
+                "Consultez les commentaires du projet."
+            )
+
+    def request_revision(self, by, message):
+        """Teacher asks for changes on a submitted project (message required)."""
+        self._require_submitted()
+        message = (message or "").strip()
+        if not message:
+            raise ValidationError("Précisez les modifications attendues.")
+        name = by.user.get_full_name() or by.user.username
+        with transaction.atomic():
+            self.status = "revision_requested"
+            self.save()
+            ProjectComment.objects.create(
+                project=self, author=by.user, content=f"[RÉVISION DEMANDÉE]\n{message}"
+            )
+            self._log(by.user, "status_changed", f"Révision demandée par {name}")
+            self._sync_direct_assignments("started")
+            self.notify_team(
+                f"{name} demande des révisions sur le projet « {self.title} ». "
+                "Consultez ses commentaires puis soumettez à nouveau."
+            )
+
+    def reopen(self, by):
+        """Owner puts a rejected project back in progress to rework it."""
+        if by.pk != self.student_id:
+            raise ValidationError("Seul le propriétaire du projet peut le rouvrir.")
+        if self.status != "rejected":
+            raise ValidationError("Seuls les projets rejetés peuvent être rouverts.")
+        with transaction.atomic():
+            self.status = "in_progress"
+            self.save()
+            self._log(by.user, "status_changed", "Projet rouvert pour être retravaillé")
+            self.notify_team(
+                f"{by.get_full_name()} a rouvert le projet « {self.title} ».", exclude=by
+            )
 
     def calculate_progress(self):
         """Calculate detailed project progress based on multiple factors"""
