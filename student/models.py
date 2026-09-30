@@ -746,6 +746,13 @@ class Project(models.Model):
         self.save(update_fields=["like_count"])
 
     class Meta:
+        indexes = [
+            models.Index(fields=["status"], name="project_status_idx"),
+            models.Index(fields=["module", "status"], name="project_module_status_idx"),
+            models.Index(
+                fields=["is_public", "is_hidden_by_admin", "status"], name="project_showcase_idx"
+            ),
+        ]
         ordering = ["-created_at"]
 
 
@@ -910,6 +917,11 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        indexes = [
+            models.Index(
+                fields=["recipient", "is_read", "created_at"], name="notification_inbox_idx"
+            ),
+        ]
         ordering = ["-created_at"]
 
     def __str__(self):

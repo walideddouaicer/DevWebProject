@@ -348,6 +348,15 @@ class ProjectAssignment(models.Model):
         return stats
 
     class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(min_team_size__gte=1), name="assignment_min_team_size_positive"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(max_team_size__gte=models.F("min_team_size")),
+                name="assignment_max_team_size_gte_min",
+            ),
+        ]
         ordering = ["-created_at"]
         verbose_name = "Project Assignment"
         verbose_name_plural = "Project Assignments"
@@ -457,6 +466,14 @@ class ProjectOption(models.Model):
         return f"{self.current_teams}/{self.max_teams} équipes"
 
     class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(max_teams__gte=1), name="option_max_teams_positive"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(current_teams__gte=0), name="option_current_teams_non_negative"
+            ),
+        ]
         ordering = ["order", "title"]
         verbose_name = "Project Option"
         verbose_name_plural = "Project Options"
@@ -499,6 +516,11 @@ class ProjectEvaluation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(score__gte=0, score__lte=20), name="evaluation_score_0_20"
+            ),
+        ]
         ordering = ["-updated_at"]
         verbose_name = "Project Evaluation"
         verbose_name_plural = "Project Evaluations"
@@ -544,6 +566,11 @@ class EvaluationCriterion(models.Model):
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(score__gte=0, score__lte=20), name="criterion_score_0_20"
+            ),
+        ]
         ordering = ["order", "id"]
         verbose_name = "Evaluation Criterion"
         verbose_name_plural = "Evaluation Criteria"
