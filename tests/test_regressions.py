@@ -285,7 +285,6 @@ class RegressionTests(Fixtures):
         self.assertFalse(project.is_on_track())
 
     # B11 -----------------------------------------------------------------
-    @expectedFailure
     def test_B11_completion_counts_students_not_projects(self):
         s = self.students
         team = self.assignment(

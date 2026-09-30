@@ -226,23 +226,29 @@ class ProjectAssignment(models.Model):
         return True
 
     def get_total_students(self):
-        """Get total number of students this assignment applies to"""
-        if self.target_selection == "all_students":
-            return self.module.get_enrolled_students_count()
-        else:
+        """Students expected to hand in this assignment."""
+        if self.assignment_type == "direct":
             return self.direct_assignments.count()
+        return self.module.get_enrolled_students_count()
 
     def get_submitted_projects_count(self):
-        """Count submitted projects for this assignment"""
+        """Projects (teams) that are submitted or validated."""
         return self.submitted_projects.filter(status__in=["submitted", "validated"]).count()
 
+    def get_submitted_students_count(self):
+        """Students covered by a submitted/validated project, as owner or collaborator."""
+        done = self.submitted_projects.filter(status__in=["submitted", "validated"])
+        students = set(done.values_list("student_id", flat=True))
+        students.update(done.values_list("collaborators__id", flat=True))
+        students.discard(None)
+        return len(students)
+
     def get_completion_percentage(self):
-        """Calculate completion percentage"""
+        """Share of expected students whose work has been handed in (0-100)."""
         total = self.get_total_students()
         if total == 0:
             return 0
-        submitted = self.get_submitted_projects_count()
-        return int((submitted / total) * 100)
+        return min(100, int(self.get_submitted_students_count() / total * 100))
 
     def is_deadline_approaching(self, days=7):
         """Check if any deadline is approaching within specified days"""
