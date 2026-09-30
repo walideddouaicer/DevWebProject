@@ -447,3 +447,10 @@ class RegressionTests(Fixtures):
         self.login(self.students[1])
         response = self.client.post(reverse("public:toggle_project_like", args=[project.id]))
         self.assertEqual(response.status_code, 404)
+
+    def test_B5_get_does_not_remove_collaborator(self):
+        s = self.students
+        project = self.project(s[0], [s[1]])
+        self.login(s[0])
+        self.client.get(reverse("student:remove_collaborator", args=[project.id, s[1].id]))
+        self.assertTrue(project.collaborators.filter(pk=s[1].pk).exists())

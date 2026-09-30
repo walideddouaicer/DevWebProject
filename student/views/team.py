@@ -318,6 +318,7 @@ def respond_to_invitation(request, invitation_id, response):
 
 
 @login_required
+@require_POST
 def remove_collaborator(request, project_id, collaborator_id):
     student = get_object_or_404(StudentProfile, user=request.user)
     project = get_object_or_404(Project, id=project_id, student=student)

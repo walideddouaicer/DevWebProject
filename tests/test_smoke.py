@@ -179,3 +179,34 @@ class SmokeTest(TestCase):
                 + "\n".join(f"  {k}: {v}" for k, v in sorted(fixed.items()))
             )
         self.assertFalse(message, "\n".join(message))
+
+
+class InProgressProjectSmokeTest(SmokeTest):
+    """Same crawl as the owner of an IN-PROGRESS team project, so status checks don't mask a
+    GET that mutates. (Business rules can still mask some — e.g. team minimum size — which is
+    why each mutating endpoint also has a targeted test in test_regressions.)"""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        amine = StudentProfile.objects.get(user__username="etu.amine")
+        project = Project.objects.get(student=amine, project_assignment__module__code="WEB401")
+        milestone = project.milestones.filter(completed=False).first()
+        cls.kwargs.update(
+            project_id=project.id,
+            milestone_id=milestone.id,
+            deliverable_id=project.deliverables.first().id,
+            collaborator_id=project.collaborators.first().id,
+            invitation_id=CollaborationInvitation.objects.get(project=project, status="pending").id,
+        )
+        Notification.objects.create(recipient=amine, notification_type="project_update", message="x")
+        cls.kwargs["notification_id"] = Notification.objects.filter(recipient=amine).last().id
+
+    def test_every_url_every_role(self):
+        global ROLES
+        saved = ROLES
+        ROLES = {"owner": "etu.amine"}
+        try:
+            super().test_every_url_every_role()
+        finally:
+            ROLES = saved
