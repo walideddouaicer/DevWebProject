@@ -1,0 +1,22 @@
+{% load ui %}
+<div class="table-wrap">
+  <table class="table table-stack table-assignments">
+    <thead><tr><th>Devoir</th><th>Format</th><th>Échéance</th><th>État</th><th class="col-actions"><span class="visually-hidden">Action</span></th></tr></thead>
+    <tbody>
+      {% for item in items %}{% with a=item.assignment p=item.project %}
+      <tr>
+        <td><a class="row-title" href="{% url 'student:assignment_detail' a.id %}">{{ a.title }}</a><div class="subtle text-sm">{{ a.module.code }} · {{ a.teacher.user.get_full_name }}</div></td>
+        <td data-label="Format">{% if a.assignment_type == "choice_based" %}Sujet au choix{% else %}Sujet imposé{% endif %}<div class="subtle text-sm">{% if a.is_team_work %}Équipe de {{ a.min_team_size }} à {{ a.max_team_size }}{% else %}Individuel{% endif %}</div></td>
+        <td data-label="Échéance">{% if p %}{% deadline a.deadline status=p.status %}{% else %}{% deadline a.deadline %}{% endif %}{% if a.selection_deadline and not p %}<div class="subtle text-sm">choix avant le {{ a.selection_deadline|date:"d/m" }}</div>{% endif %}</td>
+        <td data-label="État">{% if p %}{% status_chip p.status %}{% if item.team_info %}<div class="subtle text-sm">{{ item.team_info.members_display|default:"" }}</div>{% endif %}{% elif item.action_needed and not item.can_create_project %}<span class="muted text-sm">{{ item.action_needed }}</span>{% else %}<span class="chip">Pas commencé</span>{% endif %}</td>
+        <td class="col-actions">
+          {% if p %}<a class="btn btn-sm" href="{% url 'student:project_detail' p.id %}">Ouvrir le projet</a>
+          {% elif item.can_create_project and a.assignment_type == "choice_based" %}<a class="btn btn-sm btn-primary" href="{% url 'student:select_project_option_direct' a.id %}">Choisir un sujet</a>
+          {% elif item.can_create_project %}<a class="btn btn-sm btn-primary" href="{% url 'student:create_assignment_project_direct' a.id %}">Démarrer</a>
+          {% else %}<a class="btn btn-sm btn-ghost" href="{% url 'student:assignment_detail' a.id %}">Détails</a>{% endif %}
+        </td>
+      </tr>
+      {% endwith %}{% endfor %}
+    </tbody>
+  </table>
+</div>

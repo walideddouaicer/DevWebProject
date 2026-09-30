@@ -1,266 +1,36 @@
-{% extends 'student/base.html' %}
-{% load static %}
-
-{% block title %}Mes Modules - ENSA Project Manager{% endblock %}
-
-{% block breadcrumb_items %}
-<span class="breadcrumb-separator">></span>
-<span>Mes Modules</span>
-{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/my_modules.css' %}">
-{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Mes modules{% endblock %}
 {% block content %}
-    <!-- Hero Section -->
-    <div class="modules-hero">
-        <div class="hero-content">
-            <div class="hero-text">
-                <h1>📚 Mes Modules</h1>
-                <p>Gérez vos {{ enrollments.count }} inscription{{ enrollments.count|pluralize }} aux modules d'enseignement et explorez de nouvelles opportunités d'apprentissage</p>
-            </div>
-            <div class="hero-illustration">📚</div>
-        </div>
-    </div>
-
-    <!-- Join Module Section -->
-    <div class="join-module-section">
-        <div class="join-header">
-            <div class="join-info">
-                <h3>🔗 Rejoindre un Nouveau Module</h3>
-                <p>Entrez le code du module fourni par votre enseignant pour vous inscrire automatiquement au cours et accéder aux projets associés.</p>
-            </div>
-            <div class="join-illustration">➕</div>
-        </div>
-        
-        <form method="post" action="{% url 'student:join_module' %}" class="join-form">
-            {% csrf_token %}
-            <div class="join-input-group">
-                <label for="module_code" class="join-input-label">Code du Module</label>
-                <input type="text" name="module_code" id="module_code" class="join-input" 
-                       placeholder="Saisissez le code du module..." required 
-                       pattern="[A-Za-z0-9]+" title="Code alphanumérique uniquement">
-                <div class="join-examples">
-                    💡 Exemples: UML1, CS101, MATH202, INFO205
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary">
-                🚀 Rejoindre le Module
-            </button>
-        </form>
-    </div>
-
-    <!-- Enrolled Modules -->
-    <div class="modules-section">
-        <div class="section-header">
-            <h2 class="section-title">
-                📋 Modules Inscrits
-            </h2>
-            <span class="modules-count">{{ enrollments.count }}</span>
-        </div>
-        
-        {% if enrollments %}
-            <div class="modules-grid">
-                {% for enrollment in enrollments %}
-                <div class="module-card">
-                    <!-- Module Header -->
-                    <div class="module-header">
-                        <div class="enrollment-badge">
-                            📅 {{ enrollment.enrolled_at|date:"d/m/Y" }}
-                        </div>
-                        <h3 class="module-title">{{ enrollment.module.name }}</h3>
-                        <div class="module-code">{{ enrollment.module.code }}</div>
-                    </div>
-
-                    <!-- Module Body -->
-                    <div class="module-body">
-                        <!-- Module Information -->
-                        <div class="module-info">
-                            <div class="info-grid">
-                                <div class="info-item">
-                                    <span class="info-label">📅 Semestre</span>
-                                    <span class="info-value">{{ enrollment.module.get_semester_display }}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">🗓️ Année académique</span>
-                                    <span class="info-value">{{ enrollment.module.academic_year }}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">📊 Statut</span>
-                                    <span class="info-value">
-                                        <span class="status-indicator {% if enrollment.module.is_active %}status-active{% else %}status-inactive{% endif %}">
-                                            {% if enrollment.module.is_active %}✅ Actif{% else %}❌ Inactif{% endif %}
-                                        </span>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Module Description -->
-                        {% if enrollment.module.description %}
-                        <div class="description-preview">
-                            <div class="description-text">
-                                <strong>Description:</strong><br>
-                                {{ enrollment.module.description|truncatewords:25 }}
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <!-- Teachers Section -->
-                        {% if enrollment.module.assignments.all %}
-                        <div class="teachers-section">
-                            <h4 class="teachers-title">
-                                👨‍🏫 Enseignants du Module
-                            </h4>
-                            <div class="teachers-list">
-                                {% for assignment in enrollment.module.assignments.all %}
-                                {% if assignment.is_active %}
-                                <div class="teacher-item">
-                                    <div class="teacher-avatar">
-                                        {{ assignment.teacher.user.first_name|first|default:assignment.teacher.user.username|first|upper }}
-                                    </div>
-                                    <div class="teacher-info">
-                                        <div class="teacher-name">
-                                            {{ assignment.teacher.user.get_full_name|default:assignment.teacher.user.username }}
-                                        </div>
-                                        <div class="teacher-details">
-                                            <span>🆔 {{ assignment.teacher.teacher_id }}</span>
-                                            <span>🏢 {{ assignment.teacher.department }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <!-- Module Actions -->
-                        <div class="module-actions">
-                            <form method="post" action="{% url 'student:leave_module' enrollment.module.id %}" 
-                                  onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir quitter le module {{ enrollment.module.name|escapejs }}?\n\nCette action est irréversible et vous perdrez l\'accès à tous les projets associés à ce module.')">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger">
-                                    🚪 Quitter le Module
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <!-- Empty State -->
-            <div class="empty-state">
-                <div class="empty-state-icon">📚</div>
-                <h3>Aucun Module Inscrit</h3>
-                <p>
-                    Vous n'êtes inscrit à aucun module pour le moment. Utilisez le formulaire ci-dessus pour rejoindre un module 
-                    avec le code fourni par votre enseignant et commencer votre parcours d'apprentissage.
-                </p>
-                <a href="{% url 'student:dashboard' %}" class="btn btn-primary">
-                    ← Retour au Tableau de Bord
-                </a>
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Guide Section -->
-    <div class="guide-section">
-        <div class="guide-header">
-            <div class="guide-icon">💡</div>
-            <div class="guide-content">
-                <h3>Guide d'Inscription aux Modules</h3>
-                <p>Suivez ces étapes simples pour rejoindre un module et accéder aux projets associés</p>
-            </div>
-        </div>
-        
-        <ol class="steps-list">
-            <li class="step-item">
-                <div class="step-number">1</div>
-                <div class="step-content">
-                    <strong>Obtenez le code du module</strong> auprès de votre enseignant ou coordinateur pédagogique
-                </div>
-            </li>
-            
-            <li class="step-item">
-                <div class="step-number">2</div>
-                <div class="step-content">
-                    <strong>Saisissez le code</strong> dans le formulaire en haut de cette page en respectant la casse
-                </div>
-            </li>
-            
-            <li class="step-item">
-                <div class="step-number">3</div>
-                <div class="step-content">
-                    <strong>Cliquez sur "Rejoindre"</strong> pour vous inscrire automatiquement au module
-                </div>
-            </li>
-            
-            <li class="step-item">
-                <div class="step-number">4</div>
-                <div class="step-content">
-                    <strong>Accédez aux projets</strong> et interagissez avec vos enseignants et camarades de classe
-                </div>
-            </li>
-        </ol>
-        
-        <div class="security-notice">
-            <div class="security-icon">🔐</div>
-            <div class="security-text">
-                <strong>Sécurité:</strong> Gardez les codes de modules confidentiels et ne les partagez qu'avec vos camarades de classe autorisés par l'enseignant.
-            </div>
-        </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const moduleCodeInput = document.getElementById('module_code');
-            const joinForm = moduleCodeInput.closest('form');
-            
-            // Format input in uppercase as user types
-            moduleCodeInput.addEventListener('input', function() {
-                this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-            });
-            
-            // Add loading state to join button
-            joinForm.addEventListener('submit', function() {
-                const submitBtn = this.querySelector('button[type="submit"]');
-                submitBtn.textContent = '⏳ Inscription en cours...';
-                submitBtn.disabled = true;
-            });
-            
-            // Add hover effects to module cards
-            const moduleCards = document.querySelectorAll('.module-card');
-            moduleCards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-8px) scale(1.02)';
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = '';
-                });
-            });
-            
-            // Enhanced leave module confirmation
-            const leaveButtons = document.querySelectorAll('form[action*="leave_module"] button');
-            leaveButtons.forEach(button => {
-                const form = button.closest('form');
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    // Create custom confirmation modal
-                    const moduleName = this.action.match(/leave_module\/(\d+)/)[1];
-                    const confirmed = confirm(`⚠️ ATTENTION ⚠️\n\nVous êtes sur le point de quitter ce module.\n\n🚫 Conséquences:\n• Perte d'accès aux projets du module\n• Suppression de votre progression\n• Impossible de rejoindre automatiquement\n\n❓ Voulez-vous vraiment continuer?`);
-                    
-                    if (confirmed) {
-                        button.textContent = '⏳ Traitement...';
-                        button.disabled = true;
-                        this.submit();
-                    }
-                });
-            });
-        });
-    </script>
+<header class="page-header"><div><h1>Mes modules</h1><p class="meta">Les devoirs et annonces de ces modules vous sont adressés.</p></div></header>
+<section class="card card-body stack">
+  <form method="post" action="{% url 'student:join_module' %}" class="cluster">
+    {% csrf_token %}
+    <label for="module-code"><strong>Rejoindre un module</strong></label>
+    <input class="input mono" id="module-code" name="module_code" maxlength="10" placeholder="Code, ex. WEB401" required autocapitalize="characters">
+    <button class="btn btn-primary" type="submit">Rejoindre</button>
+  </form>
+  <p class="subtle text-sm">Le code est communiqué par votre enseignant.</p>
+</section>
+<section class="stack">
+  <h2 class="section-title">Inscriptions <span class="count">{{ enrollments|length }}</span></h2>
+  {% if enrollments %}
+  <div class="grid">
+    {% for e in enrollments %}{% with m=e.module %}
+    <article class="card card-body stack stack-sm">
+      <div class="spread"><span class="mono text-sm muted">{{ m.code }}</span><span class="subtle text-sm">{{ m.get_semester_display }} · {{ m.academic_year }}</span></div>
+      <h3>{{ m.name }}</h3>
+      {% if m.description %}<p class="muted text-sm">{{ m.description|truncatewords:24 }}</p>{% endif %}
+      <p class="text-sm">{% for ma in m.assignments.all %}{% if ma.is_active %}{{ ma.teacher.user.get_full_name }}{% if not forloop.last %}, {% endif %}{% endif %}{% endfor %}</p>
+      <div class="spread">
+        <span class="subtle text-sm">Inscrit le {{ e.enrolled_at|date:"d/m/Y" }}</span>
+        <form method="post" action="{% url 'student:leave_module' m.id %}" data-confirm="Vous ne verrez plus les devoirs et annonces de {{ m.code }}. Vos projets existants sont conservés." data-confirm-title="Quitter {{ m.code }} ?" data-confirm-action="Quitter" data-confirm-danger>{% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">Quitter</button></form>
+      </div>
+    </article>
+    {% endwith %}{% endfor %}
+  </div>
+  {% else %}
+  <div class="card empty">{% icon "book-open" %}<h3>Aucun module</h3><p>Saisissez le code d'un module ci-dessus pour vous inscrire.</p></div>
+  {% endif %}
+</section>
 {% endblock %}

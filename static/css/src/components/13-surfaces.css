@@ -77,3 +77,10 @@
 .stat-strip .stat { display: flex; flex-direction: column; }
 .stat-strip .value { font-size: var(--text-xl); font-weight: 600; font-variant-numeric: tabular-nums; }
 .stat-strip .label { color: var(--ink-2); font-size: var(--text-sm); }
+@media (min-width: 640px) {
+  .table-assignments { table-layout: fixed; }
+  .table-assignments th:nth-child(1) { width: 34%; }
+  .table-assignments th:nth-child(2) { width: 15%; }
+  .table-assignments th:nth-child(3) { width: 15%; }
+  .table-assignments th:nth-child(5) { width: 150px; }
+}

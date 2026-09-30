@@ -388,7 +388,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
 - [x] **P6.4 Student collaboration:** invitations (received/sent), invite flow (HTMX typeahead
   over allowed students; replaces select2), teammates board, notifications page (grouped by day,
   mark-read via HTMX), calendar (month grid + agenda list on mobile, .ics link).
-- [ ] **P6.5 Student assignments & modules:** assignments list (grouped by urgency), assignment
+- [x] **P6.5 Student assignments & modules:** assignments list (grouped by urgency), assignment
   detail, option selection (compare options side by side, clear availability), create-project-from-
   assignment, my modules, join module.
 - [ ] **P6.6 Student profile & settings:** profile view/edit (avatar upload with preview),
@@ -686,3 +686,7 @@ Everything else in this plan is decided by Claude.
   candidates else HTMX search (`student:invite_candidates`, full-page fallback without JS).
   `Project.invite_candidates()` model method — fixed a NOT IN (NULL) bug that emptied the list
   whenever another team of the assignment had no collaborators.
+- **2026-09-30** · P6.5 · Student assignments list grouped by next action (view builds
+  `groups`), assignment detail, subject choice (radio cards, one template for both entry points),
+  start-project form, my modules (join + leave with confirm). Model choice labels translated to
+  French (migrations *_french_choice_labels). join_module now returns to Mes modules.

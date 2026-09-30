@@ -24,7 +24,7 @@ def join_module(request):
             for errors in form.errors.values():
                 for error in errors:
                     messages.error(request, error)
-            return redirect("student:dashboard")
+            return redirect("student:my_modules")
         module_code = form.cleaned_data["module_code"]
 
         try:
@@ -61,7 +61,7 @@ def join_module(request):
             logger.exception("join_module failed")
             messages.error(request, "Une erreur est survenue. Veuillez réessayer.")
 
-    return redirect("student:dashboard")
+    return redirect("student:my_modules")
 
 
 @login_required

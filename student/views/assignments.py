@@ -78,6 +78,8 @@ def assignments_dashboard(request):
 
     if not enrolled_module_ids:
         context = {
+            "has_modules": False,
+            "groups": {},
             "student": student,
             "direct_assignments": [],
             "choice_assignments": [],
@@ -203,8 +205,28 @@ def assignments_dashboard(request):
     )
     overdue_assignments = sum(1 for a in all_assignment_data if a["is_overdue"])
 
+    # Group by what the student has to do next (the page is organised this way)
+    def deadline_of(item):
+        return item["assignment"].deadline
+
+    groups = {"todo": [], "active": [], "done": [], "closed": []}
+    for item in all_assignment_data:
+        project = item["project"]
+        if project and project.status in ("submitted", "validated"):
+            groups["done"].append(item)
+        elif project:
+            groups["active"].append(item)
+        elif item["can_create_project"]:
+            groups["todo"].append(item)
+        else:
+            groups["closed"].append(item)
+    for key in ("todo", "active"):
+        groups[key].sort(key=deadline_of)
+
     context = {
         "student": student,
+        "groups": groups,
+        "has_modules": True,
         "direct_assignments": direct_assignments,
         "choice_assignments": choice_assignments,
         "team_assignments": team_assignments,

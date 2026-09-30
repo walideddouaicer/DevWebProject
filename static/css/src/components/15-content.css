@@ -76,3 +76,12 @@
 .cal-legend .event.is-deadline { background: var(--danger-soft); color: var(--danger); }
 .cal-legend .event.is-selection { background: var(--warn-soft); color: var(--warn); }
 .cal-legend .event.is-milestone { background: var(--ok-soft); color: var(--ok); }
+.option-grid { border: 0; padding: 0; margin: 0; --min: 300px; }
+.option { display: flex; flex-direction: column; gap: var(--s-2); cursor: pointer; }
+.option:hover { border-color: var(--line-strong); }
+.option:has(input:checked) { border-color: var(--accent); box-shadow: var(--focus-ring); }
+.option.is-disabled { opacity: .7; cursor: not-allowed; }
+.option input { accent-color: var(--accent); width: 16px; height: 16px; }
+.text-base { font-size: var(--text-base); }
+.option-head { display: grid; grid-template-columns: auto 1fr; gap: var(--s-2); align-items: start; }
+.option-head input { margin-top: 3px; }

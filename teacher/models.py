@@ -150,8 +150,8 @@ class ProjectAssignment(models.Model):
 
     # Assignment type
     ASSIGNMENT_TYPES = [
-        ("direct", "Direct Assignment"),
-        ("choice_based", "Choice-Based Assignment"),
+        ("direct", "Sujet imposé"),
+        ("choice_based", "Sujets au choix"),
     ]
     assignment_type = models.CharField(max_length=20, choices=ASSIGNMENT_TYPES)
 
@@ -166,18 +166,18 @@ class ProjectAssignment(models.Model):
     target_selection = models.CharField(
         max_length=20,
         choices=[
-            ("all_students", "All Students in Module"),
-            ("specific_students", "Specific Students"),
+            ("all_students", "Tous les étudiants du module"),
+            ("specific_students", "Étudiants sélectionnés"),
         ],
         default="all_students",
     )
 
     # Status and dates
     STATUS_CHOICES = [
-        ("draft", "Draft"),
-        ("published", "Published"),
-        ("in_progress", "In Progress"),
-        ("completed", "Completed"),
+        ("draft", "Brouillon"),
+        ("published", "Publié"),
+        ("in_progress", "En cours"),
+        ("completed", "Terminé"),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
 
@@ -372,7 +372,7 @@ class ProjectOption(models.Model):
     requirements = models.TextField(blank=True, help_text="Specific requirements or skills needed")
     estimated_difficulty = models.CharField(
         max_length=20,
-        choices=[("easy", "Easy"), ("medium", "Medium"), ("hard", "Hard")],
+        choices=[("easy", "Facile"), ("medium", "Moyenne"), ("hard", "Difficile")],
         default="medium",
     )
 

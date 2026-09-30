@@ -133,8 +133,8 @@ class Project(models.Model):
     assignment_source = models.CharField(
         max_length=20,
         choices=[
-            ("student_initiated", "Student Initiated"),
-            ("teacher_assigned", "Teacher Assigned"),
+            ("student_initiated", "Initiative de l'étudiant"),
+            ("teacher_assigned", "Devoir d'un enseignant"),
         ],
         default="student_initiated",
     )
