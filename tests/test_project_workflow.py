@@ -153,3 +153,34 @@ class WorkflowTests(Fixtures):
             project.reopen(by=self.students[1])
         project.reopen(by=self.students[0])
         self.assertEqual(project.status, "in_progress")
+
+
+class AssignmentTargetingTests(Fixtures):
+    """Draft/publish targeting of direct assignments (PLAN P2.5)."""
+
+    def test_publishing_all_students_assignment_targets_and_notifies_enrollees(self):
+        from django.urls import reverse
+
+        from student.models import Notification
+
+        assignment = self.assignment(status="draft", target_selection="all_students")
+        self.assertEqual(assignment.direct_assignments.count(), 0)
+        self.login(self.teacher)
+        self.client.post(reverse("teacher:assignment_publish", args=[assignment.id]))
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.status, "published")
+        self.assertEqual(assignment.direct_assignments.count(), len(self.students))
+        self.assertEqual(
+            Notification.objects.filter(
+                project_assignment=assignment, notification_type="assignment_created"
+            ).count(),
+            len(self.students),
+        )
+
+    def test_reactivated_enrollment_gets_assignment_once(self):
+        from teacher.models import ModuleEnrollment
+
+        assignment = self.assignment(target_selection="all_students")
+        enrollment = ModuleEnrollment.objects.get(student=self.students[0], module=self.module)
+        self.assertEqual(enrollment.attach_published_assignments(), [assignment])
+        self.assertEqual(enrollment.attach_published_assignments(), [])

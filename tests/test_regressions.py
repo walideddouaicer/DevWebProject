@@ -299,7 +299,6 @@ class RegressionTests(Fixtures):
         self.assertEqual(team.get_completion_percentage(), 100)
 
     # B12 -----------------------------------------------------------------
-    @expectedFailure
     def test_B12_creating_a_draft_does_not_notify_students(self):
         self.login(self.teacher)
         deadline = (timezone.now() + timedelta(days=10)).strftime("%Y-%m-%d %H:%M")
@@ -323,7 +322,6 @@ class RegressionTests(Fixtures):
         )
 
     # B13 -----------------------------------------------------------------
-    @expectedFailure
     def test_B13_late_enrollee_gets_direct_all_students_assignment(self):
         assignment = self.assignment(target_selection="all_students")
         newcomer = StudentProfile.objects.create(

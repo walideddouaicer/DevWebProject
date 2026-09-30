@@ -1364,7 +1364,7 @@ def import_students(request):
                                 if module:
                                     ModuleEnrollment.objects.create(
                                         student=student, module=module, is_active=True
-                                    )
+                                    ).attach_published_assignments()
                         except Exception as e:
                             errors.append(
                                 {

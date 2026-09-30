@@ -117,6 +117,23 @@ class ModuleEnrollment(models.Model):
     def __str__(self):
         return f"{self.student.user.get_full_name()} - {self.module.code}"
 
+    def attach_published_assignments(self):
+        """A student who (re)joins a module inherits its published direct "all students"
+        assignments (PLAN B13). Returns the assignments newly attached."""
+        attached = []
+        for assignment in self.module.project_assignments.filter(
+            status="published", assignment_type="direct", target_selection="all_students"
+        ):
+            _, created = DirectStudentAssignment.objects.get_or_create(
+                assignment=assignment, student=self.student
+            )
+            if created:
+                attached.append(assignment)
+                assignment.notify_students(
+                    [self.student], f"Nouveau devoir assigné: {assignment.title}"
+                )
+        return attached
+
 
 # UPDATED: Core assignment system with team terminology
 class ProjectAssignment(models.Model):
@@ -266,6 +283,39 @@ class ProjectAssignment(models.Model):
                 approaching_deadlines.append(("final", days_left))
 
         return approaching_deadlines
+
+    def sync_direct_targets(self):
+        """Direct "all students" assignments target every active enrollee: create the missing
+        DirectStudentAssignment rows. Returns the newly targeted students."""
+        if self.assignment_type != "direct" or self.target_selection != "all_students":
+            return []
+        already = set(self.direct_assignments.values_list("student_id", flat=True))
+        new_students = [
+            enrollment.student
+            for enrollment in self.module.enrollments.filter(is_active=True).select_related(
+                "student"
+            )
+            if enrollment.student_id not in already
+        ]
+        DirectStudentAssignment.objects.bulk_create(
+            [DirectStudentAssignment(assignment=self, student=s) for s in new_students]
+        )
+        return new_students
+
+    def notify_students(self, students, message):
+        from student.models import Notification
+
+        Notification.objects.bulk_create(
+            [
+                Notification(
+                    recipient=student,
+                    project_assignment=self,
+                    notification_type="assignment_created",
+                    message=message,
+                )
+                for student in students
+            ]
+        )
 
     def get_team_statistics(self):
         """Get statistics about teams formed for this assignment"""

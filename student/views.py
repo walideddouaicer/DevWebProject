@@ -1153,6 +1153,7 @@ def join_module(request):
             )
 
             if created:
+                enrollment.attach_published_assignments()
                 messages.success(
                     request, f"Vous avez rejoint le module '{module.name}' avec succès!"
                 )
@@ -1162,6 +1163,7 @@ def join_module(request):
                 # Reactivate if was previously inactive
                 enrollment.is_active = True
                 enrollment.save()
+                enrollment.attach_published_assignments()
                 messages.success(request, f"Vous avez rejoint à nouveau le module '{module.name}'!")
 
         except Module.DoesNotExist:

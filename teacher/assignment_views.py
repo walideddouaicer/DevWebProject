@@ -461,66 +461,28 @@ def assignment_create(request):
                     assignment.module = module
                     assignment.save()
 
-                    # Handle student selection for direct assignments
-                    if assignment.assignment_type == "direct":
-                        if assignment.target_selection == "all_students":
-                            # Assign to all students in module
-                            enrolled_students = StudentProfile.objects.filter(
-                                module_enrollments__module=module,
-                                module_enrollments__is_active=True,
-                            )
-                        elif (
-                            assignment.target_selection == "specific_students"
-                            and selected_student_ids
-                        ):
-                            # Assign to selected students
-                            enrolled_students = StudentProfile.objects.filter(
-                                id__in=selected_student_ids,
-                                module_enrollments__module=module,
-                                module_enrollments__is_active=True,
-                            )
-                        else:
-                            enrolled_students = StudentProfile.objects.none()
-
-                        # Create direct assignments
-                        created_count = 0
-                        notification_batch = []
-
-                        for student in enrolled_students:
-                            direct_assignment, created = (
-                                DirectStudentAssignment.objects.get_or_create(
-                                    assignment=assignment,
-                                    student=student,
-                                    defaults={"status": "assigned"},
-                                )
-                            )
-                            if created:
-                                created_count += 1
-
-                                # Prepare notification for batch creation
-                                notification_batch.append(
-                                    Notification(
-                                        recipient=student,
-                                        project_assignment=assignment,
-                                        notification_type="assignment_created",
-                                        message=f"Nouveau devoir assigné: {assignment.title}",
-                                    )
-                                )
-
-                        # Batch create notifications
-                        if notification_batch:
-                            Notification.objects.bulk_create(notification_batch)
-
-                        if created_count > 0:
-                            messages.success(
-                                request, f"Devoir créé et assigné à {created_count} étudiant(s)."
-                            )
-                            return redirect(
-                                "teacher:assignment_detail", assignment_id=assignment.id
-                            )
-                        else:
+                    # Direct assignments with hand-picked students: remember the choice now,
+                    # without notifying anyone (it's still a draft). "All students"
+                    # targets are resolved at publish time (sync_direct_targets).
+                    if (
+                        assignment.assignment_type == "direct"
+                        and assignment.target_selection == "specific_students"
+                    ):
+                        chosen = StudentProfile.objects.filter(
+                            id__in=selected_student_ids,
+                            module_enrollments__module=module,
+                            module_enrollments__is_active=True,
+                        )
+                        DirectStudentAssignment.objects.bulk_create(
+                            [
+                                DirectStudentAssignment(assignment=assignment, student=student)
+                                for student in chosen
+                            ]
+                        )
+                        if not chosen:
                             messages.warning(
-                                request, "Devoir créé mais aucun étudiant n'a été assigné."
+                                request,
+                                "Aucun étudiant sélectionné: choisissez-les avant de publier.",
                             )
 
                     messages.success(request, f"Devoir '{assignment.title}' créé avec succès.")
@@ -671,8 +633,8 @@ def assignment_students(request, assignment_id):
                                 )
                             )
 
-                    # Batch create notifications for better performance
-                    if notification_batch:
+                    # Students only hear about it once the assignment is published
+                    if notification_batch and assignment.status == "published":
                         Notification.objects.bulk_create(notification_batch)
 
                     messages.success(request, f"{created_count} étudiants assignés au devoir.")
@@ -721,6 +683,9 @@ def assignment_publish(request, assignment_id):
     if request.method == "POST":
         try:
             with transaction.atomic():
+                # "All students" direct assignments target whoever is enrolled right now
+                assignment.sync_direct_targets()
+
                 # Enhanced validation before publishing
                 validation_errors = []
 
