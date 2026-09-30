@@ -609,3 +609,7 @@ Everything else in this plan is decided by Claude.
   that showed `str(e)` to users now log + show a generic message (admin import row errors
   intentionally still detailed). ValidationError shown via `.messages` (no more "['…']").
   Next: P3.1.
+- **2026-09-30** · D13 (P3.4) · Badges are NOT cached: one `accounts.context_processors.badges`
+  with ≤4 indexed COUNTs per request beats cache invalidation complexity; exact at all times.
+  Removed the 3 per-app processors, `clear_student_context_cache`, and the dead
+  `pending_module_approvals` banner.

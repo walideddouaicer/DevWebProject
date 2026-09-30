@@ -9,7 +9,6 @@ from ..models import (
     Notification,
     StudentProfile,
 )
-from ..utils import clear_student_context_cache
 
 
 @login_required
@@ -47,7 +46,6 @@ def mark_notification_read(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, recipient=student)
     notification.is_read = True
     notification.save()
-    clear_student_context_cache(student)
     return redirect("student:notifications")
 
 
@@ -57,6 +55,5 @@ def mark_all_notifications_read(request):
     """Mark all notifications as read"""
     student = get_object_or_404(StudentProfile, user=request.user)
     Notification.objects.filter(recipient=student, is_read=False).update(is_read=True)
-    clear_student_context_cache(student)
     messages.success(request, "Toutes les notifications ont été marquées comme lues.")
     return redirect("student:notifications")

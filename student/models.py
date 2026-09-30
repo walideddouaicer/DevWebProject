@@ -515,8 +515,6 @@ class Project(models.Model):
 
     def notify_team(self, message, exclude=None, notification_type="project_update"):
         """In-app notification to every team member except `exclude` (a StudentProfile)."""
-        from .utils import clear_student_context_cache
-
         for member in self.get_team_members():
             if exclude is not None and member.pk == exclude.pk:
                 continue
@@ -527,7 +525,6 @@ class Project(models.Model):
                 notification_type=notification_type,
                 message=message,
             )
-            clear_student_context_cache(member)
 
     def _sync_direct_assignments(self, status):
         """Mirror the project status onto the team's DirectStudentAssignment rows."""

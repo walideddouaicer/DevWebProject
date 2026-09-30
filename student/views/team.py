@@ -16,7 +16,7 @@ from ..models import (
     ProjectActivity,
     StudentProfile,
 )
-from ..utils import clear_student_context_cache, send_invitation_email
+from ..utils import send_invitation_email
 
 logger = logging.getLogger(__name__)
 
@@ -314,8 +314,6 @@ def respond_to_invitation(request, invitation_id, response):
         messages.info(
             request, f"Vous avez refusé l'invitation pour le projet '{invitation.project.title}'."
         )
-
-    clear_student_context_cache(student)
     return redirect("student:invitations_list")
 
 

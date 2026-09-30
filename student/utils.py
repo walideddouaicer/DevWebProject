@@ -1,9 +1,6 @@
 # sending emails
 import logging
 
-from django.core.cache import cache
-from django.utils import timezone
-
 
 def group_deliverables(queryset):
     """Latest deliverable per name, each carrying `.history` (older versions).
@@ -21,21 +18,6 @@ def group_deliverables(queryset):
             groups[deliverable.name].history.append(deliverable)
     # Show most recently updated deliverables first
     return sorted(groups.values(), key=lambda d: d.upload_date, reverse=True)
-
-
-def clear_student_context_cache(student):
-    """Invalidate the cached navbar badge counts for a student.
-
-    Must be called whenever notifications/invitations change so the
-    badges update immediately instead of waiting for the cache TTL.
-    """
-    hour = timezone.now().hour
-    cache.delete_many(
-        [
-            f"student_context_{student.id}_{hour}",
-            f"student_nav_{student.id}_{hour}",
-        ]
-    )
 
 
 # Get a logger for this module

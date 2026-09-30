@@ -590,21 +590,7 @@
 </div>
 
 <!-- Module Approval Alert -->
-{% if pending_module_approvals > 0 %}
-<div class="alert alert-warning" style="margin-bottom: 24px;">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <i class="fas fa-clock" style="font-size: 20px;"></i>
-        <div>
-            <div style="font-weight: 600; margin-bottom: 4px;">
-                Modules en attente d'approbation
-            </div>
-            <div style="font-size: 14px; opacity: 0.9;">
-                {{ pending_module_approvals }} module{{ pending_module_approvals|pluralize }} créé{{ pending_module_approvals|pluralize }} par vous en attente de validation administrative
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
+
 
 <!-- Urgent Items -->
 {% if urgent_assignments %}
