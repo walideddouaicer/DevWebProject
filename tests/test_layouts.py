@@ -63,3 +63,22 @@ class LayoutTests(Fixtures):
         )
         html = self.render(self.teacher, "layouts/app.html")
         self.assertIn('data-theme="dark"', html)
+
+
+class HtmxMessagesTests(Fixtures):
+    def test_messages_become_hx_trigger_toasts_for_htmx_requests(self):
+        import json
+
+        self.login(self.students[0])
+        project = self.project(self.students[0])
+        response = self.client.post(
+            reverse("student:add_comment", args=[project.id]),
+            {"content": "Bonjour"},
+            HTTP_HX_REQUEST="true",
+        )
+        # A redirect keeps its messages for the next page
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn("HX-Trigger", response)
+        page = self.client.get(reverse("student:notifications"), HTTP_HX_REQUEST="true")
+        toasts = json.loads(page["HX-Trigger"])["toast"]
+        self.assertEqual(toasts[0]["level"], "success")

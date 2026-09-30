@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P4 done → P5 next (P5.1 UI inventory) — backend is production-ready**
+- Phase: **P5 done → P6 next (P6.1 auth pages)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (182 tests, 0 expected failures — all review bugs fixed)
+- Last green `make check`: 2026-09-30 (198 tests)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -336,36 +336,36 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
 
 ### P5 — Design system foundation (the UI revamp starts here; read §6 first)
 
-- [ ] **P5.1 Page inventory.** Generate `docs/ui-inventory.md`: every URL name → view → template →
+- [x] **P5.1 Page inventory.** Generate `docs/ui-inventory.md`: every URL name → view → template →
   role → purpose → key data/actions (from code, not guesses). This drives P6 ordering and prevents
   missed pages. Also note which templates are orphaned (not rendered by any view) → delete them.
-- [ ] **P5.2 Screenshot harness.** `scripts/screens.py` (Playwright, Chromium): starts from seeded
+- [x] **P5.2 Screenshot harness.** `scripts/screens.py` (Playwright, Chromium): starts from seeded
   DB, logs in per role, captures every inventory page at 1440×900 and 390×844, light + dark, into
   `screens/<phase>/<role>/<name>__<width>__<theme>.png`; `make screens` (flags: `--only name`,
   `--role`). Also runs axe-core (vendored into `scripts/vendor/axe.min.js`) and writes
   `screens/a11y.json` with violations per page. Capture a **"before"** set now into
   `screens/before/` (gitignored, kept locally for comparison).
-- [ ] **P5.3 Fonts & icons.** Download and vendor the woff2 files (Latin + Latin-ext subsets) for the chosen
+- [x] **P5.3 Fonts & icons.** Download and vendor the woff2 files (Latin + Latin-ext subsets) for the chosen
   families (§6.2) with OFL licenses into `static/fonts/`; build the Lucide sprite for only the icons
   used (script `scripts/build_icons.py` with a list in `static/icons/icons.txt`); `{% icon %}` tag with
   `aria-hidden` by default and a label option.
-- [ ] **P5.4 CSS architecture:** `static/css/app.css` imports in order (plain CSS `@import`
+- [x] **P5.4 CSS architecture:** `static/css/app.css` imports in order (plain CSS `@import`
   is fine with WhiteNoise, or concatenate through a tiny script if the request count matters; decide and record in §8):
   `tokens.css` (§6.3), `reset.css`, `base.css` (typography, links, focus), `layout.css` (shell,
   grid, stack/cluster utilities, container), `components/*.css` (one file per component in §6.5),
   `pages/*.css` (only when truly page-specific; aim for near zero).
-- [ ] **P5.5 Components (templates + CSS)** per §6.5, each with a demo on a dev-only
+- [x] **P5.5 Components (templates + CSS)** per §6.5, each with a demo on a dev-only
   `/_styleguide/` page (DEBUG only) showing every state in both themes. Screenshot it and review.
-- [ ] **P5.6 Layouts:** `layouts/base.html` (html/head, theme bootstrap without FOUC through a tiny
+- [x] **P5.6 Layouts:** `layouts/base.html` (html/head, theme bootstrap without FOUC through a tiny
   external script, skip link, messages → toasts), `layouts/app.html` (sidebar nav on desktop,
   bottom-sheet/drawer nav on mobile, top bar with search, notifications, user menu; role-aware
   nav definitions in Python `core/navigation.py`, not duplicated across 4 base templates),
   `layouts/public.html`, `layouts/auth.html` (login/signup/reset), `layouts/print.html` (for
   printable project/evaluation sheets).
-- [ ] **P5.7 Theme:** light/dark/auto driven by `data-theme` on `<html>`; the preference is saved to
+- [x] **P5.7 Theme:** light/dark/auto driven by `data-theme` on `<html>`; the preference is saved to
   UserPreferences for students AND teachers/admins (UserPreferences is per-User already), and to
   localStorage for anonymous visitors. Delete the old theme-toggle.js/themes.css.
-- [ ] **P5.8 HTMX setup:** vendored htmx, `django-htmx` middleware, CSRF header config in a static
+- [x] **P5.8 HTMX setup:** vendored htmx, `django-htmx` middleware, CSRF header config in a static
   JS file, partial-template convention (`templates/<app>/partials/…`), a toast system from the
   `HX-Trigger` header.
 
@@ -645,3 +645,22 @@ Everything else in this plan is decided by Claude.
   script), or if the two dark-token blocks diverge. Token tweaks vs §6.3: --warn #7A5000,
   --ink-3 #75706A / dark #8C877C, new --border-input (#8C867A / #6E6A60, 3:1 for fields).
   Workflow: edit src → `python scripts/build_css.py` → commit both.
+- **2026-09-30** · P5.3–P5.8 · Fonts + Lucide sprite (`{% icon %}`), CSS build (D16), tokens
+  WCAG-verified, ~30 components, tags (status_chip, avatar, deadline, field), layouts
+  (`layouts/base|app|public|auth.html`), `ui/navigation.py`, `static/js/app.js` (drawer, menus,
+  toasts, `data-confirm` dialogs, bulk select, theme), theme endpoint `ui:set_theme`, HTMX 2
+  vendored with CSP-safe config + `HtmxMessagesMiddleware` (messages → HX-Trigger toasts).
+  **P6 conventions (read before every P6 task):**
+  - Pages extend `layouts/app.html` (auth'd), `layouts/public.html` or `layouts/auth.html`;
+    `{% load ui %}`; page header = `.page-header` markup (see `ui/templates/ui/styleguide_shell.html`).
+  - Forms: `{% field form.x %}` per field (or custom markup using .field classes); submit
+    buttons `.btn .btn-primary`; destructive forms get `data-confirm="…" data-confirm-danger`.
+  - NO `style="…"`, `onclick=`, `<style>`, `<script>` inline, CDN links, emoji, `fa-*`.
+    Progress = `<progress class="meter">`. Colors only via tokens/classes.
+  - HTMX partials in `templates/<app>/partials/`; views check `request.htmx`.
+  - Visual check: `/_styleguide/` for components; `scripts/screens.py --only <name> --role <r>`
+    for pages (seeds its own DB). For a quick signed-in shot: run a throwaway server on :8767
+    and use a small Playwright script (login form → goto → screenshot). Kill servers with
+    `ps aux | grep "[r]unserver 127.0.0.1:876" | awk '{print $2}' | xargs -r kill` (never
+    `pkill -f` with the pattern in the same command line: it kills its own shell).
+  - Delete the old per-page CSS/JS and `<style>` blocks of each template you rebuild.

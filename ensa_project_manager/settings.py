@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     # Third party
     "axes",
     "csp",
+    "django_htmx",
 ]
 
 MIDDLEWARE = [
@@ -129,6 +130,8 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
+    "ui.middleware.HtmxMessagesMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
     # Must stay last: turns failed-login lockouts into responses.

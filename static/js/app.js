@@ -168,5 +168,17 @@
     }
   });
 
+  /* ---- HTMX: toasts from HX-Trigger, re-init swapped content ------------------- */
+  document.addEventListener("toast", function (event) {
+    var items = event.detail && event.detail.value !== undefined ? event.detail.value : event.detail;
+    (Array.isArray(items) ? items : [items]).forEach(function (item) {
+      if (item && item.message) window.showToast(item.message, item.level);
+    });
+  });
+  document.addEventListener("htmx:afterSwap", function (event) { initToasts(event.target); });
+  document.addEventListener("htmx:responseError", function () {
+    window.showToast("Une erreur est survenue. Réessayez.", "error");
+  });
+
   initToasts();
 })();
