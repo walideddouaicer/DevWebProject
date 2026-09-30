@@ -78,6 +78,41 @@ class TeacherFormTests(Fixtures):
         self.assertEqual(str(evaluation.score), "15.50")
         self.assertEqual(evaluation.criteria.get().name, "Code")
 
+    def test_grade_with_untouched_suggested_criteria(self):
+        """The page pre-fills criteria names; leaving them unscored must not block grading."""
+        project = self.project(self.students[0], status="submitted")
+        self.login(self.teacher)
+        self.client.post(
+            reverse("teacher:grade_project", args=[project.id]),
+            {
+                "score": "14",
+                "criterion_name": ["Qualité technique", "Respect des délais"],
+                "criterion_score": ["", "15"],
+                "criterion_comment": ["", ""],
+            },
+        )
+        evaluation = ProjectEvaluation.objects.get(project=project)
+        self.assertEqual([c.name for c in evaluation.criteria.all()], ["Respect des délais"])
+
+    def test_grade_error_keeps_what_was_typed(self):
+        project = self.project(self.students[0], status="submitted")
+        self.login(self.teacher)
+        response = self.client.post(
+            reverse("teacher:grade_project", args=[project.id]),
+            {
+                "score": "14",
+                "comments": "Bon travail",
+                "criterion_name": ["Code"],
+                "criterion_score": ["25"],
+                "criterion_comment": ["trop haut"],
+            },
+        )
+        self.assertFalse(ProjectEvaluation.objects.exists())
+        self.assertContains(response, 'value="14"')
+        self.assertContains(response, "Bon travail")
+        self.assertContains(response, 'value="25"')
+        self.assertNotContains(response, 'name="validate_project" checked')
+
     def test_grade_rejects_out_of_range(self):
         project = self.project(self.students[0], status="submitted")
         self.login(self.teacher)

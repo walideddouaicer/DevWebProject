@@ -335,11 +335,33 @@ def grade_project(request, project_id):
             {"name": name, "score": "", "comment": ""} for name in DEFAULT_EVALUATION_CRITERIA
         ]
 
+    score_value = str(evaluation.score) if evaluation else ""
+    comments_value = evaluation.comments if evaluation else ""
+    validate_checked = True
+    if request.method == "POST":
+        # Re-show what the teacher typed rather than losing it on a validation error
+        post = request.POST
+        criteria_for_form = [
+            {"name": n, "score": s, "comment": c}
+            for n, s, c in zip(
+                post.getlist("criterion_name"),
+                post.getlist("criterion_score"),
+                post.getlist("criterion_comment"),
+                strict=False,
+            )
+        ]
+        score_value = post.get("score", "")
+        comments_value = post.get("comments", "")
+        validate_checked = bool(post.get("validate_project"))
+
     context = {
         "teacher": teacher,
         "project": project,
         "evaluation": evaluation,
         "criteria_for_form": criteria_for_form,
+        "score_value": score_value,
+        "comments_value": comments_value,
+        "validate_checked": validate_checked,
     }
 
     return render(request, "teacher/grade_project.html", context)

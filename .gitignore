@@ -28,3 +28,4 @@ htmlcov/
 /staticfiles/
 *.sqlite3
 .scheduler.json
+e2e/artifacts/

@@ -17,7 +17,9 @@ Server-rendered templates; UI copy is **French**, code is English.
 make setup          # .venv + requirements/dev.txt + migrate
 make run            # runserver
 make check          # ruff, django checks (incl. --deploy with fake prod env), migrations, tests
-make test           # test suite only
+make test           # test suite only (excludes the e2e tag)
+make e2e            # Playwright browser journeys in e2e/ (live server, seeded DB)
+make qa             # screenshot every page x role; fails on JS/CSP errors or serious axe issues
 make seed           # demo data (password for every account: demo12345!)
 .venv/bin/python manage.py seed_demo --reset   # wipe DB + reseed (DEBUG only)
 ```
@@ -40,7 +42,15 @@ django.db.backends.postgresql DB_NAME=ensa DB_USER=ensa DB_PASSWORD=ensa DB_HOST
 | `teacher` | Modules, enrollments, `ProjectAssignment`/`ProjectOption`/`DirectStudentAssignment`, review, grading (`ProjectEvaluation`), announcements |
 | `administrator` | Admin dashboard, users/imports, modules, moderation, exports, `seed_demo` |
 | `search` | Role-aware global search |
-| `tests/` | Cross-app suites: `test_smoke.py` (every URL × role), `test_regressions.py` (bug ids from PLAN §3) |
+| `ui` | Design system: template tags (`icon`, `status_chip`, `avatar`, `field`…), navigation, widgets, styleguide (DEBUG) |
+| `tests/` | Cross-app suites: `test_smoke.py` (every URL × role: no 5xx, no GET mutation, permission matrix, outsider POSTs), `test_regressions.py` (bug ids from PLAN §3) |
+| `e2e/` | Browser journeys (tag `e2e`): `BrowserTestCase` in `e2e/base.py`; failure screenshots in `e2e/artifacts/` |
+| `docs/` | `DEPLOY.md` (server setup), `OPERATIONS.md` (jobs, logs, secrets) |
+
+UI rules: CSS sources in `static/css/src/**` built into `static/css/app.css` by
+`scripts/build_css.py` (commit both). No inline `style`/`on*`/`<script>` anywhere (the CSP
+is enforced; widget attrs are tested too), no CDN. Emails: `templates/emails/<name>.txt` +
+`.html`, sent with `ensa_project_manager.emails.send_templated_email`, gated by `wants_email`.
 
 Role = which `*Profile` row a User has (Admin > Teacher > Student, see `ensa_project_manager/views.py`).
 

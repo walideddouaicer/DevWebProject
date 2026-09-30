@@ -667,7 +667,8 @@ class EvaluationForm(forms.Form):
 def parse_rubric(data):
     """Rubric rows from parallel POST arrays (criterion_name/score/comment).
 
-    Returns (rows, errors). Fully empty rows are ignored.
+    Returns (rows, errors). Empty rows, and suggested criteria left unscored and
+    uncommented, are ignored: the rubric is optional, the overall grade is what counts.
     """
     names = data.getlist("criterion_name")
     scores = data.getlist("criterion_score")
@@ -678,7 +679,7 @@ def parse_rubric(data):
         name = name.strip()[:100]
         raw_score = (scores[index] if index < len(scores) else "").strip()
         comment = (comments[index] if index < len(comments) else "").strip()[:255]
-        if not name and not raw_score:
+        if not raw_score and not comment:
             continue
         try:
             score = score_field.clean(raw_score)

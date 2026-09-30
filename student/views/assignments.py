@@ -555,11 +555,8 @@ def handle_choice_based_assignment_project(request, student, assignment):
         # Make certain fields readonly
         form.fields["module"].widget.attrs["readonly"] = True
         form.fields["project_type"].widget.attrs["readonly"] = True
-
-        if selected_option:
-            # If option is selected, make title and description readonly too
-            form.fields["title"].widget.attrs["readonly"] = True
-            form.fields["description"].widget.attrs["readonly"] = True
+        # Title/description start from the chosen subject but stay editable: several teams can
+        # pick the same subject, and the subject itself stays linked via selected_option.
 
     context = {
         "student": student,

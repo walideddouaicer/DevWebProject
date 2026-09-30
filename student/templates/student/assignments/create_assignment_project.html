@@ -6,7 +6,7 @@
   <div>
     <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="{% url 'student:assignments_dashboard' %}">Devoirs</a><span class="sep">/</span><a href="{% url 'student:assignment_detail' assignment.id %}">{{ assignment.title }}</a></nav>
     <h1>Démarrer le projet</h1>
-    <p class="meta">{% if selected_option %}Sujet choisi : <strong>{{ selected_option.title }}</strong>. {% endif %}{% if team_info.is_team_work %}Vous serez responsable de l'équipe (de {{ team_info.min_size }} à {{ team_info.max_size }} membres) et inviterez vos coéquipiers depuis la page du projet.{% else %}Projet individuel.{% endif %}</p>
+    <p class="muted">{% if selected_option %}Sujet choisi : <strong>{{ selected_option.title }}</strong>. {% endif %}{% if team_info.is_team_work %}Vous serez responsable de l'équipe (de {{ team_info.min_size }} à {{ team_info.max_size }} membres) et inviterez vos coéquipiers depuis la page du projet.{% else %}Projet individuel.{% endif %}</p>
   </div>
 </header>
 <form method="post" class="card card-body" novalidate>

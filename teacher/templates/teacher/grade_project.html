@@ -42,9 +42,9 @@
   <div class="form-section">
     <header><h2>Note globale</h2></header>
     <div class="form-grid">
-      <div class="field"><label for="score">Note sur 20<span class="required" aria-hidden="true">*</span></label><input class="input num" id="score" name="score" value="{% if evaluation %}{{ evaluation.score|stringformat:'s' }}{% endif %}" inputmode="decimal" required placeholder="Ex. 15,5"></div>
-      <div class="field"><label for="comments">Appréciation</label><textarea class="textarea" id="comments" name="comments" rows="5" maxlength="5000">{% if evaluation %}{{ evaluation.comments }}{% endif %}</textarea><p class="field-help">Visible par toute l'équipe.</p></div>
-      {% if project.status == "submitted" %}<label class="check"><input type="checkbox" name="validate_project" checked> Valider le projet en même temps</label>{% endif %}
+      <div class="field"><label for="score">Note sur 20<span class="required" aria-hidden="true">*</span></label><input class="input num" id="score" name="score" value="{{ score_value }}" inputmode="decimal" required placeholder="Ex. 15,5"></div>
+      <div class="field"><label for="comments">Appréciation</label><textarea class="textarea" id="comments" name="comments" rows="5" maxlength="5000">{{ comments_value }}</textarea><p class="field-help">Visible par toute l'équipe.</p></div>
+      {% if project.status == "submitted" %}<label class="check"><input type="checkbox" name="validate_project"{% if validate_checked %} checked{% endif %}> Valider le projet en même temps</label>{% endif %}
     </div>
   </div>
   <div class="form-actions"><a class="btn btn-ghost" href="{% url 'teacher:project_review' project.id %}">Annuler</a><button class="btn btn-primary" type="submit">Enregistrer la note</button></div>

@@ -7,7 +7,7 @@ DEPLOY_ENV = DJANGO_DEBUG=False ENVIRONMENT=prod \
 	DJANGO_ALLOWED_HOSTS=example.com SITE_URL=https://example.com EMAIL_HOST=smtp.example.com \
 	DATABASE_URL=postgres://u:p@localhost:5432/db
 
-.PHONY: setup run test lint format check coverage screens qa seed docker-build docker-up
+.PHONY: setup run test e2e lint format check coverage screens qa seed docker-build docker-up
 
 setup:
 	python3 -m venv .venv
@@ -19,7 +19,11 @@ run:
 	$(MANAGE) runserver
 
 test:
-	$(MANAGE) test --parallel auto
+	$(MANAGE) test --parallel auto --exclude-tag e2e
+
+# Browser end-to-end journeys (Playwright + live server), see e2e/
+e2e:
+	$(MANAGE) test e2e --tag e2e
 
 lint:
 	$(RUFF) check .
@@ -33,7 +37,7 @@ check: lint
 	$(MANAGE) check --fail-level WARNING
 	$(DEPLOY_ENV) $(MANAGE) check --deploy --fail-level WARNING
 	$(MANAGE) makemigrations --check --dry-run
-	$(MANAGE) test --parallel auto
+	$(MANAGE) test --parallel auto --exclude-tag e2e
 
 coverage:
 	.venv/bin/coverage run manage.py test

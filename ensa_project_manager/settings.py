@@ -316,6 +316,10 @@ EMAIL_BACKEND = env(
 EMAIL_HOST = env("EMAIL_HOST", "")
 EMAIL_PORT = env_int("EMAIL_PORT", 587)
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", default=True)
+# Implicit TLS (usually port 465). Django refuses TLS and SSL together.
+EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", default=False)
+if EMAIL_USE_SSL:
+    EMAIL_USE_TLS = False
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
 EMAIL_TIMEOUT = env_int("EMAIL_TIMEOUT", 15)

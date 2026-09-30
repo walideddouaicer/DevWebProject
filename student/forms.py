@@ -119,6 +119,10 @@ class DeliverableForm(forms.ModelForm):
             "name": forms.TextInput(attrs={"placeholder": "Nom du livrable"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["file_type"].choices = [("", "Choisir…"), *ProjectDeliverable.DELIVERABLE_TYPES]
+
     def clean_file(self):
         file = self.cleaned_data.get("file")
         if file:

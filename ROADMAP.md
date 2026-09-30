@@ -1,5 +1,8 @@
 # ROADMAP — ENSA Project Manager
 
+> **Superseded (2026-09-30).** This backlog predates the v2.0 revamp. Current state and
+> remaining work live in `PLAN.md`; what shipped is in `CHANGELOG.md`. Kept for history only.
+
 Feature backlog agreed on 2026-07-03. Work through it top-to-bottom (ordered by
 impact vs effort and dependencies). Check items off as they land; add notes/dates
 next to completed items. This file is the single source of truth for what's next —

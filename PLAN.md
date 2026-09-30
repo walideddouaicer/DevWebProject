@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P7.4 done → P7.5 next (E2E happy paths)**
+- Phase: **P7.6 done → P7.7 next (release candidate)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (283 tests)
+- Last green `make check`: 2026-09-30 (285 tests; `make e2e` 3 journeys green)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -430,13 +430,13 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   (page weight < 300 KB for app pages excluding user images, no layout shift from fonts via
   `font-display: swap` + metric fallbacks); DB indexes verified with EXPLAIN on Postgres
   for the heaviest lists.
-- [ ] **P7.5 Full E2E happy paths** (Playwright scripts in `e2e/`, run through `make e2e` against
+- [x] **P7.5 Full E2E happy paths** (Playwright scripts in `e2e/`, run through `make e2e` against
   runserver + seeded DB): signup→admin approval→login; teacher creates choice-based team
   assignment→publishes→student A picks option→invites B, C→they accept→upload deliverable v1, v2→
   submit→teacher requests revision→resubmit→grade+validate→student makes it public→anon views,
   likes require login, reports→admin hides. Also direct individual assignment and deadline reminder
   command output. All green, including against the prod compose stack.
-- [ ] **P7.6 Docs:** `README.md` (what it is, screenshots from `screens/after/`, local dev quick
+- [x] **P7.6 Docs:** `README.md` (what it is, screenshots from `screens/after/`, local dev quick
   start), `docs/DEPLOY.md` (VPS + Docker Compose + Caddy step-by-step: DNS, env file, first
   deploy, `createadmin`, email setup, backups/restore drill, upgrades, rollback),
   `docs/OPERATIONS.md` (cron jobs, logs, common tasks, how to rotate secrets), `CHANGELOG.md`.
@@ -801,3 +801,20 @@ Everything else in this plan is decided by Claude.
   migration 0026); `member_projects` OR-join + DISTINCT → `IN (subquery)` 3.5 → 1.2 ms.
   Full suite green on Postgres; fixed a hardcoded module id in test_query_budget that only
   passed on SQLite (CI runs Postgres).
+- **2026-09-30** · P7.5 + P7.6 · `e2e/` = Django `StaticLiveServerTestCase` + Playwright
+  (tag `e2e`, excluded from `make test`/`check`; `make e2e`). Helpers: `as_(username)`,
+  `field(page, label)` (exact label, tolerates the required "*"), `choose(select, text)`,
+  failure screenshots via `_callTestMethod`, fails on any console error/CSP violation unless
+  listed in `self.expected_console`. Bugs the journeys found and fixed: (1) grading was
+  impossible without scoring every pre-filled rubric criterion, and the form lost the typed
+  grade/comment on error → `parse_rubric` skips unscored+uncommented rows, view re-renders
+  POSTed values (+2 unit tests); (2) project title/description were `readonly` after
+  choosing a subject although the page says "ajustez le titre" (cosmetic lock, not enforced)
+  → editable; (3) deliverable type placeholder "---------" → "Choisir…"; (4) subtitle on
+  "Démarrer le projet" broke apart (`.meta` is flex) → `muted`. P7.6 also added the
+  `EMAIL_USE_SSL` setting (port 465), documented in docs/DEPLOY.md.
+  Journeys (all green): signup → approval → login; choice-based team assignment → subject →
+  invites → v1/v2 → submit → revision → resubmit → grade+validate → showcase → anon like
+  redirects to login, report requires login → admin hides → 404; direct individual
+  assignment → J-3 reminder (notification + email) → start project → no duplicate reminder.
+  Not done: running the journeys against the prod compose stack (needs the P8 server).
