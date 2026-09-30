@@ -38,6 +38,10 @@ make seed             # demo data — every account's password is demo12345!
 make run              # http://127.0.0.1:8000
 ```
 
+For a presentation, `make demo` starts a separate demo instance (its own database in
+`~/.ensa-demo`, demo accounts loaded on first run, emails printed in the terminal);
+`make demo-reset` starts it over from fresh data.
+
 Demo accounts: `admin`, `prof.alami` (teacher), `etu.youssef` (student with a team),
 `etu.anas` (student without a team).
 
