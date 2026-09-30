@@ -22,28 +22,24 @@ ALLOWED_DELIVERABLE_EXTENSIONS = {
     ".7z",
     ".tar",
     ".gz",
-    # images
+    # images (no SVG: it can carry scripts)
     ".png",
     ".jpg",
     ".jpeg",
     ".gif",
-    ".svg",
     ".webp",
-    # code / notebooks
+    # code / notebooks (no .html/.js/.xml: active content; zip web projects instead)
     ".py",
     ".java",
     ".c",
     ".cpp",
     ".h",
     ".hpp",
-    ".js",
     ".ts",
-    ".html",
     ".css",
     ".sql",
     ".ipynb",
     ".json",
-    ".xml",
     ".yml",
     ".yaml",
 }
@@ -90,5 +86,15 @@ def validate_image_file(image):
     content_type = getattr(image, "content_type", None)
     if content_type and not content_type.startswith("image/"):
         raise forms.ValidationError("Le fichier doit être une image.")
+    if content_type:
+        # Freshly uploaded: make sure it really decodes as an image.
+        from PIL import Image, UnidentifiedImageError
+
+        try:
+            position = image.tell()
+            Image.open(image).verify()
+            image.seek(position)
+        except (UnidentifiedImageError, OSError, SyntaxError):
+            raise forms.ValidationError("Le fichier n'est pas une image valide.")
 
     return image

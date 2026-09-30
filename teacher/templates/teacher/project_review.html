@@ -287,7 +287,7 @@
                                 </div>
                                 <div class="deliverable-icon">📄</div>
                             </div>
-                            <a href="{{ deliverable.file.url }}" class="download-btn" target="_blank">
+                            <a href="{{ deliverable.download_url }}" class="download-btn" target="_blank">
                                 <i class="fas fa-download"></i>
                                 Télécharger
                             </a>
@@ -301,7 +301,7 @@
                                 {% for old in deliverable.history %}
                                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--border-color); font-size: 0.85rem;">
                                     <span style="color: var(--text-muted);">v{{ old.version }} — {{ old.upload_date|date:"d/m/Y H:i" }}</span>
-                                    <a href="{{ old.file.url }}" target="_blank" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">
+                                    <a href="{{ old.download_url }}" target="_blank" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">
                                         <i class="fas fa-download"></i> Télécharger
                                     </a>
                                 </div>

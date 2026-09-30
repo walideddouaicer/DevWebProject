@@ -1,8 +1,13 @@
+import os
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
+
+from .storage import get_private_storage
 
 # Create your models here.
 
@@ -184,6 +189,10 @@ class Project(models.Model):
     report_count = models.PositiveIntegerField(default=0)
     is_hidden_by_admin = models.BooleanField(
         default=False, help_text="Hidden due to reports/violations"
+    )
+    public_deliverables = models.BooleanField(
+        default=False,
+        help_text="Les livrables sont téléchargeables depuis la vitrine publique",
     )
 
     def __str__(self):
@@ -767,7 +776,7 @@ class ProjectDeliverable(models.Model):
     ]
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="deliverables")
-    file = models.FileField(upload_to="deliverables/")
+    file = models.FileField(upload_to="deliverables/", storage=get_private_storage)
     file_type = models.CharField(max_length=20, choices=DELIVERABLE_TYPES)
     name = models.CharField(max_length=200)
     version = models.PositiveIntegerField(default=1, help_text="Version du livrable (v1, v2, ...)")
@@ -775,6 +784,25 @@ class ProjectDeliverable(models.Model):
 
     def __str__(self):
         return f"{self.name} (v{self.version}) - {self.project.title}"
+
+    PREVIEWABLE_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp"}
+
+    @property
+    def extension(self):
+        return os.path.splitext(self.file.name)[1].lower()
+
+    @property
+    def is_previewable(self):
+        """Files the browser can safely display inline (sandboxed, see student.downloads)."""
+        return self.extension in self.PREVIEWABLE_EXTENSIONS
+
+    @property
+    def download_url(self):
+        return reverse("student:deliverable_download", args=[self.pk])
+
+    @property
+    def preview_url(self):
+        return f"{self.download_url}?inline=1" if self.is_previewable else None
 
     @classmethod
     def next_version(cls, project, name):

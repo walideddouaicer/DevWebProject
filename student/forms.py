@@ -128,6 +128,7 @@ class MakeProjectPublicForm(forms.ModelForm):
             "public_demo_url",
             "public_github_url",
             "public_portfolio_url",
+            "public_deliverables",
         ]
         widgets = {
             "public_cover_image": forms.FileInput(
@@ -165,6 +166,7 @@ class MakeProjectPublicForm(forms.ModelForm):
             "public_demo_url": "Lien de démonstration (optionnel)",
             "public_github_url": "Lien GitHub (optionnel)",
             "public_portfolio_url": "Lien portfolio (optionnel)",
+            "public_deliverables": "Rendre les livrables téléchargeables publiquement",
         }
         help_texts = {
             "public_cover_image": "Image qui représentera votre projet. Si non fournie, une image par défaut sera utilisée.",

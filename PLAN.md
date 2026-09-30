@@ -109,6 +109,10 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
 - **B22** No password-reset flow at all.
 - **B23** Race: `report_count += 1`, `view_count += 1` (use F()).
 - **B24** Likes/comments/reports allowed on projects hidden by an admin (they only check is_public).
+- **B25** (found in P1.7) Stored XSS: user-controlled strings (deliverable names, collaborator
+  names, module names, option titles) interpolated into inline `onclick`/`onsubmit` JS. HTML
+  escaping is decoded by the browser before the JS runs. Patched with data attributes/`escapejs`
+  in P1.7; P6 removes all inline handlers (P6.13 grep) and P7.3 enforces CSP.
 
 ---
 

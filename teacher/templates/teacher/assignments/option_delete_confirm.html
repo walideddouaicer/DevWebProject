@@ -328,7 +328,7 @@
             <form method="post" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="btn" style="background: var(--error); color: white; min-width: 150px;" 
-                        onclick="return confirm('ATTENTION: Cette suppression affectera {{ option.current_groups }} groupe{{ option.current_groups|pluralize }}.\n\nTapez le nom de l\'option pour confirmer :\n\n{{ option.title }}') && prompt('Pour confirmer, tapez exactement le nom de l\'option :') === '{{ option.title }}'">
+                        onclick="return confirm('ATTENTION: Cette suppression affectera {{ option.current_groups }} groupe{{ option.current_groups|pluralize }}.\n\nTapez le nom de l\'option pour confirmer :\n\n{{ option.title|escapejs }}') && prompt('Pour confirmer, tapez exactement le nom de l\'option :') === '{{ option.title|escapejs }}'">
                     <i class="fas fa-trash-alt"></i>
                     Supprimer Quand Même
                 </button>
@@ -337,7 +337,7 @@
             <form method="post" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="btn" style="background: var(--error); color: white; min-width: 150px;" 
-                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer définitivement l\'option « {{ option.title }} » ?')">
+                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer définitivement l\'option « {{ option.title|escapejs }} » ?')">
                     <i class="fas fa-trash-alt"></i>
                     Supprimer l'Option
                 </button>

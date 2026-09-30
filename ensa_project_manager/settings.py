@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import sys
+import tempfile
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -208,7 +210,17 @@ LOGOUT_REDIRECT_URL = "public:homepage"  # Where to go after logout
 
 # Media files
 MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = os.environ.get("MEDIA_ROOT", os.path.join(BASE_DIR, "media"))
+
+# Private files (project deliverables). Never served by the web server: downloads go
+# through permission-checked views (student.downloads).
+PRIVATE_MEDIA_ROOT = os.environ.get("PRIVATE_MEDIA_ROOT", os.path.join(BASE_DIR, "private"))
+
+# The test runner must never write uploads into the working tree.
+if len(sys.argv) > 1 and sys.argv[1] == "test":
+    _test_files = tempfile.mkdtemp(prefix="ensa-test-files-")
+    MEDIA_ROOT = os.path.join(_test_files, "media")
+    PRIVATE_MEDIA_ROOT = os.path.join(_test_files, "private")
 
 
 # Email settings

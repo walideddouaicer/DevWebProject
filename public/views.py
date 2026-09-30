@@ -197,7 +197,10 @@ def public_project_detail(request, project_id):
     # Get deliverables, grouped by name (latest version of each)
     from student.utils import group_deliverables
 
-    deliverables = group_deliverables(project.deliverables.all())
+    # Files are private unless the owner opted in when publishing
+    deliverables = (
+        group_deliverables(project.deliverables.all()) if project.public_deliverables else []
+    )
 
     # Get public comments
     comments = (

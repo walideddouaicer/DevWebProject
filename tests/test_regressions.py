@@ -7,6 +7,7 @@ Not covered here: B19 (dependencies, fixed in P0.2), B21 (dead code), B23 (a rac
 isn't practical to unit test; fixed by inspection in P2.9).
 """
 
+import os
 import shutil
 import tempfile
 from datetime import timedelta
@@ -197,7 +198,6 @@ class RegressionTests(Fixtures):
         self.assertEqual(project.status, "submitted")
 
     # B6 ------------------------------------------------------------------
-    @expectedFailure
     def test_B6_active_content_uploads_are_rejected(self):
         project = self.project(self.students[0])
         self.login(self.students[0])
@@ -209,7 +209,6 @@ class RegressionTests(Fixtures):
             )
         self.assertEqual(project.deliverables.count(), 0)
 
-    @expectedFailure
     def test_B6_deliverables_are_not_served_from_public_media(self):
         project = self.project(self.students[0])
         self.login(self.students[0])
@@ -222,7 +221,12 @@ class RegressionTests(Fixtures):
             },
         )
         deliverable = project.deliverables.get()
-        self.assertFalse(deliverable.file.url.startswith(settings.MEDIA_URL))
+        media_root = os.path.realpath(settings.MEDIA_ROOT)
+        self.assertFalse(os.path.realpath(deliverable.file.path).startswith(media_root))
+        self.assertEqual(
+            deliverable.download_url,
+            reverse("student:deliverable_download", args=[deliverable.id]),
+        )
 
     # B7 ------------------------------------------------------------------
     @expectedFailure

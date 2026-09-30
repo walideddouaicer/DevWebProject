@@ -1,11 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import (
-    assignment_views,  # Import the new assignment views
-    calendar_views,
-    views,
-)
+from . import assignment_views, calendar_views, downloads, views
 
 app_name = "student"
 
@@ -47,6 +43,11 @@ urlpatterns = [
         name="remove_collaborator",
     ),
     path("projects/<int:project_id>/comment/", views.add_comment, name="add_comment"),
+    path(
+        "deliverables/<int:deliverable_id>/download/",
+        downloads.deliverable_download,
+        name="deliverable_download",
+    ),
     path(
         "deliverables/<int:deliverable_id>/comment/",
         views.add_deliverable_comment,

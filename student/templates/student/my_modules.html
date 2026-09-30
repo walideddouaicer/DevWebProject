@@ -139,7 +139,7 @@
                         <!-- Module Actions -->
                         <div class="module-actions">
                             <form method="post" action="{% url 'student:leave_module' enrollment.module.id %}" 
-                                  onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir quitter le module {{ enrollment.module.name }}?\n\nCette action est irréversible et vous perdrez l\'accès à tous les projets associés à ce module.')">
+                                  onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir quitter le module {{ enrollment.module.name|escapejs }}?\n\nCette action est irréversible et vous perdrez l\'accès à tous les projets associés à ce module.')">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-danger">
                                     🚪 Quitter le Module

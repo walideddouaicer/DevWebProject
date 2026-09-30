@@ -357,7 +357,7 @@
                                 {% if is_owner and project.status == 'in_progress' %}
                                 <a href="{% url 'student:remove_collaborator' project.id collaborator.id %}" 
                                    class="action-btn danger" style="padding: var(--space-1) var(--space-2); font-size: var(--text-xs);"
-                                   onclick="return confirm('Retirer {{ collaborator.user.get_full_name|default:collaborator.user.username }} du projet?')">
+                                   onclick="return confirm('Retirer {{ collaborator.user.get_full_name|default:collaborator.user.username|escapejs }} du projet?')">
                                     🗑️
                                 </a>
                                 {% endif %}
@@ -521,13 +521,13 @@
                                     <div class="deliverable-icon">📄</div>
                                 </div>
                                 <div style="margin-top: var(--space-4); display: flex; gap: var(--space-2);">
-                                    {% if deliverable.file_type in 'report,presentation' %}
-                                        <button class="action-btn primary" style="padding: var(--space-2) var(--space-3); font-size: var(--text-xs);"
-                                                onclick="previewFile('{{ deliverable.file.url }}', '{{ deliverable.file_type }}', '{{ deliverable.name }}')">
+                                    {% if deliverable.is_previewable %}
+                                        <button type="button" class="action-btn primary js-preview" style="padding: var(--space-2) var(--space-3); font-size: var(--text-xs);"
+                                                data-url="{{ deliverable.preview_url }}" data-kind="{% if deliverable.extension == '.pdf' %}pdf{% else %}image{% endif %}" data-name="{{ deliverable.name }}">
                                             👁️ Aperçu
                                         </button>
                                     {% endif %}
-                                    <a href="{{ deliverable.file.url }}" class="action-btn success" style="padding: var(--space-2) var(--space-3); font-size: var(--text-xs);" target="_blank">
+                                    <a href="{{ deliverable.download_url }}" class="action-btn success" style="padding: var(--space-2) var(--space-3); font-size: var(--text-xs);" target="_blank">
                                         📥 Télécharger
                                     </a>
                                 </div>
@@ -541,7 +541,7 @@
                                     {% for old in deliverable.history %}
                                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--border-color); font-size: var(--text-sm);">
                                         <span style="color: var(--text-muted);">v{{ old.version }} — {{ old.upload_date|date:"d/m/Y H:i" }}</span>
-                                        <a href="{{ old.file.url }}" target="_blank" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">📥 Télécharger</a>
+                                        <a href="{{ old.download_url }}" target="_blank" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">📥 Télécharger</a>
                                     </div>
                                     {% endfor %}
                                 </details>
@@ -790,67 +790,29 @@ $(document).ready(function() {
     });
 });
 
-function previewFile(url, fileType, fileName) {
+function previewFile(url, kind, fileName) {
     const modal = document.getElementById('filePreviewModal');
     const container = document.getElementById('previewContainer');
-    const title = document.getElementById('previewTitle');
+    document.getElementById('previewTitle').textContent = 'Aperçu : ' + fileName;
+    container.replaceChildren();
 
-    title.textContent = 'Aperçu: ' + fileName;
-    container.innerHTML = '';
-
-    if (!url.startsWith('http')) {
-        url = window.location.origin + url;
-    }
-
-    if (fileType === 'report' || fileType === 'presentation') {
-        const iframe = document.createElement('iframe');
-        iframe.src = url;
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.border = 'none';
-        iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-
-        iframe.onload = function() {
-            try {
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                if (!iframeDoc || iframeDoc.body.innerHTML === '') {
-                    throw new Error('Empty content');
-                }
-            } catch (e) {
-                container.innerHTML = `
-                    <div class="preview-error">
-                        <div style="font-size: 3em; margin-bottom: 20px; opacity: 0.3;">📄</div>
-                        <p>L'aperçu direct n'est pas disponible.</p>
-                        <p>Le fichier peut être téléchargé et visualisé localement.</p>
-                        <a href="${url}" class="action-btn primary" target="_blank">📥 Télécharger le fichier</a>
-                    </div>
-                `;
-            }
-        };
-
-        iframe.onerror = function() {
-            container.innerHTML = `
-                <div class="preview-error">
-                    <div style="font-size: 3em; margin-bottom: 20px; opacity: 0.3;">❌</div>
-                    <p>Impossible de charger l'aperçu du fichier.</p>
-                    <a href="${url}" class="action-btn primary" target="_blank">📥 Télécharger le fichier</a>
-                </div>
-            `;
-        };
-
-        container.appendChild(iframe);
-    } else {
-        container.innerHTML = `
-            <div class="preview-error">
-                <div style="font-size: 3em; margin-bottom: 20px; opacity: 0.3;">📄</div>
-                <p>L'aperçu n'est pas disponible pour ce type de fichier.</p>
-                <a href="${url}" class="action-btn primary" target="_blank">📥 Télécharger le fichier</a>
-            </div>
-        `;
-    }
-
+    // Only PDFs and images get a preview URL (see ProjectDeliverable.preview_url)
+    const isImage = kind === 'image';
+    const element = document.createElement(isImage ? 'img' : 'iframe');
+    element.src = url;
+    element.style.width = '100%';
+    element.style.height = isImage ? 'auto' : '100%';
+    element.style.border = 'none';
+    element.alt = fileName;
+    container.appendChild(element);
     modal.style.display = 'flex';
 }
+
+document.querySelectorAll('.js-preview').forEach(function (button) {
+    button.addEventListener('click', function () {
+        previewFile(button.dataset.url, button.dataset.kind, button.dataset.name);
+    });
+});
 
 function closePreview() {
     const modal = document.getElementById('filePreviewModal');
