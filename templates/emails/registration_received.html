@@ -1,0 +1,12 @@
+{% extends "emails/base.html" %}
+{% block preheader %}Un administrateur va examiner votre demande.{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#1B1A17;">Demande reçue</h1>
+<p style="margin:0 0 16px;">Bonjour {{ registration.first_name }},</p>
+<p style="margin:0 0 16px;">Nous avons bien reçu votre demande d'inscription en tant que {{ registration.get_role_display|lower }}.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;font-size:15px;">
+  <tr><td style="padding:2px 16px 2px 0;color:#57534A;">Nom d'utilisateur</td><td style="padding:2px 0;font-weight:600;">{{ registration.username }}</td></tr>
+  <tr><td style="padding:2px 16px 2px 0;color:#57534A;">Adresse e-mail</td><td style="padding:2px 0;font-weight:600;">{{ registration.email }}</td></tr>
+</table>
+<p style="margin:0;">Un administrateur va examiner votre demande. Vous recevrez un e-mail dès que votre compte sera activé.</p>
+{% endblock %}

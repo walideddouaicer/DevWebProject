@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P6.11 done → P6.12 next (emails)**
+- Phase: **P6.12 done → P6.13 next (cleanup sweep)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (219 tests)
+- Last green `make check`: 2026-09-30 (232 tests)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -409,7 +409,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   report), pending registrations, modules list/create/edit/detail/delete, teacher-module
   assignments, projects list/detail, moderation queue, exports page, statistics.
 - [x] **P6.11 Search:** global search page + top-bar quick search (HTMX dropdown, keyboard nav).
-- [ ] **P6.12 Emails:** HTML + text templates (invitation, approval, reset, reminders, digest,
+- [x] **P6.12 Emails:** HTML + text templates (invitation, approval, reset, reminders, digest,
   announcement, grade) with an inline-CSS-safe simple layout; preview route in DEBUG.
 - [ ] **P6.13 Cleanup sweep:** delete every old per-app CSS/JS file and unused template; grep
   that no template has `<style`, `style="` (except rare dynamic widths through CSS vars),
@@ -729,3 +729,16 @@ Everything else in this plan is decided by Claude.
   `<mark>`). Fixed globally: `.col-actions` width 1% pushed stacked-table buttons off-card on
   mobile. screens.py skips HTMX fragments and audits search for every role with `?q=web`.
   `search.SearchQuery` model is unused (left in place; drop in P7 cleanup with a migration).
+- **2026-09-30** · P6.12 · Emails are multipart: `emails/<name>.txt` + `<name>.html` extending
+  `emails/base.html` (table layout, inline styles — the only place inline styles are allowed;
+  P6.13 grep must exclude `templates/emails/`). New: `project_update`, `deadline_reminder`,
+  `digest`; HTML for registration received/approved, invitation, announcement, password reset.
+  `wants_email(user, flag)` centralises preferences (inactive/no email/opted out/digest → no).
+  `Project.notify_team(..., email="Heading", details=...)` bulk-creates notifications and emails
+  on commit; used by validate / reject (reason) / request_revision (message) and grading
+  (`validate(notify=False)` + one combined "noté et validé" message — was two before).
+  Digest and reminder commands now use templates (+ select_related, no N+1). DEBUG-only
+  `/_emails/` previews (`email_previews.samples()` also feeds tests/test_emails.py).
+  Removed emoji from announcement notifications. Left for P6.13: emoji in a few
+  `messages.success` strings (student/views/projects.py, teacher/views/modules.py).
+  Known wart: reminder notifications end with a "(J-3)" dedupe marker visible to users.

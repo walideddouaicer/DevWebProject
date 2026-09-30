@@ -1,0 +1,10 @@
+{% extends "emails/base.html" %}
+{% block preheader %}{{ lead }}{% endblock %}
+{% block content %}
+<p style="margin:0 0 8px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#1F5C57;">{{ assignment.module.code }} — {{ assignment.module.name }}</p>
+<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#1B1A17;">{{ lead }}</h1>
+<p style="margin:0 0 16px;">Bonjour {{ recipient_name }},</p>
+<p style="margin:0 0 16px;">Date limite : <strong>{{ deadline|date:"l j F Y à H:i" }}</strong>.</p>
+{% include "emails/_button.html" with url=assignment_url label="Ouvrir le devoir" %}
+{% endblock %}
+{% block footer %}Rappels activés dans vos préférences. <a href="{{ settings_url }}" style="color:#6E695F;">Gérer mes préférences</a>{% endblock %}

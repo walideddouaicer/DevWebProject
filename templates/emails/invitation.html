@@ -1,0 +1,8 @@
+{% extends "emails/base.html" %}
+{% block preheader %}{{ sender_name }} vous invite à rejoindre son équipe.{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#1B1A17;">Invitation à rejoindre une équipe</h1>
+<p style="margin:0 0 16px;">Bonjour {{ recipient_name }},</p>
+<p style="margin:0 0 16px;"><strong>{{ sender_name }}</strong> vous invite à rejoindre l'équipe du projet « {{ project.title }} »{% if project.project_assignment %} (devoir : {{ project.project_assignment.title }}){% endif %}.</p>
+{% include "emails/_button.html" with url=invitations_url label="Répondre à l'invitation" %}
+{% endblock %}

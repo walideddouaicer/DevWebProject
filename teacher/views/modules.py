@@ -184,8 +184,7 @@ def module_management(request, module_id):
 def post_module_announcement(request, module_id):
     """Broadcast an announcement to every active student of a module."""
 
-    from ensa_project_manager.emails import absolute_url, send_templated_email
-    from student.models import UserPreferences
+    from ensa_project_manager.emails import absolute_url, send_templated_email, wants_email
 
     from ..models import ModuleAnnouncement
 
@@ -216,8 +215,10 @@ def post_module_announcement(request, module_id):
     ModuleAnnouncement.objects.create(module=module, teacher=teacher, title=title, content=content)
 
     teacher_name = teacher.user.get_full_name() or teacher.user.username
-    enrollments = ModuleEnrollment.objects.filter(module=module, is_active=True).select_related(
-        "student__user"
+    enrollments = list(
+        ModuleEnrollment.objects.filter(module=module, is_active=True).select_related(
+            "student__user__preferences"
+        )
     )
 
     # In-app notifications (bulk)
@@ -226,7 +227,7 @@ def post_module_announcement(request, module_id):
             Notification(
                 recipient=enrollment.student,
                 notification_type="announcement",
-                message=f"📢 [{module.code}] {title} — {content[:180]}{'...' if len(content) > 180 else ''}",
+                message=f"[{module.code}] {title} — {content[:180]}{'...' if len(content) > 180 else ''}",
             )
             for enrollment in enrollments
         ]
@@ -236,13 +237,7 @@ def post_module_announcement(request, module_id):
     emailed = 0
     for enrollment in enrollments:
         user = enrollment.student.user
-        if not user.email:
-            continue
-        prefs = UserPreferences.objects.filter(user=user).first()
-        if prefs and not (prefs.email_notifications and prefs.project_notifications):
-            continue
-        if prefs and prefs.email_digest:
-            # Digest users get the announcement in their daily summary instead
+        if not wants_email(user, "project_notifications"):
             continue
         if send_templated_email(
             f"[{module.code}] {title}",
@@ -261,7 +256,7 @@ def post_module_announcement(request, module_id):
 
     messages.success(
         request,
-        f"Annonce publiée: {enrollments.count()} étudiant(s) notifié(s)"
+        f"Annonce publiée: {len(enrollments)} étudiant(s) notifié(s)"
         + (f", {emailed} email(s) envoyé(s)." if emailed else "."),
     )
     return redirect("teacher:module_detail", module_id=module.id)

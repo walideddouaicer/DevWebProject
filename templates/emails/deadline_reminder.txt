@@ -1,0 +1,8 @@
+{% autoescape off %}Bonjour {{ recipient_name }},
+
+{{ lead }} — date limite : {{ deadline|date:"l j F Y à H:i" }} ({{ assignment.module.code }}).
+
+Ouvrir le devoir : {{ assignment_url }}
+
+L'équipe ENSA Project Manager
+{% endautoescape %}

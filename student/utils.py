@@ -26,15 +26,10 @@ logger = logging.getLogger(__name__)
 
 def send_invitation_email(invitation):
     """Email the invitation recipient, respecting their notification preferences."""
-    from ensa_project_manager.emails import absolute_url, send_templated_email
+    from ensa_project_manager.emails import absolute_url, send_templated_email, wants_email
 
     recipient_user = invitation.recipient.user
-    prefs = getattr(recipient_user, "preferences", None)
-    if prefs is not None and (
-        not prefs.email_notifications
-        or not prefs.collaboration_notifications
-        or prefs.email_digest  # digest users get a daily summary instead
-    ):
+    if not wants_email(recipient_user, "collaboration_notifications"):
         return False
     sender = invitation.sender.user
     return send_templated_email(

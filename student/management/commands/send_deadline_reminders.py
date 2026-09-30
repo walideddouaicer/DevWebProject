@@ -1,7 +1,7 @@
 # Deadline reminder job (ROADMAP item #1).
 #
-# Run daily (Windows Task Scheduler / cron):
-#   venv\Scripts\python.exe manage.py send_deadline_reminders
+# Run daily by the scheduler container (run_scheduler), or by hand:
+#   python manage.py send_deadline_reminders [--dry-run]
 #
 # For every published assignment, students who still have work to do receive an
 # in-app Notification at J-7, J-3, J-1 and J-0 (deadline day) — both for the
@@ -9,12 +9,11 @@
 # Emails are sent only if the student's UserPreferences allow it.
 # A (J-x) marker in the message guarantees each threshold fires only once.
 
-from django.conf import settings
-from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from student.models import Notification, Project, StudentProfile, UserPreferences
+from ensa_project_manager.emails import absolute_url, send_templated_email, wants_email
+from student.models import Notification, Project, StudentProfile
 from teacher.models import ProjectAssignment
 
 THRESHOLDS = [7, 3, 1, 0]  # days before the deadline
@@ -95,12 +94,12 @@ class Command(BaseCommand):
             return list(
                 StudentProfile.objects.filter(
                     direct_assignments__assignment=assignment
-                ).select_related("user")
+                ).select_related("user__preferences")
             )
         return list(
             StudentProfile.objects.filter(
                 module_enrollments__module=assignment.module, module_enrollments__is_active=True
-            ).select_related("user")
+            ).select_related("user__preferences")
         )
 
     # ------------------------------------------------------------------
@@ -145,33 +144,24 @@ class Command(BaseCommand):
             notification_type="assignment_deadline",
             message=message,
         )
-        self.send_email(student, assignment, message)
+        self.send_email(student, assignment, lead, deadline)
         return 1
 
-    def send_email(self, student, assignment, message):
-        """Email the reminder if the student's preferences allow it."""
+    def send_email(self, student, assignment, lead, deadline):
+        """Email the reminder if the student's preferences allow it (never raises)."""
         user = student.user
-        if not user.email:
+        if not wants_email(user, "assignment_reminders"):
             return
-        prefs = UserPreferences.objects.filter(user=user).first()
-        if prefs and not (prefs.email_notifications and prefs.assignment_reminders):
-            return
-        if prefs and prefs.email_digest:
-            # Digest users get the reminder in their daily summary instead
-            return
-        try:
-            send_mail(
-                subject=f"Rappel de date limite — {assignment.title}",
-                message=(
-                    f"Bonjour {user.first_name or user.username},\n\n"
-                    f"{message}\n\n"
-                    "Connectez-vous à ENSA Project Manager pour soumettre votre travail.\n\n"
-                    "Cordialement,\nL'équipe ENSA Project Manager"
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
-        except Exception:
-            # Never let email problems break the reminder job
-            pass
+        send_templated_email(
+            f"Rappel de date limite — {assignment.title}",
+            "deadline_reminder",
+            {
+                "recipient_name": user.first_name or user.username,
+                "assignment": assignment,
+                "lead": lead,
+                "deadline": deadline,
+                "assignment_url": absolute_url("student:assignment_detail", assignment.id),
+                "settings_url": absolute_url("student:profile_settings") + "?tab=notifications",
+            },
+            [user.email],
+        )

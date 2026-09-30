@@ -1,0 +1,10 @@
+{% autoescape off %}Bonjour {{ recipient_name }},
+
+{{ message }}
+{% if details %}
+{{ details }}
+{% endif %}
+Voir le projet : {{ project_url }}
+
+L'équipe ENSA Project Manager
+{% endautoescape %}

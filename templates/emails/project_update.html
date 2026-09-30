@@ -1,0 +1,11 @@
+{% extends "emails/base.html" %}
+{% block preheader %}{{ message }}{% endblock %}
+{% block content %}
+<p style="margin:0 0 8px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#1F5C57;">{{ project.title }}</p>
+<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#1B1A17;">{{ heading }}</h1>
+<p style="margin:0 0 16px;">Bonjour {{ recipient_name }},</p>
+<p style="margin:0 0 16px;">{{ message }}</p>
+{% if details %}<div style="margin:0 0 16px;padding:16px;background:#F6F4EF;border-left:3px solid #1F5C57;border-radius:4px;">{{ details|linebreaksbr }}</div>{% endif %}
+{% include "emails/_button.html" with url=project_url label="Voir le projet" %}
+{% endblock %}
+{% block footer %}Vous recevez cet e-mail car les notifications de projet sont activées. <a href="{{ settings_url }}" style="color:#6E695F;">Gérer mes préférences</a>{% endblock %}

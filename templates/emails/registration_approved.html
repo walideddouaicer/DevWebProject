@@ -1,0 +1,8 @@
+{% extends "emails/base.html" %}
+{% block preheader %}Vous pouvez maintenant vous connecter.{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#1B1A17;">Votre compte est activé</h1>
+<p style="margin:0 0 16px;">Bonjour {{ registration.first_name }},</p>
+<p style="margin:0 0 16px;">Connectez-vous avec votre nom d'utilisateur (<strong>{{ registration.username }}</strong>) et le mot de passe choisi lors de l'inscription.</p>
+{% include "emails/_button.html" with url=login_url label="Se connecter" %}
+{% endblock %}

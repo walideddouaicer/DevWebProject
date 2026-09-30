@@ -1,22 +1,19 @@
 # Daily email digest (ROADMAP #14).
 #
-# Run once a day (Windows Task Scheduler / cron):
-#   venv\Scripts\python.exe manage.py send_daily_digest
+# Run once a day by the scheduler container (run_scheduler), or by hand:
+#   python manage.py send_daily_digest [--dry-run]
 #
 # Students who enabled the digest preference receive ONE summary email of
 # their unread notifications from the last 24 hours, instead of an email
 # per event (the immediate-email paths skip digest users).
 
-import logging
-
-from django.conf import settings
-from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from ensa_project_manager.emails import absolute_url, send_templated_email
 from student.models import Notification, UserPreferences
 
-logger = logging.getLogger(__name__)
+MAX_ITEMS = 30
 
 
 class Command(BaseCommand):
@@ -43,59 +40,40 @@ class Command(BaseCommand):
         digest_prefs = UserPreferences.objects.filter(
             email_digest=True,
             email_notifications=True,
-        ).select_related("user")
+        ).select_related("user__studentprofile")
 
         for prefs in digest_prefs:
             user = prefs.user
-            if not user.email:
-                continue
-
             student = getattr(user, "studentprofile", None)
-            if student is None:
+            if not user.email or not user.is_active or student is None:
                 continue
 
-            notifications = Notification.objects.filter(
-                recipient=student,
-                is_read=False,
-                created_at__gte=since,
+            unread = Notification.objects.filter(
+                recipient=student, is_read=False, created_at__gte=since
             ).order_by("created_at")
-
-            if not notifications.exists():
+            total = unread.count()
+            if not total:
                 continue
-
-            lines = [f"• {n.message}" for n in notifications[:30]]
-            extra = notifications.count() - 30
-            if extra > 0:
-                lines.append(f"... et {extra} autre(s) notification(s).")
-
-            body = (
-                f"Bonjour {user.first_name or user.username},\n\n"
-                f"Voici votre résumé quotidien ENSA Project Manager "
-                f"({notifications.count()} notification(s) non lue(s)):\n\n"
-                + "\n".join(lines)
-                + "\n\nConnectez-vous pour voir les détails: /student/notifications/\n\n"
-                "Cordialement,\nENSA Project Manager\n\n"
-                "Vous recevez ce résumé car le mode digest est activé dans vos paramètres."
-            )
 
             if dry_run:
-                self.stdout.write(
-                    f"[dry-run] {user.username}: {notifications.count()} notification(s)"
-                )
+                self.stdout.write(f"[dry-run] {user.username}: {total} notification(s)")
                 sent += 1
                 continue
 
-            try:
-                send_mail(
-                    subject=f"Votre résumé quotidien — {notifications.count()} notification(s)",
-                    message=body,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    fail_silently=False,
-                )
+            if send_templated_email(
+                f"Votre résumé quotidien — {total} notification{'s' if total > 1 else ''}",
+                "digest",
+                {
+                    "recipient_name": user.first_name or user.username,
+                    "notifications": unread[:MAX_ITEMS],
+                    "total": total,
+                    "extra": max(0, total - MAX_ITEMS),
+                    "notifications_url": absolute_url("student:notifications"),
+                    "settings_url": absolute_url("student:profile_settings") + "?tab=notifications",
+                },
+                [user.email],
+            ):
                 sent += 1
-            except Exception:
-                logger.exception("Digest email to %s failed", user.email)
 
         verb = "seraient envoyés" if dry_run else "envoyés"
         self.stdout.write(self.style.SUCCESS(f"{sent} digest(s) {verb}."))

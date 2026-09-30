@@ -162,7 +162,7 @@ class DailyDigestTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         message = mail.outbox[0]
         self.assertEqual(message.to, ["digestuser@x.com"])
-        self.assertIn("2 notification(s)", message.subject)
+        self.assertIn("2 notifications", message.subject)
         self.assertIn("Quelque chose est arrivé", message.body)
 
     def test_no_digest_when_nothing_unread(self):

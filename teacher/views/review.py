@@ -15,7 +15,6 @@ from ensa_project_manager.pagination import paginate
 from student.forms import CommentForm
 from student.models import (
     DeliverableComment,
-    Notification,
     Project,
     ProjectComment,
     ProjectDeliverable,
@@ -319,24 +318,18 @@ def grade_project(request, project_id):
                 ),
             )
 
-            # Optionally validate at the same time (same effects as approve_project)
+            # Optionally validate at the same time (one combined notification below)
+            validated = False
             if validate_project and project.status == "submitted":
-                project.validate(by=teacher)
+                project.validate(by=teacher, notify=False)
+                validated = True
 
-            # Notify the whole team of the grade
-            validated_note = (
-                " et validé" if (validate_project and project.status == "validated") else ""
+            project.notify_team(
+                f"Le projet « {project.title} » a été noté{' et validé' if validated else ''} : "
+                f"{score}/20 ({evaluation.get_mention()}) par {teacher_name}.",
+                email="Projet validé et noté" if validated else "Projet noté",
+                details=comments,
             )
-            for member in project.get_team_members():
-                Notification.objects.create(
-                    recipient=member,
-                    project=project,
-                    notification_type="project_update",
-                    message=(
-                        f"Le projet '{project.title}' a été noté{validated_note}: "
-                        f"{score}/20 ({evaluation.get_mention()}) par {teacher_name}"
-                    ),
-                )
 
             messages.success(request, f"Note enregistrée: {score}/20 ({evaluation.get_mention()}).")
             return redirect("teacher:project_review", project_id=project.id)

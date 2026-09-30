@@ -1,0 +1,11 @@
+{% autoescape off %}Bonjour {{ recipient_name }},
+
+Votre résumé : {{ total }} notification{{ total|pluralize }} non lue{{ total|pluralize }}.
+{% for n in notifications %}
+- {{ n.message }} ({{ n.created_at|date:"d/m H:i" }}){% endfor %}{% if extra %}
+- … et {{ extra }} autre{{ extra|pluralize }}.{% endif %}
+
+Tout voir : {{ notifications_url }}
+
+Vous recevez ce résumé car le mode résumé quotidien est activé : {{ settings_url }}
+{% endautoescape %}

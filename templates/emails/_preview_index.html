@@ -1,0 +1,10 @@
+{% extends "layouts/public.html" %}
+{% block title %}E-mails{% endblock %}
+{% block content %}
+<section class="section"><div class="container stack">
+  <h1>Aperçu des e-mails</h1>
+  <p class="muted">Développement uniquement. Chaque e-mail existe en HTML et en texte brut.</p>
+  <div class="card"><ul class="results" role="list">{% for name in names %}<li><a href="{% url 'email_preview' name %}"><span class="result-title mono">{{ name }}</span><span class="cluster cluster-sm text-sm">HTML</span></a></li>{% endfor %}</ul></div>
+  <p class="text-sm muted">Version texte : ajoutez <code>?txt=1</code> à l'adresse.</p>
+</div></section>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "emails/base.html" %}
+{% block preheader %}{{ module.code }} · {{ title }}{% endblock %}
+{% block content %}
+<p style="margin:0 0 8px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#1F5C57;">{{ module.code }} — {{ module.name }}</p>
+<h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#1B1A17;">{{ title }}</h1>
+<div style="margin:0 0 16px;padding:16px;background:#F6F4EF;border-radius:6px;">{{ content|linebreaksbr }}</div>
+<p style="margin:0;color:#57534A;font-size:14px;">Annonce de {{ teacher_name }}</p>
+{% include "emails/_button.html" with url=modules_url label="Voir mes modules" %}
+{% endblock %}

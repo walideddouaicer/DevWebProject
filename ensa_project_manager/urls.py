@@ -54,6 +54,7 @@ urlpatterns = [
         "password-reset/",
         auth_views.PasswordResetView.as_view(
             email_template_name="emails/password_reset.txt",
+            html_email_template_name="emails/password_reset.html",
             subject_template_name="emails/password_reset_subject.txt",
         ),
         name="password_reset",
@@ -99,8 +100,12 @@ urlpatterns = [
 if settings.DEBUG:
     from ui.views import styleguide, styleguide_shell
 
+    from .email_previews import email_index, email_preview
+
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += [
         path("_styleguide/", styleguide, name="styleguide"),
         path("_styleguide/shell/", styleguide_shell, name="styleguide_shell"),
+        path("_emails/", email_index, name="email_index"),
+        path("_emails/<slug:name>/", email_preview, name="email_preview"),
     ]

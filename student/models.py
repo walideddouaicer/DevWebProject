@@ -539,17 +539,52 @@ class Project(models.Model):
     # transition is legal, record activity, keep DirectStudentAssignment in sync for the
     # WHOLE team and notify the team. Permission checks (who may call them) stay in views.
 
-    def notify_team(self, message, exclude=None, notification_type="project_update"):
-        """In-app notification to every team member except `exclude` (a StudentProfile)."""
-        for member in self.get_team_members():
-            if exclude is not None and member.pk == exclude.pk:
+    def notify_team(
+        self, message, exclude=None, notification_type="project_update", email=None, details=""
+    ):
+        """In-app notification to every team member except `exclude` (a StudentProfile).
+
+        With ``email`` (a heading such as "Projet validé"), members whose preferences allow
+        project emails also get one, sent after the transaction commits.
+        """
+        members = [m for m in self.get_team_members() if exclude is None or m.pk != exclude.pk]
+        Notification.objects.bulk_create(
+            [
+                Notification(
+                    recipient=member,
+                    project=self,
+                    project_assignment=self.project_assignment,
+                    notification_type=notification_type,
+                    message=message,
+                )
+                for member in members
+            ]
+        )
+        if email:
+            transaction.on_commit(
+                lambda: self._email_team(members, email, message, details), robust=True
+            )
+
+    def _email_team(self, members, heading, message, details):
+        from ensa_project_manager.emails import absolute_url, send_templated_email, wants_email
+
+        for member in members:
+            user = member.user
+            if not wants_email(user, "project_notifications"):
                 continue
-            Notification.objects.create(
-                recipient=member,
-                project=self,
-                project_assignment=self.project_assignment,
-                notification_type=notification_type,
-                message=message,
+            send_templated_email(
+                f"{heading} — {self.title}",
+                "project_update",
+                {
+                    "recipient_name": user.first_name or user.username,
+                    "project": self,
+                    "heading": heading,
+                    "message": message,
+                    "details": details,
+                    "project_url": absolute_url("student:project_detail", self.pk),
+                    "settings_url": absolute_url("student:profile_settings") + "?tab=notifications",
+                },
+                [user.email],
             )
 
     def _sync_direct_assignments(self, status):
@@ -611,8 +646,11 @@ class Project(models.Model):
         if self.status != "submitted":
             raise ValidationError("Seuls les projets soumis peuvent être évalués.")
 
-    def validate(self, by):
-        """Teacher validates a submitted project. `by` is a TeacherProfile."""
+    def validate(self, by, notify=True):
+        """Teacher validates a submitted project. `by` is a TeacherProfile.
+
+        ``notify=False`` lets the caller send one combined notification (grading).
+        """
         self._require_submitted()
         name = by.user.get_full_name() or by.user.username
         with transaction.atomic():
@@ -620,7 +658,10 @@ class Project(models.Model):
             self.save()
             self._log(by.user, "assignment_validated", f"Projet validé par {name}")
             self._sync_direct_assignments("validated")
-            self.notify_team(f"Le projet « {self.title} » a été validé par {name}.")
+            if notify:
+                self.notify_team(
+                    f"Le projet « {self.title} » a été validé par {name}.", email="Projet validé"
+                )
 
     def reject(self, by, reason=""):
         """Teacher rejects a submitted project, optionally explaining why."""
@@ -638,7 +679,9 @@ class Project(models.Model):
             self._sync_direct_assignments("started")
             self.notify_team(
                 f"Le projet « {self.title} » a été rejeté par {name}. "
-                "Consultez les commentaires du projet."
+                "Consultez les commentaires du projet.",
+                email="Projet rejeté",
+                details=reason,
             )
 
     def request_revision(self, by, message):
@@ -658,7 +701,9 @@ class Project(models.Model):
             self._sync_direct_assignments("started")
             self.notify_team(
                 f"{name} demande des révisions sur le projet « {self.title} ». "
-                "Consultez ses commentaires puis soumettez à nouveau."
+                "Consultez ses commentaires puis soumettez à nouveau.",
+                email="Révisions demandées",
+                details=message,
             )
 
     def reopen(self, by):
