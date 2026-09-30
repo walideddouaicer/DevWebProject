@@ -3,8 +3,8 @@ from django.test import SimpleTestCase
 
 
 class IconTagTests(SimpleTestCase):
-    def render(self, source):
-        return Template("{% load ui %}" + source).render(Context())
+    def render(self, source, **context):
+        return Template("{% load ui %}" + source).render(Context(context))
 
     def test_decorative_icon_is_hidden_from_assistive_tech(self):
         html = self.render('{% icon "bell" %}')
@@ -12,7 +12,7 @@ class IconTagTests(SimpleTestCase):
         self.assertIn("sprite.svg#i-bell", html)
 
     def test_labelled_icon(self):
-        html = self.render('{% icon "bell" label="Notifications <3" %}')
+        html = self.render('{% icon "bell" label=name %}', name="Notifications <3")
         self.assertIn('role="img"', html)
         self.assertIn("Notifications &lt;3", html)
 
