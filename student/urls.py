@@ -14,7 +14,7 @@ urlpatterns = [
     path("projects/<int:project_id>/upload/", views.upload_deliverable, name="upload_deliverable"),
     path("projects/<int:project_id>/milestone/add/", views.add_milestone, name="add_milestone"),
     path("milestone/<int:milestone_id>/toggle/", views.toggle_milestone, name="toggle_milestone"),
-    # NEW: Confirmation page before submission
+    # Confirmation page before submission
     path(
         "projects/<int:project_id>/submit-confirmation/",
         views.project_submit_confirmation,
@@ -103,14 +103,14 @@ urlpatterns = [
         ),
         name="password_change_done",
     ),
-    # FIXED: Assignment System URLs with correct function names
+    # Assignment System URLs with correct function names
     path("assignments/", assignment_views.assignments_dashboard, name="assignments_dashboard"),
     path(
         "assignments/<int:assignment_id>/",
         assignment_views.assignment_detail,
         name="assignment_detail",
     ),
-    # FIXED: Use the correct function name that exists in assignment_views.py
+    # Use the correct function name that exists in assignment_views.py
     path(
         "assignments/<int:assignment_id>/create-project/",
         assignment_views.create_assignment_project_direct,

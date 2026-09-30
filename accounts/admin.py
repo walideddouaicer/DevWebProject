@@ -1,9 +1,13 @@
+import logging
+
 # accounts/admin.py
 from django.contrib import admin, messages
 from django.contrib.auth.models import User
 from django.utils import timezone
 
 from .models import PendingRegistration
+
+logger = logging.getLogger(__name__)
 
 
 @admin.action(description="Approve selected registrations")
@@ -57,8 +61,12 @@ def approve_registrations(modeladmin, request, queryset):
 
             approved_count += 1
 
-        except Exception as e:
-            messages.error(request, f"Error approving {registration.username}: {str(e)}")
+        except Exception:
+            logger.exception("Error approving {registration.username}")
+            messages.error(
+                request,
+                "Error approving {registration.username}. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
 
     messages.success(request, f"Successfully approved {approved_count} registrations.")
 

@@ -415,7 +415,7 @@ def handle_direct_assignment_project(request, student, assignment):
                     return redirect("student:project_detail", project_id=project.id)
 
             except ValidationError as e:
-                messages.error(request, str(e))
+                messages.error(request, " ".join(e.messages))
     else:
         # Pre-populate form with assignment data
         initial_data = {
@@ -525,7 +525,7 @@ def handle_choice_based_assignment_project(request, student, assignment):
                     return redirect("student:project_detail", project_id=project.id)
 
             except ValidationError as e:
-                messages.error(request, str(e))
+                messages.error(request, " ".join(e.messages))
     else:
         if selected_option:
             # Pre-populate form with selected option data
@@ -579,10 +579,6 @@ def handle_choice_based_assignment_project(request, student, assignment):
         return render(request, "student/assignments/create_assignment_project.html", context)
     else:
         return render(request, "student/assignments/select_project_option.html", context)
-
-
-# COMPATIBILITY: Alias for backward compatibility with existing URLs
-create_assignment_project = create_assignment_project_direct
 
 
 # ---------------------------------------------------------------------------
@@ -781,7 +777,7 @@ def select_project_option_direct(request, assignment_id):
                         "student:select_project_option_direct", assignment_id=assignment.id
                     )
 
-                # FIXED: Properly construct the URL with query parameters
+                # Properly construct the URL with query parameters
                 redirect_url = reverse(
                     "student:create_assignment_project_direct",
                     kwargs={"assignment_id": assignment.id},

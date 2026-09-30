@@ -1,3 +1,5 @@
+import logging
+
 # administrator/views.py
 from datetime import datetime, timedelta
 
@@ -16,6 +18,8 @@ from teacher.models import Module, ModuleAssignment, ModuleEnrollment, TeacherPr
 
 # Import models from other apps
 from .models import AdminProfile
+
+logger = logging.getLogger(__name__)
 
 
 # Authentication decorator for administrators
@@ -59,7 +63,7 @@ def dashboard(request):
     recent_projects = Project.objects.filter(created_at__gte=thirty_days_ago).count()
     recent_enrollments = ModuleEnrollment.objects.filter(enrolled_at__gte=thirty_days_ago).count()
 
-    # FIXED: Module statistics with manual counting (this is what works!)
+    # Module statistics with manual counting (this is what works!)
     modules_with_stats = []
 
     for module in Module.objects.filter(is_active=True).order_by("code"):
@@ -176,7 +180,7 @@ def projects_list(request):
     # Order by latest first
     projects = projects.order_by("-updated_at")
 
-    # FIXED: Calculate statistics manually
+    # Calculate statistics manually
     total_projects = projects.count()
     submitted_count = projects.filter(status="submitted").count()
     validated_count = projects.filter(status="validated").count()
@@ -204,7 +208,7 @@ def projects_list(request):
         "search_query": search_query,
         "project_types": Project.PROJECT_TYPES,
         "status_choices": Project.STATUS_CHOICES,
-        # FIXED: Add manually calculated counts
+        # Add manually calculated counts
         "total_projects": total_projects,
         "submitted_count": submitted_count,
         "validated_count": validated_count,
@@ -281,7 +285,7 @@ def modules_list(request):
     if semester:
         modules = modules.filter(semester=semester)
 
-    # FIXED: Calculate totals manually for accuracy
+    # Calculate totals manually for accuracy
     total_modules = modules.count()
     active_modules = modules.filter(is_active=True).count()
 
@@ -297,7 +301,7 @@ def modules_list(request):
             module=module, is_active=True
         ).count()
 
-    # FIXED: Add manual counts to each module for template use
+    # Add manual counts to each module for template use
     modules_with_counts = []
     for module in modules:
         student_count = ModuleEnrollment.objects.filter(module=module, is_active=True).count()
@@ -324,7 +328,7 @@ def modules_list(request):
         "selected_academic_year": academic_year,
         "selected_semester": semester,
         "semester_choices": Module._meta.get_field("semester").choices,
-        # FIXED: Add totals calculated manually
+        # Add totals calculated manually
         "total_modules": total_modules,
         "active_modules": active_modules,
         "total_students_enrolled": total_students_enrolled,
@@ -371,8 +375,12 @@ def module_create(request):
             messages.success(request, f"Module '{module.code} - {module.name}' créé avec succès.")
             return redirect("administrator:module_detail", module_id=module.id)
 
-        except Exception as e:
-            messages.error(request, f"Erreur lors de la création du module: {str(e)}")
+        except Exception:
+            logger.exception("Erreur lors de la création du module")
+            messages.error(
+                request,
+                "Erreur lors de la création du module. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
 
     context = {
         "admin": admin,
@@ -432,8 +440,12 @@ def module_edit(request, module_id):
             module.save()
             messages.success(request, f"Module '{module.code}' mis à jour avec succès.")
             return redirect("administrator:module_detail", module_id=module.id)
-        except Exception as e:
-            messages.error(request, f"Erreur lors de la mise à jour: {str(e)}")
+        except Exception:
+            logger.exception("Erreur lors de la mise à jour")
+            messages.error(
+                request,
+                "Erreur lors de la mise à jour. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
 
     context = {
         "admin": admin,
@@ -490,17 +502,17 @@ def assignments_management(request):
     teachers = TeacherProfile.objects.select_related("user").order_by("user__first_name")
     modules = Module.objects.filter(is_active=True).order_by("code")
 
-    # FIXED: Calculate unassigned modules manually
+    # Calculate unassigned modules manually
     assigned_module_ids = assignments.values_list("module_id", flat=True)
     unassigned_modules = modules.exclude(id__in=assigned_module_ids)
 
-    # FIXED: Calculate statistics manually for accuracy
+    # Calculate statistics manually for accuracy
     total_assignments = assignments.count()
     total_teachers = teachers.count()
     total_modules = modules.count()
     total_unassigned = unassigned_modules.count()
 
-    # FIXED: Add workload counts to teachers for template
+    # Add workload counts to teachers for template
     teachers_with_workload = []
     for teacher in teachers:
         teacher_assignments = ModuleAssignment.objects.filter(
@@ -530,7 +542,7 @@ def assignments_management(request):
         "teachers": teachers_with_workload,  # Now includes workload data
         "modules": modules,
         "unassigned_modules": unassigned_modules,
-        # FIXED: Add manual counts
+        # Add manual counts
         "total_assignments": total_assignments,
         "total_teachers": total_teachers,
         "total_modules": total_modules,
@@ -589,8 +601,12 @@ def assign_teacher_to_module(request):
 
         except (TeacherProfile.DoesNotExist, Module.DoesNotExist):
             messages.error(request, "Enseignant ou module introuvable.")
-        except Exception as e:
-            messages.error(request, f"Erreur lors de l'assignation: {str(e)}")
+        except Exception:
+            logger.exception("Erreur lors de l'assignation")
+            messages.error(
+                request,
+                "Erreur lors de l'assignation. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
 
     return redirect("administrator:assignments_management")
 
@@ -612,8 +628,12 @@ def remove_assignment(request, assignment_id):
         )
     except ModuleAssignment.DoesNotExist:
         messages.error(request, "Assignation introuvable.")
-    except Exception as e:
-        messages.error(request, f"Erreur lors de la suppression: {str(e)}")
+    except Exception:
+        logger.exception("Erreur lors de la suppression")
+        messages.error(
+            request,
+            "Erreur lors de la suppression. Réessayez ; si le problème persiste, contactez l'administration.",
+        )
 
     return redirect("administrator:assignments_management")
 
@@ -715,8 +735,9 @@ def remove_student_from_module(request, module_id, student_id):
         else:
             messages.error(request, error_msg)
             return redirect("administrator:modules_list")
-    except Exception as e:
-        error_msg = f"Erreur lors de la désinscription: {str(e)}"
+    except Exception:
+        logger.exception("Unenrollment failed")
+        error_msg = "Erreur lors de la désinscription. Réessayez plus tard."
         if request.method == "POST":
             return JsonResponse({"success": False, "message": error_msg})
         else:
@@ -854,8 +875,12 @@ def approve_registration(request, registration_id):
             # Notify the user by email (console backend in dev)
             send_approval_email(registration)
 
-        except Exception as e:
-            messages.error(request, f"Erreur lors de l'approbation: {str(e)}")
+        except Exception:
+            logger.exception("Erreur lors de l'approbation")
+            messages.error(
+                request,
+                "Erreur lors de l'approbation. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
 
     return redirect("administrator:pending_registrations")
 
@@ -969,8 +994,12 @@ def reject_registration(request, registration_id):
             registration.delete()
 
             messages.info(request, f"Demande d'inscription de {name} rejetée")
-        except Exception as e:
-            messages.error(request, f"Erreur lors du rejet: {str(e)}")
+        except Exception:
+            logger.exception("Erreur lors du rejet")
+            messages.error(
+                request,
+                "Erreur lors du rejet. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
 
     return redirect("administrator:pending_registrations")
 
@@ -1402,8 +1431,12 @@ def import_students(request):
                         messages.info(request, "Aucune ligne de données trouvée dans le fichier.")
             except StopIteration:
                 pass
-            except Exception as e:
-                messages.error(request, f"Impossible de lire le fichier Excel: {str(e)}")
+            except Exception:
+                logger.exception("Impossible de lire le fichier Excel")
+                messages.error(
+                    request,
+                    "Impossible de lire le fichier Excel. Réessayez ; si le problème persiste, contactez l'administration.",
+                )
 
     context = {
         "admin": admin,
@@ -1625,8 +1658,12 @@ def import_teachers(request):
                         messages.info(request, "Aucune ligne de données trouvée dans le fichier.")
             except StopIteration:
                 pass
-            except Exception as e:
-                messages.error(request, f"Impossible de lire le fichier Excel: {str(e)}")
+            except Exception:
+                logger.exception("Impossible de lire le fichier Excel")
+                messages.error(
+                    request,
+                    "Impossible de lire le fichier Excel. Réessayez ; si le problème persiste, contactez l'administration.",
+                )
 
     context = {
         "admin": admin,

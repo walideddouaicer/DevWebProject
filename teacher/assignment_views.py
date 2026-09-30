@@ -1,5 +1,6 @@
-# teacher/assignment_views.py - UPDATED to use collaboration-based teams instead of groups
+import logging
 
+# teacher/assignment_views.py - UPDATED to use collaboration-based teams instead of groups
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -28,6 +29,8 @@ from .models import (
     ProjectOption,
     TeacherProfile,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_teacher_or_error(request):
@@ -250,7 +253,7 @@ def assignment_detail(request, assignment_id):
     else:
         # For choice-based assignments - calculate teams from projects
 
-        # ENHANCED: Get ALL project options with their selection status
+        # Get ALL project options with their selection status
         all_project_options = []
         for option in assignment.project_options.all().order_by("order", "title"):
             # Get projects that selected this option
@@ -325,7 +328,7 @@ def assignment_detail(request, assignment_id):
             "submitted": assignment_projects.filter(status__in=["submitted", "validated"]).count(),
             "validated": assignment_projects.filter(status="validated").count(),
             "teams_data": teams_data,
-            "project_options": all_project_options,  # ENHANCED: All options with selection data
+            "project_options": all_project_options,  # All options with selection data
             "projects": assignment_projects,
         }
 
@@ -497,7 +500,7 @@ def assignment_create(request):
             except Module.DoesNotExist:
                 messages.error(request, "Module sélectionné invalide.")
             except ValidationError as e:
-                messages.error(request, str(e))
+                messages.error(request, " ".join(e.messages))
         else:
             if not module_id:
                 messages.error(request, "Veuillez sélectionner un module.")
@@ -548,7 +551,7 @@ def assignment_options(request, assignment_id):
                     return redirect("teacher:assignment_options", assignment_id=assignment.id)
 
             except ValidationError as e:
-                messages.error(request, str(e))
+                messages.error(request, " ".join(e.messages))
     else:
         form = ProjectOptionForm()
 
@@ -641,8 +644,12 @@ def assignment_students(request, assignment_id):
                     messages.success(request, f"{created_count} étudiants assignés au devoir.")
                     return redirect("teacher:assignment_detail", assignment_id=assignment.id)
 
-            except Exception as e:
-                messages.error(request, f"Erreur lors de l'assignation: {str(e)}")
+            except Exception:
+                logger.exception("Erreur lors de l'assignation")
+                messages.error(
+                    request,
+                    "Erreur lors de l'assignation. Réessayez ; si le problème persiste, contactez l'administration.",
+                )
     else:
         form = StudentSelectionForm(module=assignment.module)
 
@@ -774,8 +781,12 @@ def assignment_publish(request, assignment_id):
                 messages.success(request, f"Devoir '{assignment.title}' publié avec succès.")
                 return redirect("teacher:assignment_detail", assignment_id=assignment.id)
 
-        except Exception as e:
-            messages.error(request, f"Erreur lors de la publication: {str(e)}")
+        except Exception:
+            logger.exception("Erreur lors de la publication")
+            messages.error(
+                request,
+                "Erreur lors de la publication. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
 
     # Get assignment readiness information
     readiness_info = {
@@ -924,8 +935,12 @@ def assignment_edit(request, assignment_id):
                 assignment.save(update_fields=["description", "instructions"])
                 messages.success(request, "Devoir mis à jour avec succès.")
                 return redirect("teacher:assignment_detail", assignment_id=assignment.id)
-            except Exception as e:
-                messages.error(request, f"Erreur lors de la mise à jour: {str(e)}")
+            except Exception:
+                logger.exception("Erreur lors de la mise à jour")
+                messages.error(
+                    request,
+                    "Erreur lors de la mise à jour. Réessayez ; si le problème persiste, contactez l'administration.",
+                )
         else:
             form = ProjectAssignmentForm(request.POST, instance=assignment, teacher=teacher)
             if form.is_valid():
@@ -934,7 +949,7 @@ def assignment_edit(request, assignment_id):
                     messages.success(request, "Devoir mis à jour avec succès.")
                     return redirect("teacher:assignment_detail", assignment_id=assignment.id)
                 except ValidationError as e:
-                    messages.error(request, str(e))
+                    messages.error(request, " ".join(e.messages))
     else:
         if edit_type == "limited":
             form = None  # Will show simple form in template
@@ -983,8 +998,12 @@ def option_delete(request, assignment_id, option_id):
                 messages.success(request, f"Option '{option_title}' supprimée avec succès.")
                 return redirect("teacher:assignment_options", assignment_id=assignment.id)
 
-        except Exception as e:
-            messages.error(request, f"Erreur lors de la suppression: {str(e)}")
+        except Exception:
+            logger.exception("Erreur lors de la suppression")
+            messages.error(
+                request,
+                "Erreur lors de la suppression. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
 
     context = {
         "teacher": teacher,
@@ -1034,9 +1053,13 @@ def create_teacher_module(request):
                     return redirect("teacher:module_detail", module_id=module.id)
 
             except ValidationError as e:
-                messages.error(request, str(e))
-            except Exception as e:
-                messages.error(request, f"Erreur lors de la création: {str(e)}")
+                messages.error(request, " ".join(e.messages))
+            except Exception:
+                logger.exception("Erreur lors de la création")
+                messages.error(
+                    request,
+                    "Erreur lors de la création. Réessayez ; si le problème persiste, contactez l'administration.",
+                )
     else:
         form = ModuleCreationForm()
 

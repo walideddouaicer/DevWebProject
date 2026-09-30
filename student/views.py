@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -31,8 +33,9 @@ from .models import (
 )
 from .utils import clear_student_context_cache, send_invitation_email
 
+logger = logging.getLogger(__name__)
 
-# Add these stub functions for the new URL patterns
+
 @student_required
 @require_POST
 def project_submit(request, project_id):
@@ -65,9 +68,6 @@ def project_reopen(request, project_id):
     return redirect("student:project_detail", project_id=project.id)
 
 
-# Alternative approach using get_or_create for add_collaborator in student/views.py:
-
-
 @login_required
 def add_collaborator(request, project_id):
     """ENHANCED: Add collaborator with full assignment constraint checking"""
@@ -86,7 +86,7 @@ def add_collaborator(request, project_id):
         )
         return redirect("student:project_detail", project_id=project.id)
 
-    # ENHANCED: Check assignment constraints
+    # Check assignment constraints
     if project.is_assignment_project():
         if not project.can_invite_more_collaborators():
             team_status = project.get_team_size_status()
@@ -96,7 +96,7 @@ def add_collaborator(request, project_id):
             return redirect("student:project_detail", project_id=project.id)
 
     if request.method == "POST":
-        # ENHANCED: Enhanced validation for assignment projects
+        # Enhanced validation for assignment projects
         if project.is_assignment_project() and not project.project_assignment.is_team_work:
             messages.error(
                 request, "Ce devoir doit être fait individuellement - aucun collaborateur autorisé."
@@ -119,7 +119,7 @@ def add_collaborator(request, project_id):
                     messages.info(request, f"{recipient} est déjà un collaborateur de ce projet.")
                     return redirect("student:project_detail", project_id=project.id)
 
-                # ENHANCED: For assignment projects, verify recipient eligibility
+                # For assignment projects, verify recipient eligibility
                 if project.is_assignment_project():
                     assignment = project.project_assignment
 
@@ -167,7 +167,7 @@ def add_collaborator(request, project_id):
                     # New invitation created
                     send_invitation_email(invitation)
 
-                    # ENHANCED: Assignment-specific notification message
+                    # Assignment-specific notification message
                     if project.is_assignment_project():
                         notification_msg = (
                             f"{student.user.get_full_name() or student.user.username} vous invite à collaborer "
@@ -225,9 +225,11 @@ def add_collaborator(request, project_id):
 
             except StudentProfile.DoesNotExist:
                 messages.error(request, "Étudiant non trouvé.")
-            except Exception as e:
-                # Handle any other unexpected errors
-                messages.error(request, f"Erreur lors de l'envoi de l'invitation: {str(e)}")
+            except Exception:
+                logger.exception("Invitation failed")
+                messages.error(
+                    request, "L'invitation n'a pas pu être envoyée. Réessayez plus tard."
+                )
 
     return redirect("student:project_detail", project_id=project.id)
 
@@ -463,7 +465,7 @@ def project_detail(request, project_id):
     project_activities = ProjectActivity.objects.filter(project=project)
     comments = project.comments.all().select_related("author")
 
-    # ENHANCED: Assignment-specific context
+    # Assignment-specific context
     assignment_context = {}
     if project.is_assignment_project():
         assignment = project.project_assignment
@@ -552,7 +554,7 @@ def project_detail(request, project_id):
             project=project, status="pending"
         ).select_related("recipient__user")
 
-    # ENHANCED: Assignment-specific action buttons
+    # Assignment-specific action buttons
     available_actions = {
         "can_edit": is_owner and project.status not in ["validated"],
         "can_delete": is_owner
@@ -686,9 +688,6 @@ def add_deliverable_comment(request, deliverable_id):
             messages.error(request, "Le commentaire ne peut pas être vide.")
 
     return redirect("student:project_detail", project_id=project.id)
-
-
-# Replace the project_delete view in student/views.py with this fixed version:
 
 
 @login_required
@@ -835,7 +834,7 @@ def respond_to_invitation(request, invitation_id, response):
     )
 
     if response == "accept":
-        # ENHANCED: Additional validation for assignment projects
+        # Additional validation for assignment projects
         project = invitation.project
 
         if project.is_assignment_project():
@@ -908,7 +907,7 @@ def respond_to_invitation(request, invitation_id, response):
                 description=f"{student.user.get_full_name() or student.user.username} a rejoint le projet en tant que collaborateur",
             )
 
-            # ENHANCED: Assignment-specific success message
+            # Assignment-specific success message
             if project.is_assignment_project():
                 messages.success(
                     request,
@@ -921,7 +920,7 @@ def respond_to_invitation(request, invitation_id, response):
                 )
 
         except ValidationError as e:
-            messages.error(request, str(e))
+            messages.error(request, " ".join(e.messages))
             invitation.status = "rejected"
             invitation.save()
 
@@ -957,14 +956,14 @@ def remove_collaborator(request, project_id, collaborator_id):
     try:
         collaborator = StudentProfile.objects.get(id=collaborator_id)
 
-        # ENHANCED: Use the assignment-aware removal method
+        # Use the assignment-aware removal method
         project.remove_assignment_collaborator(collaborator)
         messages.success(request, f"{collaborator} a été retiré des collaborateurs du projet.")
 
     except StudentProfile.DoesNotExist:
         messages.error(request, "Étudiant non trouvé.")
     except ValidationError as e:
-        messages.error(request, str(e))
+        messages.error(request, " ".join(e.messages))
 
     return redirect("student:project_detail", project_id=project.id)
 
@@ -1124,11 +1123,6 @@ def make_project_private(request, project_id):
     return render(request, "student/make_project_private_confirm.html", context)
 
 
-# Add this to your existing student/views.py file (append to the end)
-
-# Add these functions to the END of your existing student/views.py file
-
-
 @login_required
 def join_module(request):
     """Allow students to join a module using a code"""
@@ -1172,6 +1166,7 @@ def join_module(request):
                 f"Aucun module trouvé avec le code '{module_code}'. Vérifiez le code et réessayez.",
             )
         except Exception:
+            logger.exception("join_module failed")
             messages.error(request, "Une erreur est survenue. Veuillez réessayer.")
 
     return redirect("student:dashboard")

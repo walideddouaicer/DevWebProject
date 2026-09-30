@@ -135,7 +135,7 @@ class ModuleEnrollment(models.Model):
         return attached
 
 
-# UPDATED: Core assignment system with team terminology
+# Core assignment system with team terminology
 class ProjectAssignment(models.Model):
     teacher = models.ForeignKey(
         TeacherProfile, on_delete=models.CASCADE, related_name="assignments"
@@ -155,7 +155,7 @@ class ProjectAssignment(models.Model):
     ]
     assignment_type = models.CharField(max_length=20, choices=ASSIGNMENT_TYPES)
 
-    # UPDATED: Team work settings (renamed from group_work)
+    # Team work settings (renamed from group_work)
     is_team_work = models.BooleanField(
         default=False, help_text="Ce devoir doit-il être fait en équipe?"
     )
@@ -362,7 +362,7 @@ class ProjectAssignment(models.Model):
         verbose_name_plural = "Project Assignments"
 
 
-# UPDATED: For choice-based assignments with team terminology
+# For choice-based assignments with team terminology
 class ProjectOption(models.Model):
     assignment = models.ForeignKey(
         ProjectAssignment, on_delete=models.CASCADE, related_name="project_options"
@@ -376,7 +376,7 @@ class ProjectOption(models.Model):
         default="medium",
     )
 
-    # UPDATED: Availability settings with team terminology
+    # Availability settings with team terminology
     is_unique = models.BooleanField(default=True, help_text="Only one team can choose this project")
     max_teams = models.IntegerField(default=1, help_text="Maximum teams if not unique")
     current_teams = models.IntegerField(default=0, help_text="Current number of teams assigned")

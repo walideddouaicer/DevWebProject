@@ -7,11 +7,11 @@ app_name = "public"
 
 urlpatterns = [
     path("", views.homepage, name="homepage"),
-    # NEW: Public showcase URLs
+    # Public showcase URLs
     path("projects/", views.public_projects_showcase, name="projects_showcase"),
     path("projects/<int:project_id>/", views.public_project_detail, name="project_detail"),
     path("projects/<int:project_id>/report/", views.report_project, name="report_project"),
-    # NEW: Regular form submission for comments
+    # Regular form submission for comments
     path(
         "projects/<int:project_id>/comment/", views.add_project_comment, name="add_project_comment"
     ),

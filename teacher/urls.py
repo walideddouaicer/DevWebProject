@@ -33,10 +33,10 @@ urlpatterns = [
         views.add_deliverable_comment,
         name="add_deliverable_comment",
     ),
-    # NEW: Teacher Module Creation
+    # Teacher Module Creation
     path("modules/create/", assignment_views.create_teacher_module, name="create_teacher_module"),
     path("modules/my/", assignment_views.my_modules, name="my_modules"),
-    # NEW: Assignment Management URLs
+    # Assignment Management URLs
     path("assignments/", assignment_views.assignments_dashboard, name="assignments_dashboard"),
     path("assignments/create/", assignment_views.assignment_create, name="assignment_create"),
     path(

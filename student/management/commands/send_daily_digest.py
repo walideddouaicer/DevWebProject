@@ -7,12 +7,16 @@
 # their unread notifications from the last 24 hours, instead of an email
 # per event (the immediate-email paths skip digest users).
 
+import logging
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from student.models import Notification, UserPreferences
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -87,11 +91,11 @@ class Command(BaseCommand):
                     message=body,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
-                    fail_silently=True,
+                    fail_silently=False,
                 )
                 sent += 1
             except Exception:
-                pass
+                logger.exception("Digest email to %s failed", user.email)
 
         verb = "seraient envoyés" if dry_run else "envoyés"
         self.stdout.write(self.style.SUCCESS(f"{sent} digest(s) {verb}."))

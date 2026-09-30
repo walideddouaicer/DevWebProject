@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -13,6 +15,8 @@ from accounts.permissions import (
 
 from .assignment_views import *  # noqa: F403  (removed in PLAN P3.1)
 from .models import Module, ModuleAssignment, ModuleEnrollment, TeacherProfile
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -41,7 +45,7 @@ def dashboard(request):
     # Calculate statistics
     total_modules = assigned_modules.count()
     total_students = 0
-    total_projects = teacher_projects.count()  # MISSING: Add this line
+    total_projects = teacher_projects.count()
     pending_projects = teacher_projects.filter(status="submitted").count()
     validated_projects = teacher_projects.filter(status="validated").count()
 
@@ -55,17 +59,17 @@ def dashboard(request):
     # Get recent projects for the activity section
     recent_projects = teacher_projects.select_related("student__user", "module").order_by(
         "-updated_at"
-    )[:5]  # MISSING: Add this line
+    )[:5]
 
     context = {
         "teacher": teacher,
         "total_modules": total_modules,
         "total_students": total_students,
-        "total_projects": total_projects,  # MISSING: Add this line
+        "total_projects": total_projects,
         "pending_projects": pending_projects,
         "validated_projects": validated_projects,
         "recent_modules": recent_modules,
-        "recent_projects": recent_projects,  # MISSING: Add this line
+        "recent_projects": recent_projects,
         "assigned_modules": assigned_modules,
     }
 
@@ -94,9 +98,6 @@ def modules_list(request):
     }
 
     return render(request, "teacher/modules_list.html", context)
-
-
-# ADD these missing functions to the END of your teacher/views.py file
 
 
 @login_required
@@ -212,9 +213,6 @@ def module_projects(request, module_id):
     return render(request, "teacher/module_projects.html", context)
 
 
-# REPLACE the module_management function in teacher/views.py with this FIXED version:
-
-
 @login_required
 def module_management(request, module_id):
     """Module management interface for teachers"""
@@ -224,49 +222,25 @@ def module_management(request, module_id):
         messages.error(request, "Vous n'avez pas de profil enseignant.")
         return redirect("login")
 
-    # Verify teacher has access to this module
     try:
         assignment = ModuleAssignment.objects.get(
             teacher=teacher, module_id=module_id, is_active=True
         )
-        module = assignment.module
     except ModuleAssignment.DoesNotExist:
         messages.error(request, "Vous n'avez pas accès à ce module.")
         return redirect("teacher:modules_list")
+    module = assignment.module
 
-    # Get enrollments - Fixed query
-    try:
-        enrollments = ModuleEnrollment.objects.filter(module=module, is_active=True).select_related(
-            "student__user"
-        )
-
-        # Add debug info
-        print(f"DEBUG: Found {enrollments.count()} enrollments for module {module.code}")
-
-    except Exception as e:
-        print(f"DEBUG: Error getting enrollments: {e}")
-        enrollments = []
-
+    enrollments = ModuleEnrollment.objects.filter(module=module, is_active=True).select_related(
+        "student__user"
+    )
     context = {
         "teacher": teacher,
         "module": module,
         "assignment": assignment,
         "enrollments": enrollments,
     }
-
-    # Ensure we always return a response
-    try:
-        return render(request, "teacher/module_management.html", context)
-    except Exception as e:
-        print(f"DEBUG: Template render error: {e}")
-        # Fallback response
-        return render(
-            request,
-            "teacher/base.html",
-            {
-                "error_message": f"Error loading module management for {module.code}. Template issue."
-            },
-        )
+    return render(request, "teacher/module_management.html", context)
 
 
 # new functions that handle project feedback
@@ -329,9 +303,6 @@ def student_projects(request):
     }
 
     return render(request, "teacher/student_projects.html", context)
-
-
-# In teacher/views.py, replace the project_review function with this fixed version:
 
 
 @login_required
@@ -523,8 +494,12 @@ def add_teacher_comment(request, project_id):
                 )
 
             messages.success(request, "Commentaire ajouté avec succès.")
-        except Exception as e:
-            messages.error(request, f"Erreur lors de l'ajout du commentaire: {str(e)}")
+        except Exception:
+            logger.exception("Erreur lors de l'ajout du commentaire")
+            messages.error(
+                request,
+                "Erreur lors de l'ajout du commentaire. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
     else:
         messages.error(request, "Le commentaire ne peut pas être vide.")
 
@@ -960,5 +935,6 @@ def get_module_students(request, module_id):
         return JsonResponse(
             {"success": False, "error": "Module non trouvé ou accès non autorisé"}, status=403
         )
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=500)
+    except Exception:
+        logger.exception("get_module_students failed")
+        return JsonResponse({"success": False, "error": "Erreur interne."}, status=500)

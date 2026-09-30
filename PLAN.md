@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P1 done → P2 next (P2.1 missing-template triage)**
+- Phase: **P2 done → P3 next (P3.1 split view modules)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (143 tests, 13 expected failures remaining = open bugs)
+- Last green `make check`: 2026-09-30 (152 tests; 1 expected failure left = B20 locale, fixed in P4.1)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -244,7 +244,7 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
 
 ### P2 — Broken pages & logic bugs (B7, B9–B18, B22–B24)
 
-- [ ] **P2.1 B7 triage.** For each view with a missing template, decide: build it (it's linked
+- [x] **P2.1 B7 triage.** For each view with a missing template, decide: build it (it's linked
   and useful) or delete the view+URL+links. Default decisions: **build** admin statistics (merged into
   the dashboard/"Statistiques" page), admin users overview (redirect to `users_list`, delete
   students_list/teachers_list as separate views: users_list already has tabs), teacher
@@ -252,30 +252,30 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
   **delete** public explore_projects (duplicate of the showcase → redirect), module_oversight,
   module_status_confirm, recent_module_activity (fold anything useful into existing pages). Record in §8.
   New templates use plain markup; P6 styles them.
-- [ ] **P2.2 B9** teacher_id/admin_id: store None, not ''. Data migration to convert '' → NULL.
-- [ ] **P2.3 B10** Fix the recursion: an `is_on_track` that doesn't call calculate_progress with
+- [x] **P2.2 B9** teacher_id/admin_id: store None, not ''. Data migration to convert '' → NULL.
+- [x] **P2.3 B10** Fix the recursion: an `is_on_track` that doesn't call calculate_progress with
   is_on_track included (compute the progress parts once). Decide whether the progress bar is
   shown anywhere (P6 may use it); if not, delete both methods.
-- [ ] **P2.4 B11** Completion % = students covered by submitted/validated projects ÷ expected
+- [x] **P2.4 B11** Completion % = students covered by submitted/validated projects ÷ expected
   students (direct: DirectStudentAssignment count; choice: active enrollees).
-- [ ] **P2.5 B12/B13** No notifications/DirectStudentAssignment rows at draft creation for
+- [x] **P2.5 B12/B13** No notifications/DirectStudentAssignment rows at draft creation for
   "all_students" — create them at publish. On a new enrollment (join_module, admin enroll),
   add DirectStudentAssignment rows for published "all_students" direct assignments of that module
   (a model method on ModuleEnrollment or a signal; prefer an explicit call in the enroll paths).
-- [ ] **P2.6 B18** Teacher access = module membership (ModuleAssignment active) everywhere;
+- [x] **P2.6 B18** Teacher access = module membership (ModuleAssignment active) everywhere;
   add `ProjectAssignment.is_manageable_by(teacher)`. Co-teachers can manage assignments.
-- [ ] **P2.7 B16/B17** Build absolute URLs from `SITE_URL` env (add to settings); the signup forms
+- [x] **P2.7 B16/B17** Build absolute URLs from `SITE_URL` env (add to settings); the signup forms
   run `validate_password`. Emails move to templates `templates/emails/*.txt` (+ .html later in P6.12).
-- [ ] **P2.8 B22 Password reset** with Django's auth views, templates, email; a "Mot de passe oublié ?"
+- [x] **P2.8 B22 Password reset** with Django's auth views, templates, email; a "Mot de passe oublié ?"
   link on login. Also add password change for teachers/admins (only students have it now).
-- [ ] **P2.9 B23/B24** F() expressions for counters; public interactions require
+- [x] **P2.9 B23/B24** F() expressions for counters; public interactions require
   `is_public=True, is_hidden_by_admin=False, status='validated'`.
-- [ ] **P2.10 Model hardening.** DB constraints: CheckConstraint min_team_size ≤ max_team_size,
+- [x] **P2.10 Model hardening.** DB constraints: CheckConstraint min_team_size ≤ max_team_size,
   min ≥ 1; max_teams ≥ 1; score 0–20 on evaluations; conditional UniqueConstraints for
   nullable IDs. Indexes on Project(status), Project(module, status), Notification(recipient,
   is_read, created_at). Remove the `save()→clean()` override pitfalls if they block admin/bulk ops (keep the
   validation; call `full_clean` in forms). Migrations tested on a copy of seeded data.
-- [ ] **P2.11 Remove dead code (B21):** unregistered context processors, duplicate URL entries,
+- [x] **P2.11 Remove dead code (B21):** unregistered context processors, duplicate URL entries,
   aliases, "# Add this to your file" comment debris, runs of blank lines, debug `print()`s, and
   broad `except Exception` that swallow errors (log them instead).
 
@@ -599,3 +599,13 @@ Everything else in this plan is decided by Claude.
   students/, users/teachers/ → users_list tabs; public /explore/ → showcase. Deleted unrouted
   admin views module_oversight, toggle_module_status, recent_module_activity, and the duplicated
   registration URL entries. Smoke KNOWN_FAILURES is now empty.
+- **2026-09-30** · P2.2–P2.11 · B9 (NULL ids + data migrations), B10 (progress recursion),
+  B11 (completion by students), B12/B13 (draft silence, sync at publish, late enrollees via
+  `ModuleEnrollment.attach_published_assignments`), B18 (`manageable_assignments`: co-teachers),
+  B16/B17 (SITE_URL + `ensa_project_manager/emails.py` + `templates/emails/*.txt`; signup
+  password validators), B22 (password reset + change for all roles), B23/B24 (F() counters,
+  `public_projects()` helper), DB constraints + indexes (verified on Postgres), dead code:
+  6 unregistered context processors, debug prints, paste-instruction comments, error handlers
+  that showed `str(e)` to users now log + show a generic message (admin import row errors
+  intentionally still detailed). ValidationError shown via `.messages` (no more "['…']").
+  Next: P3.1.

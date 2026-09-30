@@ -275,7 +275,7 @@ class Project(models.Model):
         assignment = self.project_assignment
         current_size = self.get_team_size()
 
-        # FIXED: Use the new field names
+        # Use the new field names
         if hasattr(assignment, "min_team_size"):
             # New field names
             min_size = assignment.min_team_size
@@ -306,7 +306,7 @@ class Project(models.Model):
         assignment = self.project_assignment
         current_size = self.get_team_size()
 
-        # FIXED: Use the new field names with fallback
+        # Use the new field names with fallback
         if hasattr(assignment, "is_team_work"):
             is_team_work = assignment.is_team_work
             min_size = assignment.min_team_size
@@ -888,7 +888,7 @@ class Notification(models.Model):
         ("project_update", "Mise à jour du projet"),
         ("milestone", "Jalon ajouté"),
         ("deliverable", "Livrable ajouté"),
-        # NEW: Assignment-related notifications
+        # Assignment-related notifications
         ("assignment_created", "Nouveau devoir assigné"),
         ("assignment_deadline", "Rappel de date limite"),
         ("group_invitation", "Invitation de groupe"),
@@ -903,7 +903,7 @@ class Notification(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="notifications", null=True, blank=True
     )
-    # NEW: Link to assignment for assignment-related notifications
+    # Link to assignment for assignment-related notifications
     project_assignment = models.ForeignKey(
         "teacher.ProjectAssignment",
         on_delete=models.CASCADE,
@@ -938,11 +938,11 @@ class ProjectActivity(models.Model):
         ("milestone_added", "Ajout de jalon"),
         ("milestone_completed", "Jalon complété"),
         ("deliverable_added", "Ajout de livrable"),
-        # NEW: Add these activity types for public showcase
+        # Add these activity types for public showcase
         ("made_public", "Projet rendu public"),
         ("made_private", "Projet retiré du public"),
         ("comment_added", "Commentaire ajouté"),
-        # NEW: Assignment-related activities
+        # Assignment-related activities
         ("assignment_created", "Devoir créé depuis assignation"),
         ("assignment_submitted", "Devoir soumis"),
         ("assignment_validated", "Devoir validé"),
@@ -1160,7 +1160,7 @@ class UserPreferences(models.Model):
     email_notifications = models.BooleanField(default=True)
     project_notifications = models.BooleanField(default=True)
     collaboration_notifications = models.BooleanField(default=True)
-    # NEW: Assignment notification preferences
+    # Assignment notification preferences
     assignment_notifications = models.BooleanField(default=True)
     assignment_reminders = models.BooleanField(default=True)
     group_notifications = models.BooleanField(default=True)
