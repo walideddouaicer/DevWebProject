@@ -274,16 +274,15 @@ class RegressionTests(Fixtures):
         self.assertEqual(PendingRegistration.objects.filter(is_approved=True).count(), 2)
 
     # B10 -----------------------------------------------------------------
-    @expectedFailure
     def test_B10_progress_of_late_project_does_not_recurse(self):
         project = self.project(
             self.students[0],
             start_date=timezone.localdate() - timedelta(days=30),
             end_date=timezone.localdate() - timedelta(days=1),
         )
-        if hasattr(project, "calculate_progress"):
-            project.calculate_progress()
-            project.is_on_track()
+        progress = project.calculate_progress()
+        self.assertFalse(progress["is_on_track"])  # late and far from done
+        self.assertFalse(project.is_on_track())
 
     # B11 -----------------------------------------------------------------
     @expectedFailure

@@ -652,11 +652,8 @@ class Project(models.Model):
                 f"{by.get_full_name()} a rouvert le projet « {self.title} ».", exclude=by
             )
 
-    def calculate_progress(self):
-        """Calculate detailed project progress based on multiple factors"""
-        progress_components = {"status": 0, "milestones": 0, "deliverables": 0, "time": 0}
-
-        # Status-based progress (30% weight)
+    def _progress_components(self):
+        """Weighted progress parts (status 30%, milestones 40%, deliverables 20%, time 10%)."""
         status_weights = {
             "in_progress": 50,
             "submitted": 80,
@@ -664,64 +661,50 @@ class Project(models.Model):
             "validated": 100,
             "rejected": 20,
         }
-        progress_components["status"] = status_weights.get(self.status, 0) * 0.3
-
-        # Milestone completion (40% weight)
+        components = {
+            "status": status_weights.get(self.status, 0) * 0.3,
+            "milestones": 20,
+            "deliverables": min(self.deliverables.count() / 3 * 100, 100) * 0.2,
+            "time": 5,
+        }
         total_milestones = self.milestones.count()
-        if total_milestones > 0:
-            completed_milestones = self.milestones.filter(completed=True).count()
-            progress_components["milestones"] = (
-                (completed_milestones / total_milestones) * 100 * 0.4
-            )
-        else:
-            progress_components["milestones"] = 20
-
-        # Deliverables (20% weight)
-        deliverable_count = self.deliverables.count()
-        deliverable_progress = min(deliverable_count / 3 * 100, 100)
-        progress_components["deliverables"] = deliverable_progress * 0.2
-
-        # Time progress (10% weight)
+        if total_milestones:
+            completed = self.milestones.filter(completed=True).count()
+            components["milestones"] = completed / total_milestones * 100 * 0.4
         if self.start_date and self.end_date:
+            components["time"] = 0
             total_duration = (self.end_date - self.start_date).days
-            elapsed = (timezone.now().date() - self.start_date).days
+            elapsed = (timezone.localdate() - self.start_date).days
             if total_duration > 0:
-                time_progress = min(elapsed / total_duration * 100, 100)
-                progress_components["time"] = time_progress * 0.1
-        else:
-            progress_components["time"] = 5
+                components["time"] = min(elapsed / total_duration * 100, 100) * 0.1
+        return components
 
-        # Calculate total progress
-        total_progress = sum(progress_components.values())
+    def calculate_progress(self):
+        """Progress summary: {'total': 0-100, 'components': {...}, 'is_on_track': bool}."""
+        components = self._progress_components()
+        total = round(sum(components.values()))
         return {
-            "total": round(total_progress),
-            "components": progress_components,
-            "is_on_track": self.is_on_track(),
+            "total": total,
+            "components": components,
+            "is_on_track": self.is_on_track(progress_total=total),
         }
 
-    def is_on_track(self):
-        """Determine if project is on track based on milestones and deadlines"""
+    def is_on_track(self, progress_total=None):
+        """False if a milestone is overdue, or <80% done in the last 20% of the timeline."""
         if not self.end_date:
             return True
-
-        days_until_deadline = (self.end_date - timezone.now().date()).days
-
-        # Check overdue milestones
-        overdue_milestones = self.milestones.filter(
-            completed=False, due_date__lt=timezone.now().date()
-        ).count()
-
-        if overdue_milestones > 0:
+        today = timezone.localdate()
+        if self.milestones.filter(completed=False, due_date__lt=today).exists():
             return False
-
-        # Check if we're in the last 20% of time with less than 80% progress
         if self.start_date:
             total_duration = (self.end_date - self.start_date).days
             if total_duration > 0:
-                time_remaining_percent = (days_until_deadline / total_duration) * 100
-                if time_remaining_percent < 20 and self.calculate_progress()["total"] < 80:
-                    return False
-
+                remaining_percent = (self.end_date - today).days / total_duration * 100
+                if remaining_percent < 20:
+                    if progress_total is None:
+                        progress_total = round(sum(self._progress_components().values()))
+                    if progress_total < 80:
+                        return False
         return True
 
     def can_be_made_public(self):
