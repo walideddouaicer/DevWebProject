@@ -118,3 +118,10 @@ def get_project_for_teacher(teacher, project_id, queryset=None):
 
     queryset = Project.objects.all() if queryset is None else queryset
     return get_object_or_404(queryset, pk=project_id, module_id__in=teacher_module_ids(teacher))
+
+
+def manageable_assignments(teacher):
+    """Assignments of every module the teacher actively teaches (co-teachers included)."""
+    from teacher.models import ProjectAssignment
+
+    return ProjectAssignment.objects.filter(module_id__in=teacher_module_ids(teacher))

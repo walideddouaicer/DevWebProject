@@ -9,6 +9,7 @@ from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from accounts.permissions import manageable_assignments, teacher_module_ids
 from student.models import Notification, Project, StudentProfile
 
 from .forms import (
@@ -52,7 +53,7 @@ def assignments_dashboard(request):
 
     # Get teacher's assignments with proper prefetching
     assignments = (
-        ProjectAssignment.objects.filter(teacher=teacher)
+        manageable_assignments(teacher)
         .select_related("module")
         .prefetch_related(
             Prefetch("project_options", queryset=ProjectOption.objects.filter(is_available=True)),
@@ -162,7 +163,7 @@ def assignments_dashboard(request):
 
     # Count ungraded projects
     ungraded_projects_count = Project.objects.filter(
-        project_assignment__teacher=teacher, status="submitted"
+        project_assignment__module_id__in=teacher_module_ids(teacher), status="submitted"
     ).count()
 
     context = {
@@ -191,7 +192,7 @@ def assignment_detail(request, assignment_id):
         return redirect("login")
 
     assignment = get_object_or_404(
-        ProjectAssignment.objects.select_related("module"), id=assignment_id, teacher=teacher
+        manageable_assignments(teacher).select_related("module"), id=assignment_id
     )
 
     # Get all projects for this assignment
@@ -344,7 +345,7 @@ def assignment_teams(request, assignment_id):
     if not teacher:
         return redirect("login")
 
-    assignment = get_object_or_404(ProjectAssignment, id=assignment_id, teacher=teacher)
+    assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
     # Get all projects for this assignment with their teams
     projects = (
@@ -521,7 +522,7 @@ def assignment_options(request, assignment_id):
         return redirect("login")
 
     assignment = get_object_or_404(
-        ProjectAssignment, id=assignment_id, teacher=teacher, assignment_type="choice_based"
+        manageable_assignments(teacher), id=assignment_id, assignment_type="choice_based"
     )
 
     if request.method == "POST":
@@ -590,7 +591,7 @@ def assignment_students(request, assignment_id):
         return redirect("login")
 
     assignment = get_object_or_404(
-        ProjectAssignment, id=assignment_id, teacher=teacher, assignment_type="direct"
+        manageable_assignments(teacher), id=assignment_id, assignment_type="direct"
     )
 
     if request.method == "POST":
@@ -677,7 +678,7 @@ def assignment_publish(request, assignment_id):
         return redirect("login")
 
     assignment = get_object_or_404(
-        ProjectAssignment, id=assignment_id, teacher=teacher, status="draft"
+        manageable_assignments(teacher), id=assignment_id, status="draft"
     )
 
     if request.method == "POST":
@@ -816,7 +817,7 @@ def assignment_progress(request, assignment_id):
     if not teacher:
         return redirect("login")
 
-    assignment = get_object_or_404(ProjectAssignment, id=assignment_id, teacher=teacher)
+    assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
     # Get submitted projects for this assignment with proper filtering
     submitted_projects = (
@@ -892,7 +893,7 @@ def assignment_edit(request, assignment_id):
     if not teacher:
         return redirect("login")
 
-    assignment = get_object_or_404(ProjectAssignment, id=assignment_id, teacher=teacher)
+    assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
     # Enhanced edit permissions check
     can_edit = assignment.status in ["draft", "published"]
@@ -959,7 +960,7 @@ def option_delete(request, assignment_id, option_id):
     if not teacher:
         return redirect("login")
 
-    assignment = get_object_or_404(ProjectAssignment, id=assignment_id, teacher=teacher)
+    assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
     option = get_object_or_404(ProjectOption, id=option_id, assignment=assignment)
 
     # Enhanced deletion validation using project system

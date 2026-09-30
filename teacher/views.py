@@ -5,7 +5,11 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 
-from accounts.permissions import get_project_for_teacher, teacher_required
+from accounts.permissions import (
+    get_project_for_teacher,
+    manageable_assignments,
+    teacher_required,
+)
 
 from .assignment_views import *  # noqa: F403  (removed in PLAN P3.1)
 from .models import Module, ModuleAssignment, ModuleEnrollment, TeacherProfile
@@ -662,15 +666,13 @@ def export_assignment_results(request, assignment_id):
 
     from administrator.exports import build_assignment_results_workbook, excel_response
 
-    from .models import ProjectAssignment
-
     try:
         teacher = TeacherProfile.objects.get(user=request.user)
     except TeacherProfile.DoesNotExist:
         messages.error(request, "Vous n'avez pas de profil enseignant.")
         return redirect("login")
 
-    assignment = get_object_or_404(ProjectAssignment, id=assignment_id, teacher=teacher)
+    assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
     projects = (
         assignment.submitted_projects.select_related("student__user", "selected_option")
@@ -693,15 +695,13 @@ def bulk_project_action(request, assignment_id):
     """Validate or request revision on several submitted projects at once."""
     from student.models import Project
 
-    from .models import ProjectAssignment
-
     try:
         teacher = TeacherProfile.objects.get(user=request.user)
     except TeacherProfile.DoesNotExist:
         messages.error(request, "Vous n'avez pas de profil enseignant.")
         return redirect("login")
 
-    assignment = get_object_or_404(ProjectAssignment, id=assignment_id, teacher=teacher)
+    assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
     action = request.POST.get("action")
     project_ids = request.POST.getlist("project_ids")

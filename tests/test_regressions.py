@@ -414,13 +414,19 @@ class RegressionTests(Fixtures):
         self.assertFalse(form.is_valid())
 
     # B18 -----------------------------------------------------------------
-    @expectedFailure
     def test_B18_co_teacher_can_follow_assignment_progress(self):
         assignment = self.assignment()
         ModuleAssignment.objects.create(teacher=self.other_teacher, module=self.module)
         self.login(self.other_teacher)
         response = self.client.get(reverse("teacher:assignment_progress", args=[assignment.id]))
         self.assertEqual(response.status_code, 200)
+
+    def test_B18_teacher_outside_module_cannot_see_assignment(self):
+        assignment = self.assignment()
+        self.login(self.other_teacher)
+        for name in ["assignment_detail", "assignment_progress", "export_assignment_results"]:
+            response = self.client.get(reverse(f"teacher:{name}", args=[assignment.id]))
+            self.assertEqual(response.status_code, 404, name)
 
     # B20 -----------------------------------------------------------------
     @expectedFailure
