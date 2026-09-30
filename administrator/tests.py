@@ -304,7 +304,7 @@ class ToggleUserActiveTests(TestCase):
         self.client.logout()
         self.client.login(username="etudiant", password="pass")
         response = self.toggle(self.admin_user)
-        self.assertEqual(response.status_code, 302)  # bounced to login
+        self.assertEqual(response.status_code, 403)  # logged-in non-admin: forbidden
 
 
 class AdminExportTests(TestCase):
@@ -387,7 +387,7 @@ class AdminExportTests(TestCase):
         self.client.logout()
         self.client.login(username="etudiant", password="pass")
         response = self.client.get(reverse("administrator:export_projects"))
-        self.assertEqual(response.status_code, 302)  # bounced to login
+        self.assertEqual(response.status_code, 403)  # logged-in non-admin: forbidden
 
     def test_exports_page_renders(self):
         response = self.client.get(reverse("administrator:exports"))
