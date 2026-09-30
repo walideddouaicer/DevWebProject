@@ -441,7 +441,6 @@ class RegressionTests(Fixtures):
         self.assertEqual(self.client.get(url).status_code, 200)
 
     # B24 -----------------------------------------------------------------
-    @expectedFailure
     def test_B24_hidden_projects_cannot_be_liked(self):
         project = self.project(
             self.students[0], status="validated", is_public=True, is_hidden_by_admin=True

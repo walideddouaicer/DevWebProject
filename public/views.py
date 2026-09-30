@@ -2,7 +2,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -18,6 +18,15 @@ from student.models import (
     StudentProfile,
 )
 from teacher.models import TeacherProfile
+
+
+def public_projects():
+    """Projects visible on the showcase: published, validated, not hidden by moderation."""
+    return Project.objects.filter(is_public=True, is_hidden_by_admin=False, status="validated")
+
+
+def get_public_project(project_id):
+    return get_object_or_404(public_projects(), pk=project_id)
 
 
 def get_common_context():
@@ -156,10 +165,7 @@ def public_project_detail(request, project_id):
     """Detailed view of a public project - includes deliverables!"""
 
     project = get_object_or_404(
-        Project.objects.select_related("student__user", "module"),
-        id=project_id,
-        is_public=True,
-        is_hidden_by_admin=False,
+        public_projects().select_related("student__user", "module"), pk=project_id
     )
 
     # Track view (only once per session per project)
@@ -172,9 +178,9 @@ def public_project_detail(request, project_id):
             user_agent=request.META.get("HTTP_USER_AGENT", ""),
         )
 
-        # Update view count
+        # Atomic increment (concurrent visitors must not lose counts)
+        Project.objects.filter(pk=project.pk).update(view_count=F("view_count") + 1)
         project.view_count += 1
-        project.save(update_fields=["view_count"])
 
         # Mark as viewed in session
         request.session[view_key] = True
@@ -250,7 +256,7 @@ def toggle_project_like(request, project_id):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
 
-    project = get_object_or_404(Project, id=project_id, is_public=True)
+    project = get_public_project(project_id)
 
     like, created = ProjectLike.objects.get_or_create(project=project, user=request.user)
 
@@ -274,7 +280,7 @@ def add_public_comment(request, project_id):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
 
-    project = get_object_or_404(Project, id=project_id, is_public=True)
+    project = get_public_project(project_id)
 
     form = PublicCommentForm(request.POST)
     if form.is_valid():
@@ -310,7 +316,7 @@ def add_project_comment(request, project_id):
     if request.method != "POST":
         return redirect("public:project_detail", project_id=project_id)
 
-    project = get_object_or_404(Project, id=project_id, is_public=True)
+    project = get_public_project(project_id)
 
     form = PublicCommentForm(request.POST)
     if form.is_valid():
@@ -329,7 +335,7 @@ def add_project_comment(request, project_id):
 @login_required
 def report_project(request, project_id):
     """Report inappropriate public project"""
-    project = get_object_or_404(Project, id=project_id, is_public=True)
+    project = get_public_project(project_id)
 
     # Check if user already reported this project
     if project.reports.filter(reporter=request.user).exists():
@@ -344,11 +350,9 @@ def report_project(request, project_id):
             report.reporter = request.user
             report.save()
 
-            # Update project report count
-            project.report_count += 1
-            if project.report_count >= 3:  # Auto-flag after 3 reports
-                project.is_reported = True
-            project.save(update_fields=["report_count", "is_reported"])
+            # Atomic increment; auto-flag after 3 reports
+            Project.objects.filter(pk=project.pk).update(report_count=F("report_count") + 1)
+            Project.objects.filter(pk=project.pk, report_count__gte=3).update(is_reported=True)
 
             messages.success(
                 request, "Merci pour votre signalement. Il sera examiné par notre équipe."
