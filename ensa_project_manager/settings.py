@@ -270,6 +270,8 @@ MEDIA_ROOT = env("MEDIA_ROOT", str(BASE_DIR / "media"))
 # Private files (project deliverables). Never served by the web server: downloads go
 # through permission-checked views (student.views.deliverables).
 PRIVATE_MEDIA_ROOT = env("PRIVATE_MEDIA_ROOT", str(BASE_DIR / "private"))
+# Where run_scheduler remembers which daily jobs already ran.
+SCHEDULER_STATE_FILE = env("SCHEDULER_STATE_FILE", str(BASE_DIR / ".scheduler.json"))
 
 if TESTING:
     # The test runner must never write uploads into the working tree.

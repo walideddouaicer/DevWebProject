@@ -619,3 +619,8 @@ Everything else in this plan is decided by Claude.
   budgets + growth tests (tests/test_query_budget.py) → fixed N+1s on admin users/projects/
   modules/dashboard, teacher dashboard/projects/module projects. One uncached badges processor.
   Pagination helper/component on 6 lists. Next: P4.1.
+- **2026-09-30** · D15 (P4.6) · No supercronic: `manage.py run_scheduler` (JSON state file,
+  once per local day, catch-up after downtime, never repeats — the digest isn't idempotent).
+  Backups (P4.7) will run in a separate postgres:16-alpine service so pg_dump matches the
+  server version and the app image needs no apt packages. Gunicorn 26 needs
+  `--control-socket /tmp/gunicorn.ctl` (default path not writable for the non-root user).
