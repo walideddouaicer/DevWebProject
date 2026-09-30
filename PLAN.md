@@ -109,6 +109,8 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
 - **B22** No password-reset flow at all.
 - **B23** Race: `report_count += 1`, `view_count += 1` (use F()).
 - **B24** Likes/comments/reports allowed on projects hidden by an admin (they only check is_public).
+- **B26** (found in P5.2 screenshots) Student dashboard stat cards show 0 projects while the
+  table lists 2 (template/view variable mismatch). Fix in P6.3 (dashboard rebuilt).
 - **B25** (found in P1.7) Stored XSS: user-controlled strings (deliverable names, collaborator
   names, module names, option titles) interpolated into inline `onclick`/`onsubmit` JS. HTML
   escaping is decoded by the browser before the JS runs. Patched with data attributes/`escapejs`
@@ -633,3 +635,7 @@ Everything else in this plan is decided by Claude.
   --build` with a throwaway .env (DOMAIN=localhost, HTTP_PORT=8080, HTTPS_PORT=8443,
   DJANGO_CSRF_TRUSTED_ORIGINS=https://localhost:8443); tear down with `down -v`; delete .env.
   Next: P5.1 (UI inventory), then the design system.
+- **2026-09-30** · P5.2 · `scripts/screens.py` (Playwright + axe; seeds its own throwaway DB and
+  server on :8765). Baseline `screens/before/`: 420 shots, 105 pages, 93 with serious/critical
+  a11y issues (color-contrast 91, button-name 19, scrollable-region-focusable 12, select-name
+  10, label 9). Found B26. Chromium headless installed in ~/.cache/ms-playwright.
