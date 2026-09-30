@@ -1,0 +1,20 @@
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Aperçu du shell{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="#">Devoirs</a><span class="sep">/</span><span>WEB401</span></nav>
+    <h1>Plateforme de réservation pour un riad {% status_chip "in_progress" %}</h1>
+    <div class="meta"><span>WEB401 — Développement web avancé</span>{% deadline now %}</div>
+  </div>
+  <div class="actions"><a class="btn" href="#">{% icon "pencil" %} Modifier</a><a class="btn btn-primary" href="#">Soumettre</a></div>
+</header>
+<div class="with-aside">
+  <div class="stack">
+    <div class="alert alert-warn">{% icon "alert-triangle" %}<div>Il manque 1 membre à l'équipe (minimum : 2).</div></div>
+    <div class="card card-body"><p>Concevoir et déployer une application web complète répondant à un besoin réel d'une association ou d'une PME de la région.</p></div>
+  </div>
+  <aside class="card card-body stack stack-sm"><h2 class="section-title">Équipe</h2><progress class="meter" value="2" max="3">2 sur 3</progress><p class="muted text-sm">2 membres sur 3 maximum</p></aside>
+</div>
+{% endblock %}

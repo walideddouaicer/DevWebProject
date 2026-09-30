@@ -1,0 +1,33 @@
+/* Buttons: primary / secondary / ghost / danger; sizes sm / md; icon-only; loading */
+.btn {
+  --btn-bg: var(--surface); --btn-fg: var(--ink); --btn-border: var(--line-strong);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  min-height: 36px; padding: 0 var(--s-4);
+  background: var(--btn-bg); color: var(--btn-fg);
+  border: 1px solid var(--btn-border); border-radius: var(--r);
+  font-size: var(--text-md); font-weight: 600; line-height: 1; white-space: nowrap;
+  text-decoration: none; cursor: pointer; user-select: none;
+  transition: background-color .12s var(--ease), border-color .12s var(--ease), color .12s var(--ease);
+}
+.btn:hover { background: var(--sunken); color: var(--btn-fg); text-decoration: none; }
+.btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; pointer-events: none; }
+.btn-primary { --btn-bg: var(--accent); --btn-fg: var(--accent-ink); --btn-border: var(--accent); }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-ghost { --btn-bg: transparent; --btn-border: transparent; --btn-fg: var(--ink-2); }
+.btn-ghost:hover { background: var(--sunken); color: var(--ink); }
+.btn-danger { --btn-fg: var(--danger); --btn-border: color-mix(in oklab, var(--danger) 40%, var(--line)); }
+.btn-danger:hover { background: var(--danger-soft); }
+.btn-danger.btn-solid { --btn-bg: var(--danger); --btn-fg: var(--danger-ink); --btn-border: var(--danger); }
+.btn-sm { min-height: 30px; padding: 0 var(--s-3); font-size: var(--text-sm); }
+.btn-icon { width: 36px; padding: 0; }
+.btn-icon.btn-sm { width: 30px; }
+.btn .icon { width: 16px; height: 16px; }
+.btn.is-loading { color: transparent !important; position: relative; pointer-events: none; }
+.btn.is-loading::after {
+  content: ""; position: absolute; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--btn-fg); border-right-color: transparent; animation: spin .7s linear infinite;
+}
+.btn-link { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; cursor: pointer; }
+.btn-link:hover { text-decoration: underline; }
+@keyframes spin { to { transform: rotate(360deg); } }

@@ -1,0 +1,7 @@
+{% load ui %}{% with tone=level|default:"info" %}
+<div class="toast toast-{% if 'error' in tone %}error{% elif 'success' in tone %}success{% elif 'warning' in tone %}warning{% else %}info{% endif %}" role="{% if 'error' in tone %}alert{% else %}status{% endif %}">
+  {% if 'error' in tone %}{% icon "alert-circle" %}{% elif 'success' in tone %}{% icon "check-circle-2" %}{% elif 'warning' in tone %}{% icon "alert-triangle" %}{% else %}{% icon "info" %}{% endif %}
+  <div class="toast-body">{{ text }}</div>
+  <button type="button" class="btn btn-ghost btn-icon btn-sm toast-close" aria-label="Fermer">{% icon "x" size=16 %}</button>
+</div>
+{% endwith %}

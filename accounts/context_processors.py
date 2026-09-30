@@ -13,6 +13,21 @@ from .permissions import get_profiles, get_role, teacher_module_ids
 
 
 def badges(request):
+    """Role, badge counts, navigation and theme for every template."""
+    context = _badges(request)
+    role = context.get("user_role")
+    if role:
+        from ui.navigation import HOME, build_navigation
+
+        context["navigation"] = build_navigation(role, request.path, context)
+        context["home_url_name"] = HOME[role]
+        preferences = getattr(request.user, "preferences", None)
+        context["theme"] = preferences.theme_preference if preferences else "auto"
+        context["theme_from_server"] = True
+    return context
+
+
+def _badges(request):
     user = request.user
     if not user.is_authenticated:
         return {"user_role": None}

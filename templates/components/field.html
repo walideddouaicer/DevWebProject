@@ -1,0 +1,14 @@
+{% if is_check %}
+<div class="field{% if bf.errors %} has-error{% endif %}">
+  <label class="check" for="{{ bf.id_for_label }}">{{ control }} <span>{{ label }}</span></label>
+  {% if help %}<p class="field-help" id="{{ bf.auto_id }}_help">{{ help }}</p>{% endif %}
+  {% if bf.errors %}<p class="field-error" id="{{ bf.auto_id }}_errors">{{ bf.errors|join:" " }}</p>{% endif %}
+</div>
+{% else %}
+<div class="field{% if bf.errors %} has-error{% endif %}">
+  <label for="{{ bf.id_for_label }}"{% if hide_label %} class="visually-hidden"{% endif %}>{{ label }}{% if required %}<span class="required" aria-hidden="true">*</span>{% endif %}</label>
+  {{ control }}
+  {% if help %}<p class="field-help" id="{{ bf.auto_id }}_help">{{ help }}</p>{% endif %}
+  {% if bf.errors %}<p class="field-error" id="{{ bf.auto_id }}_errors">{{ bf.errors|join:" " }}</p>{% endif %}
+</div>
+{% endif %}

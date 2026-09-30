@@ -1,0 +1,26 @@
+{% load static %}<!DOCTYPE html>
+<html lang="fr" data-theme="{{ theme|default:'auto' }}"{% if theme_from_server %} data-theme-source="server"{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ENSA Project Manager{% endblock %} — ENSA Project Manager</title>
+  <meta name="description" content="{% block description %}Gestion des projets d'ingénieurs de l'ENSA : devoirs, équipes, livrables, évaluations et vitrine publique.{% endblock %}">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="{% static 'icons/favicon.svg' %}" type="image/svg+xml">
+  <link rel="preload" href="{% static 'fonts/public-sans-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'js/theme.js' %}"></script>
+  <script src="{% static 'js/app.js' %}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">Aller au contenu</a>
+  {% block body %}{% endblock %}
+  <div id="toasts" class="toasts" aria-live="polite">
+    {% for message in messages %}
+      {% include "components/toast.html" with level=message.tags text=message %}
+    {% endfor %}
+  </div>
+</body>
+</html>

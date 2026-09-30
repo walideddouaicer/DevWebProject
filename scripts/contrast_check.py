@@ -19,6 +19,8 @@ PAIRS = [
     ("ink-2", "surface", 4.5, "secondary text on cards"),
     ("ink-2", "sunken", 4.5, "table header text"),
     ("ink-3", "surface", 4.5, "placeholders / meta"),
+    ("ink-3", "paper", 4.5, "meta on paper"),
+    ("danger-ink", "danger", 4.5, "solid danger button"),
     ("accent", "surface", 4.5, "links"),
     ("accent", "paper", 4.5, "links on paper"),
     ("accent-ink", "accent", 4.5, "primary button text"),

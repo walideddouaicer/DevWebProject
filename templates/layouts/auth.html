@@ -1,0 +1,16 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block body %}
+<main id="main" class="auth" tabindex="-1">
+  <div class="auth-card stack">
+    <a class="brand" href="{% url 'public:homepage' %}">
+      <img class="brand-mark" src="{% static 'icons/favicon.svg' %}" alt="" width="28" height="28">
+      <span class="brand-name">Projets ENSA</span>
+    </a>
+    <div class="card card-body stack">
+      {% block content %}{% endblock %}
+    </div>
+    {% block below %}{% endblock %}
+  </div>
+</main>
+{% endblock %}

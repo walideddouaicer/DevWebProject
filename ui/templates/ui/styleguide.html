@@ -1,0 +1,150 @@
+{% load static ui %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Styleguide — Atelier</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<main class="container stack stack-lg" style="padding-block: 32px 96px">
+  <header class="page-header">
+    <div>
+      <div class="eyebrow">Système de design</div>
+      <h1><span class="display">Atelier</span></h1>
+      <p class="meta">Composants de l'interface d'ENSA Project Manager, dans tous leurs états.</p>
+    </div>
+  </header>
+
+  <section class="stack">
+    <h2 class="section-title">Typographie</h2>
+    <p class="display">Projets d'ingénieurs, suivis sans friction</p>
+    <h1>Titre de page (h1)</h1><h2>Section (h2)</h2><h3>Sous-section (h3)</h3>
+    <p>Texte courant en Public Sans. <a href="#">Un lien dans le texte</a>, du <strong>gras</strong>, du <code>code</code> et un identifiant <span class="mono">E2022003</span>.</p>
+    <p class="muted">Texte secondaire pour les métadonnées et les aides.</p>
+  </section>
+
+  <section class="stack">
+    <h2 class="section-title">Boutons</h2>
+    <div class="cluster">
+      <button class="btn btn-primary">{% icon "plus" %} Nouveau projet</button>
+      <button class="btn">Annuler</button>
+      <button class="btn btn-ghost">Plus tard</button>
+      <button class="btn btn-danger">{% icon "trash-2" %} Supprimer</button>
+      <button class="btn btn-danger btn-solid">Supprimer définitivement</button>
+      <button class="btn btn-primary is-loading">Envoi</button>
+      <button class="btn" disabled>Désactivé</button>
+      <button class="btn btn-icon" aria-label="Paramètres">{% icon "settings" %}</button>
+      <button class="btn btn-sm">Petit</button>
+      <button class="btn-link">Bouton-lien</button>
+    </div>
+  </section>
+
+  <section class="stack">
+    <h2 class="section-title">Statuts, badges, avatars, échéances</h2>
+    <div class="cluster">{% for s in statuses %}{% status_chip s %}{% endfor %}</div>
+    <div class="cluster"><span class="badge">3</span><span class="badge badge-muted">12</span><span class="tag">Web</span><span class="tag">IA</span><span class="version">v2</span></div>
+    <div class="cluster">{% for p in people %}{% avatar p %}{% endfor %} {% avatar people.0 size="lg" %} {% avatar people.1 size="sm" %}</div>
+    <div class="avatar-stack">{% for p in people|slice:":4" %}{% avatar p size="sm" %}{% endfor %}</div>
+    <div class="cluster">{% for d in deadlines %}{% deadline d %}{% endfor %}{% deadline deadlines.0 done=True %}</div>
+  </section>
+
+  <section class="stack">
+    <h2 class="section-title">Formulaires</h2>
+    <div class="card card-body">
+      <form class="form-grid form-grid-2" novalidate onsubmit="return false">
+        {% field form.title %}{% field form.module %}
+        {% field bound.title %}{% field bound.email %}
+        {% field form.description %}
+        <div class="stack stack-sm">
+          {% field form.public %}
+          <label class="switch"><input type="checkbox" checked> Notifications par e-mail</label>
+          <label class="dropzone">{% icon "upload" size=24 %}<span><strong>Déposez un fichier</strong> ou cliquez pour parcourir</span><span class="field-help">PDF, Word, ZIP… 10 Mo maximum</span><input type="file"></label>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="stack">
+    <h2 class="section-title">Alertes</h2>
+    <div class="alert alert-info">{% icon "info" %}<div><div class="alert-title">Sélection ouverte jusqu'au 5 octobre</div>Choisissez une option de projet avec votre équipe.</div></div>
+    <div class="alert alert-ok">{% icon "check-circle-2" %}<div>Projet soumis. Votre enseignant a été prévenu.</div></div>
+    <div class="alert alert-warn">{% icon "alert-triangle" %}<div>Il manque 1 membre à l'équipe (minimum : 2).</div></div>
+    <div class="alert alert-danger">{% icon "alert-circle" %}<div>La date limite est dépassée.</div></div>
+  </section>
+
+  <section class="stack">
+    <h2 class="section-title">Chiffres clés</h2>
+    <div class="stat-strip">
+      <div class="stat"><span class="value">12</span><span class="label">projets à relire</span></div>
+      <div class="stat"><span class="value">3</span><span class="label">échéances cette semaine</span></div>
+      <div class="stat"><span class="value">84 %</span><span class="label">rendus</span></div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <h2 class="section-title">Tableau</h2>
+    <div class="bulk-bar"><strong>2 sélectionnés</strong><button class="btn btn-sm btn-primary">Valider</button><button class="btn btn-sm">Demander une révision</button></div>
+    <div class="table-wrap">
+      <table class="table table-stack">
+        <thead><tr><th class="col-check"><input type="checkbox" aria-label="Tout sélectionner"></th><th>Projet</th><th>Équipe</th><th>Statut</th><th>Échéance</th><th class="col-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody>
+          <tr><td class="col-check"><input type="checkbox" aria-label="Sélectionner"></td><td data-label="Projet"><a class="row-title" href="#">Plateforme de réservation pour un riad</a></td><td data-label="Équipe"><div class="avatar-stack">{% avatar people.0 size="sm" %}{% avatar people.1 size="sm" %}</div></td><td data-label="Statut">{% status_chip "in_progress" %}</td><td data-label="Échéance">{% deadline deadlines.4 %}</td><td class="col-actions"><a class="btn btn-sm" href="#">Ouvrir</a></td></tr>
+          <tr><td class="col-check"><input type="checkbox" aria-label="Sélectionner"></td><td data-label="Projet"><a class="row-title" href="#">Gestion des adhérents d'une association</a></td><td data-label="Équipe"><div class="avatar-stack">{% avatar people.2 size="sm" %}{% avatar people.3 size="sm" %}{% avatar people.4 size="sm" %}</div></td><td data-label="Statut">{% status_chip "submitted" %}</td><td data-label="Échéance">{% deadline deadlines.2 %}</td><td class="col-actions"><a class="btn btn-sm" href="#">Relire</a></td></tr>
+          <tr class="empty-row"><td colspan="6">Aucun autre projet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <nav class="pagination" aria-label="Pagination"><a href="#">Précédent</a><span>Page 2 sur 5</span><a href="#">Suivant</a></nav>
+  </section>
+
+  <section class="stack">
+    <h2 class="section-title">Onglets, fil d'Ariane, liste de définitions</h2>
+    <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="#">Modules</a><span class="sep">/</span><a href="#">WEB401</a><span class="sep">/</span><span>Projet de fin de module</span></nav>
+    <nav class="tabs" aria-label="Sections"><a href="#" aria-current="page">Aperçu</a><a href="#">Livrables <span class="badge badge-muted">3</span></a><a href="#">Jalons</a><a href="#">Équipe</a><a href="#">Discussion</a></nav>
+    <dl class="dl"><dt>Module</dt><dd>WEB401 — Développement web avancé</dd><dt>Type</dt><dd>Projet de module</dd><dt>Technologies</dt><dd>Django, PostgreSQL, HTMX</dd></dl>
+  </section>
+
+  <section class="grid" style="--min: 320px">
+    <div class="card">
+      <div class="card-header"><h3>Livrables</h3><button class="btn btn-sm">{% icon "upload" %} Ajouter</button></div>
+      <ul class="file-list">
+        <li class="file-row"><span class="file-icon">{% icon "file-text" %}</span><div><div class="file-name">Cahier des charges <span class="version">v2</span></div><div class="file-meta"><span>PDF · 84 Ko</span><span>il y a 3 jours</span></div></div><a class="btn btn-sm btn-ghost" href="#">{% icon "download" %}<span class="visually-hidden">Télécharger</span></a>
+          <details class="file-history"><summary>1 version précédente</summary><ul><li><span class="version">v1</span> — 12/09/2026 <a href="#">Télécharger</a></li></ul></details></li>
+        <li class="file-row"><span class="file-icon">{% icon "presentation" %}</span><div><div class="file-name">Maquettes</div><div class="file-meta"><span>PDF · 1,2 Mo</span><span>hier</span></div></div><a class="btn btn-sm btn-ghost" href="#">{% icon "download" %}<span class="visually-hidden">Télécharger</span></a></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Discussion</h3></div>
+      <div class="card-body comments">
+        <div class="comment is-teacher">{% avatar people.5 %}<div><div class="comment-head"><span class="comment-author">Karim Alami</span><span class="chip chip-accent no-dot">Enseignant</span><span class="comment-meta">il y a 2 jours</span></div><div class="comment-body">Précisez les rôles utilisateurs et les cas d'usage prioritaires.</div></div></div>
+        <div class="comment">{% avatar people.0 %}<div><div class="comment-head"><span class="comment-author">Amine Berrada</span><span class="comment-meta">hier</span></div><div class="comment-body">C'est corrigé dans la v2, section 3.</div></div></div>
+      </div>
+    </div>
+    <div class="card card-body stack">
+      <h3 class="section-title">Activité</h3>
+      <ul class="timeline"><li><div>Salma a ajouté <strong>Maquettes</strong><div class="when">hier à 14:02</div></div></li><li><div>Projet créé<div class="when">12/09/2026</div></div></li></ul>
+      <div class="stack stack-sm"><div class="spread text-sm"><span>Équipe</span><span class="muted">2 / 3</span></div><progress class="meter" value="2" max="3">2 sur 3</progress></div>
+    </div>
+    <div class="card">
+      <div class="empty">{% icon "inbox" %}<h3>Aucune notification</h3><p>Vous serez prévenu ici des invitations, commentaires et échéances.</p><a class="btn btn-sm" href="#">Voir mes projets</a></div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <h2 class="section-title">Étapes, menu, dialogue, toast</h2>
+    <ol class="stepper"><li class="is-done">Informations</li><li class="is-current">Équipe</li><li>Options</li><li>Publication</li></ol>
+    <details class="menu" open style="width: 220px; height: 150px"><summary class="btn btn-sm">Actions {% icon "chevron-down" %}</summary><div class="menu-list"><a href="#">{% icon "pencil" %} Modifier</a><a href="#">{% icon "globe" %} Rendre public</a><hr><button class="danger">{% icon "trash-2" %} Supprimer</button></div></details>
+    <dialog class="dialog" open style="position: static; margin: 0"><div class="dialog-body"><h2>Soumettre le projet ?</h2><p class="muted">Votre enseignant sera prévenu. Vous ne pourrez plus modifier les livrables tant qu'il n'aura pas répondu.</p></div><div class="dialog-actions"><button class="btn">Annuler</button><button class="btn btn-primary">Soumettre</button></div></dialog>
+    <div class="toast toast-success" style="position: static">{% icon "check-circle-2" %}<div class="toast-body">Livrable ajouté (v2).</div><button class="btn btn-ghost btn-icon btn-sm toast-close" aria-label="Fermer">{% icon "x" size=16 %}</button></div>
+  </section>
+
+  <section class="stack">
+    <h2 class="section-title">Calendrier</h2>
+    <div class="calendar-wrap"><table class="calendar"><thead><tr><th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th><th>Sam</th><th>Dim</th></tr></thead><tbody>
+      {% for d in days %}{% if forloop.counter0|divisibleby:7 %}<tr>{% endif %}<td class="{% if d == 30 %}is-today{% endif %}{% if d > 30 %} is-other-month{% endif %}"><span class="day-num">{% if d > 30 %}{{ d|add:-30 }}{% else %}{{ d }}{% endif %}</span>{% if d == 3 %}<a class="event is-deadline" href="#">Rendu TP BDD402</a>{% elif d == 5 %}<a class="event is-selection" href="#">Sélection WEB401</a>{% elif d == 6 %}<a class="event is-milestone" href="#">MVP réservation</a>{% endif %}</td>{% if forloop.counter|divisibleby:7 %}</tr>{% endif %}{% endfor %}
+    </tbody></table></div>
+  </section>
+</main>
+</body>
+</html>

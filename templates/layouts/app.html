@@ -1,0 +1,82 @@
+{% extends "layouts/base.html" %}
+{% load static ui %}
+{% comment %}
+Authenticated shell (PLAN P5.6): sidebar navigation (drawer below 1024px), top bar with
+search, notifications and user menu. Pages fill {% block content %}; use
+{% block content_class %} to pick a width ("content-narrow", "content-wide" or empty).
+{% endcomment %}
+{% block body %}
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="Navigation principale">
+    <a class="brand" href="{% url home_url_name %}">
+      <img class="brand-mark" src="{% static 'icons/favicon.svg' %}" alt="" width="28" height="28">
+      <span class="brand-name">Projets ENSA<small>{% if user_role == "student" %}Espace étudiant{% elif user_role == "teacher" %}Espace enseignant{% else %}Administration{% endif %}</small></span>
+    </a>
+    <nav class="nav">
+      {% for group in navigation %}
+      <div class="nav-group">
+        {% if group.title %}<div class="nav-group-title">{{ group.title }}</div>{% endif %}
+        {% for item in group.items %}
+        <a href="{{ item.url }}"{% if item.current %} aria-current="page"{% endif %}>
+          {% icon item.icon %}<span>{{ item.label }}</span>
+          {% if item.badge %}<span class="badge">{{ item.badge }}<span class="visually-hidden"> nouveaux</span></span>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-footer">
+      <a class="btn btn-ghost btn-sm w-full" href="{% url 'public:homepage' %}">{% icon "home" %} Site public</a>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" data-nav-close hidden></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-button nav-toggle" type="button" data-nav-toggle aria-controls="sidebar" aria-expanded="false">
+        {% icon "menu" label="Ouvrir le menu" %}
+      </button>
+      <form class="topbar-search" action="{% url 'search:search' %}" method="get" role="search">
+        {% icon "search" %}
+        <label class="visually-hidden" for="global-search">Rechercher</label>
+        <input id="global-search" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Rechercher un projet, un module, une personne…" autocomplete="off">
+      </form>
+      <div class="topbar-actions">
+        {% if user_role == "student" %}
+        <a class="icon-button" href="{% url 'student:notifications' %}">
+          {% icon "bell" label="Notifications" %}
+          {% if unread_notifications_count %}<span class="badge">{{ unread_notifications_count }}</span>{% endif %}
+        </a>
+        {% endif %}
+        <details class="menu">
+          <summary class="user-button" aria-label="Menu du compte">
+            {% avatar user size="sm" label=False %}
+            <span class="visually-hidden">{{ user.get_full_name|default:user.username }}</span>
+            {% icon "chevron-down" size=16 %}
+          </summary>
+          <div class="menu-list">
+            <div class="menu-header">{{ user.get_full_name|default:user.username }}<br><span class="subtle">{{ user.email }}</span></div>
+            <hr>
+            {% if user_role == "student" %}
+            <a href="{% url 'student:profile_view' %}">{% icon "user" %} Mon profil</a>
+            <a href="{% url 'student:profile_settings' %}">{% icon "settings" %} Paramètres</a>
+            {% endif %}
+            <a href="{% url 'password_change' %}">{% icon "key-round" %} Mot de passe</a>
+            <hr>
+            <div class="menu-row cluster cluster-sm" role="group" aria-label="Apparence">
+              <button type="button" class="btn btn-sm btn-ghost btn-icon" data-theme-choice="light" data-theme-url="{% url 'ui:set_theme' %}" aria-pressed="{% if theme == 'light' %}true{% else %}false{% endif %}">{% icon "sun" label="Thème clair" size=16 %}</button>
+              <button type="button" class="btn btn-sm btn-ghost btn-icon" data-theme-choice="dark" data-theme-url="{% url 'ui:set_theme' %}" aria-pressed="{% if theme == 'dark' %}true{% else %}false{% endif %}">{% icon "moon" label="Thème sombre" size=16 %}</button>
+              <button type="button" class="btn btn-sm btn-ghost btn-icon" data-theme-choice="auto" data-theme-url="{% url 'ui:set_theme' %}" aria-pressed="{% if theme == 'auto' %}true{% else %}false{% endif %}">{% icon "monitor" label="Thème du système" size=16 %}</button>
+            </div>
+            <hr>
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">{% icon "log-out" %} Se déconnecter</button></form>
+          </div>
+        </details>
+      </div>
+    </header>
+    <main id="main" class="content {% block content_class %}content-wide{% endblock %}" tabindex="-1">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

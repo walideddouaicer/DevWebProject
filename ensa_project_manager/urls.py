@@ -91,9 +91,16 @@ urlpatterns = [
     path("administrator/", include("administrator.urls", namespace="administrator")),
     path("search/", include("search.urls", namespace="search")),
     path("accounts/", include("accounts.urls", namespace="accounts")),
+    path("", include("ui.urls", namespace="ui")),
 ]
 
 # Development only: public uploads (avatars, covers). In production the reverse proxy
 # serves MEDIA_ROOT; private deliverables are never served directly.
 if settings.DEBUG:
+    from ui.views import styleguide, styleguide_shell
+
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += [
+        path("_styleguide/", styleguide, name="styleguide"),
+        path("_styleguide/shell/", styleguide_shell, name="styleguide_shell"),
+    ]

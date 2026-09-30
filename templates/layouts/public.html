@@ -1,0 +1,39 @@
+{% extends "layouts/base.html" %}
+{% load static ui %}
+{% block body_class %}public{% endblock %}
+{% block body %}
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="{% url 'public:homepage' %}">
+      <img class="brand-mark" src="{% static 'icons/favicon.svg' %}" alt="" width="28" height="28">
+      <span class="brand-name">Projets ENSA</span>
+    </a>
+    <nav class="site-nav" aria-label="Site">
+      {% url 'public:projects_showcase' as showcase_url %}{% url 'public:about' as about_url %}
+      <a href="{{ showcase_url }}"{% if request.path == showcase_url %} aria-current="page"{% endif %}>Vitrine des projets</a>
+      <a href="{{ about_url }}"{% if request.path == about_url %} aria-current="page"{% endif %}>À propos</a>
+    </nav>
+    <div class="cta">
+      {% if user.is_authenticated and home_url_name %}
+        <a class="btn btn-primary btn-sm" href="{% url home_url_name %}">Mon espace</a>
+      {% else %}
+        <a class="btn btn-ghost btn-sm" href="{% url 'login' %}">Connexion</a>
+        <a class="btn btn-primary btn-sm" href="{% url 'accounts:signup_choice' %}">Créer un compte</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+<main id="main" tabindex="-1">
+  {% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <div class="container spread">
+    <span>ENSA Project Manager — gestion des projets d'ingénieurs</span>
+    <nav class="cluster" aria-label="Pied de page">
+      <a href="{% url 'public:projects_showcase' %}">Vitrine</a>
+      <a href="{% url 'public:about' %}">À propos</a>
+      <a href="{% url 'login' %}">Connexion</a>
+    </nav>
+  </div>
+</footer>
+{% endblock %}
