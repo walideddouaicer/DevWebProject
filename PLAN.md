@@ -639,3 +639,9 @@ Everything else in this plan is decided by Claude.
   server on :8765). Baseline `screens/before/`: 420 shots, 105 pages, 93 with serious/critical
   a11y issues (color-contrast 91, button-name 19, scrollable-region-focusable 12, select-name
   10, label 9). Found B26. Chromium headless installed in ~/.cache/ms-playwright.
+- **2026-09-30** · D16 (P5.4) · CSS sources in `static/css/src/NN-*.css` (+ `components/`),
+  concatenated by `scripts/build_css.py` into committed `static/css/app.css` (one request, no
+  @import waterfall, no Node). Tests fail if app.css is stale, if tokens fail WCAG (contrast
+  script), or if the two dark-token blocks diverge. Token tweaks vs §6.3: --warn #7A5000,
+  --ink-3 #75706A / dark #8C877C, new --border-input (#8C867A / #6E6A60, 3:1 for fields).
+  Workflow: edit src → `python scripts/build_css.py` → commit both.

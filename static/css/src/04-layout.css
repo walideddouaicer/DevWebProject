@@ -1,0 +1,28 @@
+/* ==========================================================================
+   Layout primitives — composition over one-off rules
+   ========================================================================== */
+.container { width: 100%; max-width: var(--content-w); margin-inline: auto; padding-inline: var(--s-4); }
+@media (min-width: 640px) { .container { padding-inline: var(--s-6); } }
+
+/* Vertical rhythm: children spaced by --gap */
+.stack { display: flex; flex-direction: column; gap: var(--gap, var(--s-4)); }
+.stack-sm { --gap: var(--s-2); }
+.stack-lg { --gap: var(--s-7); }
+/* Horizontal group that wraps */
+.cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap, var(--s-3)); }
+.cluster-sm { --gap: var(--s-2); }
+.spread { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); }
+/* Responsive auto grid */
+.grid { display: grid; gap: var(--gap, var(--s-4));
+        grid-template-columns: repeat(auto-fill, minmax(min(var(--min, 260px), 100%), 1fr)); }
+/* Main + aside */
+.with-aside { display: grid; gap: var(--s-6); }
+@media (min-width: 1024px) {
+  .with-aside { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+}
+.full-bleed { width: 100%; }
+.center { text-align: center; }
+.mt-0 { margin-top: 0; }
+.w-full { width: 100%; }
+.nowrap { white-space: nowrap; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

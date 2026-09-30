@@ -1,0 +1,102 @@
+/* ==========================================================================
+   Tokens — "Atelier" (PLAN §6.3). Light by default; dark via data-theme or the
+   OS preference when data-theme="auto". Status colors are for status only.
+   ========================================================================== */
+:root {
+  color-scheme: light;
+  --paper: #F6F4EF;
+  --surface: #FFFFFF;
+  --sunken: #EFECE5;
+  --ink: #1B1A17;
+  --ink-2: #57534A;
+  --ink-3: #75706A;
+  --line: #E2DED4;
+  --line-strong: #CFC9BC;
+  --border-input: #8C867A;
+  --accent: #1F5C57;
+  --accent-hover: #174A46;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E3EFED;
+  --ok: #2E6B3A;       --ok-soft: #E4F0E3;
+  --warn: #7A5000;     --warn-soft: #F6ECD6;
+  --danger: #A8321E;   --danger-soft: #F7E4DF;
+  --info: #2B4F7A;     --info-soft: #E2EAF3;
+  --revision: #6B4E9A; --revision-soft: #ECE6F4;
+  --shadow-pop: 0 8px 24px rgb(27 26 23 / 0.12);
+  --overlay: rgb(27 26 23 / 0.45);
+
+  --font-sans: "Public Sans", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --text-xs: 0.75rem;     /* 12 */
+  --text-sm: 0.8125rem;   /* 13 */
+  --text-md: 0.875rem;    /* 14 — default UI */
+  --text-base: 1rem;      /* 16 */
+  --text-lg: 1.125rem;    /* 18 */
+  --text-xl: 1.375rem;    /* 22 */
+  --text-2xl: 1.75rem;    /* 28 */
+  --text-3xl: 2.25rem;    /* 36 */
+  --text-4xl: 3rem;       /* 48 */
+
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px;
+  --s-7: 32px; --s-8: 40px; --s-9: 48px; --s-10: 64px; --s-11: 80px; --s-12: 96px;
+
+  --r-sm: 4px; --r: 6px; --r-lg: 10px; --r-full: 999px;
+  --focus-ring: 0 0 0 3px color-mix(in oklab, var(--accent) 35%, transparent);
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --sidebar-w: 248px;
+  --topbar-h: 56px;
+  --content-w: 1200px;
+  --prose-w: 68ch;
+}
+
+/* Dark tokens: keep the two blocks below identical (build test checks it). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #121210;
+  --surface: #1A1A18;
+  --sunken: #0D0D0C;
+  --ink: #ECE9E1;
+  --ink-2: #A8A396;
+  --ink-3: #8C877C;
+  --line: #2C2B27;
+  --line-strong: #3A3934;
+  --border-input: #6E6A60;
+  --accent: #6CB8AE;
+  --accent-hover: #86C7BE;
+  --accent-ink: #0B1F1D;
+  --accent-soft: #16302D;
+  --ok: #7DC48A;       --ok-soft: #15291A;
+  --warn: #E0B458;     --warn-soft: #2E2412;
+  --danger: #F08A74;   --danger-soft: #331A15;
+  --info: #8DB1DA;     --info-soft: #172433;
+  --revision: #B9A2E0; --revision-soft: #231C30;
+  --shadow-pop: 0 8px 24px rgb(0 0 0 / 0.5);
+  --overlay: rgb(0 0 0 / 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
+    --paper: #121210;
+    --surface: #1A1A18;
+    --sunken: #0D0D0C;
+    --ink: #ECE9E1;
+    --ink-2: #A8A396;
+    --ink-3: #8C877C;
+    --line: #2C2B27;
+    --line-strong: #3A3934;
+  --border-input: #6E6A60;
+    --accent: #6CB8AE;
+    --accent-hover: #86C7BE;
+    --accent-ink: #0B1F1D;
+    --accent-soft: #16302D;
+    --ok: #7DC48A;       --ok-soft: #15291A;
+    --warn: #E0B458;     --warn-soft: #2E2412;
+    --danger: #F08A74;   --danger-soft: #331A15;
+    --info: #8DB1DA;     --info-soft: #172433;
+    --revision: #B9A2E0; --revision-soft: #231C30;
+    --shadow-pop: 0 8px 24px rgb(0 0 0 / 0.5);
+    --overlay: rgb(0 0 0 / 0.6);
+  }
+}
