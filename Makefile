@@ -1,0 +1,51 @@
+PY ?= .venv/bin/python
+RUFF ?= .venv/bin/ruff
+MANAGE = $(PY) manage.py
+# Throwaway prod-like env used only for `check --deploy`.
+DEPLOY_ENV = DJANGO_DEBUG=False ENVIRONMENT=prod \
+	DJANGO_SECRET_KEY=check-deploy-only-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJ \
+	DJANGO_ALLOWED_HOSTS=example.com DJANGO_CSRF_TRUSTED_ORIGINS=https://example.com
+
+.PHONY: setup run test lint format check coverage screens seed docker-build docker-up
+
+setup:
+	python3 -m venv .venv
+	.venv/bin/pip install -q --upgrade pip
+	.venv/bin/pip install -q -r requirements/dev.txt
+	$(MANAGE) migrate
+
+run:
+	$(MANAGE) runserver
+
+test:
+	$(MANAGE) test --parallel auto
+
+lint:
+	$(RUFF) check .
+	$(RUFF) format --check .
+
+format:
+	$(RUFF) format .
+	$(RUFF) check --fix .
+
+check: lint
+	$(MANAGE) check --fail-level WARNING
+	$(DEPLOY_ENV) $(MANAGE) check --deploy --fail-level WARNING
+	$(MANAGE) makemigrations --check --dry-run
+	$(MANAGE) test --parallel auto
+
+coverage:
+	.venv/bin/coverage run manage.py test
+	.venv/bin/coverage report --skip-covered --sort=cover
+
+seed:
+	$(MANAGE) seed_demo
+
+screens:
+	$(PY) scripts/screens.py $(ARGS)
+
+docker-build:
+	docker build -t ensa-project-manager .
+
+docker-up:
+	docker compose up --build
