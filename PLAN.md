@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P0 not started**
+- Phase: **P0 done → P1 next (P1.1 permission layer)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: n/a (no Makefile yet; `manage.py test` was 87/87 green on 2026-09-30)
+- Last green `make check`: 2026-09-30 (112 tests: 88 pass + 24 expected failures; also green on Postgres 16)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -169,20 +169,20 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
 
 ### P0 — Safety net & tooling (do first; everything else depends on it)
 
-- [ ] **P0.1 Repo hygiene.** Delete `webdevproject/` (dead scaffold with its own secret; B21).
+- [x] **P0.1 Repo hygiene.** Delete `webdevproject/` (dead scaffold with its own secret; B21).
   Add to `.gitignore`: `.venv/`, `/private/`, `screens/`, `node_modules/`, `.coverage`, `htmlcov/`.
   Add `.editorconfig`. **Done when:** tree is clean and the app still runs.
-- [ ] **P0.2 Dependencies (B19).** Create `requirements/base.txt`, `prod.txt` (-r base + gunicorn,
+- [x] **P0.2 Dependencies (B19).** Create `requirements/base.txt`, `prod.txt` (-r base + gunicorn,
   psycopg, sentry-sdk), `dev.txt` (-r base + ruff, coverage, playwright, debug-toolbar, factory-boy).
   Drop the unused scientific packages. Pin the latest Django 5.2.x and current versions that support
   Python 3.13 and 3.14. Keep the root `requirements.txt` as `-r requirements/prod.txt` for
   compatibility. **Done when:** a fresh `.venv` on Python 3.14 installs cleanly and 87 tests pass.
-- [ ] **P0.3 Ruff.** `pyproject.toml` with ruff config (line length 100, py313, rules E,F,I,B,UP,DJ,
+- [x] **P0.3 Ruff.** `pyproject.toml` with ruff config (line length 100, py313, rules E,F,I,B,UP,DJ,
   with migrations excluded). Run `ruff format` + safe fixes over the codebase in ONE commit, with no
   logic changes. Fix or `noqa` the remaining lint errors; bare `except:` → specific exceptions.
-- [ ] **P0.4 Makefile.** Targets: `setup`, `run`, `test`, `lint`, `check` (all quality gates in §4),
+- [x] **P0.4 Makefile.** Targets: `setup`, `run`, `test`, `lint`, `check` (all quality gates in §4),
   `coverage`, `screens`, `seed`, `docker-build`, `docker-up`. `check` must exit non-zero on any failure.
-- [ ] **P0.5 `seed_demo` management command** (in `administrator/management/commands/`):
+- [x] **P0.5 `seed_demo` management command** (in `administrator/management/commands/`):
   idempotent, `--reset` flag. Creates realistic French/Moroccan data: 1 admin, 4 teachers,
   ~30 students across years 3–5, 5 modules, direct and choice-based assignments (team and
   individual, deadlines in the past/near/far), projects in every status, teams of 1–4, deliverables
@@ -190,20 +190,20 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
   projects with tags, likes, a few reports, pending registrations, notifications. Fixed RNG seed.
   Realistic names and titles, no lorem ipsum. **Done when:** `make seed` on an empty DB works
   twice in a row without errors.
-- [ ] **P0.6 Smoke test** `tests/test_smoke.py` (top-level `tests` package registered in settings or
+- [x] **P0.6 Smoke test** `tests/test_smoke.py` (top-level `tests` package registered in settings or
   discovered through the runner): uses seed data (call `seed_demo` in setUpTestData, or a fast
   factory subset). Enumerates **every** URL pattern through the resolver, fills path args from real
   objects, and requests each as anon/student/owner-with-team/teacher/other-teacher/admin. Asserts
   no 5xx. For GET, snapshots row counts of key tables before/after and asserts unchanged
   (catches B5-type bugs). Known failures are allowed to start as `expectedFailure` with a B-id
   comment. **Done when:** the test runs, and each current failure is listed with its B-id.
-- [ ] **P0.7 Regression tests for B1–B24** in `tests/test_regressions.py`, one test per B-id,
+- [x] **P0.7 Regression tests for B1–B24** in `tests/test_regressions.py`, one test per B-id,
   written to assert the CORRECT behavior and decorated `@expectedFailure` for now. Every fix task
   removes the decorator. (The old repro script's logic: owner with 2 collaborators → pages 200;
   status URL can't bypass; unrelated teacher gets 403/404; GET does not mutate; etc.)
-- [ ] **P0.8 CI file** `.github/workflows/ci.yml` (Python 3.13, Postgres 16 service, `make check`).
+- [x] **P0.8 CI file** `.github/workflows/ci.yml` (Python 3.13, Postgres 16 service, `make check`).
   Not pushed yet (needs the user; §7), but it must exist and work locally through `act`, or at least be valid YAML.
-- [ ] **P0.9 Update CLAUDE.md** (stale: "no tests", "search stubs", Windows paths) → Linux commands,
+- [x] **P0.9 Update CLAUDE.md** (stale: "no tests", "search stubs", Windows paths) → Linux commands,
   a pointer to this PLAN and its protocol, and the new conventions from §4. Keep it short.
 
 ### P1 — Critical security & correctness (B1–B6, B8)
@@ -575,3 +575,9 @@ Everything else in this plan is decided by Claude.
 
 - **2026-09-30** · plan · Full review done (17 bugs reproduced at runtime, see §3). PLAN.md written,
   branch `revamp` created. Next: P0.1.
+- **2026-09-30** · P0.1–P0.9 · Scaffold removed; requirements split + pinned (Django 5.2.17,
+  reportlab 5, pillow 12 — all fine); ruff formatted the codebase; Makefile; `seed_demo`
+  (35 users, 18 projects); smoke test (KNOWN_FAILURES pinned with bug ids); 24 regression
+  tests verified to fail for the right reason; CI yml; suite green on Postgres too.
+  Notes: smoke test uses kwarg overrides for ambiguous route params. Media from seeding goes
+  to `media/` (gitignored). Next: P1.1.

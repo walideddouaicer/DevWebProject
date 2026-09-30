@@ -1,106 +1,56 @@
 # CLAUDE.md
 
-Guidance for Claude Code when working in this repository.
-
 > **ACTIVE WORK: `PLAN.md` is the master plan (production readiness + full UI revamp).**
-> The user delegated it fully and will only say "continue" / press Enter. On every session:
-> follow `PLAN.md` §0 Session protocol. Work on branch `revamp`, pick the next unchecked task,
-> finish it, `make check`, commit, and update the plan's §1/§9. Don't ask the user anything
-> outside PLAN.md §7. Parts of this file below are stale (e.g. "no test suite", Windows paths);
-> PLAN P0.9 rewrites it.
+> The user delegated it fully and will only say "continue". Every session: follow
+> `PLAN.md` §0 (session protocol): branch `revamp`, next unchecked task, `make check`,
+> commit, update PLAN §1 + §9 log. Ask the user nothing outside PLAN §7.
 
 ## Project
 
-**ENSA Project Manager** — a Django 5.2 web platform for managing engineering-school
-student projects. Four user roles (student, teacher, administrator, plus public
-visitors) collaborate around projects, modules, and assignments.
+**ENSA Project Manager** — Django 5.2 LTS platform for engineering-school student projects.
+Roles: student, teacher, administrator (+ anonymous visitors of the public showcase).
+Server-rendered templates; UI copy is **French**, code is English.
 
-- Python/Django 5.2, SQLite in dev (Postgres-ready via env vars).
-- No frontend framework — server-rendered Django templates + per-app CSS/JS under
-  each app's `static/` directory.
-- Local dependency for image/PDF/Excel work: Pillow, reportlab, openpyxl, matplotlib.
-
-## Running it
+## Commands (Linux)
 
 ```bash
-venv\Scripts\python.exe manage.py runserver     # dev server
-venv\Scripts\python.exe manage.py check          # system check
-venv\Scripts\python.exe manage.py check --deploy # production readiness
-venv\Scripts\python.exe manage.py makemigrations
-venv\Scripts\python.exe manage.py migrate
+make setup          # .venv + requirements/dev.txt + migrate
+make run            # runserver
+make check          # ruff, django checks (incl. --deploy with fake prod env), migrations, tests
+make test           # test suite only
+make seed           # demo data (password for every account: demo12345!)
+.venv/bin/python manage.py seed_demo --reset   # wipe DB + reseed (DEBUG only)
 ```
 
-The virtualenv lives in `venv/` (gitignored). On this Windows machine use
-`venv\Scripts\python.exe`.
+Demo logins after `make seed`: `admin`, `prof.alami` (WEB401, IA501), `prof.bennani`,
+`etu.amine`, `etu.salma`, `etu.youssef` (owns a 3-person team), `etu.anas` (no team) …
 
-## Configuration (important)
+Throwaway DB: `DB_ENGINE=django.db.backends.sqlite3 DB_NAME=/tmp/x.sqlite3 …`.
+Postgres check: `docker run -d --rm --name ensa-pg-test -e POSTGRES_DB=ensa -e POSTGRES_USER=ensa
+-e POSTGRES_PASSWORD=ensa -p 55432:5432 postgres:16-alpine`, then run with `DB_ENGINE=
+django.db.backends.postgresql DB_NAME=ensa DB_USER=ensa DB_PASSWORD=ensa DB_HOST=127.0.0.1 DB_PORT=55432`.
 
-Settings are environment-driven (`ensa_project_manager/settings.py`):
+## Layout
 
-- Secrets/config come from environment variables; a gitignored `.env` file is
-  auto-loaded in dev by a small built-in loader (no `django-environ` dependency).
-- Copy `.env.example` to `.env` to override defaults locally.
-- `DEBUG` defaults to **True** for dev. When `DEBUG=False`, production security
-  hardening (HTTPS redirect, HSTS, secure cookies, nosniff, X-Frame-Options)
-  activates automatically — keep that block intact.
-- DB defaults to SQLite; set `DB_ENGINE` + `DB_*` for Postgres.
-- Email defaults to the console backend; set `EMAIL_BACKEND` + `EMAIL_*` for SMTP.
+| App | Responsibility |
+|---|---|
+| `public` | Landing pages + public showcase (views, likes, comments, reports) |
+| `accounts` | Signup → `PendingRegistration` → admin approval |
+| `student` | Core domain: `Project` and everything around it (deliverables, milestones, invitations, notifications, assignments from the student side, calendar) |
+| `teacher` | Modules, enrollments, `ProjectAssignment`/`ProjectOption`/`DirectStudentAssignment`, review, grading (`ProjectEvaluation`), announcements |
+| `administrator` | Admin dashboard, users/imports, modules, moderation, exports, `seed_demo` |
+| `search` | Role-aware global search |
+| `tests/` | Cross-app suites: `test_smoke.py` (every URL × role), `test_regressions.py` (bug ids from PLAN §3) |
 
-## App layout
+Role = which `*Profile` row a User has (Admin > Teacher > Student, see `ensa_project_manager/views.py`).
 
-| App             | Responsibility |
-|-----------------|----------------|
-| `public`        | Landing pages + public project showcase (views, likes, comments, reports) |
-| `accounts`      | Registration via `PendingRegistration` → admin approval; role selection |
-| `student`       | The core domain. Profiles, projects, deliverables, milestones, collaboration invitations, notifications, assignment participation, public toggling. **Largest app.** |
-| `teacher`       | Modules, enrollments, project assignments (`direct` / `choice_based`), project options, review/validate |
-| `administrator` | Dashboard, user/module management, moderation, pending registrations |
-| `search`        | **Currently empty stubs** — search/filter not yet implemented |
+## Conventions
 
-After login, `ensa_project_manager/views.py:smart_redirect` routes users to the
-right dashboard by checking AdminProfile → TeacherProfile → StudentProfile (in
-that priority order). Role is determined by which `*Profile` row a `User` has.
-
-## Key models (most live in `student/models.py`)
-
-- `Project` — the central model. Carries: project type, status
-  (`in_progress`/`submitted`/`validated`/`rejected`), owner + collaborators,
-  optional `module` link, assignment-integration fields, public-showcase fields,
-  and engagement counters. Has substantial business logic on the model itself
-  (team-size validation, `calculate_progress()`, `is_on_track()`, public toggling).
-- `teacher.Module` / `ModuleEnrollment` / `ModuleAssignment` — modules + who's in them.
-- `teacher.ProjectAssignment` / `ProjectOption` / `DirectStudentAssignment` — the
-  assignment system. `ProjectOption.select_for_team()` uses `select_for_update()`
-  for atomic, race-free option claiming — preserve that pattern.
-- Engagement/social: `ProjectLike`, `PublicProjectComment`, `ProjectView`,
-  `ProjectReport`, `ShowcaseTag`, `Notification`, `ProjectActivity`, `UserPreferences`.
-
-## Conventions & gotchas
-
-- **Fat models**: domain logic lives on models, not in a service layer. Follow suit.
-- **Mixed language**: UI strings and many messages are in **French**; code/identifiers
-  are English. `USE_I18N=True` but there are no translation catalogs yet — match the
-  surrounding language of whatever you edit.
-- **View files are large** (`student/views.py` ~1400 lines; `teacher/assignment_views.py`
-  ~1090). `student/views.py` does `from .assignment_views import *`.
-- **No test suite yet** — every `tests.py` is an empty stub. Worth adding when touching
-  assignment/team-size logic.
-- **N+1 risk**: `Project.calculate_progress()` issues several queries and is also
-  called by `is_on_track()`. Use `select_related`/`prefetch_related`/annotations in
-  list views; be careful calling these methods in loops.
-- Per-app static files; shared base styles in `static/css/main.css`.
-- There's a light/dark/auto theme system (`UserPreferences.theme_preference`,
-  `student/static/student/js/theme-toggle.js`).
-
-## Git
-
-- Branch: `main`. Commit messages end with the `Co-Authored-By` trailer.
-- `db.sqlite3`, `media/`, `venv/`, `.env`, and IDE dirs are gitignored.
-- The legacy `projects` app was removed; its old `projects_*` tables may still exist
-  in local `db.sqlite3` but are orphaned and unused.
-
-## Known upgrade backlog (planned with the user)
-
-**See `ROADMAP.md`** — the full prioritized feature backlog lives there (4 phases,
-15 features). Keep it updated as items land; it is the single source of truth for
-what to build next across sessions.
+- **Fat models**: domain logic on models (state transitions, team rules), views stay thin.
+- Match surrounding language: French UI strings, English identifiers.
+- Every fix gets a test. Removing a bug's `@expectedFailure` in `tests/test_regressions.py` and
+  its `KNOWN_FAILURES` entries in `tests/test_smoke.py` is part of fixing it.
+- `ProjectOption` claiming uses `select_for_update()` — preserve that pattern.
+- N+1 risk in list views: use `select_related`/`prefetch_related`/annotations.
+- Settings are env-driven (`ensa_project_manager/settings.py`, `.env` auto-loaded in dev).
+- Commits end with the Co-Authored-By trailer. Never push without the user's OK (PLAN §7).
