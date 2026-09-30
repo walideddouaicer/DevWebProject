@@ -116,6 +116,7 @@ INSTALLED_APPS = [
     "search",
     # Third party
     "axes",
+    "csp",
 ]
 
 MIDDLEWARE = [
@@ -127,6 +128,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "csp.middleware.CSPMiddleware",
     # Must stay last: turns failed-login lockouts into responses.
     "axes.middleware.AxesMiddleware",
 ]
@@ -367,6 +369,28 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = env_int("DJANGO_HSTS_SECONDS", 31536000)
     SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("DJANGO_HSTS_INCLUDE_SUBDOMAINS", default=True)
     SECURE_HSTS_PRELOAD = env_bool("DJANGO_HSTS_PRELOAD", default=False)
+
+# Content Security Policy (django-csp). Report-only until every inline script/style and
+# CDN asset is gone (PLAN P6.13); CSP_ENFORCE=True switches to enforcement (PLAN P7.3).
+_CSP_DIRECTIVES = {
+    "default-src": ["'self'"],
+    "script-src": ["'self'"],
+    "style-src": ["'self'"],
+    "img-src": ["'self'", "data:"],
+    "font-src": ["'self'"],
+    "connect-src": ["'self'"],
+    "frame-src": ["'self'"],
+    "object-src": ["'none'"],
+    "base-uri": ["'self'"],
+    "form-action": ["'self'"],
+    "frame-ancestors": ["'none'"],
+}
+if env_bool("CSP_ENFORCE", default=False):
+    CONTENT_SECURITY_POLICY = {"DIRECTIVES": _CSP_DIRECTIVES}
+    CONTENT_SECURITY_POLICY_REPORT_ONLY = None
+else:
+    CONTENT_SECURITY_POLICY = None
+    CONTENT_SECURITY_POLICY_REPORT_ONLY = {"DIRECTIVES": _CSP_DIRECTIVES}
 
 # HSTS preload is opt-in (DJANGO_HSTS_PRELOAD=True): it is practically irreversible and the
 # site may live on a subdomain of a school domain we don't control.

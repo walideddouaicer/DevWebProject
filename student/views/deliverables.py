@@ -148,6 +148,10 @@ def deliverable_download(request, deliverable_id):
     response["X-Content-Type-Options"] = "nosniff"
     response["Cache-Control"] = "private, max-age=0"
     response["Referrer-Policy"] = "no-referrer"
+    if inline:
+        # The project page previews PDFs/images in an iframe: allow same-origin framing.
+        response["X-Frame-Options"] = "SAMEORIGIN"
+        response._csp_replace = response._csp_replace_ro = {"frame-ancestors": ["'self'"]}
     if inline and extension in IMAGE_EXTENSIONS:
         # Images shown inline can't run anything; PDFs need the browser's viewer,
         # which a CSP sandbox would block.

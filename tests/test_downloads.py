@@ -90,3 +90,17 @@ class DownloadTests(Fixtures):
         )
         self.assertFalse(form.is_valid())
         self.assertIn("profile_picture", form.errors)
+
+    def test_inline_preview_can_be_framed_by_our_pages_only(self):
+        self.client.force_login(self.students[0].user)
+        inline = self.client.get(self.url + "?inline=1")
+        self.assertEqual(inline["X-Frame-Options"], "SAMEORIGIN")
+        self.assertIn("frame-ancestors 'self'", inline["Content-Security-Policy-Report-Only"])
+        attachment = self.client.get(self.url)
+        self.assertEqual(attachment["X-Frame-Options"], "DENY")
+
+    def test_pages_carry_a_csp(self):
+        response = self.client.get("/")
+        policy = response["Content-Security-Policy-Report-Only"]
+        self.assertIn("default-src 'self'", policy)
+        self.assertIn("frame-ancestors 'none'", policy)
