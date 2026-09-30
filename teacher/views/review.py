@@ -10,8 +10,16 @@ from accounts.permissions import (
     get_project_for_teacher,
     teacher_required,
 )
-from student.models import Notification, Project
+from student.forms import CommentForm
+from student.models import (
+    DeliverableComment,
+    Notification,
+    Project,
+    ProjectComment,
+    ProjectDeliverable,
+)
 
+from ..forms import EvaluationForm, RejectionForm, RevisionRequestForm, parse_rubric
 from ..models import (
     Module,
     ModuleAssignment,
@@ -154,7 +162,9 @@ def reject_project(request, project_id):
     """Teacher rejects a submitted project (optional reason in `reason`)."""
     project = get_project_for_teacher(request.teacher, project_id)
     try:
-        project.reject(by=request.teacher, reason=request.POST.get("reason", ""))
+        form = RejectionForm(request.POST)
+        reason = form.cleaned_data["reason"] if form.is_valid() else ""
+        project.reject(by=request.teacher, reason=reason)
     except ValidationError as error:
         messages.error(request, " ".join(error.messages))
     else:
@@ -168,7 +178,9 @@ def request_revision(request, project_id):
     """Teacher asks for changes on a submitted project (message in `content`)."""
     project = get_project_for_teacher(request.teacher, project_id)
     try:
-        project.request_revision(by=request.teacher, message=request.POST.get("content", ""))
+        form = RevisionRequestForm(request.POST)
+        message = form.cleaned_data["content"] if form.is_valid() else ""
+        project.request_revision(by=request.teacher, message=message)
     except ValidationError as error:
         messages.error(request, " ".join(error.messages))
     else:
@@ -178,128 +190,50 @@ def request_revision(request, project_id):
     return redirect("teacher:project_review", project_id=project.id)
 
 
-@login_required
+@teacher_required
+@require_POST
 def add_deliverable_comment(request, deliverable_id):
-    """Teacher adds feedback on a specific deliverable"""
-    from student.models import DeliverableComment, ProjectDeliverable
-
-    deliverable = get_object_or_404(ProjectDeliverable, id=deliverable_id)
-    project = deliverable.project
-
-    if request.method != "POST":
-        return redirect("teacher:project_review", project_id=project.id)
-
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
-
-    # Verify the deliverable belongs to a project in the teacher's modules
-    teacher_modules = ModuleAssignment.objects.filter(teacher=teacher, is_active=True).values_list(
-        "module", flat=True
+    """Teacher adds feedback on a specific deliverable."""
+    deliverable = get_object_or_404(
+        ProjectDeliverable.objects.select_related("project"), pk=deliverable_id
     )
-
-    if project.module_id not in teacher_modules:
-        messages.error(request, "Vous n'avez pas accès à ce projet.")
-        return redirect("teacher:student_projects")
-
-    content = request.POST.get("content", "").strip()
-    if not content:
-        messages.error(request, "Le commentaire ne peut pas être vide.")
+    project = get_project_for_teacher(request.teacher, deliverable.project_id)
+    form = CommentForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, " ".join(form.errors["content"]))
         return redirect("teacher:project_review", project_id=project.id)
 
-    DeliverableComment.objects.create(deliverable=deliverable, author=request.user, content=content)
-
-    teacher_name = teacher.user.get_full_name() or teacher.user.username
-    for member in project.get_team_members():
-        Notification.objects.create(
-            recipient=member,
-            project=project,
-            notification_type="deliverable",
-            message=f"{teacher_name} a commenté le livrable '{deliverable.name}' du projet '{project.title}'",
-        )
-
-    messages.success(request, f"Commentaire ajouté sur le livrable '{deliverable.name}'.")
+    DeliverableComment.objects.create(
+        deliverable=deliverable, author=request.user, content=form.cleaned_data["content"]
+    )
+    teacher_name = request.teacher.user.get_full_name() or request.teacher.user.username
+    project.notify_team(
+        f"{teacher_name} a commenté le livrable « {deliverable.name} » du projet « {project.title} ».",
+        notification_type="deliverable",
+    )
+    messages.success(request, f"Commentaire ajouté sur le livrable « {deliverable.name} ».")
     return redirect("teacher:project_review", project_id=project.id)
 
 
-@login_required
+@teacher_required
+@require_POST
 def add_teacher_comment(request, project_id):
-    """Teacher adds a comment to a student project"""
-    if request.method != "POST":
-        return redirect("teacher:project_review", project_id=project_id)
+    """Teacher adds a comment to a project of one of their modules."""
+    project = get_project_for_teacher(request.teacher, project_id)
+    form = CommentForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, " ".join(form.errors["content"]))
+        return redirect("teacher:project_review", project_id=project.id)
 
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
-
-    # Get teacher's modules
-    teacher_modules = ModuleAssignment.objects.filter(teacher=teacher, is_active=True).values_list(
-        "module", flat=True
+    ProjectComment.objects.create(
+        project=project,
+        author=request.user,
+        content=f"[FEEDBACK ENSEIGNANT]\n{form.cleaned_data['content']}",
     )
-
-    # Import here
-    from student.models import ProjectComment
-
-    project = get_object_or_404(Project, id=project_id, module__in=teacher_modules)
-
-    content = request.POST.get("content")
-    if content:
-        try:
-            # Create comment with teacher as author (now using User model)
-            ProjectComment.objects.create(
-                project=project,
-                author=request.user,  # Now using User directly
-                content=f"[FEEDBACK ENSEIGNANT]\n{content}",
-            )
-
-            # Notify student
-            Notification.objects.create(
-                recipient=project.student,
-                project=project,
-                notification_type="project_update",
-                message=f"Nouveau commentaire de {teacher.user.get_full_name() or teacher.user.username} sur votre projet '{project.title}'",
-            )
-
-            # Notify collaborators too
-            for collaborator in project.collaborators.all():
-                Notification.objects.create(
-                    recipient=collaborator,
-                    project=project,
-                    notification_type="project_update",
-                    message=f"Nouveau commentaire de {teacher.user.get_full_name() or teacher.user.username} sur le projet '{project.title}'",
-                )
-
-            messages.success(request, "Commentaire ajouté avec succès.")
-        except Exception:
-            logger.exception("Erreur lors de l'ajout du commentaire")
-            messages.error(
-                request,
-                "Erreur lors de l'ajout du commentaire. Réessayez ; si le problème persiste, contactez l'administration.",
-            )
-    else:
-        messages.error(request, "Le commentaire ne peut pas être vide.")
-
+    teacher_name = request.teacher.user.get_full_name() or request.teacher.user.username
+    project.notify_team(f"Nouveau commentaire de {teacher_name} sur le projet « {project.title} ».")
+    messages.success(request, "Commentaire ajouté avec succès.")
     return redirect("teacher:project_review", project_id=project.id)
-
-
-def _parse_score(raw):
-    """Parse a /20 score; accepts French comma decimals. Returns Decimal or None."""
-    from decimal import Decimal, InvalidOperation
-
-    raw = (raw or "").strip().replace(",", ".")
-    if not raw:
-        return None
-    try:
-        value = Decimal(raw)
-    except InvalidOperation:
-        return None
-    if not (0 <= value <= 20):
-        return None
-    return value
 
 
 @login_required
@@ -333,33 +267,14 @@ def grade_project(request, project_id):
     teacher_name = teacher.user.get_full_name() or teacher.user.username
 
     if request.method == "POST":
-        score = _parse_score(request.POST.get("score"))
-        comments = request.POST.get("comments", "").strip()
-        validate_project = request.POST.get("validate_project") == "on"
-
-        # Parse rubric rows (parallel arrays); empty rows are skipped
-        names = request.POST.getlist("criterion_name")
-        scores = request.POST.getlist("criterion_score")
-        criterion_comments = request.POST.getlist("criterion_comment")
-
-        criteria_rows = []
-        errors = []
-        if score is None:
-            errors.append("La note globale est obligatoire et doit être comprise entre 0 et 20.")
-
-        for i, name in enumerate(names):
-            name = name.strip()
-            raw_score = scores[i] if i < len(scores) else ""
-            comment = (criterion_comments[i] if i < len(criterion_comments) else "").strip()
-            if not name and not raw_score.strip():
-                continue  # fully empty row
-            crit_score = _parse_score(raw_score)
-            if not name:
-                errors.append(f"Le critère n°{i + 1} a une note mais pas de nom.")
-            elif crit_score is None:
-                errors.append(f"Le critère '{name}' doit avoir une note entre 0 et 20.")
-            else:
-                criteria_rows.append({"name": name, "score": crit_score, "comment": comment})
+        form = EvaluationForm(request.POST)
+        criteria_rows, errors = parse_rubric(request.POST)
+        if form.is_valid():
+            score = form.cleaned_data["score"]
+            comments = form.cleaned_data["comments"]
+            validate_project = form.cleaned_data["validate_project"]
+        else:
+            errors = [e for field_errors in form.errors.values() for e in field_errors] + errors
 
         if errors:
             for error in errors:

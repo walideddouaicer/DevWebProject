@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from ..forms import JoinModuleForm
 from ..models import (
     StudentProfile,
 )
@@ -18,11 +19,13 @@ def join_module(request):
     student = get_object_or_404(StudentProfile, user=request.user)
 
     if request.method == "POST":
-        module_code = request.POST.get("module_code", "").strip().upper()
-
-        if not module_code:
-            messages.error(request, "Veuillez entrer un code de module.")
+        form = JoinModuleForm(request.POST)
+        if not form.is_valid():
+            for errors in form.errors.values():
+                for error in errors:
+                    messages.error(request, error)
             return redirect("student:dashboard")
+        module_code = form.cleaned_data["module_code"]
 
         try:
             # Import here to avoid circular imports

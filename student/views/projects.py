@@ -11,7 +11,7 @@ from accounts.permissions import (
 )
 from teacher.models import DirectStudentAssignment
 
-from ..forms import MakeProjectPublicForm, ProjectForm, QuickPublishForm
+from ..forms import CommentForm, MakeProjectPublicForm, ProjectForm, QuickPublishForm
 from ..models import (
     CollaborationInvitation,
     Notification,
@@ -425,7 +425,8 @@ def add_comment(request, project_id):
     project = get_project_for_member(student, project_id)
 
     if request.method == "POST":
-        content = request.POST.get("content")
+        form = CommentForm(request.POST)
+        content = form.cleaned_data["content"] if form.is_valid() else ""
         if content:
             comment = ProjectComment(
                 project=project,
@@ -445,7 +446,8 @@ def add_comment(request, project_id):
 
             messages.success(request, "Commentaire ajouté avec succès.")
         else:
-            messages.error(request, "Le commentaire ne peut pas être vide.")
+            for error in form.errors.get("content", ["Le commentaire ne peut pas être vide."]):
+                messages.error(request, error)
 
     return redirect("student:project_detail", project_id=project.id)
 

@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from student.models import Project, StudentProfile
 from teacher.models import Module, ModuleAssignment, ModuleEnrollment, TeacherProfile
 
+from ..forms import AdminModuleForm
 from ..models import AdminProfile
 from ._auth import admin_required
 
@@ -91,53 +92,23 @@ def modules_list(request):
 
 @admin_required
 def module_create(request):
-    """Create a new module"""
+    """Create a new module (validated by AdminModuleForm)."""
     admin = get_object_or_404(AdminProfile, user=request.user)
-
+    form = AdminModuleForm(request.POST or None, initial={"is_active": True})
     if request.method == "POST":
-        # Get form data
-        name = request.POST.get("name")
-        code = request.POST.get("code")
-        description = request.POST.get("description", "")
-        academic_year = request.POST.get("academic_year")
-        semester = request.POST.get("semester")
-
-        # Validate required fields
-        if not all([name, code, academic_year, semester]):
-            messages.error(request, "Tous les champs obligatoires doivent être remplis.")
-            return render(request, "administrator/module_create.html", {"admin": admin})
-
-        # Check if module code already exists
-        if Module.objects.filter(code=code).exists():
-            messages.error(request, f"Un module avec le code '{code}' existe déjà.")
-            return render(request, "administrator/module_create.html", {"admin": admin})
-
-        # Create the module
-        try:
-            module = Module.objects.create(
-                name=name,
-                code=code.upper(),
-                description=description,
-                academic_year=academic_year,
-                semester=semester,
-                is_active=True,
-            )
-
-            messages.success(request, f"Module '{module.code} - {module.name}' créé avec succès.")
+        if form.is_valid():
+            module = form.save()
+            messages.success(request, f"Module « {module.code} — {module.name} » créé avec succès.")
             return redirect("administrator:module_detail", module_id=module.id)
-
-        except Exception:
-            logger.exception("Erreur lors de la création du module")
-            messages.error(
-                request,
-                "Erreur lors de la création du module. Réessayez ; si le problème persiste, contactez l'administration.",
-            )
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(request, error)
 
     context = {
         "admin": admin,
+        "form": form,
         "semester_choices": Module._meta.get_field("semester").choices,
     }
-
     return render(request, "administrator/module_create.html", context)
 
 
@@ -175,35 +146,33 @@ def module_detail(request, module_id):
 
 @admin_required
 def module_edit(request, module_id):
-    """Edit module information"""
+    """Edit module information (validated by AdminModuleForm; the code never changes)."""
     admin = get_object_or_404(AdminProfile, user=request.user)
     module = get_object_or_404(Module, id=module_id)
 
     if request.method == "POST":
-        # Update module fields
-        module.name = request.POST.get("name", module.name)
-        module.description = request.POST.get("description", module.description)
-        module.academic_year = request.POST.get("academic_year", module.academic_year)
-        module.semester = request.POST.get("semester", module.semester)
-        module.is_active = request.POST.get("is_active") == "on"
-
-        try:
-            module.save()
-            messages.success(request, f"Module '{module.code}' mis à jour avec succès.")
+        data = request.POST.copy()
+        # Fields the page doesn't show keep their current value (checkboxes excepted).
+        for field in ("classroom", "description"):
+            if field not in data:
+                data[field] = getattr(module, field)
+        form = AdminModuleForm(data, instance=module)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Module « {module.code} » mis à jour avec succès.")
             return redirect("administrator:module_detail", module_id=module.id)
-        except Exception:
-            logger.exception("Erreur lors de la mise à jour")
-            messages.error(
-                request,
-                "Erreur lors de la mise à jour. Réessayez ; si le problème persiste, contactez l'administration.",
-            )
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(request, error)
+    else:
+        form = AdminModuleForm(instance=module)
 
     context = {
         "admin": admin,
         "module": module,
+        "form": form,
         "semester_choices": Module._meta.get_field("semester").choices,
     }
-
     return render(request, "administrator/module_edit.html", context)
 
 

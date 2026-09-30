@@ -435,3 +435,25 @@ class AccountSettingsForm(forms.Form):
             # You could load user preferences from a UserPreferences model
             # For now, we'll use default values
             pass
+
+
+class CommentForm(forms.Form):
+    """Project / deliverable discussion message."""
+
+    content = forms.CharField(
+        max_length=5000,
+        strip=True,
+        widget=forms.Textarea,
+        error_messages={"required": "Le commentaire ne peut pas être vide."},
+    )
+
+
+class JoinModuleForm(forms.Form):
+    module_code = forms.CharField(
+        max_length=10,
+        strip=True,
+        error_messages={"required": "Veuillez entrer un code de module."},
+    )
+
+    def clean_module_code(self):
+        return self.cleaned_data["module_code"].upper()

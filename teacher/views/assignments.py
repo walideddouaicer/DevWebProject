@@ -18,6 +18,7 @@ from student.models import Notification, Project, StudentProfile
 
 from ..forms import (
     AssignmentFilterForm,
+    BulkProjectActionForm,
     ProjectAssignmentForm,
     ProjectOptionForm,
     StudentSelectionForm,
@@ -73,24 +74,15 @@ def bulk_project_action(request, assignment_id):
 
     assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
-    action = request.POST.get("action")
-    project_ids = request.POST.getlist("project_ids")
-    content = request.POST.get("content", "").strip()
-
-    if action not in ("validate", "revision"):
-        messages.error(request, "Action groupée invalide.")
+    form = BulkProjectActionForm(request.POST)
+    if not form.is_valid():
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(request, error)
         return redirect("teacher:assignment_progress", assignment_id=assignment.id)
-
-    if not project_ids:
-        messages.warning(request, "Aucun projet sélectionné.")
-        return redirect("teacher:assignment_progress", assignment_id=assignment.id)
-
-    if action == "revision" and not content:
-        messages.error(
-            request,
-            "Veuillez préciser les modifications attendues pour demander une révision groupée.",
-        )
-        return redirect("teacher:assignment_progress", assignment_id=assignment.id)
+    action = form.cleaned_data["action"]
+    project_ids = form.cleaned_data["project_ids"]
+    content = form.cleaned_data["content"]
 
     # Only submitted projects of THIS assignment can be processed
     projects = Project.objects.filter(

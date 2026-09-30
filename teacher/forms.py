@@ -69,8 +69,8 @@ class ModuleCreationForm(forms.ModelForm):
         if len(code) < 3 or len(code) > 10:
             raise ValidationError("Le code du module doit contenir entre 3 et 10 caractères.")
 
-        # Check if code already exists
-        if Module.objects.filter(code=code).exists():
+        # Check if code already exists (another module; editing keeps its own code)
+        if Module.objects.filter(code=code).exclude(pk=self.instance.pk).exists():
             raise ValidationError(f"Un module avec le code '{code}' existe déjà.")
 
         return code
@@ -593,3 +593,107 @@ class AssignmentFilterForm(forms.Form):
                 .distinct()
                 .order_by("code")
             )
+
+
+class AnnouncementForm(forms.Form):
+    """Module announcement broadcast to enrolled students."""
+
+    title = forms.CharField(max_length=200, strip=True)
+    content = forms.CharField(max_length=5000, strip=True, widget=forms.Textarea)
+
+
+class RevisionRequestForm(forms.Form):
+    content = forms.CharField(
+        max_length=5000,
+        strip=True,
+        widget=forms.Textarea,
+        error_messages={"required": "Précisez les modifications attendues."},
+    )
+
+
+class RejectionForm(forms.Form):
+    reason = forms.CharField(max_length=5000, strip=True, required=False, widget=forms.Textarea)
+
+
+class BulkProjectActionForm(forms.Form):
+    ACTIONS = [("validate", "Valider"), ("revision", "Demander une révision")]
+
+    action = forms.ChoiceField(
+        choices=ACTIONS, error_messages={"invalid_choice": "Action groupée invalide."}
+    )
+    project_ids = forms.TypedMultipleChoiceField(
+        coerce=int, error_messages={"required": "Aucun projet sélectionné."}
+    )
+    content = forms.CharField(max_length=5000, strip=True, required=False)
+
+    def __init__(self, *args, projects=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Any id is accepted at this stage; the view only acts on this assignment's
+        # submitted projects and reports the rest as skipped.
+        self.fields["project_ids"].valid_value = lambda value: str(value).isdigit()
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("action") == "revision" and not cleaned.get("content"):
+            self.add_error(
+                "content",
+                "Veuillez préciser les modifications attendues pour demander une révision groupée.",
+            )
+        return cleaned
+
+
+class FrenchDecimalField(forms.DecimalField):
+    """Accepts "15,5" as well as "15.5"."""
+
+    def to_python(self, value):
+        if isinstance(value, str):
+            value = value.strip().replace(",", ".")
+        return super().to_python(value)
+
+
+class EvaluationForm(forms.Form):
+    """Overall grade; rubric rows are parsed by parse_rubric (dynamic row count)."""
+
+    score = FrenchDecimalField(
+        min_value=0,
+        max_value=20,
+        max_digits=4,
+        decimal_places=2,
+        error_messages={
+            "required": "La note globale est obligatoire et doit être comprise entre 0 et 20.",
+            "invalid": "La note globale est obligatoire et doit être comprise entre 0 et 20.",
+            "min_value": "La note globale est obligatoire et doit être comprise entre 0 et 20.",
+            "max_value": "La note globale est obligatoire et doit être comprise entre 0 et 20.",
+        },
+    )
+    comments = forms.CharField(max_length=5000, strip=True, required=False)
+    validate_project = forms.BooleanField(required=False)
+
+
+def parse_rubric(data):
+    """Rubric rows from parallel POST arrays (criterion_name/score/comment).
+
+    Returns (rows, errors). Fully empty rows are ignored.
+    """
+    names = data.getlist("criterion_name")
+    scores = data.getlist("criterion_score")
+    comments = data.getlist("criterion_comment")
+    rows, errors = [], []
+    score_field = FrenchDecimalField(min_value=0, max_value=20, max_digits=4, decimal_places=2)
+    for index, name in enumerate(names):
+        name = name.strip()[:100]
+        raw_score = (scores[index] if index < len(scores) else "").strip()
+        comment = (comments[index] if index < len(comments) else "").strip()[:255]
+        if not name and not raw_score:
+            continue
+        try:
+            score = score_field.clean(raw_score)
+        except ValidationError:
+            score = None
+        if not name:
+            errors.append(f"Le critère n°{index + 1} a une note mais pas de nom.")
+        elif score is None:
+            errors.append(f"Le critère '{name}' doit avoir une note entre 0 et 20.")
+        else:
+            rows.append({"name": name, "score": score, "comment": comment})
+    return rows, errors

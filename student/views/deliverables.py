@@ -12,7 +12,7 @@ from accounts.permissions import (
     teacher_module_ids,
 )
 
-from ..forms import DeliverableForm
+from ..forms import CommentForm, DeliverableForm
 from ..models import (
     Notification,
     ProjectActivity,
@@ -85,7 +85,8 @@ def add_deliverable_comment(request, deliverable_id):
         return redirect("student:dashboard")
 
     if request.method == "POST":
-        content = request.POST.get("content", "").strip()
+        form = CommentForm(request.POST)
+        content = form.cleaned_data["content"] if form.is_valid() else ""
         if content:
             DeliverableComment.objects.create(
                 deliverable=deliverable, author=request.user, content=content

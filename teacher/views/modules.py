@@ -12,6 +12,7 @@ from django.views.decorators.http import require_http_methods
 from student.models import Notification, Project
 
 from ..forms import (
+    AnnouncementForm,
     ModuleCreationForm,
 )
 from ..models import (
@@ -217,12 +218,14 @@ def post_module_announcement(request, module_id):
         messages.error(request, "Vous n'avez pas accès à ce module.")
         return redirect("teacher:modules_list")
 
-    title = request.POST.get("title", "").strip()
-    content = request.POST.get("content", "").strip()
-
-    if not title or not content:
-        messages.error(request, "Le titre et le contenu de l'annonce sont obligatoires.")
+    form = AnnouncementForm(request.POST)
+    if not form.is_valid():
+        messages.error(
+            request,
+            "Le titre (200 caractères max.) et le contenu (5000 max.) de l'annonce sont obligatoires.",
+        )
         return redirect("teacher:module_detail", module_id=module.id)
+    title, content = form.cleaned_data["title"], form.cleaned_data["content"]
 
     ModuleAnnouncement.objects.create(module=module, teacher=teacher, title=title, content=content)
 

@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from student.models import Project
 from teacher.models import Module, ModuleAssignment, TeacherProfile
 
+from ..forms import ModerationForm
 from ..models import AdminProfile
 from ._auth import admin_required
 
@@ -202,8 +203,12 @@ def moderate_project(request, project_id):
         return redirect("administrator:reports_moderation")
 
     project = get_object_or_404(Project, id=project_id)
-    action = request.POST.get("action")
-    notes = request.POST.get("admin_notes", "").strip()
+    form = ModerationForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Action de modération invalide.")
+        return redirect("administrator:reports_moderation")
+    action = form.cleaned_data["action"]
+    notes = form.cleaned_data["admin_notes"]
 
     if action == "hide":
         project.is_hidden_by_admin = True
