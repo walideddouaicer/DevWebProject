@@ -1,6 +1,5 @@
 import logging
 
-# teacher/assignment_views.py - UPDATED to use collaboration-based teams instead of groups
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -9,28 +8,114 @@ from django.db import models, transaction
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
 
-from accounts.permissions import manageable_assignments, teacher_module_ids
+from accounts.permissions import (
+    manageable_assignments,
+    teacher_module_ids,
+)
 from student.models import Notification, Project, StudentProfile
 
-from .forms import (
+from ..forms import (
     AssignmentFilterForm,
-    ModuleCreationForm,
     ProjectAssignmentForm,
     ProjectOptionForm,
     StudentSelectionForm,
 )
-from .models import (
+from ..models import (
     DirectStudentAssignment,
     Module,
-    ModuleAssignment,
-    ModuleEnrollment,
-    ProjectAssignment,
     ProjectOption,
     TeacherProfile,
 )
 
 logger = logging.getLogger(__name__)
+
+
+@login_required
+def export_assignment_results(request, assignment_id):
+    """Download an assignment's teams, statuses and grades as Excel."""
+    from django.utils import timezone
+
+    from administrator.exports import build_assignment_results_workbook, excel_response
+
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect("login")
+
+    assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
+
+    projects = (
+        assignment.submitted_projects.select_related("student__user", "selected_option")
+        .prefetch_related("collaborators__user")
+        .order_by("student__user__last_name")
+    )
+
+    workbook = build_assignment_results_workbook(assignment, projects)
+    safe_title = "".join(ch if ch.isalnum() else "_" for ch in assignment.title)[:40]
+    filename = f"resultats_{safe_title}_{timezone.now().strftime('%Y%m%d')}.xlsx"
+    return excel_response(workbook, filename)
+
+
+@login_required
+@require_http_methods(["POST"])
+def bulk_project_action(request, assignment_id):
+    """Validate or request revision on several submitted projects at once."""
+    from student.models import Project
+
+    try:
+        teacher = TeacherProfile.objects.get(user=request.user)
+    except TeacherProfile.DoesNotExist:
+        messages.error(request, "Vous n'avez pas de profil enseignant.")
+        return redirect("login")
+
+    assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
+
+    action = request.POST.get("action")
+    project_ids = request.POST.getlist("project_ids")
+    content = request.POST.get("content", "").strip()
+
+    if action not in ("validate", "revision"):
+        messages.error(request, "Action groupée invalide.")
+        return redirect("teacher:assignment_progress", assignment_id=assignment.id)
+
+    if not project_ids:
+        messages.warning(request, "Aucun projet sélectionné.")
+        return redirect("teacher:assignment_progress", assignment_id=assignment.id)
+
+    if action == "revision" and not content:
+        messages.error(
+            request,
+            "Veuillez préciser les modifications attendues pour demander une révision groupée.",
+        )
+        return redirect("teacher:assignment_progress", assignment_id=assignment.id)
+
+    # Only submitted projects of THIS assignment can be processed
+    projects = Project.objects.filter(
+        id__in=project_ids, project_assignment=assignment, status="submitted"
+    )
+
+    processed = 0
+    for project in projects:
+        if action == "validate":
+            project.validate(by=teacher)
+        else:
+            project.request_revision(by=teacher, message=content)
+        processed += 1
+
+    skipped = len(project_ids) - processed
+    if action == "validate":
+        messages.success(request, f"{processed} projet(s) validé(s).")
+    else:
+        messages.success(request, f"Révision demandée pour {processed} projet(s).")
+    if skipped:
+        messages.warning(
+            request, f"{skipped} projet(s) ignoré(s) (non soumis ou hors de ce devoir)."
+        )
+
+    return redirect("teacher:assignment_progress", assignment_id=assignment.id)
 
 
 def get_teacher_or_error(request):
@@ -40,11 +125,6 @@ def get_teacher_or_error(request):
     except TeacherProfile.DoesNotExist:
         messages.error(request, "Vous n'avez pas de profil enseignant.")
         return None
-
-
-def check_teacher_module_access(teacher, module):
-    """Helper function to check if teacher has access to a module"""
-    return ModuleAssignment.objects.filter(teacher=teacher, module=module, is_active=True).exists()
 
 
 @login_required
@@ -1013,115 +1093,3 @@ def option_delete(request, assignment_id, option_id):
     }
 
     return render(request, "teacher/assignments/option_delete_confirm.html", context)
-
-
-@login_required
-@transaction.atomic
-def create_teacher_module(request):
-    """Allow teachers to create new modules directly (no approval needed)"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
-
-    if request.method == "POST":
-        form = ModuleCreationForm(request.POST)
-        if form.is_valid():
-            try:
-                with transaction.atomic():
-                    module = form.save(commit=False)
-                    module.primary_teacher = teacher
-                    module.created_by_teacher = True
-                    module.is_active = True  # Active immediately, no approval needed
-                    module.save()
-
-                    # Automatically assign the teacher to the module
-                    ModuleAssignment.objects.create(
-                        teacher=teacher,
-                        module=module,
-                        assigned_by=teacher.user,  # Self-assigned
-                        is_active=True,
-                    )
-
-                    # ❌ REMOVED: ProjectActivity creation (was causing the error)
-                    # No need to log module creation as project activity
-
-                    messages.success(
-                        request,
-                        f"✅ Module '{module.code} - {module.name}' créé avec succès! "
-                        f"Votre module est maintenant actif et les étudiants peuvent s'inscrire.",
-                    )
-                    return redirect("teacher:module_detail", module_id=module.id)
-
-            except ValidationError as e:
-                messages.error(request, " ".join(e.messages))
-            except Exception:
-                logger.exception("Erreur lors de la création")
-                messages.error(
-                    request,
-                    "Erreur lors de la création. Réessayez ; si le problème persiste, contactez l'administration.",
-                )
-    else:
-        form = ModuleCreationForm()
-
-    context = {
-        "teacher": teacher,
-        "form": form,
-    }
-
-    return render(request, "teacher/modules/create.html", context)
-
-
-@login_required
-def my_modules(request):
-    """Display teacher's modules - updated for direct creation"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
-
-    # Get teacher's assigned modules (both admin-assigned and self-created)
-    module_assignments = (
-        ModuleAssignment.objects.filter(teacher=teacher, is_active=True)
-        .select_related("module")
-        .order_by("-assigned_at")
-    )
-
-    modules_with_stats = []
-    for assignment in module_assignments:
-        module = assignment.module
-
-        # Calculate statistics
-        enrolled_count = ModuleEnrollment.objects.filter(module=module, is_active=True).count()
-
-        project_assignments_count = ProjectAssignment.objects.filter(
-            teacher=teacher, module=module
-        ).count()
-
-        total_projects_count = Project.objects.filter(module=module).count()
-
-        # Get recent students for preview
-        recent_students = (
-            ModuleEnrollment.objects.filter(module=module, is_active=True)
-            .select_related("student__user")
-            .order_by("-enrolled_at")[:10]
-        )
-
-        modules_with_stats.append(
-            {
-                "assignment": assignment,
-                "module": module,
-                "enrolled_count": enrolled_count,
-                "project_assignments_count": project_assignments_count,
-                "total_projects_count": total_projects_count,
-                "recent_students": recent_students,
-                "is_self_created": module.created_by_teacher and module.primary_teacher == teacher,
-                "creation_status": "active",  # Always active now
-            }
-        )
-
-    context = {
-        "teacher": teacher,
-        "modules_with_stats": modules_with_stats,
-        "pending_modules_count": 0,  # No more pending modules
-    }
-
-    return render(request, "teacher/modules/my_modules.html", context)

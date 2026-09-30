@@ -1,9 +1,3 @@
-# Student calendar + iCalendar export (ROADMAP #8).
-#
-# One place to see every date that matters: assignment deadlines, selection
-# deadlines, project milestones and project end dates. The .ics feed lets
-# students subscribe from Google Calendar / Outlook.
-
 import calendar as pycalendar
 from datetime import UTC, date, timedelta
 
@@ -15,7 +9,11 @@ from django.utils import timezone
 
 from teacher.models import ProjectAssignment
 
-from .models import Project, ProjectMilestone, StudentProfile
+from ..models import (
+    Project,
+    ProjectMilestone,
+    StudentProfile,
+)
 
 
 def collect_student_events(student):

@@ -1,9 +1,6 @@
 from django.urls import path
 
-from . import (
-    assignment_views,  # Import the new assignment views
-    views,
-)
+from . import views
 
 app_name = "teacher"
 
@@ -34,29 +31,29 @@ urlpatterns = [
         name="add_deliverable_comment",
     ),
     # Teacher Module Creation
-    path("modules/create/", assignment_views.create_teacher_module, name="create_teacher_module"),
-    path("modules/my/", assignment_views.my_modules, name="my_modules"),
+    path("modules/create/", views.create_teacher_module, name="create_teacher_module"),
+    path("modules/my/", views.my_modules, name="my_modules"),
     # Assignment Management URLs
-    path("assignments/", assignment_views.assignments_dashboard, name="assignments_dashboard"),
-    path("assignments/create/", assignment_views.assignment_create, name="assignment_create"),
+    path("assignments/", views.assignments_dashboard, name="assignments_dashboard"),
+    path("assignments/create/", views.assignment_create, name="assignment_create"),
     path(
         "assignments/<int:assignment_id>/",
-        assignment_views.assignment_detail,
+        views.assignment_detail,
         name="assignment_detail",
     ),
     path(
         "assignments/<int:assignment_id>/edit/",
-        assignment_views.assignment_edit,
+        views.assignment_edit,
         name="assignment_edit",
     ),
     path(
         "assignments/<int:assignment_id>/publish/",
-        assignment_views.assignment_publish,
+        views.assignment_publish,
         name="assignment_publish",
     ),
     path(
         "assignments/<int:assignment_id>/progress/",
-        assignment_views.assignment_progress,
+        views.assignment_progress,
         name="assignment_progress",
     ),
     path(
@@ -67,24 +64,24 @@ urlpatterns = [
     # Assignment Students Management (for direct assignments)
     path(
         "assignments/<int:assignment_id>/students/",
-        assignment_views.assignment_students,
+        views.assignment_students,
         name="assignment_students",
     ),
     # Assignment Options Management (for choice-based assignments)
     path(
         "assignments/<int:assignment_id>/options/",
-        assignment_views.assignment_options,
+        views.assignment_options,
         name="assignment_options",
     ),
     path(
         "assignments/<int:assignment_id>/options/<int:option_id>/delete/",
-        assignment_views.option_delete,
+        views.option_delete,
         name="option_delete",
     ),
     # ===== TEAM MANAGEMENT (REPLACES GROUP MANAGEMENT) =====
     path(
         "assignments/<int:assignment_id>/teams/",
-        assignment_views.assignment_teams,
+        views.assignment_teams,
         name="assignment_teams",
     ),
     path(

@@ -1,0 +1,589 @@
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+
+from accounts.permissions import (
+    get_project_for_member,
+    student_required,
+)
+from teacher.models import DirectStudentAssignment
+
+from ..forms import MakeProjectPublicForm, ProjectForm, QuickPublishForm
+from ..models import (
+    CollaborationInvitation,
+    Notification,
+    Project,
+    ProjectActivity,
+    ProjectComment,
+    ProjectDeliverable,
+    ProjectMilestone,
+    StudentProfile,
+)
+
+
+@student_required
+@require_POST
+def project_submit(request, project_id):
+    """Owner submits the project for review (rules live in Project.submit)."""
+    student = request.student
+    project = get_project_for_member(student, project_id)
+    try:
+        project.submit(by=student)
+    except ValidationError as error:
+        for message in error.messages:
+            messages.error(request, message)
+    else:
+        messages.success(request, "Votre projet a été soumis avec succès.")
+    return redirect("student:project_detail", project_id=project.id)
+
+
+@student_required
+@require_POST
+def project_reopen(request, project_id):
+    """Owner puts a rejected project back in progress."""
+    student = request.student
+    project = get_project_for_member(student, project_id)
+    try:
+        project.reopen(by=student)
+    except ValidationError as error:
+        for message in error.messages:
+            messages.error(request, message)
+    else:
+        messages.success(request, "Le projet est de nouveau en cours: vous pouvez le retravailler.")
+    return redirect("student:project_detail", project_id=project.id)
+
+
+@login_required
+def dashboard(request):
+    student = get_object_or_404(StudentProfile, user=request.user)
+
+    # Get filter parameters
+    search_query = request.GET.get("search", "")
+    project_type = request.GET.get("type", "")
+    status = request.GET.get("status", "")
+    view = request.GET.get("view", "all")  # 'all', 'mine', 'collaborated'
+
+    # Start with all projects for this student
+    if view == "mine":
+        all_projects = Project.objects.filter(student=student)
+    elif view == "collaborated":
+        all_projects = Project.objects.filter(collaborators=student)
+    else:  # 'all' - default
+        all_projects = Project.objects.filter(
+            Q(student=student) | Q(collaborators=student)
+        ).distinct()
+
+    # Apply filters if provided
+    if search_query:
+        all_projects = all_projects.filter(title__icontains=search_query)
+
+    if project_type:
+        all_projects = all_projects.filter(project_type=project_type)
+
+    if status:
+        all_projects = all_projects.filter(status=status)
+
+    # Get project statistics
+    total_projects = all_projects.count()
+    completed_projects = all_projects.filter(status="validated").count()
+    in_progress_projects = all_projects.filter(status="in_progress").count()
+    pending_validation = all_projects.filter(status="submitted").count()
+
+    # Get pending invitations count
+    pending_invitations_count = CollaborationInvitation.objects.filter(
+        recipient=student, status="pending"
+    ).count()
+
+    # Get active projects for display, applying the same filters
+    # Base queries for owned and collaborated projects
+    owned_projects_base = Project.objects.filter(student=student)
+    collaborated_projects_base = Project.objects.filter(collaborators=student).exclude(
+        student=student
+    )
+
+    # Apply the same filters to both collections
+    if search_query:
+        owned_projects_base = owned_projects_base.filter(title__icontains=search_query)
+        collaborated_projects_base = collaborated_projects_base.filter(
+            title__icontains=search_query
+        )
+
+    if project_type:
+        owned_projects_base = owned_projects_base.filter(project_type=project_type)
+        collaborated_projects_base = collaborated_projects_base.filter(project_type=project_type)
+
+    if status:
+        owned_projects_base = owned_projects_base.filter(status=status)
+        collaborated_projects_base = collaborated_projects_base.filter(status=status)
+
+    # Assign the filtered projects
+    owned_projects = owned_projects_base
+    collaborated_projects = collaborated_projects_base
+
+    # Get project type choices for the filter dropdown
+    project_type_choices = dict(Project.PROJECT_TYPES)
+    status_choices = dict(Project.STATUS_CHOICES)
+
+    context = {
+        "student": student,
+        "total_projects": total_projects,
+        "completed_projects": completed_projects,
+        "in_progress_projects": in_progress_projects,
+        "pending_validation": pending_validation,
+        "pending_invitations_count": pending_invitations_count,
+        "owned_projects": owned_projects,
+        "collaborated_projects": collaborated_projects,
+        "search_query": search_query,
+        "project_type": project_type,
+        "status": status,
+        "project_type_choices": project_type_choices,
+        "status_choices": status_choices,
+        "view": view,
+    }
+
+    return render(request, "student/dashboard.html", context)
+
+
+@login_required
+def project_create(request):
+    student = get_object_or_404(StudentProfile, user=request.user)
+
+    if request.method == "POST":
+        form = ProjectForm(request.POST, current_student=student)
+        if form.is_valid():
+            project = form.save(commit=False)
+            project.student = student
+            project.status = "in_progress"
+            project.save()
+
+            # This is needed to save many-to-many relationships
+            form.save_m2m()
+
+            # Record activity
+            ProjectActivity.objects.create(
+                project=project,
+                user=request.user,
+                activity_type="created",
+                description="Projet créé",
+            )
+
+            messages.success(request, "Projet créé avec succès.")
+            return redirect("student:project_detail", project_id=project.id)
+    else:
+        form = ProjectForm(current_student=student)
+
+    context = {"form": form, "title": "Créer un nouveau projet"}
+
+    return render(request, "student/project_form.html", context)
+
+
+@login_required
+def project_edit(request, project_id):
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_object_or_404(Project, id=project_id, student=student)
+
+    # dont allow editing if the project is already validated
+    if project.status == "validated":
+        messages.warning(request, "Les projets validés ne peuvent plus être modifiés.")
+        return redirect("student:project_detail", project_id=project.id)
+
+    if request.method == "POST":
+        form = ProjectForm(request.POST, instance=project, current_student=student)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Projet mis à jour avec succès.")
+            return redirect("student:project_detail", project_id=project.id)
+    else:
+        form = ProjectForm(instance=project, current_student=student)
+
+    context = {"form": form, "project": project, "title": "Modifier le projet"}
+
+    return render(request, "student/project_form.html", context)
+
+
+@login_required
+def project_detail(request, project_id):
+    """Enhanced project detail view with assignment context and team info"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+
+    # Get the project with related data
+    project = get_object_or_404(
+        Project.objects.select_related("module", "project_assignment", "selected_option"),
+        id=project_id,
+    )
+
+    # Check if the requesting user is either the owner or a collaborator
+    is_owner = project.student == student
+    is_collaborator = project.collaborators.filter(id=student.id).exists()
+
+    # If the user is neither, deny access
+    if not is_owner and not is_collaborator:
+        messages.error(request, "Vous n'avez pas l'autorisation de voir ce projet.")
+        return redirect("student:dashboard")
+
+    # Get basic project data (deliverables grouped by name: latest + history)
+    from ..utils import group_deliverables
+
+    deliverables = group_deliverables(
+        ProjectDeliverable.objects.filter(project=project).prefetch_related(
+            "feedback_comments__author"
+        )
+    )
+    milestones = ProjectMilestone.objects.filter(project=project)
+    project_activities = ProjectActivity.objects.filter(project=project)
+    comments = project.comments.all().select_related("author")
+
+    # Assignment-specific context
+    assignment_context = {}
+    if project.is_assignment_project():
+        assignment = project.project_assignment
+        team_info = project.get_assignment_team_info()
+
+        assignment_context = {
+            "assignment": assignment,
+            "is_assignment_project": True,
+            "assignment_type": assignment.assignment_type,
+            "team_info": team_info,
+            "selected_option": project.selected_option,
+            "deadline_info": {
+                "assignment_deadline": assignment.deadline,
+                "is_overdue": project.is_overdue(),
+                "can_submit": project.can_be_submitted_for_assignment(),
+            },
+        }
+    else:
+        assignment_context = {
+            "is_assignment_project": False,
+            "team_info": {
+                "team_members": project.get_team_members(),
+                "team_size": project.get_team_size(),
+                "size_status": {
+                    "status": "unlimited",
+                    "message": "Projet personnel",
+                    "can_invite": True,
+                },
+                "display_name": None,
+            },
+        }
+
+    # For project owners, get available students for collaboration
+    available_students = []
+    if is_owner and project.status == "in_progress":
+        # Base query: exclude owner and current collaborators
+        base_exclusions = Q(id=student.id) | Q(
+            id__in=project.collaborators.values_list("id", flat=True)
+        )
+
+        # Also exclude students who have pending invitations
+        invited_student_ids = CollaborationInvitation.objects.filter(
+            project=project, status="pending"
+        ).values_list("recipient_id", flat=True)
+        base_exclusions |= Q(id__in=invited_student_ids)
+
+        if project.is_assignment_project():
+            assignment = project.project_assignment
+
+            # For assignment projects, only show students from the same module
+            available_students = StudentProfile.objects.filter(
+                module_enrollments__module=assignment.module, module_enrollments__is_active=True
+            ).exclude(base_exclusions)
+
+            # For direct assignments, further filter to only assigned students
+            if assignment.assignment_type == "direct":
+                assigned_student_ids = DirectStudentAssignment.objects.filter(
+                    assignment=assignment
+                ).values_list("student_id", flat=True)
+                available_students = available_students.filter(id__in=assigned_student_ids)
+
+            # Exclude students already working on this assignment in other projects
+            students_in_other_projects = (
+                Project.objects.filter(project_assignment=assignment)
+                .exclude(id=project.id)
+                .values_list("student_id", flat=True)
+            )
+
+            collaborators_in_other_projects = (
+                Project.objects.filter(project_assignment=assignment)
+                .exclude(id=project.id)
+                .values_list("collaborators__id", flat=True)
+            )
+
+            available_students = available_students.exclude(
+                Q(id__in=students_in_other_projects) | Q(id__in=collaborators_in_other_projects)
+            )
+        else:
+            # For personal projects, show all students except exclusions
+            available_students = StudentProfile.objects.exclude(base_exclusions)
+
+    # For project owners, show pending invitations
+    pending_invitations = []
+    if is_owner:
+        pending_invitations = CollaborationInvitation.objects.filter(
+            project=project, status="pending"
+        ).select_related("recipient__user")
+
+    # Assignment-specific action buttons
+    available_actions = {
+        "can_edit": is_owner and project.status not in ["validated"],
+        "can_delete": is_owner
+        and project.status == "in_progress"
+        and not project.is_assignment_project(),
+        "can_submit": is_owner and project.status in ["in_progress", "revision_requested"],
+        "can_invite_collaborators": (
+            is_owner
+            and project.status == "in_progress"
+            and assignment_context.get("team_info", {})
+            .get("size_status", {})
+            .get("can_invite", True)
+        ),
+        "can_add_deliverables": (is_owner or is_collaborator) and project.status != "validated",
+        "can_add_milestones": (is_owner or is_collaborator) and project.status != "validated",
+        "can_comment": True,  # Everyone can comment
+    }
+
+    # Assignment submission validation
+    if project.is_assignment_project():
+        available_actions["can_submit"] = is_owner and project.can_be_submitted_for_assignment()
+        if not available_actions["can_submit"] and is_owner:
+            # Provide specific reason why can't submit
+            team_status = project.get_team_size_status()
+            if team_status["status"] in ["too_small", "too_large"]:
+                available_actions["submit_blocked_reason"] = team_status["message"]
+            elif not project.is_team_size_valid():
+                available_actions["submit_blocked_reason"] = "Taille d'équipe invalide"
+            elif project.is_overdue():
+                available_actions["submit_blocked_reason"] = "Date limite dépassée"
+
+    context = {
+        "project": project,
+        "deliverables": deliverables,
+        "collaborators": project.collaborators.all(),
+        "milestones": milestones,
+        "available_students": available_students,
+        "pending_invitations": pending_invitations,
+        "is_owner": is_owner,
+        "is_collaborator": is_collaborator,
+        "project_activities": project_activities,
+        "comments": comments,
+        "assignment_context": assignment_context,  # ENHANCED
+        "available_actions": available_actions,  # ENHANCED
+        "evaluation": getattr(project, "evaluation", None),  # Teacher grade (if any)
+    }
+
+    return render(request, "student/project_detail.html", context)
+
+
+@login_required
+def project_delete(request, project_id):
+    """View to delete a project"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_object_or_404(Project, id=project_id, student=student)
+
+    # Only allow deletion of projects that are in progress (not submitted, validated, or rejected)
+    if project.status != "in_progress":
+        messages.warning(request, "Seuls les projets en cours peuvent être supprimés.")
+        return redirect("student:project_detail", project_id=project.id)
+
+    if request.method == "POST":
+        # Delete any deliverables associated with this project
+        ProjectDeliverable.objects.filter(project=project).delete()
+
+        # Also delete any pending invitations for this project
+        CollaborationInvitation.objects.filter(project=project).delete()
+
+        # Delete any milestones associated with this project
+        ProjectMilestone.objects.filter(project=project).delete()
+
+        # Delete any comments associated with this project
+        ProjectComment.objects.filter(project=project).delete()
+
+        # Delete any activities associated with this project
+        ProjectActivity.objects.filter(project=project).delete()
+
+        # Delete any notifications associated with this project
+        Notification.objects.filter(project=project).delete()
+
+        # Delete the project itself
+        project.delete()
+
+        messages.success(request, "Le projet a été supprimé avec succès.")
+        return redirect("student:dashboard")
+
+    context = {
+        "project": project,
+    }
+
+    return render(request, "student/project_delete_confirm.html", context)
+
+
+@login_required
+def add_comment(request, project_id):
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_project_for_member(student, project_id)
+
+    if request.method == "POST":
+        content = request.POST.get("content")
+        if content:
+            comment = ProjectComment(
+                project=project,
+                author=request.user,  # Now using User directly instead of StudentProfile
+                content=content,
+            )
+            comment.save()
+
+            # Add activity record
+            activity = ProjectActivity(
+                project=project,
+                user=request.user,
+                activity_type="comment_added",
+                description=f'A ajouté un commentaire: "{content[:50]}{"..." if len(content) > 50 else ""}"',
+            )
+            activity.save()
+
+            messages.success(request, "Commentaire ajouté avec succès.")
+        else:
+            messages.error(request, "Le commentaire ne peut pas être vide.")
+
+    return redirect("student:project_detail", project_id=project.id)
+
+
+@login_required
+def make_project_public(request, project_id):
+    """Student makes their project public (instant, no approval needed)"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_object_or_404(Project, id=project_id, student=student)
+
+    if not project.can_be_made_public():
+        messages.error(request, "Ce projet ne peut pas être rendu public. Il doit être validé.")
+        return redirect("student:project_detail", project_id=project.id)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "quick_publish":
+            # Quick publish with current content
+            form = QuickPublishForm(request.POST)
+            if form.is_valid():
+                if project.make_public():
+                    ProjectActivity.objects.create(
+                        project=project,
+                        user=request.user,
+                        activity_type="made_public",
+                        description="Projet rendu public",
+                    )
+                    messages.success(
+                        request,
+                        f"🎉 Votre projet '{project.title}' est maintenant visible publiquement!",
+                    )
+                    return redirect("public:project_detail", project_id=project.id)
+
+        elif action == "enhanced_publish":
+            # Publish with enhanced content
+            form = MakeProjectPublicForm(request.POST, request.FILES, instance=project)
+            if form.is_valid():
+                # Save the enhanced fields first
+                enhanced_project = form.save(commit=False)
+
+                # Then make it public
+                if enhanced_project.make_public():
+                    # Now save all the enhanced fields to the database
+                    enhanced_project.save()
+
+                    # Save selected showcase tags (custom through-model field)
+                    form.save_showcase_tags(enhanced_project)
+
+                    ProjectActivity.objects.create(
+                        project=enhanced_project,
+                        user=request.user,
+                        activity_type="made_public",
+                        description="Projet rendu public avec contenu enrichi",
+                    )
+                    messages.success(
+                        request,
+                        f"🎉 Votre projet '{enhanced_project.title}' est maintenant visible publiquement!",
+                    )
+                    return redirect("public:project_detail", project_id=enhanced_project.id)
+                else:
+                    messages.error(request, "Erreur lors de la publication du projet.")
+            else:
+                # Form has errors, show them
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Erreur dans {field}: {error}")
+
+    # GET request - show both options
+    quick_form = QuickPublishForm()
+    enhanced_form = MakeProjectPublicForm(instance=project)
+
+    context = {
+        "project": project,
+        "quick_form": quick_form,
+        "enhanced_form": enhanced_form,
+    }
+
+    return render(request, "student/make_project_public.html", context)
+
+
+@login_required
+def make_project_private(request, project_id):
+    """Student removes their project from public showcase"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_object_or_404(Project, id=project_id, student=student, is_public=True)
+
+    if request.method == "POST":
+        project.make_private()
+
+        ProjectActivity.objects.create(
+            project=project,
+            user=request.user,
+            activity_type="made_private",
+            description="Projet retiré de l'affichage public",
+        )
+
+        messages.success(
+            request, f"Votre projet '{project.title}' n'est plus visible publiquement."
+        )
+        return redirect("student:project_detail", project_id=project.id)
+
+    context = {"project": project}
+    return render(request, "student/make_project_private_confirm.html", context)
+
+
+@login_required
+def project_submit_confirmation(request, project_id):
+    """Show confirmation page before project submission"""
+    student = get_object_or_404(StudentProfile, user=request.user)
+    project = get_project_for_member(student, project_id)
+
+    # Only the owner can submit
+    if project.student != student:
+        messages.error(request, "Seul le propriétaire du projet peut le soumettre.")
+        return redirect("student:project_detail", project_id=project.id)
+
+    if project.status not in ["in_progress", "revision_requested"]:
+        messages.warning(request, "Seuls les projets en cours ou en révision peuvent être soumis.")
+        return redirect("student:project_detail", project_id=project.id)
+
+    # Get pending invitations to show in confirmation
+    pending_invitations = CollaborationInvitation.objects.filter(
+        project=project, status="pending"
+    ).select_related("recipient__user")
+
+    # Get project statistics for the checklist
+    deliverables_count = project.deliverables.count()
+    milestones_count = project.milestones.count()
+    completed_milestones_count = project.milestones.filter(completed=True).count()
+
+    context = {
+        "project": project,
+        "pending_invitations": pending_invitations,
+        "deliverables_count": deliverables_count,
+        "milestones_count": milestones_count,
+        "completed_milestones_count": completed_milestones_count,
+        "is_ready_to_submit": True,  # You can add more complex logic here
+    }
+
+    return render(request, "student/project_submit_confirmation.html", context)

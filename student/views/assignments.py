@@ -1,5 +1,3 @@
-# student/assignment_views.py - FINAL CLEAN VERSION with pure collaboration logic
-
 from functools import wraps
 
 from django.contrib import messages
@@ -14,16 +12,16 @@ from django.utils import timezone
 from accounts.permissions import student_required
 from teacher.models import DirectStudentAssignment, ProjectAssignment, ProjectOption
 
-from .forms import ProjectForm
-from .models import (
+from ..forms import (
+    ProjectForm,
+)
+from ..models import (
     CollaborationInvitation,
     Project,
     ProjectActivity,
     StudentProfile,
     TeammateRequest,
 )
-
-# Helper functions
 
 
 def get_student_or_error(request):
@@ -579,10 +577,6 @@ def handle_choice_based_assignment_project(request, student, assignment):
         return render(request, "student/assignments/create_assignment_project.html", context)
     else:
         return render(request, "student/assignments/select_project_option.html", context)
-
-
-# ---------------------------------------------------------------------------
-# Find-teammates board (ROADMAP #9)
 
 
 def _students_involved_in_assignment(assignment):

@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import assignment_views, calendar_views, downloads, views
+from . import views
 
 app_name = "student"
 
@@ -45,7 +45,7 @@ urlpatterns = [
     path("projects/<int:project_id>/comment/", views.add_comment, name="add_comment"),
     path(
         "deliverables/<int:deliverable_id>/download/",
-        downloads.deliverable_download,
+        views.deliverable_download,
         name="deliverable_download",
     ),
     path(
@@ -54,8 +54,8 @@ urlpatterns = [
         name="add_deliverable_comment",
     ),
     # Calendar (ROADMAP #8)
-    path("calendar/", calendar_views.calendar_view, name="calendar"),
-    path("calendar.ics", calendar_views.calendar_ics, name="calendar_ics"),
+    path("calendar/", views.calendar_view, name="calendar"),
+    path("calendar.ics", views.calendar_ics, name="calendar_ics"),
     path("notifications/", views.notifications, name="notifications"),
     path(
         "notifications/<int:notification_id>/read/",
@@ -104,39 +104,39 @@ urlpatterns = [
         name="password_change_done",
     ),
     # Assignment System URLs with correct function names
-    path("assignments/", assignment_views.assignments_dashboard, name="assignments_dashboard"),
+    path("assignments/", views.assignments_dashboard, name="assignments_dashboard"),
     path(
         "assignments/<int:assignment_id>/",
-        assignment_views.assignment_detail,
+        views.assignment_detail,
         name="assignment_detail",
     ),
-    # Use the correct function name that exists in assignment_views.py
+    # Use the correct function name that exists in views.py
     path(
         "assignments/<int:assignment_id>/create-project/",
-        assignment_views.create_assignment_project_direct,
+        views.create_assignment_project_direct,
         name="create_assignment_project",
     ),
     # Direct Assignment Project Creation (primary method)
     path(
         "assignments/<int:assignment_id>/create-project-direct/",
-        assignment_views.create_assignment_project_direct,
+        views.create_assignment_project_direct,
         name="create_assignment_project_direct",
     ),
     # Project option selection for choice-based assignments
     path(
         "assignments/<int:assignment_id>/select-option/",
-        assignment_views.select_project_option_direct,
+        views.select_project_option_direct,
         name="select_project_option_direct",
     ),
     # Find-teammates board (ROADMAP #9)
     path(
         "assignments/<int:assignment_id>/teammates/",
-        assignment_views.teammates_board,
+        views.teammates_board,
         name="teammates_board",
     ),
     path(
         "assignments/<int:assignment_id>/teammates/toggle/",
-        assignment_views.toggle_teammate_request,
+        views.toggle_teammate_request,
         name="toggle_teammate_request",
     ),
 ]

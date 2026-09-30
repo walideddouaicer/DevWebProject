@@ -1,0 +1,446 @@
+import logging
+
+from django.contrib import messages
+from django.db.models import Q
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+
+from student.models import Project, StudentProfile
+from teacher.models import Module, ModuleAssignment, ModuleEnrollment, TeacherProfile
+
+from ..models import AdminProfile
+from ._auth import admin_required
+
+logger = logging.getLogger(__name__)
+
+
+@admin_required
+def modules_list(request):
+    """List all modules with management options - FIXED VERSION"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+
+    # Get base queryset
+    modules = Module.objects.all().order_by("-created_at")
+
+    # Apply filters
+    search_query = request.GET.get("search", "")
+    if search_query:
+        modules = modules.filter(Q(code__icontains=search_query) | Q(name__icontains=search_query))
+
+    academic_year = request.GET.get("academic_year")
+    if academic_year:
+        modules = modules.filter(academic_year=academic_year)
+
+    semester = request.GET.get("semester")
+    if semester:
+        modules = modules.filter(semester=semester)
+
+    # Calculate totals manually for accuracy
+    total_modules = modules.count()
+    active_modules = modules.filter(is_active=True).count()
+
+    # Calculate total students and teachers across all modules
+    total_students_enrolled = 0
+    total_teachers_assigned = 0
+
+    for module in modules:
+        total_students_enrolled += ModuleEnrollment.objects.filter(
+            module=module, is_active=True
+        ).count()
+        total_teachers_assigned += ModuleAssignment.objects.filter(
+            module=module, is_active=True
+        ).count()
+
+    # Add manual counts to each module for template use
+    modules_with_counts = []
+    for module in modules:
+        student_count = ModuleEnrollment.objects.filter(module=module, is_active=True).count()
+        teacher_count = ModuleAssignment.objects.filter(module=module, is_active=True).count()
+        project_count = Project.objects.filter(module=module).count()
+
+        # Add counts as attributes
+        module.student_count = student_count
+        module.teacher_count = teacher_count
+        module.project_count = project_count
+
+        modules_with_counts.append(module)
+
+    # Get filter options
+    academic_years = (
+        Module.objects.values_list("academic_year", flat=True).distinct().order_by("academic_year")
+    )
+
+    context = {
+        "admin": admin,
+        "modules": modules_with_counts,  # Now has count attributes
+        "academic_years": academic_years,
+        "search_query": search_query,
+        "selected_academic_year": academic_year,
+        "selected_semester": semester,
+        "semester_choices": Module._meta.get_field("semester").choices,
+        # Add totals calculated manually
+        "total_modules": total_modules,
+        "active_modules": active_modules,
+        "total_students_enrolled": total_students_enrolled,
+        "total_teachers_assigned": total_teachers_assigned,
+    }
+
+    return render(request, "administrator/modules_list.html", context)
+
+
+@admin_required
+def module_create(request):
+    """Create a new module"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+
+    if request.method == "POST":
+        # Get form data
+        name = request.POST.get("name")
+        code = request.POST.get("code")
+        description = request.POST.get("description", "")
+        academic_year = request.POST.get("academic_year")
+        semester = request.POST.get("semester")
+
+        # Validate required fields
+        if not all([name, code, academic_year, semester]):
+            messages.error(request, "Tous les champs obligatoires doivent être remplis.")
+            return render(request, "administrator/module_create.html", {"admin": admin})
+
+        # Check if module code already exists
+        if Module.objects.filter(code=code).exists():
+            messages.error(request, f"Un module avec le code '{code}' existe déjà.")
+            return render(request, "administrator/module_create.html", {"admin": admin})
+
+        # Create the module
+        try:
+            module = Module.objects.create(
+                name=name,
+                code=code.upper(),
+                description=description,
+                academic_year=academic_year,
+                semester=semester,
+                is_active=True,
+            )
+
+            messages.success(request, f"Module '{module.code} - {module.name}' créé avec succès.")
+            return redirect("administrator:module_detail", module_id=module.id)
+
+        except Exception:
+            logger.exception("Erreur lors de la création du module")
+            messages.error(
+                request,
+                "Erreur lors de la création du module. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
+
+    context = {
+        "admin": admin,
+        "semester_choices": Module._meta.get_field("semester").choices,
+    }
+
+    return render(request, "administrator/module_create.html", context)
+
+
+@admin_required
+def module_detail(request, module_id):
+    """View detailed information about a module"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+
+    module = get_object_or_404(Module, id=module_id)
+
+    # Get module statistics
+    enrollments = ModuleEnrollment.objects.filter(module=module, is_active=True).select_related(
+        "student__user"
+    )
+
+    assignments = ModuleAssignment.objects.filter(module=module, is_active=True).select_related(
+        "teacher__user"
+    )
+
+    module_projects = Project.objects.filter(module=module).select_related("student__user")
+
+    context = {
+        "admin": admin,
+        "module": module,
+        "enrollments": enrollments,
+        "assignments": assignments,
+        "module_projects": module_projects,
+        "total_students": enrollments.count(),
+        "total_teachers": assignments.count(),
+        "total_projects": module_projects.count(),
+    }
+
+    return render(request, "administrator/module_detail.html", context)
+
+
+@admin_required
+def module_edit(request, module_id):
+    """Edit module information"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+    module = get_object_or_404(Module, id=module_id)
+
+    if request.method == "POST":
+        # Update module fields
+        module.name = request.POST.get("name", module.name)
+        module.description = request.POST.get("description", module.description)
+        module.academic_year = request.POST.get("academic_year", module.academic_year)
+        module.semester = request.POST.get("semester", module.semester)
+        module.is_active = request.POST.get("is_active") == "on"
+
+        try:
+            module.save()
+            messages.success(request, f"Module '{module.code}' mis à jour avec succès.")
+            return redirect("administrator:module_detail", module_id=module.id)
+        except Exception:
+            logger.exception("Erreur lors de la mise à jour")
+            messages.error(
+                request,
+                "Erreur lors de la mise à jour. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
+
+    context = {
+        "admin": admin,
+        "module": module,
+        "semester_choices": Module._meta.get_field("semester").choices,
+    }
+
+    return render(request, "administrator/module_edit.html", context)
+
+
+@admin_required
+def module_delete(request, module_id):
+    """Delete a module (soft delete - set is_active to False)"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+    module = get_object_or_404(Module, id=module_id)
+
+    if request.method == "POST":
+        # Soft delete - set is_active to False
+        module.is_active = False
+        module.save()
+
+        messages.success(request, f"Module '{module.code}' désactivé avec succès.")
+        return redirect("administrator:modules_list")
+
+    # Get statistics for confirmation
+    student_count = ModuleEnrollment.objects.filter(module=module, is_active=True).count()
+    teacher_count = ModuleAssignment.objects.filter(module=module, is_active=True).count()
+    project_count = Project.objects.filter(module=module).count()
+
+    context = {
+        "admin": admin,
+        "module": module,
+        "student_count": student_count,
+        "teacher_count": teacher_count,
+        "project_count": project_count,
+    }
+
+    return render(request, "administrator/module_delete.html", context)
+
+
+@admin_required
+def assignments_management(request):
+    """Manage teacher-module assignments - FIXED VERSION"""
+    admin = get_object_or_404(AdminProfile, user=request.user)
+
+    # Get all active assignments
+    assignments = (
+        ModuleAssignment.objects.filter(is_active=True)
+        .select_related("teacher__user", "module")
+        .order_by("module__code")
+    )
+
+    # Get teachers and modules for new assignments
+    teachers = TeacherProfile.objects.select_related("user").order_by("user__first_name")
+    modules = Module.objects.filter(is_active=True).order_by("code")
+
+    # Calculate unassigned modules manually
+    assigned_module_ids = assignments.values_list("module_id", flat=True)
+    unassigned_modules = modules.exclude(id__in=assigned_module_ids)
+
+    # Calculate statistics manually for accuracy
+    total_assignments = assignments.count()
+    total_teachers = teachers.count()
+    total_modules = modules.count()
+    total_unassigned = unassigned_modules.count()
+
+    # Add workload counts to teachers for template
+    teachers_with_workload = []
+    for teacher in teachers:
+        teacher_assignments = ModuleAssignment.objects.filter(
+            teacher=teacher, is_active=True
+        ).count()
+
+        # Calculate total students taught by this teacher
+        teacher_modules = ModuleAssignment.objects.filter(
+            teacher=teacher, is_active=True
+        ).values_list("module_id", flat=True)
+
+        total_students = 0
+        for module_id in teacher_modules:
+            total_students += ModuleEnrollment.objects.filter(
+                module_id=module_id, is_active=True
+            ).count()
+
+        # Add attributes for template
+        teacher.assignment_count = teacher_assignments
+        teacher.student_count = total_students
+
+        teachers_with_workload.append(teacher)
+
+    context = {
+        "admin": admin,
+        "assignments": assignments,
+        "teachers": teachers_with_workload,  # Now includes workload data
+        "modules": modules,
+        "unassigned_modules": unassigned_modules,
+        # Add manual counts
+        "total_assignments": total_assignments,
+        "total_teachers": total_teachers,
+        "total_modules": total_modules,
+        "total_unassigned": total_unassigned,
+    }
+
+    return render(request, "administrator/assignments_management.html", context)
+
+
+@admin_required
+def assign_teacher_to_module(request):
+    """Assign a teacher to a module"""
+    get_object_or_404(AdminProfile, user=request.user)
+
+    if request.method == "POST":
+        teacher_id = request.POST.get("teacher_id")
+        module_id = request.POST.get("module_id")
+
+        if not teacher_id or not module_id:
+            messages.error(request, "Veuillez sélectionner un enseignant et un module.")
+            return redirect("administrator:assignments_management")
+
+        try:
+            teacher = TeacherProfile.objects.get(id=teacher_id)
+            module = Module.objects.get(id=module_id)
+
+            # Check if assignment already exists
+            existing_assignment = ModuleAssignment.objects.filter(
+                teacher=teacher, module=module
+            ).first()
+
+            if existing_assignment:
+                if existing_assignment.is_active:
+                    messages.info(
+                        request,
+                        f"{teacher.user.get_full_name()} est déjà assigné au module {module.code}.",
+                    )
+                else:
+                    # Reactivate existing assignment
+                    existing_assignment.is_active = True
+                    existing_assignment.assigned_by = request.user
+                    existing_assignment.save()
+                    messages.success(
+                        request,
+                        f"{teacher.user.get_full_name()} a été réassigné au module {module.code}.",
+                    )
+            else:
+                # Create new assignment
+                ModuleAssignment.objects.create(
+                    teacher=teacher, module=module, assigned_by=request.user, is_active=True
+                )
+                messages.success(
+                    request,
+                    f"{teacher.user.get_full_name()} a été assigné au module {module.code}.",
+                )
+
+        except (TeacherProfile.DoesNotExist, Module.DoesNotExist):
+            messages.error(request, "Enseignant ou module introuvable.")
+        except Exception:
+            logger.exception("Erreur lors de l'assignation")
+            messages.error(
+                request,
+                "Erreur lors de l'assignation. Réessayez ; si le problème persiste, contactez l'administration.",
+            )
+
+    return redirect("administrator:assignments_management")
+
+
+@admin_required
+@require_POST
+def remove_assignment(request, assignment_id):
+    """Remove a teacher-module assignment"""
+    get_object_or_404(AdminProfile, user=request.user)
+
+    try:
+        assignment = ModuleAssignment.objects.get(id=assignment_id, is_active=True)
+        assignment.is_active = False
+        assignment.save()
+
+        messages.success(
+            request,
+            f"Assignation de {assignment.teacher.user.get_full_name()} au module {assignment.module.code} supprimée.",
+        )
+    except ModuleAssignment.DoesNotExist:
+        messages.error(request, "Assignation introuvable.")
+    except Exception:
+        logger.exception("Erreur lors de la suppression")
+        messages.error(
+            request,
+            "Erreur lors de la suppression. Réessayez ; si le problème persiste, contactez l'administration.",
+        )
+
+    return redirect("administrator:assignments_management")
+
+
+@admin_required
+@require_POST
+def remove_student_from_module(request, module_id, student_id):
+    """Remove a student from a module"""
+    get_object_or_404(AdminProfile, user=request.user)
+
+    try:
+        module = Module.objects.get(id=module_id)
+        student = StudentProfile.objects.get(id=student_id)
+
+        # Find the enrollment
+        enrollment = ModuleEnrollment.objects.get(module=module, student=student, is_active=True)
+
+        # Deactivate the enrollment (soft delete)
+        enrollment.is_active = False
+        enrollment.save()
+
+        if request.method == "POST":
+            # For AJAX requests
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": f"{student.user.get_full_name() or student.user.username} a été désinscrit du module {module.code}.",
+                }
+            )
+        else:
+            # For regular requests
+            messages.success(
+                request,
+                f"{student.user.get_full_name() or student.user.username} a été désinscrit du module {module.code}.",
+            )
+            return redirect("administrator:module_detail", module_id=module.id)
+
+    except ModuleEnrollment.DoesNotExist:
+        error_msg = "Cet étudiant n'est pas inscrit à ce module."
+        if request.method == "POST":
+            return JsonResponse({"success": False, "message": error_msg})
+        else:
+            messages.error(request, error_msg)
+            return redirect("administrator:module_detail", module_id=module_id)
+    except (Module.DoesNotExist, StudentProfile.DoesNotExist):
+        error_msg = "Module ou étudiant introuvable."
+        if request.method == "POST":
+            return JsonResponse({"success": False, "message": error_msg})
+        else:
+            messages.error(request, error_msg)
+            return redirect("administrator:modules_list")
+    except Exception:
+        logger.exception("Unenrollment failed")
+        error_msg = "Erreur lors de la désinscription. Réessayez plus tard."
+        if request.method == "POST":
+            return JsonResponse({"success": False, "message": error_msg})
+        else:
+            messages.error(request, error_msg)
+            return redirect("administrator:module_detail", module_id=module_id)
