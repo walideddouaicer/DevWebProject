@@ -1,28 +1,30 @@
-{% extends 'teacher/base.html' %}
-{% comment %}Functional placeholder built in PLAN P2.1; redesigned in P6.9.{% endcomment %}
-{% block title %}Étudiants assignés — {{ assignment.title }}{% endblock %}
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Étudiants concernés — {{ assignment.title }}{% endblock %}
 {% block content %}
-<h1>Étudiants assignés</h1>
-<p>{{ assignment.title }} — {{ assignment.module.code }}</p>
-<p>{{ total_assigned }} assigné{{ total_assigned|pluralize }} sur {{ total_enrolled }} inscrit{{ total_enrolled|pluralize }} ({{ unassigned_count }} non assigné{{ unassigned_count|pluralize }}).</p>
-
-<form method="post">
-  {% csrf_token %}
-  <fieldset>
-    <legend>{{ form.selected_students.label }}</legend>
-    {% if form.selected_students.help_text %}<p>{{ form.selected_students.help_text }}</p>{% endif %}
-    {{ form.selected_students }}
-    {{ form.selected_students.errors }}
-  </fieldset>
-  <p><label>{{ form.select_all }} {{ form.select_all.label }}</label></p>
-  <button type="submit">Assigner les étudiants sélectionnés</button>
-</form>
-
-<h2>Déjà assignés</h2>
-<ul>
-  {% for direct in assigned_students %}
-  <li>{{ direct.student.get_full_name }} ({{ direct.student.student_id }}) — {{ direct.get_status_display }}</li>
-  {% empty %}<li>Aucun étudiant assigné pour l'instant.</li>{% endfor %}
-</ul>
-<p><a href="{% url 'teacher:assignment_detail' assignment.id %}">Retour au devoir</a></p>
+<header class="page-header"><div><nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="{% url 'teacher:assignment_detail' assignment.id %}">{{ assignment.title }}</a></nav><h1>Étudiants concernés</h1><p class="meta">{{ total_assigned }} sur {{ total_enrolled }} inscrit{{ total_enrolled|pluralize }} au module {{ assignment.module.code }}.</p></div>
+  <div class="actions">{% if assignment.status == "draft" and total_assigned %}<a class="btn btn-primary" href="{% url 'teacher:assignment_publish' assignment.id %}">{% icon "send" %} Publier</a>{% endif %}</div></header>
+<div class="with-aside">
+  <form method="post" class="stack" novalidate>
+    {% csrf_token %}
+    {% if assignment.target_selection == "all_students" %}
+    <div class="alert alert-info">{% icon "info" %}<div>Ce devoir concerne tout le module : chaque étudiant inscrit (y compris plus tard) y est rattaché à la publication.</div></div>
+    {% endif %}
+    <div class="table-wrap"><table class="table table-stack">
+      <thead><tr><th class="col-check"><input type="checkbox" data-select-all="{{ form.selected_students.html_name }}" aria-label="Tout sélectionner"></th><th>Étudiant</th><th>Numéro</th><th>Année</th></tr></thead>
+      <tbody>
+        {% for choice in form.selected_students %}
+        <tr><td class="col-check">{{ choice.tag }}</td><td><label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label></td><td data-label="Numéro" class="mono">{{ choice.data.value.instance.student_id|default:"" }}</td><td data-label="Année">{{ choice.data.value.instance.get_year_of_study_display|default:"" }}</td></tr>
+        {% empty %}<tr class="empty-row"><td colspan="4">Aucun étudiant inscrit au module.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="form-actions"><span class="muted text-sm"><span data-selected-count="{{ form.selected_students.html_name }}">0</span> sélectionné(s)</span><button class="btn btn-primary" type="submit">Ajouter les étudiants sélectionnés</button></div>
+  </form>
+  <aside class="card card-body stack">
+    <h2 class="section-title">Déjà concernés <span class="count">{{ total_assigned }}</span></h2>
+    {% if assigned_students %}<ul class="side-list" role="list">{% for d in assigned_students %}<li class="person spread"><span class="cluster cluster-sm">{% avatar d.student size="sm" %}{{ d.student.get_full_name }}</span>{% status_chip d.status %}</li>{% endfor %}</ul>
+    {% else %}<p class="muted text-sm">Personne pour l'instant.</p>{% endif %}
+  </aside>
+</div>
 {% endblock %}

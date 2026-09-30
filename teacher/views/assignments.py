@@ -5,19 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import models, transaction
-from django.db.models import Prefetch, Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from accounts.permissions import (
-    manageable_assignments,
-    teacher_module_ids,
-)
+from accounts.permissions import manageable_assignments, teacher_module_ids, teacher_required
 from student.models import Notification, Project, StudentProfile
 
 from ..forms import (
-    AssignmentFilterForm,
     BulkProjectActionForm,
     ProjectAssignmentForm,
     ProjectOptionForm,
@@ -119,297 +115,73 @@ def get_teacher_or_error(request):
         return None
 
 
-@login_required
+@teacher_required
 def assignments_dashboard(request):
-    """Main dashboard for teacher assignments - UPDATED FOR NO APPROVAL SYSTEM"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
-
-    # Get teacher's assignments with proper prefetching
+    """All assignments of the teacher's modules: drafts, open, closed."""
+    teacher = request.teacher
+    now = timezone.now()
     assignments = (
         manageable_assignments(teacher)
-        .select_related("module")
-        .prefetch_related(
-            Prefetch("project_options", queryset=ProjectOption.objects.filter(is_available=True)),
-            Prefetch(
-                "submitted_projects", queryset=Project.objects.select_related("student__user")
+        .select_related("module", "teacher__user")
+        .annotate(
+            project_count=Count("submitted_projects", distinct=True),
+            waiting_count=Count(
+                "submitted_projects",
+                filter=Q(submitted_projects__status="submitted"),
+                distinct=True,
             ),
         )
-        .order_by("module__code", "-created_at")
+        .order_by("deadline")
     )
-
-    # Apply filters
-    filter_form = AssignmentFilterForm(request.GET, teacher=teacher)
-    if filter_form.is_valid():
-        status = filter_form.cleaned_data.get("status")
-        assignment_type = filter_form.cleaned_data.get("assignment_type")
-        module = filter_form.cleaned_data.get("module")
-        search = filter_form.cleaned_data.get("search")
-        deadline_filter = filter_form.cleaned_data.get("deadline_filter")
-
-        if status:
-            assignments = assignments.filter(status=status)
-        if assignment_type:
-            assignments = assignments.filter(assignment_type=assignment_type)
-        if module:
-            assignments = assignments.filter(module=module)
-        if search:
-            assignments = assignments.filter(title__icontains=search)
-
-        # Enhanced deadline filtering
-        if deadline_filter:
-            now = timezone.now()
-            if deadline_filter == "upcoming":
-                upcoming_deadline = now + timezone.timedelta(days=7)
-                assignments = assignments.filter(
-                    Q(deadline__lte=upcoming_deadline, deadline__gt=now)
-                    | Q(selection_deadline__lte=upcoming_deadline, selection_deadline__gt=now)
-                )
-            elif deadline_filter == "overdue":
-                assignments = assignments.filter(
-                    Q(deadline__lt=now) | Q(selection_deadline__lt=now)
-                ).exclude(status__in=["completed", "draft"])
-            elif deadline_filter == "today":
-                today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-                today_end = today_start + timezone.timedelta(days=1)
-                assignments = assignments.filter(
-                    Q(deadline__range=(today_start, today_end))
-                    | Q(selection_deadline__range=(today_start, today_end))
-                )
-
-    # Calculate statistics
-    total_assignments = assignments.count()
-    active_assignments = assignments.filter(status__in=["published", "in_progress"]).count()
-    draft_assignments = assignments.filter(status="draft").count()
-    completed_assignments = assignments.filter(status="completed").count()
-
-    # Group assignments by module with proper statistics
-    modules_with_assignments = {}
-    for assignment in assignments:
-        module = assignment.module
-        if module.id not in modules_with_assignments:
-            modules_with_assignments[module.id] = {
-                "module": module,
-                "assignments": [],
-                "total_count": 0,
-                "active_count": 0,
-                "draft_count": 0,
-                "completed_count": 0,
-            }
-
-        modules_with_assignments[module.id]["assignments"].append(assignment)
-        modules_with_assignments[module.id]["total_count"] += 1
-
-        if assignment.status in ["published", "in_progress"]:
-            modules_with_assignments[module.id]["active_count"] += 1
-        elif assignment.status == "draft":
-            modules_with_assignments[module.id]["draft_count"] += 1
-        elif assignment.status == "completed":
-            modules_with_assignments[module.id]["completed_count"] += 1
-
-    # Convert to list for template
-    modules_data = list(modules_with_assignments.values())
-
-    # Enhanced urgent items calculation
-    urgent_assignments = []
-    now = timezone.now()
-
-    for assignment in assignments.filter(status__in=["published", "in_progress"]):
-        urgent_items = assignment.is_deadline_approaching(days=3)
-
-        for deadline_type, days_left in urgent_items:
-            urgent_assignments.append(
-                {
-                    "assignment": assignment,
-                    "days_left": days_left,
-                    "type": {"selection": "Sélection des projets", "final": "Rendu final"}.get(
-                        deadline_type, deadline_type
-                    ),
-                    "deadline_type": deadline_type,
-                }
-            )
-
-    # Sort by urgency (days left)
-    urgent_assignments.sort(key=lambda x: x["days_left"])
-
-    # ❌ REMOVED: No more pending module approvals
-    # pending_module_approvals = 0  # No approval system anymore
-
-    # Count ungraded projects
-    ungraded_projects_count = Project.objects.filter(
-        project_assignment__module_id__in=teacher_module_ids(teacher), status="submitted"
-    ).count()
-
+    module_filter = request.GET.get("module", "")
+    if module_filter.isdigit():
+        assignments = assignments.filter(module_id=int(module_filter))
+    assignments = list(assignments)
+    groups = {
+        "drafts": [a for a in assignments if a.status == "draft"],
+        "open": [a for a in assignments if a.status == "published" and a.deadline >= now],
+        "closed": [
+            a
+            for a in assignments
+            if a.status in ("completed", "in_progress")
+            or (a.status == "published" and a.deadline < now)
+        ],
+    }
     context = {
         "teacher": teacher,
-        "assignments": assignments,
-        "modules_data": modules_data,
-        "filter_form": filter_form,
-        "total_assignments": total_assignments,
-        "active_assignments": active_assignments,
-        "draft_assignments": draft_assignments,
-        "completed_assignments": completed_assignments,
-        "urgent_assignments": urgent_assignments[:10],
-        # ❌ REMOVED: 'pending_module_approvals': 0,
-        "ungraded_projects_count": ungraded_projects_count,
-        "urgent_deadlines_count": len(urgent_assignments),
+        "groups": groups,
+        "total": len(assignments),
+        "modules": Module.objects.filter(id__in=teacher_module_ids(teacher)).order_by("code"),
+        "module_filter": module_filter,
     }
-
     return render(request, "teacher/assignments/dashboard.html", context)
 
 
-@login_required
+@teacher_required
 def assignment_detail(request, assignment_id):
-    """View assignment details and progress - UPDATED FOR TEAMS WITH FULL OPTION VISIBILITY"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
-
+    """Overview of one assignment: status, hand-in progress, subjects, next step."""
+    teacher = request.teacher
     assignment = get_object_or_404(
-        manageable_assignments(teacher).select_related("module"), id=assignment_id
+        manageable_assignments(teacher).select_related("module", "teacher__user"), id=assignment_id
     )
-
-    # Get all projects for this assignment
-    assignment_projects = (
-        assignment.submitted_projects.select_related("student__user", "selected_option")
-        .prefetch_related("collaborators__user")
-        .order_by("-created_at")
-    )
-
-    # Enhanced progress data calculation using collaboration system
-    if assignment.assignment_type == "direct":
-        # For direct assignments
-        direct_assignments = DirectStudentAssignment.objects.filter(
-            assignment=assignment
-        ).select_related("student__user")
-
-        # Calculate detailed statistics
-        total_assigned = direct_assignments.count()
-        started_count = direct_assignments.filter(status="started").count()
-        submitted_count = assignment_projects.filter(status__in=["submitted", "validated"]).count()
-        validated_count = assignment_projects.filter(status="validated").count()
-        overdue_count = sum(1 for da in direct_assignments if da.is_overdue())
-
-        # Get individual student progress
-        student_progress = []
-        for direct_assignment in direct_assignments:
-            project = assignment_projects.filter(student=direct_assignment.student).first()
-            student_info = {
-                "student": direct_assignment.student,
-                "assignment_status": direct_assignment.status,
-                "project": project,
-                "team_size": project.get_team_size() if project else 1,
-                "team_members": project.get_team_members()
-                if project
-                else [direct_assignment.student],
-                "is_overdue": direct_assignment.is_overdue(),
-                "can_submit": project.can_be_submitted_for_assignment() if project else False,
-                "selected_option": project.selected_option if project else None,
-            }
-            student_progress.append(student_info)
-
-        progress_data = {
-            "total_assigned": total_assigned,
-            "started": started_count,
-            "submitted": submitted_count,
-            "validated": validated_count,
-            "overdue": overdue_count,
-            "completion_rate": int(validated_count / total_assigned * 100)
-            if total_assigned > 0
-            else 0,
-            "assignments": direct_assignments,
-            "projects": assignment_projects,
-            "student_progress": student_progress,
-        }
-    else:
-        # For choice-based assignments - calculate teams from projects
-
-        # Get ALL project options with their selection status
-        all_project_options = []
-        for option in assignment.project_options.all().order_by("order", "title"):
-            # Get projects that selected this option
-            projects_with_option = assignment_projects.filter(selected_option=option)
-
-            option_data = {
-                "option": option,
-                "projects_count": projects_with_option.count(),
-                "projects": list(projects_with_option),
-                "is_available": option.is_selectable(),
-                "availability_text": option.get_availability_text(),
-                "teams_using": [],  # Will be populated below
-            }
-
-            # Get team information for each project using this option
-            for project in projects_with_option:
-                team_members = project.get_team_members()
-                team_info = {
-                    "project": project,
-                    "leader": project.student,
-                    "members": team_members,
-                    "size": len(team_members),
-                    "team_display": project.get_assignment_team_display(),
-                    "status": project.status,
-                    "submitted_at": project.assignment_submitted_at,
-                }
-                option_data["teams_using"].append(team_info)
-
-            all_project_options.append(option_data)
-
-        # Build team data from projects (instead of groups)
-        teams_data = []
-        total_students = assignment.module.get_enrolled_students_count()
-        students_in_teams = set()
-
-        for project in assignment_projects:
-            team_members = project.get_team_members()
-            team_info = {
-                "project": project,
-                "leader": project.student,
-                "members": team_members,
-                "size": len(team_members),
-                "is_valid_size": project.is_team_size_valid(),
-                "selected_option": project.selected_option,
-                "status": project.status,
-                "team_name": f"Équipe {project.title}",
-                "team_display": project.get_assignment_team_display(),
-            }
-            teams_data.append(team_info)
-
-            # Track students who are in teams
-            for member in team_members:
-                students_in_teams.add(member.id)
-
-        # Calculate team statistics
-        total_teams = len(teams_data)
-        valid_teams = sum(1 for team in teams_data if team["is_valid_size"])
-        submitted_teams = sum(
-            1 for team in teams_data if team["status"] in ["submitted", "validated"]
-        )
-
-        progress_data = {
-            "total_teams": total_teams,
-            "valid_teams": valid_teams,
-            "submitted_teams": submitted_teams,
-            "total_students": total_students,
-            "students_in_teams": len(students_in_teams),
-            "students_without_teams": total_students - len(students_in_teams),
-            "student_coverage": int(len(students_in_teams) / total_students * 100)
-            if total_students > 0
-            else 0,
-            "submitted": assignment_projects.filter(status__in=["submitted", "validated"]).count(),
-            "validated": assignment_projects.filter(status="validated").count(),
-            "teams_data": teams_data,
-            "project_options": all_project_options,  # All options with selection data
-            "projects": assignment_projects,
-        }
-
+    projects = assignment.submitted_projects.all()
+    counts = {row["status"]: row["n"] for row in projects.values("status").annotate(n=Count("id"))}
+    options = assignment.project_options.annotate(
+        projects_count=Count("submitted_projects", distinct=True)
+    ).order_by("order", "title")
     context = {
         "teacher": teacher,
         "assignment": assignment,
-        "progress_data": progress_data,
+        "options": options,
+        "counts": counts,
+        "project_total": sum(counts.values()),
+        "expected_students": assignment.get_total_students(),
+        "completion": assignment.get_completion_percentage(),
+        "direct_count": assignment.direct_assignments.count(),
+        "recent_projects": projects.select_related("student__user")
+        .prefetch_related("collaborators__user")
+        .order_by("-updated_at")[:8],
     }
-
     return render(request, "teacher/assignments/detail.html", context)
 
 
@@ -566,6 +338,8 @@ def assignment_create(request):
                     # Redirect based on assignment type
                     if assignment.assignment_type == "choice_based":
                         return redirect("teacher:assignment_options", assignment_id=assignment.id)
+                    if assignment.target_selection == "specific_students":
+                        return redirect("teacher:assignment_students", assignment_id=assignment.id)
                     else:
                         return redirect("teacher:assignment_detail", assignment_id=assignment.id)
 
@@ -583,6 +357,7 @@ def assignment_create(request):
         "teacher": teacher,
         "form": form,
         "teacher_modules": teacher_modules,
+        "selected_module": request.POST.get("module") or request.GET.get("module", ""),
     }
 
     return render(request, "teacher/assignments/create.html", context)

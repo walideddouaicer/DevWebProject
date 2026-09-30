@@ -177,6 +177,10 @@ class ProjectAssignmentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.teacher = kwargs.pop("teacher", None)
         super().__init__(*args, **kwargs)
+        self.fields["assignment_type"].choices = [
+            ("", "Choisir…"),
+            *ProjectAssignment.ASSIGNMENT_TYPES,
+        ]
 
         # Set intelligent default values
         if not self.instance.pk:

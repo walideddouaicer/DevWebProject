@@ -1,0 +1,29 @@
+{% load ui %}
+<div class="form-section">
+  <header><h2>Le devoir</h2><p>Ce que les étudiants liront.</p></header>
+  <div class="form-grid">
+    {% if teacher_modules %}
+    <div class="field"><label for="module">Module<span class="required" aria-hidden="true">*</span></label>
+      <select class="select" id="module" name="module" required><option value="">Choisir…</option>{% for m in teacher_modules %}<option value="{{ m.id }}"{% if selected_module == m.id|stringformat:"s" %} selected{% endif %}>{{ m.code }} — {{ m.name }}</option>{% endfor %}</select></div>
+    {% endif %}
+    {% field form.title label="Titre" %}
+    {% field form.description label="Énoncé" %}
+    {% field form.instructions label="Consignes" help="Livrables attendus, format du rendu, critères d'évaluation…" %}
+  </div>
+</div>
+<div class="form-section">
+  <header><h2>Organisation</h2><p>Qui travaille sur quoi, et avec qui.</p></header>
+  <div class="form-grid">
+    {% field form.assignment_type label="Type de devoir" help="Sujets au choix : vous proposez une liste, chaque équipe en choisit un." %}
+    <div data-show-if="assignment_type=direct">{% field form.target_selection label="Étudiants concernés" %}</div>
+    {% field form.is_team_work label="Travail en équipe" %}
+    <div class="form-grid form-grid-2" data-show-if="is_team_work">{% field form.min_team_size label="Taille minimale" %}{% field form.max_team_size label="Taille maximale" %}</div>
+  </div>
+</div>
+<div class="form-section">
+  <header><h2>Échéances</h2></header>
+  <div class="form-grid form-grid-2">
+    {% field form.deadline label="Date limite de rendu" %}
+    <div data-show-if="assignment_type=choice_based">{% field form.selection_deadline label="Date limite de choix du sujet" help="Facultatif. Doit précéder le rendu." %}</div>
+  </div>
+</div>

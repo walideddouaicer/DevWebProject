@@ -89,3 +89,5 @@
 details > summary.btn { list-style: none; }
 details > summary.btn::-webkit-details-marker { display: none; }
 details[open] > summary.btn { background: var(--sunken); }
+.bulk-bar details { position: relative; }
+.bulk-revision { margin-top: var(--s-2); min-width: min(420px, 100%); }

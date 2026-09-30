@@ -78,7 +78,6 @@ def module_detail(request, module_id):
     )
 
     # Import here to avoid circular imports
-    from student.models import Project
 
     # Get projects from this module
     module_projects = (
@@ -95,8 +94,6 @@ def module_detail(request, module_id):
 
     # Recent announcements for this module
     announcements = module.announcements.select_related("teacher__user")[:5]
-
-    from ..models import ProjectAssignment
 
     module_assignments = ProjectAssignment.objects.filter(module=module).order_by("-created_at")
 
@@ -137,7 +134,6 @@ def module_projects(request, module_id):
         return redirect("teacher:modules_list")
 
     # Import here to avoid circular imports
-    from student.models import Project
 
     # Get all projects from this module
     projects = (
@@ -417,57 +413,7 @@ def create_teacher_module(request):
     return render(request, "teacher/modules/create.html", context)
 
 
-@login_required
+@teacher_required
 def my_modules(request):
-    """Display teacher's modules - updated for direct creation"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
-
-    # Get teacher's assigned modules (both admin-assigned and self-created)
-    module_assignments = (
-        ModuleAssignment.objects.filter(teacher=teacher, is_active=True)
-        .select_related("module")
-        .order_by("-assigned_at")
-    )
-
-    modules_with_stats = []
-    for assignment in module_assignments:
-        module = assignment.module
-
-        # Calculate statistics
-        enrolled_count = ModuleEnrollment.objects.filter(module=module, is_active=True).count()
-
-        project_assignments_count = ProjectAssignment.objects.filter(
-            teacher=teacher, module=module
-        ).count()
-
-        total_projects_count = Project.objects.filter(module=module).count()
-
-        # Get recent students for preview
-        recent_students = (
-            ModuleEnrollment.objects.filter(module=module, is_active=True)
-            .select_related("student__user")
-            .order_by("-enrolled_at")[:10]
-        )
-
-        modules_with_stats.append(
-            {
-                "assignment": assignment,
-                "module": module,
-                "enrolled_count": enrolled_count,
-                "project_assignments_count": project_assignments_count,
-                "total_projects_count": total_projects_count,
-                "recent_students": recent_students,
-                "is_self_created": module.created_by_teacher and module.primary_teacher == teacher,
-                "creation_status": "active",  # Always active now
-            }
-        )
-
-    context = {
-        "teacher": teacher,
-        "modules_with_stats": modules_with_stats,
-        "pending_modules_count": 0,  # No more pending modules
-    }
-
-    return render(request, "teacher/modules/my_modules.html", context)
+    """Former duplicate of the modules list."""
+    return redirect("teacher:modules_list")

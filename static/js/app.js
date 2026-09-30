@@ -217,5 +217,27 @@
   });
   updateRubricMean();
 
+  /* ---- Conditional fields: <div data-show-if="assignment_type=choice_based"> or
+          data-show-if="is_team_work" (checkbox). Only hides: values are still submitted
+          (the server ignores e.g. team sizes for individual work). ------------------------ */
+  function refreshConditional(root) {
+    (root || document).querySelectorAll("[data-show-if]").forEach(function (block) {
+      var form = block.closest("form");
+      if (!form) return;
+      var expression = block.dataset.showIf;
+      var negate = expression.charAt(0) === "!";
+      var rule = (negate ? expression.slice(1) : expression).split("=");
+      var field = form.elements[rule[0]];
+      if (!field) return;
+      var visible;
+      if (field.type === "checkbox") visible = field.checked;
+      else visible = rule.length > 1 ? field.value === rule[1] : Boolean(field.value);
+      if (negate) visible = !visible;
+      block.hidden = !visible;
+    });
+  }
+  document.addEventListener("change", function () { refreshConditional(); });
+  refreshConditional();
+
   initToasts();
 })();

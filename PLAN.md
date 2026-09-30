@@ -400,7 +400,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   per-file feedback threads, milestones, activity, actions: valider / demander une révision /
   rejeter with reason), grading page (rubric rows editable with HTMX add/remove, live total, mention
   preview), printable evaluation sheet.
-- [ ] **P6.9 Teacher assignments:** dashboard, create/edit (a multi-step feel but a single page;
+- [x] **P6.9 Teacher assignments:** dashboard, create/edit (a multi-step feel but a single page;
   team settings reveal conditionally), options management, students selection (the page built in
   P2.1), teams view, progress (table with bulk-select action bar, filters, export), publish
   confirm, option delete confirm, module creation, my modules.
@@ -705,3 +705,10 @@ Everything else in this plan is decided by Claude.
   discussion, activity) and grading (editable rubric rows via `data-add-row`/`data-remove-row`
   + `<template>`, live criteria mean, print button + `90-print.css`). Verified with Playwright:
   add-row and mean work, no JS errors.
+- **2026-09-30** · P6.9 · Teacher assignments: dashboard (drafts/open/closed + module tabs),
+  detail (overview, hand-in %, subjects, next step), create/edit sharing `_form_fields.html`
+  with `data-show-if` conditional fields (app.js; supports `!field`), subjects management,
+  students selection (select-all + live count), teams, progress with bulk bar, publish
+  checklist, subject delete, module creation. assignments_dashboard/detail views rewritten
+  (−230 lines). my_modules → redirect. Create of a direct "specific students" assignment now
+  lands on the students page. Old teacher base/CSS/JS deleted.

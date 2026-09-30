@@ -1,0 +1,11 @@
+{% load ui %}
+<div class="table-wrap"><table class="table table-stack table-assignments">
+  <thead><tr><th>Devoir</th><th>Format</th><th>Échéance</th><th>Projets</th><th class="col-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+  <tbody>{% for a in items %}<tr>
+    <td><a class="row-title" href="{% url 'teacher:assignment_detail' a.id %}">{{ a.title }}</a><div class="subtle text-sm">{{ a.module.code }}{% if a.teacher_id != teacher.id %} · {{ a.teacher.user.get_full_name }}{% endif %}</div></td>
+    <td data-label="Format">{% if a.assignment_type == "choice_based" %}Sujets au choix{% else %}Sujet imposé{% endif %}<div class="subtle text-sm">{% if a.is_team_work %}Équipes de {{ a.min_team_size }} à {{ a.max_team_size }}{% else %}Individuel{% endif %}</div></td>
+    <td data-label="Échéance">{% if a.status == "published" %}{% deadline a.deadline %}{% else %}<span class="subtle">{{ a.deadline|date:"d/m/Y" }}</span>{% endif %}</td>
+    <td data-label="Projets"><span class="num">{{ a.project_count }}</span>{% if a.waiting_count %} <span class="chip chip-warn">{{ a.waiting_count }} à relire</span>{% endif %}</td>
+    <td class="col-actions">{% if a.status == "draft" %}<a class="btn btn-sm btn-primary" href="{% url 'teacher:assignment_detail' a.id %}">Préparer</a>{% else %}<a class="btn btn-sm" href="{% url 'teacher:assignment_progress' a.id %}">Suivi</a>{% endif %}</td>
+  </tr>{% endfor %}</tbody>
+</table></div>

@@ -1,30 +1,30 @@
-{% extends 'teacher/base.html' %}
-{% comment %}Functional placeholder built in PLAN P2.1; redesigned in P6.9.{% endcomment %}
+{% extends "layouts/app.html" %}
+{% load ui %}
 {% block title %}Équipes — {{ assignment.title }}{% endblock %}
 {% block content %}
-<h1>Équipes</h1>
-<p>{{ assignment.title }} — {{ assignment.module.code }}</p>
-<p>{{ total_teams }} équipe{{ total_teams|pluralize }} · {{ students_in_teams_count }} étudiant{{ students_in_teams_count|pluralize }} en équipe sur {{ total_enrolled }} ({{ participation_rate }} %) · {{ valid_teams }} de taille valide · {{ submitted_teams }} soumise{{ submitted_teams|pluralize }}</p>
-
-<table>
-  <thead><tr><th>Projet</th><th>Membres</th><th>Taille</th><th>Option</th><th>Statut</th></tr></thead>
-  <tbody>
-    {% for team in teams_data %}
-    <tr>
-      <td><a href="{% url 'teacher:project_review' team.project.id %}">{{ team.project.title }}</a></td>
-      <td>{% for member in team.all_members %}{{ member.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-      <td>{{ team.team_size }} — {{ team.size_status.message }}</td>
-      <td>{{ team.selected_option.title|default:"—" }}</td>
-      <td>{{ team.project.get_status_display }}</td>
-    </tr>
-    {% empty %}<tr><td colspan="5">Aucune équipe formée pour l'instant.</td></tr>{% endfor %}
-  </tbody>
-</table>
-
-<h2>Étudiants sans équipe</h2>
-<ul>
-  {% for student in unassigned_students %}<li>{{ student.get_full_name }} ({{ student.student_id }})</li>
-  {% empty %}<li>Tous les étudiants concernés ont une équipe.</li>{% endfor %}
-</ul>
-<p><a href="{% url 'teacher:assignment_detail' assignment.id %}">Retour au devoir</a></p>
+<header class="page-header"><div><nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="{% url 'teacher:assignment_detail' assignment.id %}">{{ assignment.title }}</a></nav><h1>Équipes</h1><p class="meta">Équipes de {{ assignment.min_team_size }} à {{ assignment.max_team_size }}</p></div></header>
+<div class="stat-strip">
+  <div class="stat"><span class="value">{{ total_teams }}</span><span class="label">équipe{{ total_teams|pluralize }}</span></div>
+  <div class="stat"><span class="value">{{ participation_rate }} %</span><span class="label">des étudiants en équipe</span></div>
+  <div class="stat"><span class="value">{{ valid_teams }}</span><span class="label">de taille valide</span></div>
+  <div class="stat"><span class="value">{{ submitted_teams }}</span><span class="label">ont rendu</span></div>
+</div>
+<section class="stack">
+  {% if teams_data %}
+  <div class="table-wrap"><table class="table table-stack"><thead><tr><th>Projet</th><th>Membres</th><th>Taille</th><th>Sujet</th><th>Statut</th></tr></thead><tbody>
+    {% for t in teams_data %}<tr>
+      <td><a class="row-title" href="{% url 'teacher:project_review' t.project.id %}">{{ t.project.title }}</a></td>
+      <td data-label="Membres">{% for m in t.all_members %}{{ m.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      <td data-label="Taille"><span class="chip{% if t.is_valid_size %} chip-ok{% else %} chip-warn{% endif %} no-dot">{{ t.team_size }}</span></td>
+      <td data-label="Sujet">{{ t.selected_option.title|default:"—" }}</td>
+      <td data-label="Statut">{% status_chip t.status %}</td>
+    </tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="card empty">{% icon "users" %}<h3>Aucune équipe</h3><p>Les équipes apparaîtront dès que des étudiants auront démarré un projet.</p></div>{% endif %}
+</section>
+<section class="stack">
+  <h2 class="section-title">Sans équipe <span class="count">{{ unassigned_students|length }}</span></h2>
+  {% if unassigned_students %}<div class="card card-body"><div class="cluster">{% for s in unassigned_students %}<span class="tag">{{ s.get_full_name }}</span>{% endfor %}</div></div>
+  {% else %}<p class="muted">Tous les étudiants concernés ont une équipe.</p>{% endif %}
+</section>
 {% endblock %}
