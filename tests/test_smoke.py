@@ -64,12 +64,6 @@ KNOWN_FAILURES = {
     ("owner", "student:leave_module"): "mutates",
     ("student", "student:leave_module"): "mutates",
     ("student", "student:mark_all_notifications_read"): "mutates",
-    ("teacher", "student:project_approve"): "mutates",
-    ("teacher_other", "student:project_approve"): "mutates",
-    ("teacher", "student:project_reject"): "mutates",
-    ("teacher_other", "student:project_reject"): "mutates",
-    ("teacher", "teacher:approve_project"): "mutates",
-    ("teacher", "teacher:reject_project"): "mutates",
     ("admin", "administrator:remove_assignment"): "mutates",
     ("admin", "administrator:remove_student_from_module"): "mutates",
 }

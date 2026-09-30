@@ -4,8 +4,9 @@ from django.core.exceptions import ValidationError
 from django.db.models import Case, OuterRef, Q, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
-from accounts.permissions import get_project_for_member
+from accounts.permissions import get_project_for_member, student_required
 from teacher.models import DirectStudentAssignment
 
 from .assignment_views import *  # noqa: F403  (removed in PLAN P3.1)
@@ -32,184 +33,35 @@ from .utils import clear_student_context_cache, send_invitation_email
 
 
 # Add these stub functions for the new URL patterns
-@login_required
+@student_required
+@require_POST
 def project_submit(request, project_id):
-    student = get_object_or_404(StudentProfile, user=request.user)
-    # Allow both owners and collaborators to access the project
+    """Owner submits the project for review (rules live in Project.submit)."""
+    student = request.student
     project = get_project_for_member(student, project_id)
-
-    # Only the owner can submit
-    if project.student != student:
-        messages.error(request, "Seul le propriétaire du projet peut le soumettre.")
-        return redirect("student:project_detail", project_id=project.id)
-
-    if project.status not in ["in_progress", "revision_requested"]:
-        messages.warning(request, "Seuls les projets en cours ou en révision peuvent être soumis.")
-        return redirect("student:project_detail", project_id=project.id)
-
-    # ENHANCED: Check assignment submission requirements
-    if project.is_assignment_project():
-        if not project.can_be_submitted_for_assignment():
-            team_status = project.get_team_size_status()
-            if team_status["status"] in ["too_small", "too_large"]:
-                messages.error(request, f"Impossible de soumettre: {team_status['message']}")
-            elif project.is_overdue():
-                messages.error(request, "Impossible de soumettre: la date limite est dépassée.")
-            else:
-                messages.error(request, "Le projet ne peut pas être soumis pour ce devoir.")
-            return redirect("student:project_detail", project_id=project.id)
-
-    # Change status to 'submitted'
-    project.status = "submitted"
-    if project.is_assignment_project():
-        project.assignment_submitted_at = timezone.now()
-    project.save()
-
-    # Record activity
-    ProjectActivity.objects.create(
-        project=project,
-        user=request.user,
-        activity_type="status_changed",
-        description="Le projet a été soumis pour évaluation",
-    )
-
-    # ENHANCED: Update assignment status if applicable
-    if project.is_assignment_project():
-        assignment = project.project_assignment
-        if assignment.assignment_type == "direct":
-            # Update direct assignment status
-            DirectStudentAssignment.objects.filter(assignment=assignment, student=student).update(
-                status="submitted"
-            )
-
-        # Notify all team members for assignment projects
-        team_members = project.get_team_members()
-        for member in team_members:
-            if member != student:  # Don't notify the submitter
-                Notification.objects.create(
-                    recipient=member,
-                    project=project,
-                    project_assignment=assignment,
-                    notification_type="project_update",
-                    message=f"Le projet '{project.title}' a été soumis par {student.get_full_name()}",
-                )
-
-    messages.success(request, "Votre projet a été soumis avec succès.")
+    try:
+        project.submit(by=student)
+    except ValidationError as error:
+        for message in error.messages:
+            messages.error(request, message)
+    else:
+        messages.success(request, "Votre projet a été soumis avec succès.")
     return redirect("student:project_detail", project_id=project.id)
 
 
-@login_required
-def project_approve(request, project_id):
-    """Teacher approves a submitted project"""
-    from teacher.models import TeacherProfile
-
-    if not TeacherProfile.objects.filter(user=request.user).exists():
-        messages.error(request, "Seuls les enseignants peuvent approuver les projets.")
-        return redirect("student:project_detail", project_id=project_id)
-
-    project = get_object_or_404(Project, id=project_id)
-
-    if project.status != "submitted":
-        messages.warning(request, "Seuls les projets soumis peuvent être approuvés.")
-        return redirect("student:project_detail", project_id=project_id)
-
-    project.status = "validated"
-    project.save()
-
-    # Record activity
-    ProjectActivity.objects.create(
-        project=project,
-        user=request.user,
-        activity_type="status_changed",
-        description="Projet validé",
-    )
-
-    # ENHANCED: Notify all team members for assignment projects
-    if project.is_assignment_project():
-        team_members = project.get_team_members()
-        for member in team_members:
-            Notification.objects.create(
-                recipient=member,
-                project=project,
-                project_assignment=project.project_assignment,
-                notification_type="project_update",
-                message=f"Le projet '{project.title}' a été validé",
-            )
-
-        # Update assignment status
-        if project.project_assignment.assignment_type == "direct":
-            DirectStudentAssignment.objects.filter(
-                assignment=project.project_assignment,
-                student__in=[member.id for member in team_members],
-            ).update(status="validated")
+@student_required
+@require_POST
+def project_reopen(request, project_id):
+    """Owner puts a rejected project back in progress."""
+    student = request.student
+    project = get_project_for_member(student, project_id)
+    try:
+        project.reopen(by=student)
+    except ValidationError as error:
+        for message in error.messages:
+            messages.error(request, message)
     else:
-        # Notify project owner and collaborators
-        Notification.objects.create(
-            recipient=project.student,
-            project=project,
-            notification_type="project_update",
-            message=f"Votre projet '{project.title}' a été validé",
-        )
-
-        for collaborator in project.collaborators.all():
-            Notification.objects.create(
-                recipient=collaborator,
-                project=project,
-                notification_type="project_update",
-                message=f"Le projet '{project.title}' a été validé",
-            )
-
-    messages.success(request, "Projet validé avec succès.")
-    return redirect("student:project_detail", project_id=project.id)
-
-
-@login_required
-def project_reject(request, project_id):
-    """Teacher rejects a submitted project"""
-    from teacher.models import TeacherProfile
-
-    if not TeacherProfile.objects.filter(user=request.user).exists():
-        messages.error(request, "Seuls les enseignants peuvent rejeter les projets.")
-        return redirect("student:project_detail", project_id=project_id)
-
-    project = get_object_or_404(Project, id=project_id)
-
-    if project.status != "submitted":
-        messages.warning(request, "Seuls les projets soumis peuvent être rejetés.")
-        return redirect("student:project_detail", project_id=project_id)
-
-    project.status = "rejected"
-    project.save()
-
-    # Record activity
-    ProjectActivity.objects.create(
-        project=project,
-        user=request.user,
-        activity_type="status_changed",
-        description="Projet rejeté - révisions nécessaires",
-    )
-
-    # ENHANCED: Notify all team members for assignment projects
-    if project.is_assignment_project():
-        team_members = project.get_team_members()
-        for member in team_members:
-            Notification.objects.create(
-                recipient=member,
-                project=project,
-                project_assignment=project.project_assignment,
-                notification_type="project_update",
-                message=f"Le projet '{project.title}' a été rejeté. Veuillez consulter les commentaires et resoumettre.",
-            )
-    else:
-        # Notify project owner
-        Notification.objects.create(
-            recipient=project.student,
-            project=project,
-            notification_type="project_update",
-            message=f"Votre projet '{project.title}' a été rejeté. Veuillez consulter les commentaires et resoumettre.",
-        )
-
-    messages.info(request, "Projet rejeté. L'étudiant peut maintenant le modifier et resoumettre.")
+        messages.success(request, "Le projet est de nouveau en cours: vous pouvez le retravailler.")
     return redirect("student:project_detail", project_id=project.id)
 
 
@@ -406,36 +258,6 @@ def add_collaborator(request, project_id):
                 # Handle any other unexpected errors
                 messages.error(request, f"Erreur lors de l'envoi de l'invitation: {str(e)}")
 
-    return redirect("student:project_detail", project_id=project.id)
-
-
-@login_required
-def add_feedback(request, project_id):
-    """Allow teachers to add feedback to projects"""
-    from teacher.models import TeacherProfile
-
-    if not TeacherProfile.objects.filter(user=request.user).exists():
-        messages.error(request, "Seuls les enseignants peuvent ajouter des commentaires.")
-        return redirect("student:project_detail", project_id=project_id)
-    project = get_object_or_404(Project, id=project_id)
-    if request.method == "POST":
-        content = request.POST.get("content")
-        if content:
-            # Create a special comment marked as feedback (author is the User)
-            comment = ProjectComment(
-                project=project, author=request.user, content=f"[FEEDBACK ENSEIGNANT]\n{content}"
-            )
-            comment.save()
-            # Create notification for project owner
-            Notification.objects.create(
-                recipient=project.student,
-                project=project,
-                notification_type="project_update",
-                message=f"Nouveau feedback de {request.user.get_full_name()} sur votre projet",
-            )
-            messages.success(request, "Feedback ajouté avec succès.")
-        else:
-            messages.error(request, "Le feedback ne peut pas être vide.")
     return redirect("student:project_detail", project_id=project.id)
 
 
@@ -806,40 +628,6 @@ def project_detail(request, project_id):
     }
 
     return render(request, "student/project_detail.html", context)
-
-
-@login_required
-def project_change_status(request, project_id, new_status):
-    """View to change the status of a project"""
-    student = get_object_or_404(StudentProfile, user=request.user)
-    project = get_object_or_404(Project, id=project_id, student=student)
-
-    # Simplified transitions for new workflow
-    allowed_transitions = {
-        "in_progress": ["submitted"],
-        "submitted": [],  # Only teachers can change from submitted
-        "revision_requested": [
-            "submitted",
-            "in_progress",
-        ],  # Resubmit after revisions, or keep working
-        "validated": [],  # Cannot change from validated
-        "rejected": ["in_progress"],  # Can go back to in_progress after rejection
-    }
-
-    # Check if the transition is allowed
-    if new_status in allowed_transitions.get(project.status, []):
-        project.status = new_status
-        project.save()
-
-        if new_status == "submitted":
-            messages.success(request, "Votre projet a été soumis pour évaluation.")
-        elif new_status == "in_progress":
-            messages.success(request, "Votre projet est retourné en cours pour modifications.")
-
-        return redirect("student:project_detail", project_id=project.id)
-    else:
-        messages.error(request, "Ce changement de statut n'est pas autorisé.")
-        return redirect("student:project_detail", project_id=project.id)
 
 
 @login_required

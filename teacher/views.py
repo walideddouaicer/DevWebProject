@@ -1,8 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
+
+from accounts.permissions import get_project_for_teacher, teacher_required
 
 from .assignment_views import *  # noqa: F403  (removed in PLAN P3.1)
 from .models import Module, ModuleAssignment, ModuleEnrollment, TeacherProfile
@@ -376,180 +379,47 @@ def project_review(request, project_id):
     return render(request, "teacher/project_review.html", context)
 
 
-@login_required
+@teacher_required
+@require_POST
 def approve_project(request, project_id):
-    """Teacher approves a student project"""
+    """Teacher validates a submitted project of one of their modules."""
+    project = get_project_for_teacher(request.teacher, project_id)
     try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
-
-    # Get teacher's modules
-    teacher_modules = ModuleAssignment.objects.filter(teacher=teacher, is_active=True).values_list(
-        "module", flat=True
-    )
-
-    # Import here
-    from student.models import Notification, Project, ProjectActivity
-
-    from .models import DirectStudentAssignment
-
-    project = get_object_or_404(
-        Project, id=project_id, module__in=teacher_modules, status="submitted"
-    )
-
-    project.status = "validated"
-    project.save()
-
-    # Record activity
-    ProjectActivity.objects.create(
-        project=project,
-        user=request.user,
-        activity_type="status_changed",
-        description=f"Projet validé par {teacher.user.get_full_name() or teacher.user.username}",
-    )
-
-    teacher_name = teacher.user.get_full_name() or teacher.user.username
-
-    # Notify the whole team (owner + collaborators)
-    for member in project.get_team_members():
-        Notification.objects.create(
-            recipient=member,
-            project=project,
-            notification_type="project_update",
-            message=f"Le projet '{project.title}' a été validé par {teacher_name}",
-        )
-
-    # Keep direct-assignment tracking in sync for the whole team
-    if project.is_assignment_project() and project.project_assignment.assignment_type == "direct":
-        DirectStudentAssignment.objects.filter(
-            assignment=project.project_assignment,
-            student__in=[member.id for member in project.get_team_members()],
-        ).update(status="validated")
-
-    messages.success(request, f"Projet '{project.title}' validé avec succès.")
+        project.validate(by=request.teacher)
+    except ValidationError as error:
+        messages.error(request, " ".join(error.messages))
+    else:
+        messages.success(request, f"Projet « {project.title} » validé.")
     return redirect("teacher:project_review", project_id=project.id)
 
 
-@login_required
+@teacher_required
+@require_POST
 def reject_project(request, project_id):
-    """Teacher rejects a student project"""
+    """Teacher rejects a submitted project (optional reason in `reason`)."""
+    project = get_project_for_teacher(request.teacher, project_id)
     try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
-
-    # Get teacher's modules
-    teacher_modules = ModuleAssignment.objects.filter(teacher=teacher, is_active=True).values_list(
-        "module", flat=True
-    )
-
-    # Import here
-    from student.models import Notification, Project, ProjectActivity
-
-    from .models import DirectStudentAssignment
-
-    project = get_object_or_404(
-        Project, id=project_id, module__in=teacher_modules, status="submitted"
-    )
-
-    project.status = "rejected"
-    project.save()
-
-    # Record activity
-    ProjectActivity.objects.create(
-        project=project,
-        user=request.user,
-        activity_type="status_changed",
-        description=f"Projet rejeté par {teacher.user.get_full_name() or teacher.user.username}",
-    )
-
-    # Notify the whole team (owner + collaborators)
-    for member in project.get_team_members():
-        Notification.objects.create(
-            recipient=member,
-            project=project,
-            notification_type="project_update",
-            message=f"Le projet '{project.title}' a été rejeté. Consultez les commentaires du projet pour plus de détails.",
-        )
-
-    # The team goes back to work: reset direct-assignment tracking
-    if project.is_assignment_project() and project.project_assignment.assignment_type == "direct":
-        DirectStudentAssignment.objects.filter(
-            assignment=project.project_assignment,
-            student__in=[member.id for member in project.get_team_members()],
-        ).update(status="started")
-
-    messages.success(
-        request,
-        f"Projet '{project.title}' rejeté. L'étudiant peut maintenant le modifier et resoumettre.",
-    )
+        project.reject(by=request.teacher, reason=request.POST.get("reason", ""))
+    except ValidationError as error:
+        messages.error(request, " ".join(error.messages))
+    else:
+        messages.success(request, f"Projet « {project.title} » rejeté. L'équipe a été notifiée.")
     return redirect("teacher:project_review", project_id=project.id)
 
 
-@login_required
+@teacher_required
+@require_POST
 def request_revision(request, project_id):
-    """Teacher requests revisions on a submitted project (between approve and reject)"""
-    if request.method != "POST":
-        return redirect("teacher:project_review", project_id=project_id)
-
+    """Teacher asks for changes on a submitted project (message in `content`)."""
+    project = get_project_for_teacher(request.teacher, project_id)
     try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
-
-    # Get teacher's modules
-    teacher_modules = ModuleAssignment.objects.filter(teacher=teacher, is_active=True).values_list(
-        "module", flat=True
-    )
-
-    # Import here
-    from student.models import Notification, Project, ProjectActivity, ProjectComment
-
-    project = get_object_or_404(
-        Project, id=project_id, module__in=teacher_modules, status="submitted"
-    )
-
-    content = request.POST.get("content", "").strip()
-    if not content:
-        messages.error(
-            request, "Veuillez préciser les modifications attendues avant de demander une révision."
+        project.request_revision(by=request.teacher, message=request.POST.get("content", ""))
+    except ValidationError as error:
+        messages.error(request, " ".join(error.messages))
+    else:
+        messages.success(
+            request, f"Révision demandée pour « {project.title} ». L'équipe a été notifiée."
         )
-        return redirect("teacher:project_review", project_id=project.id)
-
-    teacher_name = teacher.user.get_full_name() or teacher.user.username
-
-    project.status = "revision_requested"
-    project.save()
-
-    # The requested changes are recorded as a project comment
-    ProjectComment.objects.create(
-        project=project, author=request.user, content=f"[RÉVISION DEMANDÉE]\n{content}"
-    )
-
-    # Record activity
-    ProjectActivity.objects.create(
-        project=project,
-        user=request.user,
-        activity_type="status_changed",
-        description=f"Révision demandée par {teacher_name}",
-    )
-
-    # Notify the whole team
-    for member in project.get_team_members():
-        Notification.objects.create(
-            recipient=member,
-            project=project,
-            notification_type="project_update",
-            message=f"{teacher_name} demande des révisions sur le projet '{project.title}'. Consultez ses commentaires puis resoumettez.",
-        )
-
-    messages.success(
-        request, f"Révision demandée pour '{project.title}'. L'étudiant a été notifié."
-    )
     return redirect("teacher:project_review", project_id=project.id)
 
 
@@ -821,9 +691,9 @@ def export_assignment_results(request, assignment_id):
 @require_http_methods(["POST"])
 def bulk_project_action(request, assignment_id):
     """Validate or request revision on several submitted projects at once."""
-    from student.models import Notification, Project, ProjectActivity, ProjectComment
+    from student.models import Project
 
-    from .models import DirectStudentAssignment, ProjectAssignment
+    from .models import ProjectAssignment
 
     try:
         teacher = TeacherProfile.objects.get(user=request.user)
@@ -836,7 +706,6 @@ def bulk_project_action(request, assignment_id):
     action = request.POST.get("action")
     project_ids = request.POST.getlist("project_ids")
     content = request.POST.get("content", "").strip()
-    teacher_name = teacher.user.get_full_name() or teacher.user.username
 
     if action not in ("validate", "revision"):
         messages.error(request, "Action groupée invalide.")
@@ -861,49 +730,9 @@ def bulk_project_action(request, assignment_id):
     processed = 0
     for project in projects:
         if action == "validate":
-            project.status = "validated"
-            project.save()
-
-            ProjectActivity.objects.create(
-                project=project,
-                user=request.user,
-                activity_type="status_changed",
-                description=f"Projet validé par {teacher_name} (action groupée)",
-            )
-
-            if project.is_assignment_project() and assignment.assignment_type == "direct":
-                DirectStudentAssignment.objects.filter(
-                    assignment=assignment,
-                    student__in=[member.id for member in project.get_team_members()],
-                ).update(status="validated")
-
-            for member in project.get_team_members():
-                Notification.objects.create(
-                    recipient=member,
-                    project=project,
-                    notification_type="project_update",
-                    message=f"Le projet '{project.title}' a été validé par {teacher_name}",
-                )
-        else:  # revision
-            project.status = "revision_requested"
-            project.save()
-
-            ProjectComment.objects.create(
-                project=project, author=request.user, content=f"[RÉVISION DEMANDÉE]\n{content}"
-            )
-            ProjectActivity.objects.create(
-                project=project,
-                user=request.user,
-                activity_type="status_changed",
-                description=f"Révision demandée par {teacher_name} (action groupée)",
-            )
-            for member in project.get_team_members():
-                Notification.objects.create(
-                    recipient=member,
-                    project=project,
-                    notification_type="project_update",
-                    message=f"{teacher_name} demande des révisions sur le projet '{project.title}'. Consultez ses commentaires puis resoumettez.",
-                )
+            project.validate(by=teacher)
+        else:
+            project.request_revision(by=teacher, message=content)
         processed += 1
 
     skipped = len(project_ids) - processed
@@ -950,7 +779,7 @@ def grade_project(request, project_id):
     """Grade a project: overall score /20, appreciation, per-criterion rubric."""
     from student.models import Notification, Project, ProjectActivity
 
-    from .models import DirectStudentAssignment, EvaluationCriterion, ProjectEvaluation
+    from .models import EvaluationCriterion, ProjectEvaluation
 
     try:
         teacher = TeacherProfile.objects.get(user=request.user)
@@ -1041,24 +870,7 @@ def grade_project(request, project_id):
 
             # Optionally validate at the same time (same effects as approve_project)
             if validate_project and project.status == "submitted":
-                project.status = "validated"
-                project.save()
-
-                ProjectActivity.objects.create(
-                    project=project,
-                    user=request.user,
-                    activity_type="status_changed",
-                    description=f"Projet validé par {teacher_name}",
-                )
-
-                if (
-                    project.is_assignment_project()
-                    and project.project_assignment.assignment_type == "direct"
-                ):
-                    DirectStudentAssignment.objects.filter(
-                        assignment=project.project_assignment,
-                        student__in=[member.id for member in project.get_team_members()],
-                    ).update(status="validated")
+                project.validate(by=teacher)
 
             # Notify the whole team of the grade
             validated_note = (

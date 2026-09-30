@@ -141,7 +141,6 @@ class RegressionTests(Fixtures):
         self.assertEqual(project.collaborators.count(), 0)
 
     # B3 ------------------------------------------------------------------
-    @expectedFailure
     def test_B3_status_url_cannot_bypass_submission_rules(self):
         s = self.students
         team = self.assignment(is_team_work=True, min_team_size=3, max_team_size=3)
@@ -153,7 +152,6 @@ class RegressionTests(Fixtures):
         self.assertEqual(project.status, "in_progress")
 
     # B4 ------------------------------------------------------------------
-    @expectedFailure
     def test_B4_unrelated_teacher_cannot_validate_or_reject(self):
         project = self.project(self.students[0], status="submitted", module=None)
         self.login(self.other_teacher)
@@ -176,7 +174,6 @@ class RegressionTests(Fixtures):
         invitation.refresh_from_db()
         self.assertEqual(invitation.status, "pending")
 
-    @expectedFailure
     def test_B5_get_does_not_validate_project(self):
         project = self.project(self.students[0], status="submitted")
         self.login(self.teacher)
@@ -329,7 +326,6 @@ class RegressionTests(Fixtures):
         )
 
     # B14 -----------------------------------------------------------------
-    @expectedFailure
     def test_B14_submitting_syncs_every_team_member(self):
         s = self.students
         team = self.assignment(

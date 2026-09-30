@@ -15,11 +15,6 @@ urlpatterns = [
     path("projects/<int:project_id>/", views.project_detail, name="project_detail"),
     path("projects/<int:project_id>/edit/", views.project_edit, name="project_edit"),
     path("projects/<int:project_id>/delete/", views.project_delete, name="project_delete"),
-    path(
-        "projects/<int:project_id>/status/<str:new_status>/",
-        views.project_change_status,
-        name="project_change_status",
-    ),
     path("projects/<int:project_id>/upload/", views.upload_deliverable, name="upload_deliverable"),
     path("projects/<int:project_id>/milestone/add/", views.add_milestone, name="add_milestone"),
     path("milestone/<int:milestone_id>/toggle/", views.toggle_milestone, name="toggle_milestone"),
@@ -31,8 +26,7 @@ urlpatterns = [
     ),
     # Existing submission URL (now used after confirmation)
     path("projects/<int:project_id>/submit/", views.project_submit, name="project_submit"),
-    path("projects/<int:project_id>/approve/", views.project_approve, name="project_approve"),
-    path("projects/<int:project_id>/reject/", views.project_reject, name="project_reject"),
+    path("projects/<int:project_id>/reopen/", views.project_reopen, name="project_reopen"),
     path(
         "milestone/<int:milestone_id>/complete/",
         views.complete_milestone,
@@ -43,7 +37,6 @@ urlpatterns = [
         views.add_collaborator,
         name="add_collaborator",
     ),
-    path("projects/<int:project_id>/feedback/add/", views.add_feedback, name="add_feedback"),
     path("invitations/", views.invitations_list, name="invitations_list"),
     path(
         "invitations/<int:invitation_id>/cancel/", views.cancel_invitation, name="cancel_invitation"

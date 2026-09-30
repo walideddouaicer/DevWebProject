@@ -157,7 +157,7 @@
                             <a href="{% url 'student:project_edit' project.id %}" class="action-btn primary">
                                 ✏️ Modifier le Projet
                             </a>
-                            <form method="post" action="{% url 'student:project_change_status' project.id 'in_progress' %}" style="display: inline;">
+                            <form method="post" action="{% url 'student:project_reopen' project.id %}" style="display: inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="action-btn warning">
                                     🔄 Reprendre les Modifications
