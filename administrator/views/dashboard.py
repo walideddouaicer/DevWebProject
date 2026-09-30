@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from accounts.models import PendingRegistration
 from student.models import Project, StudentProfile
-from teacher.models import Module, ModuleAssignment, ModuleEnrollment, TeacherProfile
+from teacher.models import Module, ModuleEnrollment, TeacherProfile
 
 from ..models import AdminProfile
 from ._auth import admin_required
@@ -34,35 +34,21 @@ def dashboard(request):
     recent_projects = Project.objects.filter(created_at__gte=thirty_days_ago).count()
     recent_enrollments = ModuleEnrollment.objects.filter(enrolled_at__gte=thirty_days_ago).count()
 
-    # Module statistics with manual counting (this is what works!)
-    modules_with_stats = []
-
-    for module in Module.objects.filter(is_active=True).order_by("code"):
-        # Manual count for each module - this is the pattern that works
-        student_count = ModuleEnrollment.objects.filter(module=module, is_active=True).count()
-
-        teacher_count = ModuleAssignment.objects.filter(module=module, is_active=True).count()
-
-        project_count = Project.objects.filter(module=module).count()
-
-        # Create a module dict with stats
-        module_data = {
-            "id": module.id,
-            "code": module.code,
-            "name": module.name,
-            "academic_year": module.academic_year,
-            "semester": module.semester,
-            "get_semester_display": module.get_semester_display(),
-            "student_count": student_count,
-            "teacher_count": teacher_count,
-            "project_count": project_count,
-        }
-
-        modules_with_stats.append(module_data)
-
-    # Sort by student count (descending) and take top 5
-    modules_with_stats.sort(key=lambda x: x["student_count"], reverse=True)
-    modules_with_stats = modules_with_stats[:5]
+    # Top 5 active modules by enrollment, counted in one query (distinct avoids
+    # the join multiplication that made the original code count in Python).
+    modules_with_stats = list(
+        Module.objects.filter(is_active=True)
+        .annotate(
+            student_count=Count(
+                "enrollments", filter=Q(enrollments__is_active=True), distinct=True
+            ),
+            teacher_count=Count(
+                "assignments", filter=Q(assignments__is_active=True), distinct=True
+            ),
+            project_count=Count("projects", distinct=True),
+        )
+        .order_by("-student_count", "code")[:5]
+    )
 
     # Recent projects for activity feed
     latest_projects = Project.objects.select_related("student__user", "module").order_by(

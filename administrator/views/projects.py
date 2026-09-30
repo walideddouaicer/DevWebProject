@@ -18,7 +18,7 @@ def projects_list(request):
 
     # Start with all projects
     projects = Project.objects.select_related("student__user", "module").prefetch_related(
-        "collaborators__user"
+        "collaborators__user", "module__assignments__teacher__user"
     )
 
     # Apply filters (existing filter logic...)

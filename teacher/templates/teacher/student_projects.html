@@ -961,20 +961,20 @@
                             <i class="fas fa-tag"></i>
                             <strong>Type:</strong> {{ project.get_project_type_display }}
                         </div>
-                        {% if project.collaborators.exists %}
+                        {% if project.collaborators.all %}
                         <div class="meta-item">
                             <i class="fas fa-users"></i>
-                            <strong>Collaborateurs:</strong> {{ project.collaborators.count }}
+                            <strong>Collaborateurs:</strong> {{ project.collaborators.all|length }}
                         </div>
                         {% endif %}
                         <div class="meta-item">
                             <i class="fas fa-clock"></i>
                             <strong>Dernière MAJ:</strong> {{ project.updated_at|date:"d/m/Y H:i" }}
                         </div>
-                        {% if project.deliverables.exists %}
+                        {% if project.deliverable_count %}
                         <div class="meta-item">
                             <i class="fas fa-paperclip"></i>
-                            <strong>Livrables:</strong> {{ project.deliverables.count }}
+                            <strong>Livrables:</strong> {{ project.deliverable_count }}
                         </div>
                         {% endif %}
                     </div>

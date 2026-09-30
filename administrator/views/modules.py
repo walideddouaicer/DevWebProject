@@ -1,7 +1,7 @@
 import logging
 
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -37,35 +37,19 @@ def modules_list(request):
     if semester:
         modules = modules.filter(semester=semester)
 
-    # Calculate totals manually for accuracy
-    total_modules = modules.count()
-    active_modules = modules.filter(is_active=True).count()
+    # Per-module counts in one query. distinct=True matters: three joined counts
+    # would otherwise multiply each other (why the old code counted in Python loops).
+    modules = modules.annotate(
+        student_count=Count("enrollments", filter=Q(enrollments__is_active=True), distinct=True),
+        teacher_count=Count("assignments", filter=Q(assignments__is_active=True), distinct=True),
+        project_count=Count("projects", distinct=True),
+    ).prefetch_related("assignments__teacher__user")
+    modules_with_counts = list(modules)
 
-    # Calculate total students and teachers across all modules
-    total_students_enrolled = 0
-    total_teachers_assigned = 0
-
-    for module in modules:
-        total_students_enrolled += ModuleEnrollment.objects.filter(
-            module=module, is_active=True
-        ).count()
-        total_teachers_assigned += ModuleAssignment.objects.filter(
-            module=module, is_active=True
-        ).count()
-
-    # Add manual counts to each module for template use
-    modules_with_counts = []
-    for module in modules:
-        student_count = ModuleEnrollment.objects.filter(module=module, is_active=True).count()
-        teacher_count = ModuleAssignment.objects.filter(module=module, is_active=True).count()
-        project_count = Project.objects.filter(module=module).count()
-
-        # Add counts as attributes
-        module.student_count = student_count
-        module.teacher_count = teacher_count
-        module.project_count = project_count
-
-        modules_with_counts.append(module)
+    total_modules = len(modules_with_counts)
+    active_modules = sum(1 for module in modules_with_counts if module.is_active)
+    total_students_enrolled = sum(module.student_count for module in modules_with_counts)
+    total_teachers_assigned = sum(module.teacher_count for module in modules_with_counts)
 
     # Get filter options
     academic_years = (

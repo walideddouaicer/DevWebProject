@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q
 from django.shortcuts import redirect, render
 
 from student.models import Project
@@ -20,9 +21,15 @@ def dashboard(request):
         return redirect("login")
 
     # Get teacher's assigned modules
-    assigned_modules = ModuleAssignment.objects.filter(
-        teacher=teacher, is_active=True
-    ).select_related("module")
+    assigned_modules = (
+        ModuleAssignment.objects.filter(teacher=teacher, is_active=True)
+        .select_related("module")
+        .annotate(
+            enrolled_count=Count(
+                "module__enrollments", filter=Q(module__enrollments__is_active=True)
+            )
+        )
+    )
 
     # Get teacher's module IDs
     teacher_module_ids = assigned_modules.values_list("module", flat=True)
@@ -34,14 +41,11 @@ def dashboard(request):
 
     # Calculate statistics
     total_modules = assigned_modules.count()
-    total_students = 0
     total_projects = teacher_projects.count()
     pending_projects = teacher_projects.filter(status="submitted").count()
     validated_projects = teacher_projects.filter(status="validated").count()
 
-    # Count total students across all modules
-    for assignment in assigned_modules:
-        total_students += assignment.module.get_enrolled_students_count()
+    total_students = sum(assignment.enrolled_count for assignment in assigned_modules)
 
     # Get recent modules for display
     recent_modules = assigned_modules[:5]  # Show 5 most recent

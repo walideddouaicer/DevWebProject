@@ -223,7 +223,7 @@
                                     </a>
                                 </div>
                                 <div class="activity-meta">
-                                    {{ assignment.module.get_enrolled_students_count }} étudiants • {{ assignment.module.get_semester_display }}
+                                    {{ assignment.enrolled_count }} étudiant{{ assignment.enrolled_count|pluralize }} • {{ assignment.module.get_semester_display }}
                                 </div>
                             </div>
                             <div class="activity-action">

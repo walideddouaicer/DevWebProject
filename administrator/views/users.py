@@ -4,13 +4,14 @@ from datetime import datetime, timedelta
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from accounts.models import PendingRegistration
 from student.models import Project, StudentProfile
-from teacher.models import ModuleAssignment, ModuleEnrollment, TeacherProfile
+from teacher.models import TeacherProfile
 
 from ..models import AdminProfile
 from ._auth import admin_required
@@ -169,29 +170,21 @@ def users_list(request):
         if department_filter:
             users = users.filter(department__icontains=department_filter)
 
-        # Add computed fields for teachers
-        users_with_stats = []
-        for teacher in users:
-            # Calculate assigned modules count
-            modules_count = ModuleAssignment.objects.filter(teacher=teacher, is_active=True).count()
-
-            # Calculate total students taught
-            teacher_modules = ModuleAssignment.objects.filter(
-                teacher=teacher, is_active=True
-            ).values_list("module_id", flat=True)
-
-            students_taught = 0
-            for module_id in teacher_modules:
-                students_taught += ModuleEnrollment.objects.filter(
-                    module_id=module_id, is_active=True
-                ).count()
-
-            # Add computed attributes
-            teacher.modules_count = modules_count
-            teacher.students_taught = students_taught
-            users_with_stats.append(teacher)
-
-        users = users_with_stats
+        # Per-teacher stats in one query (students counted once per module taught)
+        users = users.annotate(
+            modules_count=Count(
+                "module_assignments",
+                filter=Q(module_assignments__is_active=True),
+                distinct=True,
+            ),
+            students_taught=Count(
+                "module_assignments__module__enrollments",
+                filter=Q(
+                    module_assignments__is_active=True,
+                    module_assignments__module__enrollments__is_active=True,
+                ),
+            ),
+        )
 
         # Get all teacher departments for filter
         all_departments = (
@@ -222,25 +215,25 @@ def users_list(request):
         if year_filter:
             users = users.filter(year_of_study=year_filter)
 
-        # Add computed fields for students
-        users_with_stats = []
-        for student in users:
-            # Calculate active modules count
-            modules_count = ModuleEnrollment.objects.filter(student=student, is_active=True).count()
-
-            # Calculate projects count
-            projects_count = (
-                Project.objects.filter(Q(student=student) | Q(collaborators=student))
-                .distinct()
-                .count()
-            )
-
-            # Add computed attributes
-            student.modules_count = modules_count
-            student.projects_count = projects_count
-            users_with_stats.append(student)
-
-        users = users_with_stats
+        # Per-student stats in one query (subqueries avoid join multiplication)
+        owned = (
+            Project.objects.filter(student=OuterRef("pk"))
+            .values("student")
+            .annotate(n=Count("pk"))
+            .values("n")
+        )
+        collaborating = (
+            Project.collaborators.through.objects.filter(studentprofile=OuterRef("pk"))
+            .values("studentprofile")
+            .annotate(n=Count("pk"))
+            .values("n")
+        )
+        users = users.annotate(
+            modules_count=Count(
+                "module_enrollments", filter=Q(module_enrollments__is_active=True), distinct=True
+            ),
+            projects_count=Coalesce(Subquery(owned), 0) + Coalesce(Subquery(collaborating), 0),
+        )
 
         # Get all student departments for filter
         all_departments = (

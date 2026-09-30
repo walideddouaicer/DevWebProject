@@ -3,6 +3,7 @@ import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -57,6 +58,7 @@ def student_projects(request):
         Project.objects.filter(module__in=teacher_modules)
         .select_related("student__user", "module")
         .prefetch_related("collaborators__user")
+        .annotate(deliverable_count=Count("deliverables", distinct=True))
         .order_by("-updated_at")
     )
 
