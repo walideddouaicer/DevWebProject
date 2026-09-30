@@ -18,3 +18,12 @@ local_settings.py
 # IDEs
 .idea/
 .vscode/ 
+# Revamp tooling
+.venv/
+/private/
+screens/
+node_modules/
+.coverage
+htmlcov/
+/staticfiles/
+*.sqlite3
