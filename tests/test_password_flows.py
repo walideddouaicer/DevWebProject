@@ -26,7 +26,7 @@ class PasswordFlowTests(TestCase):
         link = re.search(r"https?://[^/\s]+(/reset/\S+/)", body).group(1)
 
         form_page = self.client.get(link, follow=True)
-        self.assertContains(form_page, "Choisissez un nouveau mot de passe")
+        self.assertContains(form_page, "Nouveau mot de passe")
         response = self.client.post(
             form_page.redirect_chain[-1][0],
             {"new_password1": "Nouveau-mdp-2026!", "new_password2": "Nouveau-mdp-2026!"},

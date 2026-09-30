@@ -373,7 +373,7 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
 delete old CSS/inline styles/CDN links for those templates, update the smoke test if needed,
 screenshots at both widths and themes reviewed, axe: zero serious/critical)
 
-- [ ] **P6.1 Auth:** login, signup choice, student/teacher signup, pending-confirmation page,
+- [x] **P6.1 Auth:** login, signup choice, student/teacher signup, pending-confirmation page,
   password reset (4 pages), password change. Keep them short and trustworthy; no marketing on the forms.
 - [ ] **P6.2 Public site:** homepage (honest product page for ENSA, a real showcase preview, no
   fake stats/testimonials), showcase list (filters as a sidebar/sheet, cards with real covers or
@@ -664,3 +664,6 @@ Everything else in this plan is decided by Claude.
     `ps aux | grep "[r]unserver 127.0.0.1:876" | awk '{print $2}' | xargs -r kill` (never
     `pkill -f` with the pattern in the same command line: it kills its own shell).
   - Delete the old per-page CSS/JS and `<style>` blocks of each template you rebuild.
+- **2026-09-30** · P6.1 · Auth pages rebuilt on layouts/auth (login with `next`, signup choice,
+  signup form, reset ×4, lockout) and password change on layouts/app (shared by all roles;
+  student-specific copies deleted). Accounts without a role get home=public homepage. axe: 0.

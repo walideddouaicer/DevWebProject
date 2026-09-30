@@ -1,14 +1,9 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Connexion temporairement bloquée — ENSA Project Manager</title>
-</head>
-<body style="font-family: system-ui, sans-serif; max-width: 32rem; margin: 4rem auto; padding: 0 1rem; line-height: 1.5;">
-  <h1>Trop de tentatives de connexion</h1>
-  <p>Par sécurité, les connexions à ce compte depuis votre adresse sont suspendues pendant
-     quelques minutes. Réessayez plus tard.</p>
-  <p><a href="{% url 'public:homepage' %}">Retour à l'accueil</a></p>
-</body>
-</html>
+{% extends "layouts/auth.html" %}
+{% load ui %}
+{% block title %}Connexion temporairement bloquée{% endblock %}
+{% block content %}
+{% icon "lock" size=28 %}
+<h1>Trop de tentatives</h1>
+<p class="muted">Par sécurité, les connexions à ce compte depuis votre adresse sont suspendues pendant quelques minutes. Si vous avez oublié votre mot de passe, réinitialisez-le.</p>
+<a class="btn btn-primary w-full" href="{% url 'password_reset' %}">Réinitialiser le mot de passe</a>
+{% endblock %}

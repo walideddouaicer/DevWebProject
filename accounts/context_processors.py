@@ -16,11 +16,12 @@ def badges(request):
     """Role, badge counts, navigation and theme for every template."""
     context = _badges(request)
     role = context.get("user_role")
-    if role:
+    if request.user.is_authenticated:
         from ui.navigation import HOME, build_navigation
 
-        context["navigation"] = build_navigation(role, request.path, context)
-        context["home_url_name"] = HOME[role]
+        # Accounts without a role profile (e.g. a bare Django superuser) get no app nav.
+        context["navigation"] = build_navigation(role, request.path, context) if role else []
+        context["home_url_name"] = HOME.get(role, "public:homepage")
         preferences = getattr(request.user, "preferences", None)
         context["theme"] = preferences.theme_preference if preferences else "auto"
         context["theme_from_server"] = True
