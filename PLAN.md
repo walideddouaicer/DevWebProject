@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P3 done → P4 next (P4.1 production settings)**
+- Phase: **P4 done → P5 next (P5.1 UI inventory) — backend is production-ready**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (163 tests; 1 expected failure = B20, fixed in P4.1)
+- Last green `make check`: 2026-09-30 (182 tests, 0 expected failures — all review bugs fixed)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -298,7 +298,7 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
 
 ### P4 — Production configuration & deployment artifacts
 
-- [ ] **P4.1 Settings (B20).** `ENVIRONMENT` var; prod: required SECRET_KEY / ALLOWED_HOSTS /
+- [x] **P4.1 Settings (B20).** `ENVIRONMENT` var; prod: required SECRET_KEY / ALLOWED_HOSTS /
   CSRF_TRUSTED_ORIGINS / DATABASE_URL-style vars (write a tiny parser; no new dependency needed),
   `LANGUAGE_CODE='fr'`, `TIME_ZONE='Africa/Casablanca'`, `CONN_MAX_AGE=60` + health checks,
   cache (DB cache table by default; Redis if `REDIS_URL` is set), `LOGGING` to stdout (JSON-ish
@@ -306,19 +306,19 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
   `FILE_UPLOAD_MAX_MEMORY_SIZE`, `SESSION_COOKIE_AGE`, `SECURE_REFERRER_POLICY`,
   `CSRF_COOKIE_HTTPONLY`. Remove the hardcoded fallback secret in prod mode (dev keeps a random per-run key).
   Update `.env.example` to be complete and commented.
-- [ ] **P4.2 Static & media.** WhiteNoise with `CompressedManifestStaticFilesStorage`; public
+- [x] **P4.2 Static & media.** WhiteNoise with `CompressedManifestStaticFilesStorage`; public
   media served by the reverse proxy from a volume; private deliverables are never proxied (P1.7).
-- [ ] **P4.3 CSP & headers.** django-csp: `default-src 'self'`; `img-src 'self' data:`;
+- [x] **P4.3 CSP & headers.** django-csp: `default-src 'self'`; `img-src 'self' data:`;
   `style-src 'self'`; `script-src 'self'`; `frame-ancestors 'none'`; `form-action 'self'`.
   All inline scripts/styles gone by the end of P6 → set report-only now, enforce in P7.3.
-- [ ] **P4.4 Error pages & health.** Custom 400/403/404/500 templates (500 must be static-safe,
+- [x] **P4.4 Error pages & health.** Custom 400/403/404/500 templates (500 must be static-safe,
   no DB), `/healthz` (DB ping, returns JSON), `robots.txt` (disallow app areas, allow public),
   favicon + app icons, `security.txt`.
-- [ ] **P4.5 Sentry (optional).** Init only if `SENTRY_DSN` is set; send_default_pii False.
-- [ ] **P4.6 Dockerfile** (multi-stage, python:3.13-slim, non-root user, `pip install --no-cache`,
+- [x] **P4.5 Sentry (optional).** Init only if `SENTRY_DSN` is set; send_default_pii False.
+- [x] **P4.6 Dockerfile** (multi-stage, python:3.13-slim, non-root user, `pip install --no-cache`,
   `collectstatic` at build, `HEALTHCHECK`), `.dockerignore`, `docker/entrypoint.sh` (wait for DB,
   migrate with an advisory lock / `--check` guard, then exec gunicorn with sane workers/timeouts).
-- [ ] **P4.7 docker-compose.prod.yml:** services `web` (gunicorn), `db` (postgres:16-alpine,
+- [x] **P4.7 docker-compose.prod.yml:** services `web` (gunicorn), `db` (postgres:16-alpine,
   volume, healthcheck), `caddy` (automatic HTTPS, reverse proxy, serves `/static/` via web and
   `/media/public/` from a volume, sets security headers, gzip/zstd), `cron` (same image, supercronic
   with a `crontab` for: reminders 08:00, digest 18:00, clearsessions daily, axes reset, pg_dump backup
@@ -326,10 +326,10 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
   (web + db, runserver, bind mount). **Done when:** `docker compose -f docker-compose.prod.yml up`
   works locally with `DOMAIN=localhost` (Caddy internal TLS), the smoke checklist in P7.5 passes
   against it, and `check --deploy` inside the container is clean.
-- [ ] **P4.8 Management commands for ops:** `createadmin` (non-interactive from env, creates the User
+- [x] **P4.8 Management commands for ops:** `createadmin` (non-interactive from env, creates the User
   + AdminProfile; no admin currently exists without the Django shell), `check_email` (sends a
   test mail), `backup_media` (tar of media + private).
-- [ ] **P4.9 Django admin:** move to `ADMIN_URL` env (default `gestion-interne/`); register models
+- [x] **P4.9 Django admin:** move to `ADMIN_URL` env (default `gestion-interne/`); register models
   with useful list_display/search/filters; read-only for audit-ish models.
 
 ### P5 — Design system foundation (the UI revamp starts here; read §6 first)
@@ -624,3 +624,12 @@ Everything else in this plan is decided by Claude.
   Backups (P4.7) will run in a separate postgres:16-alpine service so pg_dump matches the
   server version and the app image needs no apt packages. Gunicorn 26 needs
   `--control-socket /tmp/gunicorn.ctl` (default path not writable for the non-root user).
+- **2026-09-30** · P4.1–P4.9 · Env-driven prod settings with guard rails (tests spawn a fresh
+  interpreter), WhiteNoise, CSP report-only, error pages, /healthz middleware (first in chain),
+  robots/security.txt, Sentry opt-in, Docker image (350 MB, non-root, healthy), prod compose
+  (web/scheduler/db/caddy/backup) verified end-to-end locally over HTTPS, dev compose,
+  createadmin/check_email, Django admin at ADMIN_URL, single `PendingRegistration.approve`.
+  Useful commands for later: `docker compose -f docker-compose.prod.yml -p ensa-local up -d
+  --build` with a throwaway .env (DOMAIN=localhost, HTTP_PORT=8080, HTTPS_PORT=8443,
+  DJANGO_CSRF_TRUSTED_ORIGINS=https://localhost:8443); tear down with `down -v`; delete .env.
+  Next: P5.1 (UI inventory), then the design system.
