@@ -4,6 +4,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 
 from student.models import StudentProfile
+from teacher.models import TeacherProfile
 
 from .models import PendingRegistration
 
@@ -117,6 +118,12 @@ class TeacherSignupForm(BaseSignupForm):
 
     class Meta(BaseSignupForm.Meta):
         fields = BaseSignupForm.Meta.fields + ["teacher_id", "department"]
+
+    def clean_teacher_id(self):
+        teacher_id = (self.cleaned_data.get("teacher_id") or "").strip() or None
+        if teacher_id and TeacherProfile.objects.filter(teacher_id=teacher_id).exists():
+            raise forms.ValidationError("Un compte avec cet identifiant enseignant existe déjà.")
+        return teacher_id
 
     def save(self, commit=True):
         registration = super().save(commit=False)

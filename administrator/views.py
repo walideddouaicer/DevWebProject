@@ -833,7 +833,7 @@ def approve_registration(request, registration_id):
                 elif registration.role == "teacher":
                     TeacherProfile.objects.create(
                         user=user,
-                        teacher_id=registration.teacher_id or "",
+                        teacher_id=registration.teacher_id or None,
                         department=registration.department,
                     )
                     profile_type = "enseignant"

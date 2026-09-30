@@ -255,7 +255,6 @@ class RegressionTests(Fixtures):
         self.assertIn(reverse("login"), response["Location"])
 
     # B9 ------------------------------------------------------------------
-    @expectedFailure
     def test_B9_two_teachers_without_id_can_be_approved(self):
         registrations = [
             PendingRegistration.objects.create(

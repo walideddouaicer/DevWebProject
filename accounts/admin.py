@@ -40,7 +40,7 @@ def approve_registrations(modeladmin, request, queryset):
 
                 TeacherProfile.objects.create(
                     user=user,
-                    teacher_id=registration.teacher_id,
+                    teacher_id=registration.teacher_id or None,
                     department=registration.department,
                 )
 
