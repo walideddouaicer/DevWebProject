@@ -235,6 +235,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 /* Responsive auto grid */
 .grid { display: grid; gap: var(--gap, var(--s-4));
         grid-template-columns: repeat(auto-fill, minmax(min(var(--min, 260px), 100%), 1fr)); }
+.grid-wide { --min: 320px; }
 /* Main + aside */
 .with-aside { display: grid; gap: var(--s-6); }
 @media (min-width: 1024px) {
@@ -247,20 +248,6 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .nowrap { white-space: nowrap; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .grow { flex: 1 1 auto; min-width: 0; }
-
-/* --- 90-print.css --- */
-/* Print: evaluation sheets and project pages without the app chrome */
-@media print {
-  :root { color-scheme: light; }
-  body { background: #fff; color: #000; font-size: 11pt; }
-  .sidebar, .topbar, .sidebar-backdrop, .toasts, .skip-link, .page-header .actions,
-  .form-actions, [data-print], [data-add-row], [data-remove-row], .site-header, .site-footer { display: none !important; }
-  .app { display: block; background: none; }
-  .content { padding: 0; }
-  .card { border-color: #999; break-inside: avoid; }
-  a { color: #000; text-decoration: none; }
-  input, textarea { border: 0 !important; padding: 0 !important; background: none !important; }
-}
 
 /* --- components/10-button.css --- */
 /* Buttons: primary / secondary / ghost / danger; sizes sm / md; icon-only; loading */
@@ -829,3 +816,23 @@ progress.meter.is-warn::-moz-progress-bar { background: var(--warn); }
     var(--line) calc(var(--sidebar-w) - 1px), var(--line) var(--sidebar-w), transparent var(--sidebar-w)); }
 }
 .results .chip { white-space: nowrap; align-self: start; }
+
+/* --- components/30-styleguide.css --- */
+/* Development-only styleguide page (/_styleguide/) — demo placement helpers */
+.sg-page { padding-block: 32px 96px; }
+.sg-menu { width: 220px; height: 150px; }
+.sg-static { position: static; margin: 0; }
+
+/* --- 90-print.css --- */
+/* Print: evaluation sheets and project pages without the app chrome */
+@media print {
+  :root { color-scheme: light; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .sidebar, .topbar, .sidebar-backdrop, .toasts, .skip-link, .page-header .actions,
+  .form-actions, [data-print], [data-add-row], [data-remove-row], .site-header, .site-footer { display: none !important; }
+  .app { display: block; background: none; }
+  .content { padding: 0; }
+  .card { border-color: #999; break-inside: avoid; }
+  a { color: #000; text-decoration: none; }
+  input, textarea { border: 0 !important; padding: 0 !important; background: none !important; }
+}

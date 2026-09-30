@@ -1,0 +1,4 @@
+/* Development-only styleguide page (/_styleguide/) — demo placement helpers */
+.sg-page { padding-block: 32px 96px; }
+.sg-menu { width: 220px; height: 150px; }
+.sg-static { position: static; margin: 0; }

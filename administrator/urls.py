@@ -1,10 +1,12 @@
 # administrator/urls.py
-from django.urls import path
+from django.urls import path, reverse_lazy
+from django.utils.text import format_lazy
 from django.views.generic import RedirectView
 
 from . import views
 
 app_name = "administrator"
+USERS_LIST = reverse_lazy("administrator:users_list")
 
 urlpatterns = [
     # Dashboard
@@ -38,7 +40,7 @@ urlpatterns = [
     path("users/list/", views.users_list, name="users_list"),
     path(
         "users/students/",
-        RedirectView.as_view(url="/administrator/users/list/?type=students"),
+        RedirectView.as_view(url=format_lazy("{}?type=students", USERS_LIST)),
         name="students_list",
     ),
     path("users/students/import/", views.import_students, name="import_students"),
@@ -49,7 +51,7 @@ urlpatterns = [
     ),
     path(
         "users/teachers/",
-        RedirectView.as_view(url="/administrator/users/list/?type=teachers"),
+        RedirectView.as_view(url=format_lazy("{}?type=teachers", USERS_LIST)),
         name="teachers_list",
     ),
     path("users/teachers/import/", views.import_teachers, name="import_teachers"),

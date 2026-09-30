@@ -41,7 +41,7 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P6.12 done → P6.13 next (cleanup sweep)**
+- Phase: **P6 done → P7 next (hardening, QA, docs)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
 - Last green `make check`: 2026-09-30 (232 tests)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
@@ -411,7 +411,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
 - [x] **P6.11 Search:** global search page + top-bar quick search (HTMX dropdown, keyboard nav).
 - [x] **P6.12 Emails:** HTML + text templates (invitation, approval, reset, reminders, digest,
   announcement, grade) with an inline-CSS-safe simple layout; preview route in DEBUG.
-- [ ] **P6.13 Cleanup sweep:** delete every old per-app CSS/JS file and unused template; grep
+- [x] **P6.13 Cleanup sweep:** delete every old per-app CSS/JS file and unused template; grep
   that no template has `<style`, `style="` (except rare dynamic widths through CSS vars),
   `onclick=`, `cdnjs`, `jsdelivr`, `fonts.googleapis`, `fa-` classes. Record the counts in the log.
 
@@ -742,3 +742,13 @@ Everything else in this plan is decided by Claude.
   Removed emoji from announcement notifications. Left for P6.13: emoji in a few
   `messages.success` strings (student/views/projects.py, teacher/views/modules.py).
   Known wart: reminder notifications end with a "(J-3)" dedupe marker visible to users.
+- **2026-09-30** · P6.13 · Sweep (templates excl. `templates/emails/`): `<style` 0, `style="` 0,
+  inline `on*=` handlers 0, `cdnjs`/`jsdelivr`/`fonts.googleapis` 0, `fa-` 0, inline `<script>` 0.
+  Styleguide's 5 inline styles + `onsubmit` → classes (`components/30-styleguide.css`,
+  `.grid-wide`). Deleted orphan `static/css/main.css`, `teacher/static/`. No unreferenced
+  templates. Emoji removed from Python messages. Hardcoded paths → `reverse()`/`reverse_lazy`
+  (admin redirects, toggle-user redirect, calendar event URLs, password-change success).
+  **Bug fixed:** build_css sorted by relative path, so `90-print.css` came before
+  `components/*` and lost the cascade (`.app` stayed grid in print) — now sorted by file name;
+  verified in Chromium print emulation. Kept on purpose: `static/css/errors.css` (standalone
+  error pages), `ui/navigation.py` path prefixes (active-link matching).

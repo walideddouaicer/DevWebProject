@@ -8,6 +8,7 @@ from django.db import IntegrityError
 from django.db.models import Count, OuterRef, Q, Subquery
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import PendingRegistration
@@ -305,4 +306,4 @@ def toggle_user_active(request, user_id):
 
     # Back to the right tab
     user_type = "teachers" if TeacherProfile.objects.filter(user=target).exists() else "students"
-    return redirect(f"/administrator/users/list/?type={user_type}")
+    return redirect(f"{reverse('administrator:users_list')}?type={user_type}")

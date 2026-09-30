@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.utils import timezone
 
 from teacher.models import ProjectAssignment
@@ -39,7 +40,7 @@ def collect_student_events(student):
                     "type": "deadline",
                     "title": f"Rendu: {assignment.title}",
                     "subtitle": assignment.module.code,
-                    "url": f"/student/assignments/{assignment.id}/",
+                    "url": reverse("student:assignment_detail", args=[assignment.id]),
                     "uid": f"assignment-{assignment.id}-deadline",
                 }
             )
@@ -51,7 +52,7 @@ def collect_student_events(student):
                     "type": "selection",
                     "title": f"Sélection: {assignment.title}",
                     "subtitle": assignment.module.code,
-                    "url": f"/student/assignments/{assignment.id}/",
+                    "url": reverse("student:assignment_detail", args=[assignment.id]),
                     "uid": f"assignment-{assignment.id}-selection",
                 }
             )
@@ -68,7 +69,7 @@ def collect_student_events(student):
                     "type": "project_end",
                     "title": f"Fin du projet: {project.title}",
                     "subtitle": project.module.code if project.module else "",
-                    "url": f"/student/projects/{project.id}/",
+                    "url": reverse("student:project_detail", args=[project.id]),
                     "uid": f"project-{project.id}-end",
                 }
             )
@@ -84,7 +85,7 @@ def collect_student_events(student):
                 "type": "milestone",
                 "title": f"Jalon: {milestone.title}",
                 "subtitle": milestone.project.title,
-                "url": f"/student/projects/{milestone.project_id}/",
+                "url": reverse("student:project_detail", args=[milestone.project_id]),
                 "uid": f"milestone-{milestone.id}",
             }
         )

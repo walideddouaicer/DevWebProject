@@ -417,7 +417,7 @@ def make_project_public(request, project_id):
                     )
                     messages.success(
                         request,
-                        f"🎉 Votre projet '{project.title}' est maintenant visible publiquement!",
+                        f"Votre projet « {project.title} » est maintenant visible sur la vitrine.",
                     )
                     return redirect("public:project_detail", project_id=project.id)
 
@@ -444,7 +444,7 @@ def make_project_public(request, project_id):
                     )
                     messages.success(
                         request,
-                        f"🎉 Votre projet '{enhanced_project.title}' est maintenant visible publiquement!",
+                        f"Votre projet « {enhanced_project.title} » est maintenant visible sur la vitrine.",
                     )
                     return redirect("public:project_detail", project_id=enhanced_project.id)
                 else:

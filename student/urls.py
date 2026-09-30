@@ -1,5 +1,6 @@
 from django.contrib.auth import views as auth_views
-from django.urls import path
+from django.urls import path, reverse_lazy
+from django.utils.text import format_lazy
 
 from . import views
 
@@ -97,7 +98,9 @@ urlpatterns = [
         "password/change/",
         auth_views.PasswordChangeView.as_view(
             template_name="registration/password_change_form.html",
-            success_url="/student/settings/?tab=account&changed=true",
+            success_url=format_lazy(
+                "{}?tab=account&changed=true", reverse_lazy("student:profile_settings")
+            ),
         ),
         name="password_change",
     ),

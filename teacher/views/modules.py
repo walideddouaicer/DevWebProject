@@ -379,13 +379,10 @@ def create_teacher_module(request):
                         is_active=True,
                     )
 
-                    # ❌ REMOVED: ProjectActivity creation (was causing the error)
-                    # No need to log module creation as project activity
-
                     messages.success(
                         request,
-                        f"✅ Module '{module.code} - {module.name}' créé avec succès! "
-                        f"Votre module est maintenant actif et les étudiants peuvent s'inscrire.",
+                        f"Module {module.code} — {module.name} créé. "
+                        "Il est actif : les étudiants peuvent s'y inscrire.",
                     )
                     return redirect("teacher:module_detail", module_id=module.id)
 

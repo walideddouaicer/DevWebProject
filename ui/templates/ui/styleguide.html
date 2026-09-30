@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
-<main class="container stack stack-lg" style="padding-block: 32px 96px">
+<main class="container stack stack-lg sg-page">
   <header class="page-header">
     <div>
       <div class="eyebrow">Système de design</div>
@@ -52,7 +52,7 @@
   <section class="stack">
     <h2 class="section-title">Formulaires</h2>
     <div class="card card-body">
-      <form class="form-grid form-grid-2" novalidate onsubmit="return false">
+      <form class="form-grid form-grid-2" novalidate
         {% field form.title %}{% field form.module %}
         {% field bound.title %}{% field bound.email %}
         {% field form.description %}
@@ -105,7 +105,7 @@
     <dl class="dl"><dt>Module</dt><dd>WEB401 — Développement web avancé</dd><dt>Type</dt><dd>Projet de module</dd><dt>Technologies</dt><dd>Django, PostgreSQL, HTMX</dd></dl>
   </section>
 
-  <section class="grid" style="--min: 320px">
+  <section class="grid grid-wide">
     <div class="card">
       <div class="card-header"><h3>Livrables</h3><button class="btn btn-sm">{% icon "upload" %} Ajouter</button></div>
       <ul class="file-list">
@@ -134,9 +134,9 @@
   <section class="stack">
     <h2 class="section-title">Étapes, menu, dialogue, toast</h2>
     <ol class="stepper"><li class="is-done">Informations</li><li class="is-current">Équipe</li><li>Options</li><li>Publication</li></ol>
-    <details class="menu" open style="width: 220px; height: 150px"><summary class="btn btn-sm">Actions {% icon "chevron-down" %}</summary><div class="menu-list"><a href="#">{% icon "pencil" %} Modifier</a><a href="#">{% icon "globe" %} Rendre public</a><hr><button class="danger">{% icon "trash-2" %} Supprimer</button></div></details>
-    <dialog class="dialog" open style="position: static; margin: 0"><div class="dialog-body"><h2>Soumettre le projet ?</h2><p class="muted">Votre enseignant sera prévenu. Vous ne pourrez plus modifier les livrables tant qu'il n'aura pas répondu.</p></div><div class="dialog-actions"><button class="btn">Annuler</button><button class="btn btn-primary">Soumettre</button></div></dialog>
-    <div class="toast toast-success" style="position: static">{% icon "check-circle-2" %}<div class="toast-body">Livrable ajouté (v2).</div><button class="btn btn-ghost btn-icon btn-sm toast-close" aria-label="Fermer">{% icon "x" size=16 %}</button></div>
+    <details class="menu sg-menu" open><summary class="btn btn-sm">Actions {% icon "chevron-down" %}</summary><div class="menu-list"><a href="#">{% icon "pencil" %} Modifier</a><a href="#">{% icon "globe" %} Rendre public</a><hr><button class="danger">{% icon "trash-2" %} Supprimer</button></div></details>
+    <dialog class="dialog sg-static" open><div class="dialog-body"><h2>Soumettre le projet ?</h2><p class="muted">Votre enseignant sera prévenu. Vous ne pourrez plus modifier les livrables tant qu'il n'aura pas répondu.</p></div><div class="dialog-actions"><button class="btn">Annuler</button><button class="btn btn-primary">Soumettre</button></div></dialog>
+    <div class="toast toast-success sg-static">{% icon "check-circle-2" %}<div class="toast-body">Livrable ajouté (v2).</div><button class="btn btn-ghost btn-icon btn-sm toast-close" aria-label="Fermer">{% icon "x" size=16 %}</button></div>
   </section>
 
   <section class="stack">

@@ -15,6 +15,7 @@
 /* Responsive auto grid */
 .grid { display: grid; gap: var(--gap, var(--s-4));
         grid-template-columns: repeat(auto-fill, minmax(min(var(--min, 260px), 100%), 1fr)); }
+.grid-wide { --min: 320px; }
 /* Main + aside */
 .with-aside { display: grid; gap: var(--s-6); }
 @media (min-width: 1024px) {
