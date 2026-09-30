@@ -123,7 +123,7 @@
             <div class="reports-container">
                 <div class="reports-header">
                     <h2>Projets signalés</h2>
-                    <span>{{ projects|length }} projet{{ projects|length|pluralize }}</span>
+                    <span>{{ page_obj.paginator.count }} projet{{ page_obj.paginator.count|pluralize }}</span>
                 </div>
 
                 {% if projects %}
@@ -193,6 +193,7 @@
                         </div>
                     </div>
                     {% endfor %}
+{% include "components/pagination.html" with page=page_obj %}
                 {% else %}
                     <div class="empty-state">
                         <i class="fas fa-shield-check"></i>

@@ -240,6 +240,7 @@
                 </div>
             </div>
             {% endfor %}
+{% include "components/pagination.html" with page=page_obj %}
         </div>
     {% else %}
         <div class="empty-state">

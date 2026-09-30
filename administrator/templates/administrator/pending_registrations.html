@@ -368,6 +368,7 @@
                         </div>
                     </div>
                     {% endfor %}
+{% include "components/pagination.html" with page=page_obj %}
                 {% else %}
                     <div class="empty-state">
                         <i class="fas fa-inbox"></i>

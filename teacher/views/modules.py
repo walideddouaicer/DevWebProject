@@ -4,11 +4,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
+from ensa_project_manager.pagination import paginate
 from student.models import Notification, Project
 
 from ..forms import (
@@ -135,6 +137,10 @@ def module_projects(request, module_id):
     projects = (
         Project.objects.filter(module=module)
         .select_related("student__user")
+        .annotate(
+            collaborator_count=Count("collaborators", distinct=True),
+            deliverable_count=Count("deliverables", distinct=True),
+        )
         .order_by("-updated_at")
     )
 
@@ -149,10 +155,12 @@ def module_projects(request, module_id):
     validated_projects = projects.filter(status="validated").count()
     rejected_projects = projects.filter(status="rejected").count()
 
+    page_obj = paginate(request, projects)
     context = {
         "teacher": teacher,
         "module": module,
-        "projects": projects,
+        "projects": page_obj,
+        "page_obj": page_obj,
         "total_projects": total_projects,
         "submitted_projects": submitted_projects,
         "validated_projects": validated_projects,

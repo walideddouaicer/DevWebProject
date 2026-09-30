@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
+from ensa_project_manager.pagination import paginate
 from student.models import Project
 from teacher.models import Module, ModuleAssignment, TeacherProfile
 
@@ -182,9 +183,11 @@ def reports_moderation(request):
     pending_reports = ProjectReport.objects.filter(is_reviewed=False).count()
     hidden_projects = Project.objects.filter(is_hidden_by_admin=True).count()
 
+    page_obj = paginate(request, projects)
     context = {
         "admin": admin,
-        "projects": projects,
+        "projects": page_obj,
+        "page_obj": page_obj,
         "show": show,
         "total_reports": total_reports,
         "pending_reports": pending_reports,

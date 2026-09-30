@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from ensa_project_manager.pagination import paginate
 from student.models import Project, StudentProfile
 from teacher.models import Module, ModuleAssignment, ModuleEnrollment, TeacherProfile
 
@@ -56,9 +57,11 @@ def modules_list(request):
         Module.objects.values_list("academic_year", flat=True).distinct().order_by("academic_year")
     )
 
+    page_obj = paginate(request, modules_with_counts)
     context = {
         "admin": admin,
-        "modules": modules_with_counts,  # Now has count attributes
+        "modules": page_obj,
+        "page_obj": page_obj,
         "academic_years": academic_years,
         "search_query": search_query,
         "selected_academic_year": academic_year,

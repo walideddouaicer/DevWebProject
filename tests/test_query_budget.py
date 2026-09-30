@@ -83,6 +83,10 @@ class QueryBudgetTests(TestCase):
         ("etu.youssef", "/search/?q=extra", 20),
         ("prof.alami", "/teacher/assignments/", 30),
         ("admin", "/projects/", 20),
+        ("prof.alami", "/teacher/modules/1/projects/", 25),
+        ("etu.youssef", "/student/notifications/", 15),
+        ("admin", "/administrator/moderation/reports/?show=all", 20),
+        ("admin", "/administrator/registrations/pending/", 15),
     ]
 
     def test_ceilings_on_seed_data(self):

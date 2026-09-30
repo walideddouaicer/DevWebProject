@@ -4,6 +4,8 @@ from django.db.models import Case, OuterRef, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from ensa_project_manager.pagination import paginate
+
 from ..models import (
     CollaborationInvitation,
     Notification,
@@ -32,8 +34,10 @@ def notifications(request):
         )
     ).order_by("-created_at")
 
+    page_obj = paginate(request, notifications)
     context = {
-        "notifications": notifications,
+        "notifications": page_obj,
+        "page_obj": page_obj,
     }
     return render(request, "student/notifications.html", context)
 

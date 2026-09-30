@@ -921,7 +921,7 @@
         <h2 class="workspace-title">
             <i class="fas fa-clipboard-list"></i>
             Espace de Travail des Projets
-            {% if projects %}({{ projects.count }}){% endif %}
+            {% if projects %}({{ page_obj.paginator.count }}){% endif %}
             {% if status_filter or module_filter %}- Filtrés{% endif %}
         </h2>
         <div class="workspace-actions">
@@ -1030,6 +1030,7 @@
             </div>
         </div>
         {% endfor %}
+{% include "components/pagination.html" with page=page_obj %}
     {% else %}
         <div class="empty-workspace">
             <div class="empty-icon">

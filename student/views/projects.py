@@ -233,7 +233,7 @@ def project_detail(request, project_id):
         )
     )
     milestones = ProjectMilestone.objects.filter(project=project)
-    project_activities = ProjectActivity.objects.filter(project=project)
+    project_activities = ProjectActivity.objects.filter(project=project).select_related("user")[:50]
     comments = project.comments.all().select_related("author")
 
     # Assignment-specific context

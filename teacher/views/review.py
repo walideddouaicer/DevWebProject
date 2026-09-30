@@ -11,6 +11,7 @@ from accounts.permissions import (
     get_project_for_teacher,
     teacher_required,
 )
+from ensa_project_manager.pagination import paginate
 from student.forms import CommentForm
 from student.models import (
     DeliverableComment,
@@ -81,9 +82,11 @@ def student_projects(request):
     # Get teacher's modules for filter dropdown
     modules = Module.objects.filter(id__in=teacher_modules)
 
+    page_obj = paginate(request, projects)
     context = {
         "teacher": teacher,
-        "projects": projects,
+        "projects": page_obj,
+        "page_obj": page_obj,
         "total_projects": total_projects,
         "submitted_projects": submitted_projects,
         "validated_projects": validated_projects,
@@ -129,7 +132,7 @@ def project_review(request, project_id):
     comments = project.comments.all().select_related(
         "author"
     )  # Fixed: now just 'author' since it's User
-    activities = project.activities.all().select_related("user")
+    activities = project.activities.select_related("user")[:50]
 
     context = {
         "teacher": teacher,

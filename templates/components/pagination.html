@@ -1,0 +1,16 @@
+{% comment %}
+Pagination controls; keeps the other query-string parameters (filters, search).
+Usage: {% include "components/pagination.html" with page=page_obj %}
+Plain markup for now; styled by the design system in P5.5.
+{% endcomment %}
+{% if page.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+  {% if page.has_previous %}
+    <a href="?{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for v in values %}{{ key }}={{ v|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}page={{ page.previous_page_number }}" rel="prev">Précédent</a>
+  {% endif %}
+  <span>Page {{ page.number }} sur {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}
+    <a href="?{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for v in values %}{{ key }}={{ v|urlencode }}&amp;{% endfor %}{% endif %}{% endfor %}page={{ page.next_page_number }}" rel="next">Suivant</a>
+  {% endif %}
+</nav>
+{% endif %}

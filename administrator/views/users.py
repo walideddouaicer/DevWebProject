@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from accounts.models import PendingRegistration
+from ensa_project_manager.pagination import paginate
 from student.models import Project, StudentProfile
 from teacher.models import TeacherProfile
 
@@ -31,9 +32,11 @@ def pending_registrations(request):
     student_pending = pending.filter(role="student").count()
     teacher_pending = pending.filter(role="teacher").count()
 
+    page_obj = paginate(request, pending)
     context = {
         "admin": admin,
-        "pending_registrations": pending,
+        "pending_registrations": page_obj,
+        "page_obj": page_obj,
         "total_pending": total_pending,
         "student_pending": student_pending,
         "teacher_pending": teacher_pending,

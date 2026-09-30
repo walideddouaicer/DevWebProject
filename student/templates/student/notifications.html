@@ -47,7 +47,7 @@
     <div class="stats-overview">
         <div class="stat-card">
             <div class="stat-icon total">📊</div>
-            <div class="stat-number">{{ notifications.count }}</div>
+            <div class="stat-number">{{ page_obj.paginator.count }}</div>
             <div class="stat-label">Total Notifications</div>
         </div>
         <div class="stat-card">
@@ -85,7 +85,7 @@
                 📬 Vos Notifications
             </h2>
             {% if notifications %}
-            <span class="notifications-count">{{ notifications.count }}</span>
+            <span class="notifications-count">{{ page_obj.paginator.count }}</span>
             {% endif %}
         </div>
         
@@ -146,6 +146,7 @@
                     </div>
                 </div>
                 {% endfor %}
+{% include "components/pagination.html" with page=page_obj %}
             </div>
         {% else %}
             <div class="empty-state">
