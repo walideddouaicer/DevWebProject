@@ -7,7 +7,7 @@ DEPLOY_ENV = DJANGO_DEBUG=False ENVIRONMENT=prod \
 	DJANGO_ALLOWED_HOSTS=example.com SITE_URL=https://example.com EMAIL_HOST=smtp.example.com \
 	DATABASE_URL=postgres://u:p@localhost:5432/db
 
-.PHONY: setup run test lint format check coverage screens seed docker-build docker-up
+.PHONY: setup run test lint format check coverage screens qa seed docker-build docker-up
 
 setup:
 	python3 -m venv .venv
@@ -44,6 +44,11 @@ seed:
 
 screens:
 	$(PY) scripts/screens.py $(ARGS)
+
+# Browser QA: every page x role under the enforced CSP; fails on console errors,
+# CSP violations or serious/critical axe issues.
+qa:
+	$(PY) scripts/screens.py --strict --themes light
 
 docker-build:
 	docker build -t ensa-project-manager .

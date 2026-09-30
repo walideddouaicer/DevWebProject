@@ -27,3 +27,35 @@ class DesignSystemTests(SimpleTestCase):
         automatic = re.search(r':not\(\[data-theme="dark"\]\) \{(.*?)\}', css, re.S).group(1)
         normalize = lambda block: re.sub(r"\s+", " ", block).strip()  # noqa: E731
         self.assertEqual(normalize(explicit), normalize(automatic))
+
+
+class FormWidgetCSPTests(SimpleTestCase):
+    """Widget attrs render into HTML: they must not carry inline styles or JS handlers,
+    which the enforced CSP blocks (found on the module forms in P7.3)."""
+
+    def test_no_inline_style_or_handlers_in_widget_attrs(self):
+        import importlib
+        import inspect
+
+        from django import forms
+
+        problems = []
+        for module_name in (
+            "accounts.forms",
+            "administrator.forms",
+            "student.forms",
+            "teacher.forms",
+            "public.forms",
+        ):
+            try:
+                module = importlib.import_module(module_name)
+            except ModuleNotFoundError:
+                continue
+            for name, cls in inspect.getmembers(module, inspect.isclass):
+                if not issubclass(cls, forms.BaseForm) or cls.__module__ != module_name:
+                    continue
+                for field_name, field in cls.base_fields.items():
+                    for attr in field.widget.attrs:
+                        if attr == "style" or attr.startswith("on"):
+                            problems.append(f"{module_name}.{name}.{field_name}: {attr}")
+        self.assertFalse(problems, problems)

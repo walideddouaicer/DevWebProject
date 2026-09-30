@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P7.2 done → P7.3 next (enforce CSP)**
+- Phase: **P7.3 done → P7.4 next (performance)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (282 tests)
+- Last green `make check`: 2026-09-30 (283 tests)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -424,7 +424,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   (IDOR on every `<int:…_id>` URL, mass assignment in forms, open redirects on `next`, upload
   handling, email header injection, XSS in `|safe`/`mark_safe` uses (grep), CSV/Excel formula
   injection in exports → prefix `= + - @` cells with `'`). Fix what's found; add tests.
-- [ ] **P7.3 Enforce CSP** (flip report-only → enforce); verify with screens + console-error capture in
+- [x] **P7.3 Enforce CSP** (flip report-only → enforce); verify with screens + console-error capture in
   the Playwright harness (fail on any CSP violation or JS error).
 - [ ] **P7.4 Performance pass:** query-budget tests green; Lighthouse-style checks through Playwright
   (page weight < 300 KB for app pages excluding user images, no layout shift from fonts via
@@ -784,3 +784,11 @@ Everything else in this plan is decided by Claude.
   every exported cell), export filename via `content_disposition_header`, email subjects
   collapsed to one line, `.ics` escaping of `\r`. Export header colour → accent.
   tests/test_security.py covers these + login `next` open-redirect.
+- **2026-09-30** · P7.3 · CSP enforced by default (`CSP_ENFORCE=False` → report-only).
+  `make qa` = `screens.py --strict --themes light`: every page × role, exits 1 on console
+  error / CSP violation / serious axe issue. Result: 154 screenshots, 77 pages audited,
+  0 violations. Found + fixed: inline `style` on the module code widget and 3 dead
+  `onchange` handlers in teacher/forms.py (template grep in P6.13 couldn't see Python widget
+  attrs) → new test `FormWidgetCSPTests` inspects every form's widget attrs. Harness fixes:
+  axe injected via page.evaluate (an injected <script> is now CSP-blocked, which had silently
+  disabled the audit); file downloads are skipped, not reported as errors.

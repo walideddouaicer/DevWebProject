@@ -23,9 +23,8 @@ class ModuleCreationForm(forms.ModelForm):
             ),
             "code": forms.TextInput(
                 attrs={
-                    "class": "form-input",
+                    "class": "form-input input-code",
                     "placeholder": "Code du module (ex: CS301)",
-                    "style": "text-transform: uppercase;",
                 }
             ),
             "description": forms.Textarea(
@@ -139,13 +138,9 @@ class ProjectAssignmentForm(forms.ModelForm):
                     "placeholder": "Instructions détaillées pour les étudiants...",
                 }
             ),
-            "assignment_type": forms.Select(
-                attrs={"class": "form-select", "onchange": "toggleAssignmentOptions(this.value)"}
-            ),
+            "assignment_type": forms.Select(attrs={"class": "form-select"}),
             "deadline": NativeDateTimeInput(attrs={"class": "form-input"}),
-            "is_team_work": forms.CheckboxInput(
-                attrs={"class": "form-checkbox", "onchange": "toggleTeamOptions(this.checked)"}
-            ),
+            "is_team_work": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
             "min_team_size": forms.NumberInput(
                 attrs={"class": "form-input", "min": "1", "max": "10"}
             ),
@@ -371,9 +366,7 @@ class ProjectOptionForm(forms.ModelForm):
                 }
             ),
             "estimated_difficulty": forms.Select(attrs={"class": "form-select"}),
-            "is_unique": forms.CheckboxInput(
-                attrs={"class": "form-checkbox", "onchange": "toggleMaxTeams(this.checked)"}
-            ),
+            "is_unique": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
             "max_teams": forms.NumberInput(attrs={"class": "form-input", "min": "1", "max": "20"}),
         }
         labels = {

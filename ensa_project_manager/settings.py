@@ -382,8 +382,8 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("DJANGO_HSTS_INCLUDE_SUBDOMAINS", default=True)
     SECURE_HSTS_PRELOAD = env_bool("DJANGO_HSTS_PRELOAD", default=False)
 
-# Content Security Policy (django-csp). Report-only until every inline script/style and
-# CDN asset is gone (PLAN P6.13); CSP_ENFORCE=True switches to enforcement (PLAN P7.3).
+# Content Security Policy (django-csp), enforced (PLAN P7.3): no inline scripts/styles, no
+# third-party origins. CSP_ENFORCE=False falls back to report-only for debugging.
 _CSP_DIRECTIVES = {
     "default-src": ["'self'"],
     "script-src": ["'self'"],
@@ -397,7 +397,7 @@ _CSP_DIRECTIVES = {
     "form-action": ["'self'"],
     "frame-ancestors": ["'none'"],
 }
-if env_bool("CSP_ENFORCE", default=False):
+if env_bool("CSP_ENFORCE", default=True):
     CONTENT_SECURITY_POLICY = {"DIRECTIVES": _CSP_DIRECTIVES}
     CONTENT_SECURITY_POLICY_REPORT_ONLY = None
 else:

@@ -95,12 +95,15 @@ class DownloadTests(Fixtures):
         self.client.force_login(self.students[0].user)
         inline = self.client.get(self.url + "?inline=1")
         self.assertEqual(inline["X-Frame-Options"], "SAMEORIGIN")
-        self.assertIn("frame-ancestors 'self'", inline["Content-Security-Policy-Report-Only"])
+        self.assertIn("frame-ancestors 'self'", inline["Content-Security-Policy"])
         attachment = self.client.get(self.url)
         self.assertEqual(attachment["X-Frame-Options"], "DENY")
 
     def test_pages_carry_a_csp(self):
         response = self.client.get("/")
-        policy = response["Content-Security-Policy-Report-Only"]
+        policy = response["Content-Security-Policy"]  # enforced (P7.3)
+        self.assertFalse(response.has_header("Content-Security-Policy-Report-Only"))
         self.assertIn("default-src 'self'", policy)
+        self.assertIn("script-src 'self'", policy)
+        self.assertNotIn("unsafe-inline", policy)
         self.assertIn("frame-ancestors 'none'", policy)

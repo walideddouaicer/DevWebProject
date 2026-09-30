@@ -145,6 +145,11 @@ def main():
     parser.add_argument("--widths", default="1440,390")
     parser.add_argument("--themes", default="light,dark")
     parser.add_argument("--no-a11y", action="store_true")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit 1 on any console error, CSP violation or serious/critical a11y issue",
+    )
     args = parser.parse_args()
 
     from playwright.sync_api import sync_playwright
@@ -210,6 +215,8 @@ def main():
                                     BASE + path, wait_until="networkidle", timeout=30000
                                 )
                             except Exception as error:
+                                if "Download is starting" in str(error):
+                                    continue  # file export, not a page
                                 problems.append(
                                     {
                                         "role": role,
@@ -263,10 +270,9 @@ def main():
                                     }
                                 )
                             if not args.no_a11y and theme == themes[0] and width == widths[0]:
-                                try:
-                                    page.add_script_tag(content=axe)
-                                except Exception:
-                                    continue
+                                # Evaluated through the DevTools protocol: an injected
+                                # <script> tag would be blocked by the enforced CSP.
+                                page.evaluate(f"() => {{ {axe}\n }}")
                                 result = page.evaluate(
                                     "async () => (await axe.run(document, {resultTypes: ['violations']})).violations"
                                     ".map(v => ({id: v.id, impact: v.impact, nodes: v.nodes.length, help: v.help}))"
@@ -297,6 +303,11 @@ def main():
         lines.append(f"- **{p['role']}:{p['page']}** CSP={p['csp']} errors={p['errors']}")
     (out_dir / "report.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines[:4]))
+    print(f"{len(problems)} page(s) with console errors / CSP violations.")
+    if args.strict and (problems or serious):
+        for p in problems:
+            print(f"  {p['role']}:{p['page']} CSP={p['csp']} errors={p['errors']}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
