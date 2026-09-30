@@ -385,7 +385,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   (clean sections, inline validation), project detail (header with status + primary action; tabs or
   sections: Aperçu / Livrables / Jalons / Équipe / Discussion / Activité; evaluation card),
   submit confirmation (checklist that is actually computed), delete confirm.
-- [ ] **P6.4 Student collaboration:** invitations (received/sent), invite flow (HTMX typeahead
+- [x] **P6.4 Student collaboration:** invitations (received/sent), invite flow (HTMX typeahead
   over allowed students; replaces select2), teammates board, notifications page (grouped by day,
   mark-read via HTMX), calendar (month grid + agenda list on mobile, .ics link).
 - [ ] **P6.5 Student assignments & modules:** assignments list (grouped by urgency), assignment
@@ -681,3 +681,8 @@ Everything else in this plan is decided by Claude.
   was wiped: seeded throwaway DB + runserver :8767) and `/tmp/claude-1000/shot_login.py URL OUT
   WIDTH THEME USER [menu]`. Known gap: feedback on older deliverable versions is only visible in
   the version history, not merged into the latest version's thread.
+- **2026-09-30** · P6.4 · Invitations, notifications (day groups, unread marker, mark-read),
+  teammates board, calendar (grid + agenda, mobile agenda only), invite picker: select when ≤30
+  candidates else HTMX search (`student:invite_candidates`, full-page fallback without JS).
+  `Project.invite_candidates()` model method — fixed a NOT IN (NULL) bug that emptied the list
+  whenever another team of the assignment had no collaborators.

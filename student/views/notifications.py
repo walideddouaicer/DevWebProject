@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Case, OuterRef, When
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from ensa_project_manager.pagination import paginate
@@ -37,6 +38,7 @@ def notifications(request):
     page_obj = paginate(request, notifications)
     context = {
         "notifications": page_obj,
+        "today": timezone.localdate(),
         "page_obj": page_obj,
     }
     return render(request, "student/notifications.html", context)

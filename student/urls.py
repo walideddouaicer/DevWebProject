@@ -24,6 +24,11 @@ urlpatterns = [
     path("projects/<int:project_id>/submit/", views.project_submit, name="project_submit"),
     path("projects/<int:project_id>/reopen/", views.project_reopen, name="project_reopen"),
     path(
+        "projects/<int:project_id>/invite-candidates/",
+        views.invite_candidates,
+        name="invite_candidates",
+    ),
+    path(
         "projects/<int:project_id>/collaborator/add/",
         views.add_collaborator,
         name="add_collaborator",

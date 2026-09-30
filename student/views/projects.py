@@ -11,7 +11,6 @@ from accounts.permissions import (
     member_projects,
     student_required,
 )
-from teacher.models import DirectStudentAssignment
 
 from ..forms import CommentForm, MakeProjectPublicForm, ProjectForm, QuickPublishForm
 from ..models import (
@@ -246,54 +245,16 @@ def project_detail(request, project_id):
             },
         }
 
-    # For project owners, get available students for collaboration
-    available_students = []
-    if is_owner and project.status == "in_progress":
-        # Base query: exclude owner and current collaborators
-        base_exclusions = Q(id=student.id) | Q(
-            id__in=project.collaborators.values_list("id", flat=True)
-        )
-
-        # Also exclude students who have pending invitations
-        invited_student_ids = CollaborationInvitation.objects.filter(
-            project=project, status="pending"
-        ).values_list("recipient_id", flat=True)
-        base_exclusions |= Q(id__in=invited_student_ids)
-
-        if project.is_assignment_project():
-            assignment = project.project_assignment
-
-            # For assignment projects, only show students from the same module
-            available_students = StudentProfile.objects.filter(
-                module_enrollments__module=assignment.module, module_enrollments__is_active=True
-            ).exclude(base_exclusions)
-
-            # For direct assignments, further filter to only assigned students
-            if assignment.assignment_type == "direct":
-                assigned_student_ids = DirectStudentAssignment.objects.filter(
-                    assignment=assignment
-                ).values_list("student_id", flat=True)
-                available_students = available_students.filter(id__in=assigned_student_ids)
-
-            # Exclude students already working on this assignment in other projects
-            students_in_other_projects = (
-                Project.objects.filter(project_assignment=assignment)
-                .exclude(id=project.id)
-                .values_list("student_id", flat=True)
-            )
-
-            collaborators_in_other_projects = (
-                Project.objects.filter(project_assignment=assignment)
-                .exclude(id=project.id)
-                .values_list("collaborators__id", flat=True)
-            )
-
-            available_students = available_students.exclude(
-                Q(id__in=students_in_other_projects) | Q(id__in=collaborators_in_other_projects)
-            )
-        else:
-            # For personal projects, show all students except exclusions
-            available_students = StudentProfile.objects.exclude(base_exclusions)
+    # Invite picker: a short list when few candidates, search (invite_candidates) otherwise
+    candidates = (
+        project.invite_candidates() if is_owner and project.status == "in_progress" else None
+    )
+    candidate_count = candidates.count() if candidates is not None else 0
+    available_students = (
+        candidates.order_by("user__last_name")[:30]
+        if candidates is not None and candidate_count <= 30
+        else []
+    )
 
     # For project owners, show pending invitations
     pending_invitations = []
@@ -340,6 +301,7 @@ def project_detail(request, project_id):
         "collaborators": project.collaborators.all(),
         "milestones": milestones,
         "available_students": available_students,
+        "candidate_count": candidate_count,
         "pending_invitations": pending_invitations,
         "is_owner": is_owner,
         "is_collaborator": is_collaborator,

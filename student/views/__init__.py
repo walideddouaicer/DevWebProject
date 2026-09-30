@@ -64,6 +64,7 @@ from .team import (  # noqa: F401
     add_collaborator,
     cancel_invitation,
     invitations_list,
+    invite_candidates,
     remove_collaborator,
     respond_to_invitation,
 )

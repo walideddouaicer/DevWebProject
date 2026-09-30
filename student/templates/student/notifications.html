@@ -1,280 +1,37 @@
-{% extends 'student/base.html' %}
-{% load static %}
-
-{% block title %}Centre de Notifications - ENSA Project Manager{% endblock %}
-
-{% block breadcrumb_items %}
-<span class="breadcrumb-separator">></span>
-<span>Notifications</span>
-{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/notifications.css' %}">
-
-
-{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Notifications{% endblock %}
+{% block content_class %}content-narrow{% endblock %}
 {% block content %}
-    <!-- Hero Section -->
-    <div class="notifications-hero">
-        <div class="hero-content">
-            <div class="hero-text">
-                <h1>🔔 Centre de Notifications</h1>
-                <p>Restez informé de toutes les activités importantes et ne manquez aucune opportunité</p>
-            </div>
-            <div class="hero-illustration">🔔</div>
+<header class="page-header">
+  <div><h1>Notifications</h1><p class="meta">{{ page_obj.paginator.count }} au total{% if unread_notifications_count %} · {{ unread_notifications_count }} non lue{{ unread_notifications_count|pluralize }}{% endif %}</p></div>
+  {% if unread_notifications_count %}
+  <div class="actions"><form method="post" action="{% url 'student:mark_all_notifications_read' %}">{% csrf_token %}<button class="btn" type="submit">{% icon "check" %} Tout marquer comme lu</button></form></div>
+  {% endif %}
+</header>
+{% if notifications %}
+<div class="card">
+  <ul class="file-list">
+    {% for n in notifications %}
+    {% ifchanged n.created_at.date %}<li class="nav-group-title notif-day">{% if n.created_at.date == today %}Aujourd'hui{% else %}{{ n.created_at|date:"l j F" }}{% endif %}</li>{% endifchanged %}
+    <li class="file-row{% if not n.is_read %} is-unread{% endif %}">
+      <span class="file-icon">{% if n.notification_type == "invitation" %}{% icon "user-plus" %}{% elif n.notification_type == "announcement" %}{% icon "megaphone" %}{% elif n.notification_type == "assignment_deadline" %}{% icon "clock" %}{% elif n.notification_type == "assignment_created" %}{% icon "clipboard-list" %}{% elif n.notification_type == "deliverable" %}{% icon "paperclip" %}{% else %}{% icon "bell" %}{% endif %}</span>
+      <div>
+        <div>{{ n.message }}</div>
+        <div class="file-meta"><span>{{ n.created_at|date:"H:i" }}</span>
+          {% if n.project_id %}<a href="{% url 'student:project_detail' n.project_id %}">Voir le projet</a>{% elif n.project_assignment_id %}<a href="{% url 'student:assignment_detail' n.project_assignment_id %}">Voir le devoir</a>{% endif %}
+          {% if n.notification_type == "invitation" and n.invitation_status == "pending" %}<a href="{% url 'student:invitations_list' %}">Répondre</a>{% endif %}
         </div>
-    </div>
-
-    <!-- Priority Alert -->
-    {% if notifications and notifications.0.is_read == False %}
-    <div class="priority-alert">
-        <div class="alert-icon">{{ unread_notifications_count|default:0 }}</div>
-        <div>
-            <h3 style="margin: 0 0 var(--space-2) 0; font-size: var(--text-xl);">📬 Nouvelles Notifications</h3>
-            <p style="margin: 0; opacity: 0.9;">
-                Vous avez {{ unread_notifications_count|default:0 }} notification{{ unread_notifications_count|default:0|pluralize }} 
-                non lue{{ unread_notifications_count|default:0|pluralize }} qui nécessitent votre attention.
-            </p>
-        </div>
-        <a href="#notifications" class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border-color: transparent;">
-            👁️ Consulter
-        </a>
-    </div>
-    {% endif %}
-
-    <!-- Statistics Overview -->
-    <div class="stats-overview">
-        <div class="stat-card">
-            <div class="stat-icon total">📊</div>
-            <div class="stat-number">{{ page_obj.paginator.count }}</div>
-            <div class="stat-label">Total Notifications</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon unread">📬</div>
-            <div class="stat-number">{{ unread_notifications_count|default:0 }}</div>
-            <div class="stat-label">Non Lues</div>
-        </div>
-    </div>
-
-    <!-- Actions Bar -->
-    {% if notifications %}
-    <div class="actions-bar">
-        <div class="actions-info">
-            <h3>⚡ Actions Rapides</h3>
-            <p>Gérez efficacement vos notifications et restez organisé</p>
-        </div>
-        <div class="action-buttons">
-            <form method="post" action="{% url 'student:mark_all_notifications_read' %}" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-primary">
-                    ✅ Marquer Tout comme Lu
-                </button>
-            </form>
-            <a href="{% url 'student:dashboard' %}" class="btn btn-secondary">
-                🏠 Retour au Tableau de Bord
-            </a>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Notifications Workspace -->
-    <div class="notifications-workspace" id="notifications">
-        <div class="workspace-header">
-            <h2 class="workspace-title">
-                📬 Vos Notifications
-            </h2>
-            {% if notifications %}
-            <span class="notifications-count">{{ page_obj.paginator.count }}</span>
-            {% endif %}
-        </div>
-        
-        {% if notifications %}
-            <div>
-                {% for notification in notifications %}
-                <div class="notification-item {% if not notification.is_read %}unread{% endif %}">
-                    <div class="notification-icon notification-{{ notification.notification_type }}">
-                        {% if notification.notification_type == 'invitation' %}👥
-                        {% elif notification.notification_type == 'project' %}📊
-                        {% elif notification.notification_type == 'feedback' %}💬
-                        {% else %}🔔{% endif %}
-                    </div>
-                    
-                    <div class="notification-content">
-                        <div class="notification-type">
-                            {% if notification.notification_type == 'invitation' %}👥
-                            {% elif notification.notification_type == 'project' %}📊
-                            {% elif notification.notification_type == 'feedback' %}💬
-                            {% else %}🔔{% endif %}
-                            {{ notification.get_notification_type_display }}
-                        </div>
-                        
-                        <div class="notification-message">
-                            {{ notification.message }}
-                        </div>
-                        
-                        <div class="notification-meta">
-                            <div class="time-indicator">
-                                🕒 {{ notification.created_at|timesince }}
-                            </div>
-                            {% if not notification.is_read %}
-                                <div class="new-badge">NOUVEAU</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="notification-actions">
-                        <!-- Action button based on notification type -->
-                        {% if notification.notification_type == 'invitation' and notification.invitation_status == 'accepted' %}
-                            <a href="{% url 'student:project_detail' notification.project.id %}" class="btn btn-primary btn-sm">
-                                👁️ Voir le Projet
-                            </a>
-                        {% elif notification.notification_type != 'invitation' and notification.project %}
-                            <a href="{% url 'student:project_detail' notification.project.id %}" class="btn btn-primary btn-sm">
-                                👁️ Voir le Projet
-                            </a>
-                        {% endif %}
-                        
-                        {% if not notification.is_read %}
-                        <form method="post" action="{% url 'student:mark_notification_read' notification.id %}" style="display: inline; margin: 0;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-secondary btn-sm">
-                                ✅ Marquer Lu
-                            </button>
-                        </form>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
+      </div>
+      {% if not n.is_read %}
+      <form method="post" action="{% url 'student:mark_notification_read' n.id %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">Marquer comme lu</button></form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
 {% include "components/pagination.html" with page=page_obj %}
-            </div>
-        {% else %}
-            <div class="empty-state">
-                <div class="empty-state-icon">🔔</div>
-                <h3>Aucune notification</h3>
-                <p>
-                    Les notifications apparaîtront ici lorsque vous recevrez des invitations de collaboration, 
-                    des mises à jour de projets ou des messages de vos enseignants. Restez connecté pour 
-                    ne rien manquer de vos activités académiques !
-                </p>
-                <a href="{% url 'student:dashboard' %}" class="btn btn-primary">
-                    🏠 Retour au Tableau de Bord
-                </a>
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Guide Section -->
-    <div class="guide-section">
-        <div class="guide-header">
-            <div class="guide-icon">💡</div>
-            <div class="guide-content">
-                <h3>Guide des Notifications</h3>
-                <p>Comprenez les différents types de notifications et optimisez votre workflow</p>
-            </div>
-        </div>
-        
-        <div class="guide-grid">
-            <div class="guide-item">
-                <div class="guide-item-title">
-                    👥 Invitations de Collaboration
-                </div>
-                <p class="guide-item-description">
-                    Notifications d'invitations de collaboration sur des projets. Répondez rapidement 
-                    pour saisir les meilleures opportunités de travail en équipe.
-                </p>
-            </div>
-            
-            <div class="guide-item">
-                <div class="guide-item-title">
-                    📊 Mises à jour de Projets
-                </div>
-                <p class="guide-item-description">
-                    Informations sur le statut de vos projets, validations, rejets et commentaires 
-                    des enseignants pour suivre votre progression.
-                </p>
-            </div>
-            
-            <div class="guide-item">
-                <div class="guide-item-title">
-                    💬 Feedback et Commentaires
-                </div>
-                <p class="guide-item-description">
-                    Commentaires et retours constructifs de vos enseignants pour améliorer 
-                    la qualité de vos projets et votre apprentissage.
-                </p>
-            </div>
-            
-            <div class="guide-item">
-                <div class="guide-item-title">
-                    🔔 Notifications Système
-                </div>
-                <p class="guide-item-description">
-                    Notifications importantes du système, annonces officielles et informations 
-                    administratives concernant votre parcours académique.
-                </p>
-            </div>
-        </div>
-        
-        <div class="tip-notice">
-            <div class="tip-icon">💡</div>
-            <div class="tip-text">
-                <strong>Astuce Pro:</strong> Utilisez "Marquer tout comme lu" pour nettoyer rapidement vos notifications 
-                et consultez régulièrement cet espace pour rester au courant des dernières activités.
-            </div>
-        </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-scroll to notifications if there's a hash
-            if (window.location.hash === '#notifications') {
-                document.getElementById('notifications').scrollIntoView({ 
-                    behavior: 'smooth' 
-                });
-            }
-            
-            // Add loading states to action buttons
-            const actionForms = document.querySelectorAll('form[action*="mark_notification"], form[action*="mark_all_notifications"]');
-            actionForms.forEach(form => {
-                form.addEventListener('submit', function() {
-                    const button = this.querySelector('button[type="submit"]');
-                    const originalText = button.textContent;
-                    button.textContent = '⏳ Traitement...';
-                    button.disabled = true;
-                    
-                    // Re-enable button after 3 seconds if form doesn't submit
-                    setTimeout(() => {
-                        button.textContent = originalText;
-                        button.disabled = false;
-                    }, 3000);
-                });
-            });
-            
-            // Animate notification items on scroll
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, observerOptions);
-            
-            // Initially hide and observe notification items
-            const notificationItems = document.querySelectorAll('.notification-item');
-            notificationItems.forEach((item, index) => {
-                item.style.opacity = '0';
-                item.style.transform = 'translateY(20px)';
-                item.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
-                observer.observe(item);
-            });
-        });
-    </script>
+{% else %}
+<div class="card empty">{% icon "inbox" %}<h3>Aucune notification</h3><p>Vous serez prévenu ici des invitations, commentaires, notes et échéances.</p></div>
+{% endif %}
 {% endblock %}

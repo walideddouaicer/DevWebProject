@@ -1,0 +1,11 @@
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Inviter dans « {{ project.title }} »{% endblock %}
+{% block content_class %}content-narrow{% endblock %}
+{% block content %}
+<header class="page-header"><div><nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="{% url 'student:project_detail' project.id %}">{{ project.title }}</a><span class="sep">/</span><span>Inviter</span></nav><h1>Inviter un étudiant</h1></div></header>
+<div class="card card-body stack">
+  <form method="get" class="cluster" role="search"><label class="visually-hidden" for="q">Nom ou numéro</label><input class="input grow" id="q" name="q" value="{{ query }}" placeholder="Nom, prénom ou numéro d'étudiant"><button class="btn" type="submit">Rechercher</button></form>
+  {% include "student/partials/invite_results.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% load ui %}
+<ul class="results" id="invite-results" aria-live="polite">
+  {% for s in results %}
+  <li class="file-row">
+    {% avatar s size="sm" %}
+    <div><div class="file-name">{{ s.get_full_name }}</div><div class="file-meta">{{ s.student_id }} · {{ s.get_year_of_study_display }}</div></div>
+    <form method="post" action="{% url 'student:add_collaborator' project.id %}">{% csrf_token %}<input type="hidden" name="collaborator" value="{{ s.id }}"><button class="btn btn-sm" type="submit">Inviter</button></form>
+  </li>
+  {% empty %}
+  {% if query|length >= 2 %}<li class="muted text-sm">Aucun étudiant disponible ne correspond à « {{ query }} ».</li>{% endif %}
+  {% endfor %}
+</ul>

@@ -508,6 +508,32 @@ class Project(models.Model):
         self.collaborators.remove(student)
         return True
 
+    def invite_candidates(self):
+        """Students the owner may invite right now (assignment rules applied)."""
+        excluded = {self.student_id}
+        excluded.update(self.collaborators.values_list("id", flat=True))
+        excluded.update(
+            self.invitations.filter(status="pending").values_list("recipient_id", flat=True)
+        )
+        candidates = StudentProfile.objects.select_related("user")
+        if self.is_assignment_project():
+            assignment = self.project_assignment
+            candidates = candidates.filter(
+                module_enrollments__module=assignment.module, module_enrollments__is_active=True
+            )
+            if assignment.assignment_type == "direct":
+                candidates = candidates.filter(direct_assignments__assignment=assignment)
+            others = Project.objects.filter(project_assignment=assignment).exclude(pk=self.pk)
+            excluded.update(others.values_list("student_id", flat=True))
+            # isnull filter: a project without collaborators yields NULL, and NOT IN (…, NULL)
+            # would silently exclude everyone.
+            excluded.update(
+                others.filter(collaborators__isnull=False).values_list(
+                    "collaborators__id", flat=True
+                )
+            )
+        return candidates.exclude(id__in=excluded).distinct()
+
     # ------------------------------------------------------------------ workflow
     # Every status change goes through these methods (PLAN P1.3). They check that the
     # transition is legal, record activity, keep DirectStudentAssignment in sync for the

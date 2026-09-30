@@ -177,7 +177,16 @@
         {% endfor %}
       </div>
       {% endif %}
-      {% if actions.can_invite_collaborators and available_students %}
+      {% if actions.can_invite_collaborators and candidate_count > 30 %}
+      <div class="stack stack-sm">
+        <label class="text-sm" for="invite-search"><strong>Inviter un étudiant</strong></label>
+        <form method="get" action="{% url 'student:invite_candidates' project.id %}" role="search">
+          <input class="input" id="invite-search" type="search" name="q" placeholder="Nom ou numéro d'étudiant" autocomplete="off"
+                 hx-get="{% url 'student:invite_candidates' project.id %}" hx-trigger="input changed delay:250ms, search" hx-target="#invite-results" hx-swap="outerHTML">
+        </form>
+        <ul class="results" id="invite-results"></ul>
+      </div>
+      {% elif actions.can_invite_collaborators and available_students %}
       <form method="post" action="{% url 'student:add_collaborator' project.id %}" class="stack stack-sm">
         {% csrf_token %}
         <label class="text-sm" for="invite-student"><strong>Inviter un étudiant</strong></label>

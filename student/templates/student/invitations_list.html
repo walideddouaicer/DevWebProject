@@ -1,288 +1,46 @@
-{% extends 'student/base.html' %}
-{% load static %}
-
-{% block title %}Invitations de Collaboration - ENSA Project Manager{% endblock %}
-
-{% block breadcrumb_items %}
-<span class="breadcrumb-separator">></span>
-<span>Invitations de Collaboration</span>
-{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/invitations_list.css' %}">
-<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
-
-{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Invitations{% endblock %}
+{% block content_class %}content-narrow{% endblock %}
 {% block content %}
-    <!-- Hero Section -->
-    <div class="invitations-hero">
-        <div class="hero-content">
-            <div class="hero-text">
-                <h1>
-                    🤝 Centre de Collaboration
-                </h1>
-                <p style="margin: 0; opacity: 0.9; font-size: var(--text-xl); font-weight: 400;">
-                    Gérez vos invitations et développez vos partenariats académiques
-                </p>
-                
-                <div class="hero-stats">
-                    <div class="hero-stat">
-                        <div class="hero-stat-number">{{ received_invitations|length }}</div>
-                        <div class="hero-stat-label">Reçues</div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="hero-stat-number">{{ sent_invitations|length }}</div>
-                        <div class="hero-stat-label">Envoyées</div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="hero-stat-number">{{ accepted_collaborations|default:0 }}</div>
-                        <div class="hero-stat-label">Actives</div>
-                    </div>
-                </div>
-            </div>
-            <div class="hero-illustration">👥</div>
-        </div>
-    </div>
-
-    <!-- Priority Alert -->
-    {% if received_invitations %}
-    <div class="priority-banner">
-        <div class="priority-icon">{{ received_invitations|length }}</div>
-        <div>
-            <h3 style="margin: 0 0 var(--space-2) 0; font-size: var(--text-xl);">⚠️ Action Requise</h3>
-            <p style="margin: 0; opacity: 0.9;">
-                Vous avez {{ received_invitations|length }} invitation{{ received_invitations|length|pluralize }} 
-                en attente de réponse. Consultez-les pour ne pas manquer d'opportunités de collaboration.
-            </p>
-        </div>
-        <a href="#received" class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border-color: transparent;">
-            👁️ Voir Maintenant
-        </a>
-    </div>
-    {% endif %}
-
-    <!-- Invitations Workspace -->
-    <div class="invitations-workspace">
-        <!-- Received Invitations -->
-        <div class="section-card" id="received">
-            <div class="section-header">
-                <h2 class="section-title">
-                    📥 Invitations Reçues
-                </h2>
-                <span class="section-count">{{ received_invitations|length }}</span>
-            </div>
-            
-            {% if received_invitations %}
-                <div>
-                    {% for invitation in received_invitations %}
-                    <div class="invitation-item">
-                        <div class="invitation-header">
-                            <div style="flex: 1;">
-                                <h4 class="project-title">{{ invitation.project.title }}</h4>
-                                <div class="invitation-meta">
-                                    <span class="meta-icon">📂</span>
-                                    <span>{{ invitation.project.get_project_type_display }}</span>
-                                    {% if invitation.project.module %}
-                                    <span class="meta-icon">📚</span>
-                                    <span>{{ invitation.project.module.code }}</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="invitation-date">
-                                📅 {{ invitation.created_at|date:"d/m/Y" }}
-                            </div>
-                        </div>
-                        
-                        <div class="sender-info">
-                            <div class="sender-avatar">
-                                {{ invitation.sender.user.first_name|first|default:invitation.sender.user.username|first|upper }}
-                            </div>
-                            <div class="sender-details">
-                                <div class="sender-name">
-                                    {{ invitation.sender.user.get_full_name|default:invitation.sender.user.username }}
-                                </div>
-                                <div class="sender-meta">
-                                    <span>🆔 {{ invitation.sender.student_id }}</span>
-                                    <span>🏢 {{ invitation.sender.department }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {% if invitation.project.description %}
-                        <div class="project-description">
-                            <strong>📝 Description du projet:</strong><br>
-                            {{ invitation.project.description|truncatewords:20 }}
-                        </div>
-                        {% endif %}
-                        
-                        <div class="invitation-actions">
-                            <form method="post" action="{% url 'student:respond_to_invitation' invitation.id 'accept' %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-success">Accepter</button>
-                            </form>
-                            <form method="post" action="{% url 'student:respond_to_invitation' invitation.id 'reject' %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-secondary">Refuser</button>
-                            </form>
-                            <a href="{% url 'student:project_detail' invitation.project.id %}" class="btn btn-ghost">
-                                👁️ Voir le Projet
-                            </a>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-state-icon">📥</div>
-                    <h3>Aucune invitation reçue</h3>
-                    <p>
-                        Vous n'avez actuellement aucune invitation de collaboration en attente.
-                        Les invitations apparaîtront ici lorsque d'autres étudiants vous proposeront 
-                        de collaborer sur leurs projets.
-                    </p>
-                </div>
-            {% endif %}
-        </div>
-        
-        <!-- Sent Invitations -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2 class="section-title">
-                    📤 Invitations Envoyées
-                </h2>
-                <span class="section-count">{{ sent_invitations|length }}</span>
-            </div>
-            
-            {% if sent_invitations %}
-                <div>
-                    {% for invitation in sent_invitations %}
-                    <div class="invitation-item">
-                        <div class="invitation-header">
-                            <div style="flex: 1;">
-                                <h4 class="project-title">{{ invitation.project.title }}</h4>
-                                <div class="invitation-meta">
-                                    <span class="meta-icon">📂</span>
-                                    <span>{{ invitation.project.get_project_type_display }}</span>
-                                    {% if invitation.project.module %}
-                                    <span class="meta-icon">📚</span>
-                                    <span>{{ invitation.project.module.code }}</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="invitation-date">
-                                📅 {{ invitation.created_at|date:"d/m/Y" }}
-                            </div>
-                        </div>
-                        
-                        <div class="sender-info">
-                            <div class="sender-avatar">
-                                {{ invitation.recipient.user.first_name|first|default:invitation.recipient.user.username|first|upper }}
-                            </div>
-                            <div class="sender-details">
-                                <div class="sender-name">
-                                    {{ invitation.recipient.user.get_full_name|default:invitation.recipient.user.username }}
-                                </div>
-                                <div class="sender-meta">
-                                    <span>🆔 {{ invitation.recipient.student_id }}</span>
-                                    <span>🏢 {{ invitation.recipient.department }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="status-display status-{{ invitation.status }}">
-                            <span>
-                                {% if invitation.status == 'pending' %}⏳
-                                {% elif invitation.status == 'accepted' %}✅
-                                {% elif invitation.status == 'rejected' %}❌
-                                {% endif %}
-                                {{ invitation.get_status_display }}
-                            </span>
-                            {% if invitation.status == 'pending' %}
-                                <small>En attente de réponse...</small>
-                            {% endif %}
-                        </div>
-                        
-                        {% if invitation.status == 'pending' %}
-                        <div class="invitation-actions">
-                            <form method="post" action="{% url 'student:cancel_invitation' invitation.id %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger btn-sm">Annuler l'invitation</button>
-                            </form>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-state-icon">📤</div>
-                    <h3>Aucune invitation envoyée</h3>
-                    <p>
-                        Vous n'avez envoyé aucune invitation de collaboration.
-                        Créez un projet et invitez des collaborateurs depuis la page 
-                        de détails du projet.
-                    </p>
-                    <a href="{% url 'student:project_create' %}" class="btn btn-primary">
-                        ➕ Créer un Projet
-                    </a>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Guide Section -->
-    <div class="guide-section">
-        <div class="guide-header">
-            <div class="guide-icon">💡</div>
-            <div class="guide-content">
-                <h3>Guide de Collaboration</h3>
-                <p style="margin: 0; color: var(--text-secondary); font-size: var(--text-lg);">
-                    Apprenez à maximiser vos collaborations académiques
-                </p>
-            </div>
-        </div>
-        
-        <div class="guide-grid">
-            <div class="guide-item">
-                <div class="guide-item-title">
-                    📥 Recevoir des invitations
-                </div>
-                <p style="margin: 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6;">
-                    Les autres étudiants peuvent vous inviter à collaborer sur leurs projets. 
-                    Répondez rapidement pour saisir les meilleures opportunités.
-                </p>
-            </div>
-            
-            <div class="guide-item">
-                <div class="guide-item-title">
-                    📤 Envoyer des invitations
-                </div>
-                <p style="margin: 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6;">
-                    Depuis votre projet, ajoutez des collaborateurs pour enrichir votre équipe 
-                    et bénéficier de compétences complémentaires.
-                </p>
-            </div>
-            
-            <div class="guide-item">
-                <div class="guide-item-title">
-                    🤝 Collaboration active
-                </div>
-                <p style="margin: 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6;">
-                    Une fois acceptée, participez activement au projet comme un membre 
-                    à part entière de l'équipe de développement.
-                </p>
-            </div>
-            
-            <div class="guide-item">
-                <div class="guide-item-title">
-                    ⚡ Réactivité recommandée
-                </div>
-                <p style="margin: 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6;">
-                    Répondez dans les 48h aux invitations pour maintenir une dynamique 
-                    positive et ne pas retarder les projets en cours.
-                </p>
-            </div>
-        </div>
-    </div>
+<header class="page-header"><div><h1>Invitations</h1><p class="meta">Rejoindre une équipe ou suivre vos invitations envoyées.</p></div></header>
+<section class="stack">
+  <h2 class="section-title">Reçues <span class="count">{{ received_invitations|length }}</span></h2>
+  {% if received_invitations %}
+  <div class="card"><ul class="file-list">
+    {% for inv in received_invitations %}
+    <li class="file-row">
+      {% avatar inv.sender %}
+      <div>
+        <div class="file-name">{{ inv.project.title }}</div>
+        <div class="file-meta"><span>de {{ inv.sender.get_full_name }}</span>{% if inv.project.project_assignment %}<span>{{ inv.project.module.code }} · {{ inv.project.project_assignment.title }}</span>{% endif %}<span>{{ inv.created_at|date:"d/m/Y" }}</span></div>
+        {% if inv.message %}<p class="text-sm">« {{ inv.message }} »</p>{% endif %}
+      </div>
+      <div class="cluster cluster-sm">
+        <form method="post" action="{% url 'student:respond_to_invitation' inv.id 'accept' %}">{% csrf_token %}<button class="btn btn-primary btn-sm" type="submit">Accepter</button></form>
+        <form method="post" action="{% url 'student:respond_to_invitation' inv.id 'reject' %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">Refuser</button></form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul></div>
+  {% else %}
+  <div class="card empty">{% icon "mail" %}<h3>Aucune invitation reçue</h3><p>Pour un devoir en équipe, signalez-vous sur le tableau « cherche une équipe » du devoir.</p><a class="btn btn-sm" href="{% url 'student:assignments_dashboard' %}">Mes devoirs</a></div>
+  {% endif %}
+</section>
+<section class="stack">
+  <h2 class="section-title">Envoyées <span class="count">{{ sent_invitations|length }}</span></h2>
+  {% if sent_invitations %}
+  <div class="card"><ul class="file-list">
+    {% for inv in sent_invitations %}
+    <li class="file-row">
+      {% avatar inv.recipient %}
+      <div><div class="file-name">{{ inv.recipient.get_full_name }}</div><div class="file-meta"><span>{{ inv.project.title }}</span><span>envoyée le {{ inv.created_at|date:"d/m/Y" }}</span></div></div>
+      <form method="post" action="{% url 'student:cancel_invitation' inv.id %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">Annuler</button></form>
+    </li>
+    {% endfor %}
+  </ul></div>
+  {% else %}
+  <p class="muted">Aucune invitation en attente de réponse.</p>
+  {% endif %}
+</section>
 {% endblock %}

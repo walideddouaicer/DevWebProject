@@ -45,7 +45,7 @@
 .calendar td { height: 104px; vertical-align: top; padding: var(--s-1) var(--s-2); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .calendar td:first-child { border-left: 0; }
 .calendar .day-num { font-size: var(--text-sm); color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.calendar .is-other-month .day-num { color: var(--ink-3); opacity: .6; }
+.calendar .is-other-month .day-num { color: var(--ink-3); }
 .calendar .is-today .day-num { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50%;
   background: var(--accent); color: var(--accent-ink); font-weight: 700; }
 .calendar .event { display: block; margin-top: 2px; padding: 1px 6px; border-radius: var(--r-sm); font-size: var(--text-xs);
@@ -62,3 +62,17 @@
 .results a:hover, .results a[aria-selected="true"] { background: var(--sunken); }
 .results .result-sub { grid-column: 1; color: var(--ink-2); font-size: var(--text-sm); }
 .results mark { background: var(--warn-soft); color: inherit; border-radius: 2px; padding: 0 1px; }
+.file-row.is-unread { box-shadow: inset 3px 0 0 var(--accent); background: color-mix(in oklab, var(--accent-soft) 35%, transparent); }
+.file-list .notif-day { list-style: none; padding: var(--s-4) var(--s-4) var(--s-1); }
+.cal-nav { display: flex; align-items: center; gap: var(--s-2); }
+.cal-legend { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-4); font-size: var(--text-sm); color: var(--ink-2); }
+.cal-legend .event { display: inline-block; padding: 1px 6px; border-radius: var(--r-sm); font-size: var(--text-xs); }
+.agenda { list-style: none; padding: 0; }
+.agenda li { display: grid; grid-template-columns: 64px 1fr; gap: var(--s-3); padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); }
+.agenda li:last-child { border-bottom: 0; }
+.agenda .day { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.3; }
+.agenda .day strong { display: block; font-size: var(--text-lg); color: var(--ink); }
+.calendar .event.is-end, .cal-legend .event.is-end { background: var(--sunken); color: var(--ink-2); }
+.cal-legend .event.is-deadline { background: var(--danger-soft); color: var(--danger); }
+.cal-legend .event.is-selection { background: var(--warn-soft); color: var(--warn); }
+.cal-legend .event.is-milestone { background: var(--ok-soft); color: var(--ok); }

@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from accounts.permissions import get_project_for_owner, student_required
 from teacher.models import DirectStudentAssignment
 
 from ..models import (
@@ -195,10 +196,12 @@ def invitations_list(request):
     # Get received invitations
     received_invitations = CollaborationInvitation.objects.filter(
         recipient=student, status="pending"
-    )
+    ).select_related("project__project_assignment", "project__module", "sender__user")
 
     # Get sent invitations
-    sent_invitations = CollaborationInvitation.objects.filter(sender=student, status="pending")
+    sent_invitations = CollaborationInvitation.objects.filter(
+        sender=student, status="pending"
+    ).select_related("project", "recipient__user")
 
     context = {
         "received_invitations": received_invitations,
@@ -366,3 +369,27 @@ def cancel_invitation(request, invitation_id):
 
     messages.success(request, f"L'invitation envoyée à {recipient_name} a été annulée.")
     return redirect("student:project_detail", project_id=project_id)
+
+
+@student_required
+def invite_candidates(request, project_id):
+    """Search students the owner can invite (HTMX partial; full page without JS)."""
+    project = get_project_for_owner(request.student, project_id)
+    query = request.GET.get("q", "").strip()
+    results = []
+    if project.status == "in_progress" and len(query) >= 2:
+        results = (
+            project.invite_candidates()
+            .filter(
+                Q(user__first_name__icontains=query)
+                | Q(user__last_name__icontains=query)
+                | Q(user__username__icontains=query)
+                | Q(student_id__icontains=query)
+            )
+            .order_by("user__last_name")[:8]
+        )
+    context = {"project": project, "results": results, "query": query}
+    template = (
+        "student/partials/invite_results.html" if request.htmx else "student/invite_search.html"
+    )
+    return render(request, template, context)
