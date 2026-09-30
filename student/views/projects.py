@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -21,7 +20,6 @@ from ..models import (
     ProjectComment,
     ProjectDeliverable,
     ProjectMilestone,
-    StudentProfile,
 )
 
 
@@ -123,9 +121,9 @@ def dashboard(request):
     return render(request, "student/dashboard.html", context)
 
 
-@login_required
+@student_required
 def project_create(request):
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
 
     if request.method == "POST":
         form = ProjectForm(request.POST, current_student=student)
@@ -156,9 +154,9 @@ def project_create(request):
     return render(request, "student/project_form.html", context)
 
 
-@login_required
+@student_required
 def project_edit(request, project_id):
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     project = get_object_or_404(Project, id=project_id, student=student)
 
     # dont allow editing if the project is already validated
@@ -180,10 +178,10 @@ def project_edit(request, project_id):
     return render(request, "student/project_form.html", context)
 
 
-@login_required
+@student_required
 def project_detail(request, project_id):
     """Enhanced project detail view with assignment context and team info"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
 
     # Get the project with related data
     project = get_object_or_404(
@@ -315,10 +313,10 @@ def project_detail(request, project_id):
     return render(request, "student/project_detail.html", context)
 
 
-@login_required
+@student_required
 def project_delete(request, project_id):
     """View to delete a project"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     project = get_object_or_404(Project, id=project_id, student=student)
 
     # Only allow deletion of projects that are in progress (not submitted, validated, or rejected)
@@ -358,9 +356,9 @@ def project_delete(request, project_id):
     return render(request, "student/project_delete_confirm.html", context)
 
 
-@login_required
+@student_required
 def add_comment(request, project_id):
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     project = get_project_for_member(student, project_id)
 
     if request.method == "POST":
@@ -391,10 +389,10 @@ def add_comment(request, project_id):
     return redirect("student:project_detail", project_id=project.id)
 
 
-@login_required
+@student_required
 def make_project_public(request, project_id):
     """Student makes their project public (instant, no approval needed)"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     project = get_object_or_404(Project, id=project_id, student=student)
 
     if not project.can_be_made_public():
@@ -468,10 +466,10 @@ def make_project_public(request, project_id):
     return render(request, "student/make_project_public.html", context)
 
 
-@login_required
+@student_required
 def make_project_private(request, project_id):
     """Student removes their project from public showcase"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     project = get_object_or_404(Project, id=project_id, student=student, is_public=True)
 
     if request.method == "POST":
@@ -493,10 +491,10 @@ def make_project_private(request, project_id):
     return render(request, "student/make_project_private_confirm.html", context)
 
 
-@login_required
+@student_required
 def project_submit_confirmation(request, project_id):
     """Show confirmation page before project submission"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     project = get_project_for_member(student, project_id)
 
     # Only the owner can submit

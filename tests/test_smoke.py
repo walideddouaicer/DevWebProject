@@ -46,6 +46,20 @@ ROLES = {
 # (role, url name) -> "5xx" or "mutates". Bug ids refer to PLAN.md §3.
 KNOWN_FAILURES = {}
 
+# Routes an outsider may legitimately GET with someone else's id (e.g. a module they can join).
+OUTSIDER_ALLOWED = set()
+
+# Legacy RedirectView aliases: they redirect to the canonical route, which does the role check.
+ALIASES = {
+    "administrator:users_overview",
+    "administrator:students_list",
+    "administrator:teachers_list",
+}
+
+# Views shared across roles on purpose (the view checks access to the object itself;
+# private files answer 404 to everyone else, anonymous users included).
+SHARED = {"student:deliverable_download"}
+
 # URL names never requested (logout ends the session; Django admin is out of scope).
 SKIP = {"logout"}
 
@@ -139,7 +153,11 @@ class SmokeTest(TestCase):
         )
         cls.kwargs["notification_id"] = Notification.objects.filter(recipient=youssef).last().id
 
-    def test_every_url_every_role(self):
+    def crawl(self):
+        """GET every route as every role, once per class: (failures, {(role, name): response})."""
+        cache = type(self).__dict__.get("_crawl")
+        if cache is not None:
+            return cache
         routes = []
         for name, params in iter_url_names():
             if name in SKIP:
@@ -149,7 +167,7 @@ class SmokeTest(TestCase):
             values = {**self.kwargs, **self.overrides.get(name, {})}
             routes.append((name, reverse(name, kwargs={p: values[p] for p in params})))
 
-        failures = {}
+        failures, responses = {}, {}
         self.client.raise_request_exception = False
         for role, username in ROLES.items():
             self.client.logout()
@@ -160,12 +178,60 @@ class SmokeTest(TestCase):
                     before = fingerprint()
                     with transaction.atomic():  # savepoint: a DB error must not poison `after`
                         response = self.client.get(path)
+                    responses[(role, name)] = (response.status_code, response.get("Location", ""))
                     if response.status_code >= 500:
                         failures[(role, name)] = "5xx"
                     elif before != fingerprint():
                         failures[(role, name)] = "mutates"
                     transaction.set_rollback(True)
+        type(self)._crawl = (failures, responses)
+        return failures, responses
 
+    def test_permission_matrix(self):
+        """Role areas: anon → login, wrong role → 403; outsiders never get a 200."""
+        _, responses = self.crawl()
+        area_role = {
+            "student": {"owner", "student"},
+            "teacher": {"teacher", "teacher_other"},
+            "administrator": {"admin"},
+        }
+        problems = []
+        for (role, name), (status, location) in sorted(responses.items()):
+            area = name.split(":")[0]
+            if area not in area_role or status == 405 or name in ALIASES:
+                continue
+            if name in SHARED:
+                continue
+            if role == "anon":
+                if status != 302 or "/login/" not in location:
+                    problems.append(f"{role:14} {name}: {status} (expected login redirect)")
+            elif role not in area_role[area]:
+                if status != 403:
+                    problems.append(f"{role:14} {name}: {status} (expected 403)")
+        # Outsiders on resources that belong to someone else
+        scoped = {
+            "student": ("project_id", "milestone_id", "deliverable_id", "collaborator_id"),
+            "teacher_other": (
+                "project_id",
+                "module_id",
+                "assignment_id",
+                "option_id",
+                "deliverable_id",
+                "student_id",
+            ),
+        }
+        for role, params in scoped.items():
+            area = "student" if role == "student" else "teacher"
+            for name, route_params in iter_url_names():
+                if not name.startswith(f"{area}:") or not set(route_params) & set(params):
+                    continue
+                status, _ = responses.get((role, name), (None, ""))
+                if status == 200 and name not in OUTSIDER_ALLOWED:
+                    problems.append(f"{role:14} {name}: 200 on someone else's resource")
+        self.assertFalse(problems, "\n" + "\n".join(problems))
+
+    def test_every_url_every_role(self):
+        failures, _ = self.crawl()
         new = {k: v for k, v in failures.items() if KNOWN_FAILURES.get(k) != v}
         fixed = {k: v for k, v in KNOWN_FAILURES.items() if failures.get(k) != v}
         message = []

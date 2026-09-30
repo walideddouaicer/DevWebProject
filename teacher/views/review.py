@@ -1,7 +1,6 @@
 import logging
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
@@ -24,7 +23,6 @@ from ..forms import EvaluationForm, RejectionForm, RevisionRequestForm, parse_ru
 from ..models import (
     Module,
     ModuleAssignment,
-    TeacherProfile,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,14 +35,10 @@ DEFAULT_EVALUATION_CRITERIA = [
 ]
 
 
-@login_required
+@teacher_required
 def student_projects(request):
     """View all student projects from teacher's modules"""
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
+    teacher = request.teacher
 
     # Get all modules assigned to this teacher
     teacher_modules = ModuleAssignment.objects.filter(teacher=teacher, is_active=True).values_list(
@@ -101,14 +95,10 @@ def student_projects(request):
     return render(request, "teacher/student_projects.html", context)
 
 
-@login_required
+@teacher_required
 def project_review(request, project_id):
     """Detailed view for teacher to review a student project"""
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
+    teacher = request.teacher
 
     # Get teacher's modules
     teacher_modules = ModuleAssignment.objects.filter(teacher=teacher, is_active=True).values_list(
@@ -243,18 +233,14 @@ def add_teacher_comment(request, project_id):
     return redirect("teacher:project_review", project_id=project.id)
 
 
-@login_required
+@teacher_required
 def grade_project(request, project_id):
     """Grade a project: overall score /20, appreciation, per-criterion rubric."""
     from student.models import ProjectActivity
 
     from ..models import EvaluationCriterion, ProjectEvaluation
 
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
+    teacher = request.teacher
 
     teacher_modules = ModuleAssignment.objects.filter(teacher=teacher, is_active=True).values_list(
         "module", flat=True

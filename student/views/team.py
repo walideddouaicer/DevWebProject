@@ -1,7 +1,6 @@
 import logging
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -22,10 +21,10 @@ from ..utils import send_invitation_email
 logger = logging.getLogger(__name__)
 
 
-@login_required
+@student_required
 def add_collaborator(request, project_id):
     """ENHANCED: Add collaborator with full assignment constraint checking"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     project = get_object_or_404(Project, id=project_id, student=student)
 
     # Only the project owner can add collaborators
@@ -188,10 +187,10 @@ def add_collaborator(request, project_id):
     return redirect("student:project_detail", project_id=project.id)
 
 
-@login_required
+@student_required
 def invitations_list(request):
     """View to display pending collaboration invitations"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
 
     # Get received invitations
     received_invitations = CollaborationInvitation.objects.filter(
@@ -211,11 +210,11 @@ def invitations_list(request):
     return render(request, "student/invitations_list.html", context)
 
 
-@login_required
+@student_required
 @require_POST
 def respond_to_invitation(request, invitation_id, response):
     """ENHANCED: Accept/reject invitation with assignment constraint validation"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     invitation = get_object_or_404(
         CollaborationInvitation, id=invitation_id, recipient=student, status="pending"
     )
@@ -320,10 +319,10 @@ def respond_to_invitation(request, invitation_id, response):
     return redirect("student:invitations_list")
 
 
-@login_required
+@student_required
 @require_POST
 def remove_collaborator(request, project_id, collaborator_id):
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     project = get_object_or_404(Project, id=project_id, student=student)
 
     # Only project owner can remove collaborators
@@ -353,10 +352,10 @@ def remove_collaborator(request, project_id, collaborator_id):
     return redirect("student:project_detail", project_id=project.id)
 
 
-@login_required
+@student_required
 @require_POST
 def cancel_invitation(request, invitation_id):
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     invitation = get_object_or_404(
         CollaborationInvitation, id=invitation_id, sender=student, status="pending"
     )

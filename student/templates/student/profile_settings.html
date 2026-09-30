@@ -40,7 +40,7 @@
 {% else %}
 <section class="card card-body stack">
   <dl class="dl"><dt>Nom d'utilisateur</dt><dd class="mono">{{ user.username }}</dd><dt>E-mail</dt><dd>{{ user.email|default:"—" }}</dd><dt>Membre depuis</dt><dd>{{ user.date_joined|date:"j F Y" }}</dd></dl>
-  <div class="cluster"><a class="btn" href="{% url 'student:password_change' %}">{% icon "key-round" %} Changer de mot de passe</a><a class="btn btn-ghost" href="{% url 'student:profile_edit' %}">Modifier l'e-mail</a></div>
+  <div class="cluster"><a class="btn" href="{% url 'password_change' %}">{% icon "key-round" %} Changer de mot de passe</a><a class="btn btn-ghost" href="{% url 'student:profile_edit' %}">Modifier l'e-mail</a></div>
 </section>
 {% endif %}
 {% endblock %}

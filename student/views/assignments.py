@@ -19,18 +19,8 @@ from ..models import (
     CollaborationInvitation,
     Project,
     ProjectActivity,
-    StudentProfile,
     TeammateRequest,
 )
-
-
-def get_student_or_error(request):
-    """Helper function to get student profile with consistent error handling"""
-    try:
-        return StudentProfile.objects.get(user=request.user)
-    except StudentProfile.DoesNotExist:
-        messages.error(request, "Profil étudiant non trouvé.")
-        return None
 
 
 def check_module_access(student, assignment):
@@ -44,9 +34,7 @@ def requires_module_access(view_func):
     @student_required
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        student = get_student_or_error(request)
-        if not student:
-            return redirect("login")
+        student = request.student
 
         # Extract assignment_id from kwargs
         assignment_id = kwargs.get("assignment_id")
@@ -67,9 +55,7 @@ def requires_module_access(view_func):
 @student_required
 def assignments_dashboard(request):
     """Enhanced assignments dashboard with direct project creation links"""
-    student = get_student_or_error(request)
-    if not student:
-        return redirect("login")
+    student = request.student
 
     # Get student's modules with optimized query
     enrolled_module_ids = list(
@@ -243,9 +229,7 @@ def assignments_dashboard(request):
 @requires_module_access
 def assignment_detail(request, assignment_id):
     """View detailed information about an assignment"""
-    student = get_student_or_error(request)
-    if not student:
-        return redirect("login")
+    student = request.student
 
     assignment = get_object_or_404(
         ProjectAssignment.objects.select_related("module", "teacher__user"),
@@ -318,9 +302,7 @@ def assignment_detail(request, assignment_id):
 @transaction.atomic
 def create_assignment_project_direct(request, assignment_id):
     """Create project directly from assignment - NEW SIMPLIFIED VERSION"""
-    student = get_student_or_error(request)
-    if not student:
-        return redirect("login")
+    student = request.student
 
     # Get assignment and verify access
     assignment = get_object_or_404(
@@ -613,9 +595,7 @@ def _students_involved_in_assignment(assignment):
 @student_required
 def teammates_board(request, assignment_id):
     """Board where teamless students flag themselves as looking for a team."""
-    student = get_student_or_error(request)
-    if not student:
-        return redirect("login")
+    student = request.student
 
     assignment = get_object_or_404(
         ProjectAssignment.objects.select_related("module"),
@@ -686,9 +666,7 @@ def toggle_teammate_request(request, assignment_id):
     if request.method != "POST":
         return redirect("student:teammates_board", assignment_id=assignment_id)
 
-    student = get_student_or_error(request)
-    if not student:
-        return redirect("login")
+    student = request.student
 
     assignment = get_object_or_404(
         ProjectAssignment,
@@ -729,9 +707,7 @@ def toggle_teammate_request(request, assignment_id):
 @student_required
 def select_project_option_direct(request, assignment_id):
     """Standalone option selection view for choice-based assignments"""
-    student = get_student_or_error(request)
-    if not student:
-        return redirect("login")
+    student = request.student
 
     # Get assignment and verify access
     assignment = get_object_or_404(

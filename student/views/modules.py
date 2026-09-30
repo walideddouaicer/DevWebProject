@@ -1,22 +1,20 @@
 import logging
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
+from accounts.permissions import student_required
+
 from ..forms import JoinModuleForm
-from ..models import (
-    StudentProfile,
-)
 
 logger = logging.getLogger(__name__)
 
 
-@login_required
+@student_required
 def join_module(request):
     """Allow students to join a module using a code"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
 
     if request.method == "POST":
         form = JoinModuleForm(request.POST)
@@ -64,10 +62,10 @@ def join_module(request):
     return redirect("student:my_modules")
 
 
-@login_required
+@student_required
 def my_modules(request):
     """Display student's enrolled modules"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
 
     # Import here to avoid circular imports
     from teacher.models import ModuleEnrollment
@@ -88,11 +86,11 @@ def my_modules(request):
     return render(request, "student/my_modules.html", context)
 
 
-@login_required
+@student_required
 @require_POST
 def leave_module(request, module_id):
     """Allow student to leave a module"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
 
     # Import here to avoid circular imports
     from teacher.models import Module, ModuleEnrollment

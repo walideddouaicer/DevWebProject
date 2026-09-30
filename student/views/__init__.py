@@ -7,7 +7,6 @@ from .assignments import (  # noqa: F401
     check_module_access,
     create_assignment_project_direct,
     get_existing_assignment_project,
-    get_student_or_error,
     handle_choice_based_assignment_project,
     handle_direct_assignment_project,
     requires_module_access,

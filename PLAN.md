@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P6 done → P7 next (hardening, QA, docs)**
+- Phase: **P7.1 in progress** — permission matrix done; next: coverage 79% → ≥80% (team, milestones, student modules, accounts views, admin modules/projects, teacher assignments), malformed imports, reminder/digest commands.
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (232 tests)
+- Last green `make check`: 2026-09-30 (234 tests)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -752,3 +752,12 @@ Everything else in this plan is decided by Claude.
   `components/*` and lost the cascade (`.app` stayed grid in print) — now sorted by file name;
   verified in Chromium print emulation. Kept on purpose: `static/css/errors.css` (standalone
   error pages), `ui/navigation.py` path prefixes (active-link matching).
+- **2026-09-30** · P7.1 (part 1) · `test_permission_matrix` in tests/test_smoke.py reuses the
+  crawl (cached per class): anon → login redirect, wrong role → 403, outsider student /
+  outsider teacher never get 200 on someone else's project/module/assignment. Found ~125
+  inconsistencies (404s / redirects instead of 403, no leaks): 45 student+teacher views moved
+  from `login_required` + manual profile lookup to `@student_required` / `@teacher_required`
+  (`request.student` / `request.teacher`); `get_student_or_error` / `get_teacher_or_error`
+  deleted. Duplicate `student:password_change(_done)` routes removed (settings links to the
+  global one). Allowlisted: 3 legacy admin RedirectView aliases; `student:deliverable_download`
+  (shared by design; private files stay 404 for anon so ids can't be probed).

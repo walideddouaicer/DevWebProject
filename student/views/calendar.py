@@ -1,19 +1,18 @@
 import calendar as pycalendar
 from datetime import UTC, date, timedelta
 
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.permissions import student_required
 from teacher.models import ProjectAssignment
 
 from ..models import (
     Project,
     ProjectMilestone,
-    StudentProfile,
 )
 
 
@@ -94,10 +93,10 @@ def collect_student_events(student):
     return events
 
 
-@login_required
+@student_required
 def calendar_view(request):
     """Month-grid calendar of the student's deadlines, milestones and dates."""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
 
     today = timezone.localtime(timezone.now()).date()
     try:
@@ -174,10 +173,10 @@ def _ics_escape(text):
     )
 
 
-@login_required
+@student_required
 def calendar_ics(request):
     """iCalendar (.ics) feed of the student's events."""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     events = collect_student_events(student)
 
     now_stamp = timezone.now().strftime("%Y%m%dT%H%M%SZ")

@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.text import slugify
@@ -9,6 +8,7 @@ from accounts.permissions import (
     get_profiles,
     get_project_for_member,
     member_projects,
+    student_required,
     teacher_module_ids,
 )
 
@@ -17,16 +17,15 @@ from ..models import (
     Notification,
     ProjectActivity,
     ProjectDeliverable,
-    StudentProfile,
 )
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 
 
-@login_required
+@student_required
 def upload_deliverable(request, project_id):
     """View to upload a deliverable file for a project"""
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     project = get_project_for_member(student, project_id)
 
     # Don't allow uploads for validated projects
@@ -68,12 +67,12 @@ def upload_deliverable(request, project_id):
     return render(request, "student/upload_deliverable.html", context)
 
 
-@login_required
+@student_required
 def add_deliverable_comment(request, deliverable_id):
     """Student replies to feedback on a specific deliverable"""
     from ..models import DeliverableComment
 
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     deliverable = get_object_or_404(ProjectDeliverable, id=deliverable_id)
     project = deliverable.project
 

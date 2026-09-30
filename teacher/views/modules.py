@@ -1,7 +1,6 @@
 import logging
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
@@ -22,9 +21,7 @@ from ..models import (
     ModuleAssignment,
     ModuleEnrollment,
     ProjectAssignment,
-    TeacherProfile,
 )
-from .assignments import get_teacher_or_error
 
 logger = logging.getLogger(__name__)
 
@@ -53,14 +50,10 @@ def modules_list(request):
     )
 
 
-@login_required
+@teacher_required
 def module_detail(request, module_id):
     """Detailed view of a specific module"""
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
+    teacher = request.teacher
 
     # Verify teacher has access to this module
     try:
@@ -114,14 +107,10 @@ def module_detail(request, module_id):
     return render(request, "teacher/module_detail.html", context)
 
 
-@login_required
+@teacher_required
 def module_projects(request, module_id):
     """View all projects for a specific module"""
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
+    teacher = request.teacher
 
     # Verify teacher has access to this module
     try:
@@ -179,7 +168,7 @@ def module_management(request, module_id):
     return redirect("teacher:module_detail", module_id=module_id)
 
 
-@login_required
+@teacher_required
 @require_http_methods(["POST"])
 def post_module_announcement(request, module_id):
     """Broadcast an announcement to every active student of a module."""
@@ -188,11 +177,7 @@ def post_module_announcement(request, module_id):
 
     from ..models import ModuleAnnouncement
 
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
+    teacher = request.teacher
 
     try:
         module_assignment = ModuleAssignment.objects.get(
@@ -262,17 +247,13 @@ def post_module_announcement(request, module_id):
     return redirect("teacher:module_detail", module_id=module.id)
 
 
-@login_required
+@teacher_required
 def export_module_roster(request, module_id):
     """Download the module's enrolled-students list as Excel."""
 
     from administrator.exports import build_module_roster_workbook, excel_response
 
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
+    teacher = request.teacher
 
     try:
         assignment = ModuleAssignment.objects.get(
@@ -294,16 +275,14 @@ def export_module_roster(request, module_id):
     return excel_response(workbook, filename)
 
 
-@login_required
+@teacher_required
 @require_http_methods(["GET"])
 def get_module_students(request, module_id):
     """API endpoint to get students for a module"""
     try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-
         # Verify teacher has access to this module
         module_assignment = ModuleAssignment.objects.get(
-            teacher=teacher, module_id=module_id, is_active=True
+            teacher=request.teacher, module_id=module_id, is_active=True
         )
         module = module_assignment.module
 
@@ -338,7 +317,7 @@ def get_module_students(request, module_id):
             }
         )
 
-    except (TeacherProfile.DoesNotExist, ModuleAssignment.DoesNotExist):
+    except ModuleAssignment.DoesNotExist:
         return JsonResponse(
             {"success": False, "error": "Module non trouvé ou accès non autorisé"}, status=403
         )
@@ -352,13 +331,11 @@ def check_teacher_module_access(teacher, module):
     return ModuleAssignment.objects.filter(teacher=teacher, module=module, is_active=True).exists()
 
 
-@login_required
+@teacher_required
 @transaction.atomic
 def create_teacher_module(request):
     """Allow teachers to create new modules directly (no approval needed)"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
+    teacher = request.teacher
 
     if request.method == "POST":
         form = ModuleCreationForm(request.POST)

@@ -1,7 +1,6 @@
 import logging
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import models, transaction
@@ -23,24 +22,19 @@ from ..models import (
     DirectStudentAssignment,
     Module,
     ProjectOption,
-    TeacherProfile,
 )
 
 logger = logging.getLogger(__name__)
 
 
-@login_required
+@teacher_required
 def export_assignment_results(request, assignment_id):
     """Download an assignment's teams, statuses and grades as Excel."""
     from django.utils import timezone
 
     from administrator.exports import build_assignment_results_workbook, excel_response
 
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
+    teacher = request.teacher
 
     assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
@@ -56,17 +50,13 @@ def export_assignment_results(request, assignment_id):
     return excel_response(workbook, filename)
 
 
-@login_required
+@teacher_required
 @require_http_methods(["POST"])
 def bulk_project_action(request, assignment_id):
     """Validate or request revision on several submitted projects at once."""
     from student.models import Project
 
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
+    teacher = request.teacher
 
     assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
@@ -104,15 +94,6 @@ def bulk_project_action(request, assignment_id):
         )
 
     return redirect("teacher:assignment_progress", assignment_id=assignment.id)
-
-
-def get_teacher_or_error(request):
-    """Helper function to get teacher profile with consistent error handling"""
-    try:
-        return TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return None
 
 
 @teacher_required
@@ -185,12 +166,10 @@ def assignment_detail(request, assignment_id):
     return render(request, "teacher/assignments/detail.html", context)
 
 
-@login_required
+@teacher_required
 def assignment_teams(request, assignment_id):
     """View all teams formed through project collaboration - NEW VIEW"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
+    teacher = request.teacher
 
     assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
@@ -273,13 +252,11 @@ def assignment_teams(request, assignment_id):
     return render(request, "teacher/assignments/teams.html", context)
 
 
-@login_required
+@teacher_required
 @transaction.atomic
 def assignment_create(request):
     """Create a new project assignment - UPDATED TERMINOLOGY"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
+    teacher = request.teacher
 
     # Get teacher's modules
     teacher_modules = Module.objects.filter(
@@ -363,13 +340,11 @@ def assignment_create(request):
     return render(request, "teacher/assignments/create.html", context)
 
 
-@login_required
+@teacher_required
 @transaction.atomic
 def assignment_options(request, assignment_id):
     """Manage project options for choice-based assignments"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
+    teacher = request.teacher
 
     assignment = get_object_or_404(
         manageable_assignments(teacher), id=assignment_id, assignment_type="choice_based"
@@ -432,13 +407,11 @@ def assignment_options(request, assignment_id):
     return render(request, "teacher/assignments/options.html", context)
 
 
-@login_required
+@teacher_required
 @transaction.atomic
 def assignment_students(request, assignment_id):
     """Select students for direct assignments"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
+    teacher = request.teacher
 
     assignment = get_object_or_404(
         manageable_assignments(teacher), id=assignment_id, assignment_type="direct"
@@ -523,13 +496,11 @@ def assignment_students(request, assignment_id):
     return render(request, "teacher/assignments/students.html", context)
 
 
-@login_required
+@teacher_required
 @transaction.atomic
 def assignment_publish(request, assignment_id):
     """Publish an assignment"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
+    teacher = request.teacher
 
     assignment = get_object_or_404(
         manageable_assignments(teacher), id=assignment_id, status="draft"
@@ -668,12 +639,10 @@ def assignment_publish(request, assignment_id):
     return render(request, "teacher/assignments/publish_confirm.html", context)
 
 
-@login_required
+@teacher_required
 def assignment_progress(request, assignment_id):
     """View detailed progress of an assignment"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
+    teacher = request.teacher
 
     assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
@@ -744,12 +713,10 @@ def assignment_progress(request, assignment_id):
     return render(request, "teacher/assignments/progress.html", context)
 
 
-@login_required
+@teacher_required
 def assignment_edit(request, assignment_id):
     """Edit assignment details"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
+    teacher = request.teacher
 
     assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
 
@@ -814,13 +781,11 @@ def assignment_edit(request, assignment_id):
     return render(request, "teacher/assignments/edit.html", context)
 
 
-@login_required
+@teacher_required
 @transaction.atomic
 def option_delete(request, assignment_id, option_id):
     """Delete a project option"""
-    teacher = get_teacher_or_error(request)
-    if not teacher:
-        return redirect("login")
+    teacher = request.teacher
 
     assignment = get_object_or_404(manageable_assignments(teacher), id=assignment_id)
     option = get_object_or_404(ProjectOption, id=option_id, assignment=assignment)

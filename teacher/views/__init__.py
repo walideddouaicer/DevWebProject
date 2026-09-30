@@ -12,7 +12,6 @@ from .assignments import (  # noqa: F401
     assignments_dashboard,
     bulk_project_action,
     export_assignment_results,
-    get_teacher_or_error,
     option_delete,
 )
 from .dashboard import (  # noqa: F401

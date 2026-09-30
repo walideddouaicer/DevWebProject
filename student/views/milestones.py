@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -7,6 +6,7 @@ from django.views.decorators.http import require_POST
 
 from accounts.permissions import (
     get_project_for_member,
+    student_required,
 )
 
 from ..forms import (
@@ -16,13 +16,12 @@ from ..models import (
     Project,
     ProjectActivity,
     ProjectMilestone,
-    StudentProfile,
 )
 
 
-@login_required
+@student_required
 def add_milestone(request, project_id):
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     project = get_project_for_member(student, project_id)
 
     if request.method == "POST":
@@ -50,10 +49,10 @@ def add_milestone(request, project_id):
     return render(request, "student/milestone_form.html", context)
 
 
-@login_required
+@student_required
 @require_POST
 def toggle_milestone(request, milestone_id):
-    student = get_object_or_404(StudentProfile, user=request.user)
+    student = request.student
     milestone = get_object_or_404(
         ProjectMilestone,
         id=milestone_id,
