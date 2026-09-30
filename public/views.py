@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, F, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 # Import forms
 from student.forms import ProjectReportForm, PublicCommentForm
@@ -18,6 +19,14 @@ from student.models import (
     StudentProfile,
 )
 from teacher.models import TeacherProfile
+
+
+def _public_comments(project):
+    return (
+        project.public_comments.filter(is_flagged=False)
+        .select_related("author")
+        .order_by("-created_at")[:50]
+    )
 
 
 def public_projects():
@@ -36,12 +45,12 @@ def get_common_context():
     featured_projects = (
         Project.objects.filter(is_public=True, is_hidden_by_admin=False, status="validated")
         .select_related("student__user", "module")
-        .prefetch_related("deliverables", "showcase_tags__tag")
-        .order_by("-like_count", "-view_count", "-made_public_at")[:8]
+        .prefetch_related("showcase_tags__tag")
+        .order_by("-like_count", "-view_count", "-made_public_at")[:6]
     )  # Get 8 popular projects
 
     return {
-        "total_projects": Project.objects.filter(is_public=True, is_hidden_by_admin=False).count(),
+        "total_projects": public_projects().count(),
         "total_students": StudentProfile.objects.count(),
         "total_teachers": TeacherProfile.objects.count(),
         "featured_projects": featured_projects,
@@ -55,9 +64,8 @@ def homepage(request):
 
 
 def features(request):
-    """Features and capabilities page"""
-    context = get_common_context()
-    return render(request, "public/features.html", context)
+    """Former marketing page, merged into "À propos"."""
+    return redirect("public:about", permanent=True)
 
 
 def about(request):
@@ -71,15 +79,9 @@ def public_projects_showcase(request):
 
     # Get all public projects (no admin approval needed!)
     projects = (
-        Project.objects.filter(
-            is_public=True,
-            is_hidden_by_admin=False,  # Only hide if admin took action due to reports
-        )
+        public_projects()
         .select_related("student__user", "module")
-        .prefetch_related(
-            "showcase_tags__tag",
-            "deliverables",  # Include deliverables!
-        )
+        .prefetch_related("showcase_tags__tag")
     )
 
     # Apply search filter
@@ -193,12 +195,7 @@ def public_project_detail(request, project_id):
         group_deliverables(project.deliverables.all()) if project.public_deliverables else []
     )
 
-    # Get public comments
-    comments = (
-        project.public_comments.filter(is_flagged=False)
-        .select_related("author")
-        .order_by("-created_at")[:20]
-    )
+    comments = _public_comments(project)
 
     # Get milestones for additional context
     milestones = project.milestones.all().order_by("due_date")
@@ -220,11 +217,10 @@ def public_project_detail(request, project_id):
 
     # Related projects (same type or same student)
     related_projects = (
-        Project.objects.filter(
-            Q(project_type=project.project_type) | Q(student=project.student),
-            is_public=True,
-            is_hidden_by_admin=False,
-        )
+        public_projects()
+        .filter(Q(project_type=project.project_type) | Q(student=project.student))
+        .select_related("student__user")
+        .prefetch_related("showcase_tags__tag")
         .exclude(id=project.id)
         .order_by("-like_count")[:4]
     )
@@ -251,27 +247,25 @@ def public_project_detail(request, project_id):
 
 
 @login_required
+@require_POST
 def toggle_project_like(request, project_id):
-    """AJAX view to toggle like on a public project"""
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
-
+    """Like/unlike a showcased project. HTMX gets the button back, scripts get JSON,
+    plain forms are redirected (works without JavaScript)."""
     project = get_public_project(project_id)
-
     like, created = ProjectLike.objects.get_or_create(project=project, user=request.user)
-
     if not created:
-        # Unlike
         like.delete()
-        liked = False
-    else:
-        # Like
-        liked = True
-
-    # Update project like count
     project.update_like_count()
-
-    return JsonResponse({"liked": liked, "like_count": project.like_count})
+    liked = created
+    if request.htmx:
+        return render(
+            request,
+            "public/partials/like_button.html",
+            {"project": project, "user_has_liked": liked},
+        )
+    if "application/json" in request.headers.get("Accept", ""):
+        return JsonResponse({"liked": liked, "like_count": project.like_count})
+    return redirect("public:project_detail", project_id=project.id)
 
 
 @login_required
@@ -311,25 +305,27 @@ def add_public_comment(request, project_id):
 
 
 @login_required
+@require_POST
 def add_project_comment(request, project_id):
-    """Regular form submission for adding comments (not AJAX)"""
-    if request.method != "POST":
-        return redirect("public:project_detail", project_id=project_id)
-
+    """Public comment on a showcased project (HTMX returns the refreshed thread)."""
     project = get_public_project(project_id)
-
     form = PublicCommentForm(request.POST)
     if form.is_valid():
         comment = form.save(commit=False)
         comment.project = project
         comment.author = request.user
         comment.save()
-
-        messages.success(request, "Votre commentaire a été ajouté avec succès!")
+        messages.success(request, "Votre commentaire a été publié.")
+        form = PublicCommentForm()
     else:
-        messages.error(request, "Erreur dans votre commentaire. Veuillez vérifier le contenu.")
-
-    return redirect("public:project_detail", project_id=project_id)
+        messages.error(request, " ".join(form.errors.get("content", ["Commentaire invalide."])))
+    if request.htmx:
+        return render(
+            request,
+            "public/partials/comments.html",
+            {"project": project, "comments": _public_comments(project), "comment_form": form},
+        )
+    return redirect("public:project_detail", project_id=project.id)
 
 
 @login_required

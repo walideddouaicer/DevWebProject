@@ -375,7 +375,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
 
 - [x] **P6.1 Auth:** login, signup choice, student/teacher signup, pending-confirmation page,
   password reset (4 pages), password change. Keep them short and trustworthy; no marketing on the forms.
-- [ ] **P6.2 Public site:** homepage (honest product page for ENSA, a real showcase preview, no
+- [x] **P6.2 Public site:** homepage (honest product page for ENSA, a real showcase preview, no
   fake stats/testimonials), showcase list (filters as a sidebar/sheet, cards with real covers or
   a typographic fallback, not stock gradients), public project detail (readable article-like layout,
   team, links, allowed files, likes/comments with HTMX, report dialog), report page → dialog,
@@ -667,3 +667,8 @@ Everything else in this plan is decided by Claude.
 - **2026-09-30** · P6.1 · Auth pages rebuilt on layouts/auth (login with `next`, signup choice,
   signup form, reset ×4, lockout) and password change on layouts/app (shared by all roles;
   student-specific copies deleted). Accounts without a role get home=public homepage. axe: 0.
+- **2026-09-30** · P6.2 · Public site rebuilt (homepage, À propos (features → 301), showcase,
+  article-style project page, report form), `components/project_card.html` with typographic
+  cover fallback (`|tone` filter), like/comment work without JS and via HTMX partials
+  (`public/partials/`), JSON kept for scripts. All public views use `public_projects()`.
+  Deleted public/static and base_public/features templates. axe: 0 serious on 9 pages.

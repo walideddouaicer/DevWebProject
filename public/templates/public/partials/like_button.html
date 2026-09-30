@@ -1,0 +1,7 @@
+{% load ui %}
+<form method="post" action="{% url 'public:toggle_project_like' project.id %}" hx-post="{% url 'public:toggle_project_like' project.id %}" hx-swap="outerHTML" id="like-form">
+  {% csrf_token %}
+  <button class="btn{% if user_has_liked %} btn-primary{% endif %}" type="submit" aria-pressed="{% if user_has_liked %}true{% else %}false{% endif %}">
+    {% icon "heart" %} {% if user_has_liked %}Vous aimez{% else %}J'aime{% endif %} · <span class="num">{{ project.like_count }}</span>
+  </button>
+</form>

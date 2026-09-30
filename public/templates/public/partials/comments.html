@@ -1,0 +1,22 @@
+{% load ui %}
+<section class="card" id="comments">
+  <div class="card-header"><h2>Commentaires <span class="subtle">{{ comments|length }}</span></h2></div>
+  <div class="card-body stack">
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'public:add_project_comment' project.id %}" hx-post="{% url 'public:add_project_comment' project.id %}" hx-target="#comments" hx-swap="outerHTML" class="stack stack-sm">
+      {% csrf_token %}
+      {% field comment_form.content label="Votre commentaire" hide_label=True %}
+      <div><button class="btn btn-primary btn-sm" type="submit">Publier</button></div>
+    </form>
+    {% else %}
+    <p class="muted"><a href="{% url 'login' %}?next={{ request.path|urlencode }}">Connectez-vous</a> pour commenter.</p>
+    {% endif %}
+    <div class="comments">
+      {% for comment in comments %}
+      <div class="comment">{% avatar comment.author size="sm" %}<div><div class="comment-head"><span class="comment-author">{{ comment.author.get_full_name|default:comment.author.username }}</span><span class="comment-meta">{{ comment.created_at|date:"d/m/Y H:i" }}</span></div><div class="comment-body">{{ comment.content }}</div></div></div>
+      {% empty %}
+      <p class="muted">Aucun commentaire pour l'instant.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>

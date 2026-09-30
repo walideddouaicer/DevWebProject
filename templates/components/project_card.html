@@ -1,0 +1,20 @@
+{% load ui %}
+<article class="card project-card">
+  <div class="cover">
+    {% if project.public_cover_image %}
+      <img src="{{ project.public_cover_image.url }}" alt="" loading="lazy">
+    {% else %}
+      <div class="cover-fallback" data-tone="{{ project.title|tone }}" aria-hidden="true">{{ project.title|slice:":1" }}</div>
+    {% endif %}
+  </div>
+  <div class="body">
+    <h3><a href="{% url 'public:project_detail' project.id %}">{{ project.title }}</a></h3>
+    <p class="summary">{{ project.display_description|truncatewords:40 }}</p>
+    {% with tags=project.showcase_tags.all %}{% if tags %}<div class="cluster cluster-sm">{% for pst in tags %}<span class="tag">{{ pst.tag.name }}</span>{% endfor %}</div>{% endif %}{% endwith %}
+    <div class="meta">
+      <span>{{ project.student.get_full_name }}</span>
+      <span title="J'aime">{% icon "heart" %} {{ project.like_count }}</span>
+      <span title="Vues">{% icon "eye" %} {{ project.view_count }}</span>
+    </div>
+  </div>
+</article>

@@ -195,3 +195,9 @@ def field(bound_field, label="", help="", hide_label=False):
         "is_check": input_type == "checkbox",
         "required": bound_field.field.required and input_type != "checkbox",
     }
+
+
+@register.filter
+def tone(value):
+    """Deterministic 0-5 tone for a string (avatars, cover fallbacks)."""
+    return sum(ord(c) for c in str(value)) % 6
