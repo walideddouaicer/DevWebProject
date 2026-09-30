@@ -516,7 +516,7 @@
                              document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             
             // Make AJAX request
-            fetch(`{% url 'administrator:remove_student_from_module' module.id 0 %}`.replace('0', studentId), {
+            fetch(`{% url 'administrator:remove_student_from_module' module.id 0 %}`.replace(/0\/$/, studentId + '/'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -619,8 +619,17 @@
     
     function removeAssignment(assignmentId) {
         if (confirm('Êtes-vous sûr de vouloir retirer cet enseignant du module ?')) {
-            // Redirect to remove assignment
-            window.location.href = `{% url 'administrator:remove_assignment' 0 %}`.replace('0', assignmentId);
+            // POST (with CSRF) to remove the assignment
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = `{% url 'administrator:remove_assignment' 0 %}`.replace(/\/0\/remove\/$/, `/${assignmentId}/remove/`);
+            const token = document.createElement('input');
+            token.type = 'hidden';
+            token.name = 'csrfmiddlewaretoken';
+            token.value = '{{ csrf_token }}';
+            form.appendChild(token);
+            document.body.appendChild(form);
+            form.submit();
         }
     }
     

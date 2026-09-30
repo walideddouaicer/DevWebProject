@@ -57,15 +57,6 @@ KNOWN_FAILURES = {
     ("admin", "administrator:statistics"): "5xx",
     # B8: anonymous on requires_module_access views
     ("anon", "student:assignment_detail"): "5xx",
-    # B5: state changes on GET
-    ("owner", "student:toggle_milestone"): "mutates",
-    ("owner", "student:mark_notification_read"): "mutates",
-    ("owner", "student:mark_all_notifications_read"): "mutates",
-    ("owner", "student:leave_module"): "mutates",
-    ("student", "student:leave_module"): "mutates",
-    ("student", "student:mark_all_notifications_read"): "mutates",
-    ("admin", "administrator:remove_assignment"): "mutates",
-    ("admin", "administrator:remove_student_from_module"): "mutates",
 }
 
 # URL names never requested (logout ends the session; Django admin is out of scope).

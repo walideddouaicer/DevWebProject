@@ -8,6 +8,7 @@ from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from accounts.models import PendingRegistration
 from student.models import Project, StudentProfile
@@ -595,6 +596,7 @@ def assign_teacher_to_module(request):
 
 
 @admin_required
+@require_POST
 def remove_assignment(request, assignment_id):
     """Remove a teacher-module assignment"""
     get_object_or_404(AdminProfile, user=request.user)
@@ -756,6 +758,7 @@ def statistics(request):
 
 
 @admin_required
+@require_POST
 def remove_student_from_module(request, module_id, student_id):
     """Remove a student from a module"""
     get_object_or_404(AdminProfile, user=request.user)

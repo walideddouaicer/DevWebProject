@@ -414,11 +414,10 @@
                                 <span style="color: #856404; font-size: var(--text-xs);">({{ invitation.recipient.student_id }})</span>
                                 <div style="font-size: var(--text-xs); color: #856404;">Envoyée le {{ invitation.created_at|date:"d/m/Y à H:i" }}</div>
                             </div>
-                            <a href="{% url 'student:cancel_invitation' invitation.id %}" 
-                               class="action-btn" style="background: var(--text-muted); color: white; padding: var(--space-1) var(--space-2); font-size: var(--text-xs);"
-                               onclick="return confirm('Annuler cette invitation?')">
-                                🗑️ Annuler
-                            </a>
+                            <form method="post" action="{% url 'student:cancel_invitation' invitation.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn" style="background: var(--text-muted); color: white; padding: var(--space-1) var(--space-2); font-size: var(--text-xs);">Annuler</button>
+                            </form>
                         </div>
                         {% endfor %}
                     </div>

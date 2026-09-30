@@ -28,11 +28,6 @@ urlpatterns = [
     path("projects/<int:project_id>/submit/", views.project_submit, name="project_submit"),
     path("projects/<int:project_id>/reopen/", views.project_reopen, name="project_reopen"),
     path(
-        "milestone/<int:milestone_id>/complete/",
-        views.complete_milestone,
-        name="complete_milestone",
-    ),
-    path(
         "projects/<int:project_id>/collaborator/add/",
         views.add_collaborator,
         name="add_collaborator",

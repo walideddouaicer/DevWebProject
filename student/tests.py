@@ -439,7 +439,7 @@ class TeammatesBoardTests(TestCase):
         )
 
         self.client.login(username="bob", password="pass")
-        self.client.get(reverse("student:respond_to_invitation", args=[invitation.id, "accept"]))
+        self.client.post(reverse("student:respond_to_invitation", args=[invitation.id, "accept"]))
 
         invitation.refresh_from_db()
         self.assertEqual(invitation.status, "accepted")

@@ -138,14 +138,14 @@
             </div>
             {% endif %}
             <div class="invitation-actions">
-                <a href="{% url 'student:respond_to_invitation' invitation.id 'accept' %}" 
-                   class="btn btn-primary btn-sm">
-                    ✅ Accepter
-                </a>
-                <a href="{% url 'student:respond_to_invitation' invitation.id 'reject' %}" 
-                   class="btn btn-secondary btn-sm">
-                    ❌ Refuser
-                </a>
+                <form method="post" action="{% url 'student:respond_to_invitation' invitation.id 'accept' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-sm">Accepter</button>
+                </form>
+                <form method="post" action="{% url 'student:respond_to_invitation' invitation.id 'reject' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary btn-sm">Refuser</button>
+                </form>
             </div>
         </div>
         {% endfor %}

@@ -65,35 +65,6 @@ def project_reopen(request, project_id):
     return redirect("student:project_detail", project_id=project.id)
 
 
-@login_required
-def complete_milestone(request, milestone_id):
-    student = get_object_or_404(StudentProfile, user=request.user)
-    milestone = get_object_or_404(
-        ProjectMilestone,
-        id=milestone_id,
-        project__in=Project.objects.filter(Q(student=student) | Q(collaborators=student)),
-    )
-
-    # Only mark as completed if it's not already completed
-    if not milestone.completed:
-        milestone.completed = True
-        milestone.completed_by = request.user
-        milestone.completed_at = timezone.now()
-        milestone.save()
-
-        # Record activity
-        ProjectActivity.objects.create(
-            project=milestone.project,
-            user=request.user,
-            activity_type="milestone_completed",
-            description=f"Jalon '{milestone.title}' marqué comme complété",
-        )
-
-        messages.success(request, f"Le jalon '{milestone.title}' a été marqué comme complété.")
-
-    return redirect("student:project_detail", project_id=milestone.project.id)
-
-
 # Alternative approach using get_or_create for add_collaborator in student/views.py:
 
 
@@ -289,6 +260,7 @@ def notifications(request):
 
 
 @login_required
+@require_POST
 def mark_notification_read(request, notification_id):
     """Mark a single notification as read"""
     student = get_object_or_404(StudentProfile, user=request.user)
@@ -300,6 +272,7 @@ def mark_notification_read(request, notification_id):
 
 
 @login_required
+@require_POST
 def mark_all_notifications_read(request):
     """Mark all notifications as read"""
     student = get_object_or_404(StudentProfile, user=request.user)
@@ -792,6 +765,7 @@ def add_milestone(request, project_id):
 
 
 @login_required
+@require_POST
 def toggle_milestone(request, milestone_id):
     student = get_object_or_404(StudentProfile, user=request.user)
     milestone = get_object_or_404(
@@ -852,6 +826,7 @@ def invitations_list(request):
 
 
 @login_required
+@require_POST
 def respond_to_invitation(request, invitation_id, response):
     """ENHANCED: Accept/reject invitation with assignment constraint validation"""
     student = get_object_or_404(StudentProfile, user=request.user)
@@ -996,6 +971,7 @@ def remove_collaborator(request, project_id, collaborator_id):
 
 # cancel invitation
 @login_required
+@require_POST
 def cancel_invitation(request, invitation_id):
     student = get_object_or_404(StudentProfile, user=request.user)
     invitation = get_object_or_404(
@@ -1224,6 +1200,7 @@ def my_modules(request):
 
 
 @login_required
+@require_POST
 def leave_module(request, module_id):
     """Allow student to leave a module"""
     student = get_object_or_404(StudentProfile, user=request.user)

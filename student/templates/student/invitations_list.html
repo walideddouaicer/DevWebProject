@@ -117,12 +117,14 @@
                         {% endif %}
                         
                         <div class="invitation-actions">
-                            <a href="{% url 'student:respond_to_invitation' invitation.id 'accept' %}" class="btn btn-success">
-                                ✅ Accepter la Collaboration
-                            </a>
-                            <a href="{% url 'student:respond_to_invitation' invitation.id 'reject' %}" class="btn btn-secondary">
-                                ❌ Décliner Poliment
-                            </a>
+                            <form method="post" action="{% url 'student:respond_to_invitation' invitation.id 'accept' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success">Accepter</button>
+                            </form>
+                            <form method="post" action="{% url 'student:respond_to_invitation' invitation.id 'reject' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-secondary">Refuser</button>
+                            </form>
                             <a href="{% url 'student:project_detail' invitation.project.id %}" class="btn btn-ghost">
                                 👁️ Voir le Projet
                             </a>
@@ -203,11 +205,10 @@
                         
                         {% if invitation.status == 'pending' %}
                         <div class="invitation-actions">
-                            <a href="{% url 'student:cancel_invitation' invitation.id %}" 
-                               class="btn btn-danger btn-sm"
-                               onclick="return confirm('Êtes-vous sûr de vouloir annuler cette invitation?')">
-                                🗑️ Annuler l'Invitation
-                            </a>
+                            <form method="post" action="{% url 'student:cancel_invitation' invitation.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Annuler l'invitation</button>
+                            </form>
                         </div>
                         {% endif %}
                     </div>

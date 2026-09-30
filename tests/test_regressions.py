@@ -178,7 +178,6 @@ class RegressionTests(Fixtures):
         self.assertEqual(project.status, "submitted")
 
     # B5 ------------------------------------------------------------------
-    @expectedFailure
     def test_B5_get_does_not_accept_invitation(self):
         s = self.students
         project = self.project(s[0])
