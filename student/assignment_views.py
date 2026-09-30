@@ -3,7 +3,6 @@
 from functools import wraps
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
@@ -12,6 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.permissions import student_required
 from teacher.models import DirectStudentAssignment, ProjectAssignment, ProjectOption
 
 from .forms import ProjectForm
@@ -43,6 +43,7 @@ def check_module_access(student, assignment):
 def requires_module_access(view_func):
     """Decorator to ensure student has access to assignment's module"""
 
+    @student_required
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         student = get_student_or_error(request)
@@ -65,7 +66,7 @@ def requires_module_access(view_func):
     return wrapper
 
 
-@login_required
+@student_required
 def assignments_dashboard(request):
     """Enhanced assignments dashboard with direct project creation links"""
     student = get_student_or_error(request)
@@ -293,7 +294,7 @@ def assignment_detail(request, assignment_id):
     return render(request, "student/assignments/detail.html", context)
 
 
-@login_required
+@student_required
 @transaction.atomic
 def create_assignment_project_direct(request, assignment_id):
     """Create project directly from assignment - NEW SIMPLIFIED VERSION"""
@@ -597,7 +598,7 @@ def _students_involved_in_assignment(assignment):
     return involved
 
 
-@login_required
+@student_required
 def teammates_board(request, assignment_id):
     """Board where teamless students flag themselves as looking for a team."""
     student = get_student_or_error(request)
@@ -667,7 +668,7 @@ def teammates_board(request, assignment_id):
     return render(request, "student/assignments/teammates_board.html", context)
 
 
-@login_required
+@student_required
 def toggle_teammate_request(request, assignment_id):
     """Flag/unflag yourself as looking for a team on an assignment."""
     if request.method != "POST":
@@ -713,7 +714,7 @@ def toggle_teammate_request(request, assignment_id):
     return redirect("student:teammates_board", assignment_id=assignment.id)
 
 
-@login_required
+@student_required
 def select_project_option_direct(request, assignment_id):
     """Standalone option selection view for choice-based assignments"""
     student = get_student_or_error(request)

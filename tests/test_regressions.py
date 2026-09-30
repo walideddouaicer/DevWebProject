@@ -250,7 +250,6 @@ class RegressionTests(Fixtures):
             self.assertLess(self.client.get(path).status_code, 400, path)
 
     # B8 ------------------------------------------------------------------
-    @expectedFailure
     def test_B8_anonymous_assignment_detail_redirects_to_login(self):
         assignment = self.assignment()
         response = self.client.get(reverse("student:assignment_detail", args=[assignment.id]))

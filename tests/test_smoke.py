@@ -55,8 +55,6 @@ KNOWN_FAILURES = {
     ("admin", "administrator:students_list"): "5xx",
     ("admin", "administrator:teachers_list"): "5xx",
     ("admin", "administrator:statistics"): "5xx",
-    # B8: anonymous on requires_module_access views
-    ("anon", "student:assignment_detail"): "5xx",
 }
 
 # URL names never requested (logout ends the session; Django admin is out of scope).
