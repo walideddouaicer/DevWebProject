@@ -397,3 +397,18 @@ else:
 # HSTS preload is opt-in (DJANGO_HSTS_PRELOAD=True): it is practically irreversible and the
 # site may live on a subdomain of a school domain we don't control.
 SILENCED_SYSTEM_CHECKS = [] if env_bool("DJANGO_HSTS_PRELOAD", default=False) else ["security.W021"]
+
+
+# ---------------------------------------------------------------------------
+# Error tracking (optional): set SENTRY_DSN to enable
+# ---------------------------------------------------------------------------
+
+if env("SENTRY_DSN"):
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=env("SENTRY_DSN"),
+        environment=ENVIRONMENT,
+        send_default_pii=False,  # no user emails/IPs leave the server
+        traces_sample_rate=float(env("SENTRY_TRACES_SAMPLE_RATE", "0")),
+    )
