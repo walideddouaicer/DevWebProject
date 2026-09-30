@@ -552,7 +552,7 @@ def project_submit_confirmation(request, project_id):
     ).select_related("recipient__user")
 
     # Get project statistics for the checklist
-    deliverables_count = project.deliverables.count()
+    deliverables_count = project.deliverables.values("name").distinct().count()
     milestones_count = project.milestones.count()
     completed_milestones_count = project.milestones.filter(completed=True).count()
 
@@ -562,7 +562,7 @@ def project_submit_confirmation(request, project_id):
         "deliverables_count": deliverables_count,
         "milestones_count": milestones_count,
         "completed_milestones_count": completed_milestones_count,
-        "is_ready_to_submit": True,  # You can add more complex logic here
+        "blockers": project.get_submission_blockers(),
     }
 
     return render(request, "student/project_submit_confirmation.html", context)

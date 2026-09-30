@@ -380,7 +380,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   a typographic fallback, not stock gradients), public project detail (readable article-like layout,
   team, links, allowed files, likes/comments with HTMX, report dialog), report page → dialog,
   features/about merged into a single "À propos" page unless inventory shows otherwise.
-- [ ] **P6.3 Student core:** dashboard ("what needs my attention": deadlines, invitations, revision
+- [x] **P6.3 Student core:** dashboard ("what needs my attention": deadlines, invitations, revision
   requests, then my projects as a compact table/list with status chips), project create/edit form
   (clean sections, inline validation), project detail (header with status + primary action; tabs or
   sections: Aperçu / Livrables / Jalons / Équipe / Discussion / Activité; evaluation card),
@@ -672,3 +672,12 @@ Everything else in this plan is decided by Claude.
   cover fallback (`|tone` filter), like/comment work without JS and via HTMX partials
   (`public/partials/`), JSON kept for scripts. All public views use `public_projects()`.
   Deleted public/static and base_public/features templates. axe: 0 serious on 9 pages.
+- **2026-09-30** · P6.3 · Student dashboard (B26 fixed), project detail (sections + aside),
+  create/edit form, upload deliverable (dropzone), milestone form, submit confirmation (real
+  blockers from `Project.get_submission_blockers`), delete confirm. Found + fixed: native date
+  inputs were EMPTY since the French locale switch (P4.1) → `ui/widgets.py` NativeDate(Time)Input
+  render ISO; remove_collaborator was GET-mutating (fixed + test + smoke scenario).
+  Preview helper: `/tmp/claude-1000/preview.sh start|stop` (PID file; recreate from log if /tmp
+  was wiped: seeded throwaway DB + runserver :8767) and `/tmp/claude-1000/shot_login.py URL OUT
+  WIDTH THEME USER [menu]`. Known gap: feedback on older deliverable versions is only visible in
+  the version history, not merged into the latest version's thread.

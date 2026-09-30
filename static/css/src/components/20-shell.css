@@ -68,3 +68,9 @@
 /* Page sections inside the app content area */
 .content > section + section, .content > .stack + section, .content > section + .stack { margin-top: var(--s-8); }
 .attention { --min: 340px; }
+/* Paint the sidebar column full height (the sticky sidebar itself is only 100vh tall).
+   A hard-stop gradient = a flat color block + 1px border, not a visual gradient. */
+@media (min-width: 1024px) {
+  .app { background-image: linear-gradient(to right, var(--surface) calc(var(--sidebar-w) - 1px),
+    var(--line) calc(var(--sidebar-w) - 1px), var(--line) var(--sidebar-w), transparent var(--sidebar-w)); }
+}

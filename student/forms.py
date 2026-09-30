@@ -1,5 +1,7 @@
 from django import forms
 
+from ui.widgets import NativeDateInput
+
 from .models import (
     Project,
     ProjectDeliverable,
@@ -50,8 +52,8 @@ class ProjectForm(forms.ModelForm):
             "technologies": forms.TextInput(
                 attrs={"class": "form-input", "placeholder": "Python, Django, React, PostgreSQL..."}
             ),
-            "start_date": forms.DateInput(attrs={"class": "form-input", "type": "date"}),
-            "end_date": forms.DateInput(attrs={"class": "form-input", "type": "date"}),
+            "start_date": NativeDateInput(attrs={"class": "form-input"}),
+            "end_date": NativeDateInput(attrs={"class": "form-input"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -102,7 +104,7 @@ class MilestoneForm(forms.ModelForm):
         model = ProjectMilestone
         fields = ["title", "description", "due_date", "completed"]
         widgets = {
-            "due_date": forms.DateInput(attrs={"type": "date"}),
+            "due_date": NativeDateInput(),
             "description": forms.Textarea(attrs={"rows": 3}),
         }
 

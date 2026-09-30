@@ -98,3 +98,16 @@ class TeacherFormTests(Fixtures):
         self.client.post(url, {"action": "validate", "project_ids": [project.id, 99999]})
         project.refresh_from_db()
         self.assertEqual(project.status, "validated")
+
+
+class NativeDateWidgetTests(Fixtures):
+    def test_edit_form_prefills_iso_dates_for_native_pickers(self):
+        from datetime import date
+
+        project = self.project(
+            self.students[0], start_date=date(2026, 9, 1), end_date=date(2026, 12, 20)
+        )
+        self.login(self.students[0])
+        page = self.client.get(reverse("student:project_edit", args=[project.id]))
+        self.assertContains(page, 'value="2026-09-01"')
+        self.assertContains(page, 'value="2026-12-20"')

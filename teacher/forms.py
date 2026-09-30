@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from student.models import StudentProfile
+from ui.widgets import NativeDateTimeInput
 
 from .models import Module, ProjectAssignment, ProjectOption
 
@@ -141,9 +142,7 @@ class ProjectAssignmentForm(forms.ModelForm):
             "assignment_type": forms.Select(
                 attrs={"class": "form-select", "onchange": "toggleAssignmentOptions(this.value)"}
             ),
-            "deadline": forms.DateTimeInput(
-                attrs={"class": "form-input", "type": "datetime-local"}
-            ),
+            "deadline": NativeDateTimeInput(attrs={"class": "form-input"}),
             "is_team_work": forms.CheckboxInput(
                 attrs={"class": "form-checkbox", "onchange": "toggleTeamOptions(this.checked)"}
             ),
@@ -154,9 +153,7 @@ class ProjectAssignmentForm(forms.ModelForm):
                 attrs={"class": "form-input", "min": "1", "max": "10"}
             ),
             "target_selection": forms.Select(attrs={"class": "form-select"}),
-            "selection_deadline": forms.DateTimeInput(
-                attrs={"class": "form-input", "type": "datetime-local"}
-            ),
+            "selection_deadline": NativeDateTimeInput(attrs={"class": "form-input"}),
         }
         labels = {
             "title": "Titre du devoir",

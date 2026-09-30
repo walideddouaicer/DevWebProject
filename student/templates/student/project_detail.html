@@ -1,838 +1,203 @@
-{% extends 'student/base.html' %}
-{% load static %}
-
-{% block title %}{{ project.title }} - Détails du Projet{% endblock %}
-
-{% block breadcrumb_items %}
-<span class="breadcrumb-separator">></span>
-<a href="{% url 'student:dashboard' %}">Projets</a>
-<span class="breadcrumb-separator">></span>
-<span>{{ project.title|truncatewords:3 }}</span>
-{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/project_detail.css' %}">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}{{ project.title }}{% endblock %}
 {% block content %}
-    <!-- Project Hero Section -->
-    <div class="project-hero">
-        <div class="project-header-content">
-            <div class="project-title-section">
-                <h1>{{ project.title }}</h1>
-                <div class="project-badges">
-                    <span class="status-badge status-{{ project.status|lower }}">
-                        {{ project.get_status_display }}
-                    </span>
-                    {% if project.module %}
-                    <span class="hero-badge">
-                        📚 {{ project.module.code }}
-                    </span>
-                    {% endif %}
-                    {% if is_owner %}
-                    <span class="hero-badge">
-                        👑 Propriétaire
-                    </span>
-                    {% elif is_collaborator %}
-                    <span class="hero-badge">
-                        🤝 Collaborateur
-                    </span>
-                    {% endif %}
-                </div>
-                
-                <!-- Progress Bar -->
-                <div class="progress-section">
-                    <div class="progress-header">
-                        <span class="progress-label">Progression du Projet</span>
-                        <span class="progress-percentage">
-                            {% if project.status == 'draft' %}25%
-                            {% elif project.status == 'in_progress' %}50%
-                            {% elif project.status == 'submitted' %}75%
-                            {% elif project.status == 'revision_requested' %}60%
-                            {% elif project.status == 'validated' %}100%
-                            {% elif project.status == 'rejected' %}25%
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar progress-{{ project.status|lower }}"></div>
-                    </div>
-                </div>
-                
-                <div class="project-meta-grid">
-                    <div class="meta-card">
-                        <div class="meta-label">👤 Propriétaire</div>
-                        <div class="meta-value">{{ project.student.user.get_full_name|default:project.student.user.username }}</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-label">📂 Type de Projet</div>
-                        <div class="meta-value">{{ project.get_project_type_display }}</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-label">📅 Date de Création</div>
-                        <div class="meta-value">{{ project.created_at|date:"d/m/Y" }}</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-label">⏰ Dernière MAJ</div>
-                        <div class="meta-value">{{ project.updated_at|date:"d/m/Y H:i" }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="hero-illustration">📊</div>
-        </div>
+{% with actions=available_actions team=assignment_context.team_info %}
+<header class="page-header">
+  <div>
+    <nav class="breadcrumb" aria-label="Fil d'Ariane">
+      <a href="{% url 'student:dashboard' %}">Mes projets</a><span class="sep">/</span>
+      {% if assignment_context.is_assignment_project %}<a href="{% url 'student:assignment_detail' assignment_context.assignment.id %}">{{ assignment_context.assignment.title }}</a>{% else %}<span>{{ project.get_project_type_display }}</span>{% endif %}
+    </nav>
+    <h1>{{ project.title }} {% status_chip project.status %}{% if project.is_public %}<span class="chip chip-accent">Public</span>{% endif %}</h1>
+    <div class="meta">
+      {% if project.module %}<span>{{ project.module.code }} — {{ project.module.name }}</span>{% endif %}
+      {% if project.selected_option %}<span>Sujet : {{ project.selected_option.title }}</span>{% endif %}
+      {% if assignment_context.is_assignment_project %}{% deadline assignment_context.assignment.deadline status=project.status %}{% elif project.end_date %}{% deadline project.end_date status=project.status %}{% endif %}
     </div>
-
-    <!-- Main Content -->
-    <div class="project-workspace">
-        <div>
-            <!-- Actions Panel -->
-            <div class="actions-panel">
-                <div class="actions-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="margin: 0; color: var(--text-primary); font-size: var(--text-xl); font-weight: 700;">⚡ Actions Disponibles</h3>
-                        <span style="font-size: var(--text-sm); color: var(--text-muted);">Gérez votre projet</span>
-                    </div>
-                </div>
-                <div class="actions-grid">
-                    {% if project.status == 'in_progress' %}
-                        {% if is_owner %}
-                            <a href="{% url 'student:project_edit' project.id %}" class="action-btn primary">
-                                ✏️ Modifier le Projet
-                            </a>
-                            <a href="{% url 'student:project_delete' project.id %}" class="action-btn danger">
-                                🗑️ Supprimer le Projet
-                            </a>
-                            
-                            <!-- UPDATED: Changed from direct form submission to confirmation page -->
-                            <a href="{% url 'student:project_submit_confirmation' project.id %}" class="action-btn success">
-                                🚀 Soumettre pour Validation
-                            </a>
-                        {% endif %}
-                        
-                        <!-- Other actions for collaborators -->
-                        <a href="{% url 'student:add_milestone' project.id %}" class="action-btn primary">
-                            📅 Ajouter un Jalon
-                        </a>
-                        <a href="{% url 'student:upload_deliverable' project.id %}" class="action-btn primary">
-                            📎 Ajouter un Livrable
-                        </a>
-                        
-                    {% elif project.status == 'submitted' %}
-                        <!-- Your existing submitted message code -->
-                        <div class="status-message submitted">
-                            <div class="status-icon">📋</div>
-                            <div class="status-content">
-                                <h4>Projet Soumis pour Validation</h4>
-                                <p>Votre projet a été soumis et est en attente d'évaluation par l'enseignant. Aucune modification n'est possible pour le moment.</p>
-                                {% if is_owner %}
-                                    <small style="color: var(--text-muted);">
-                                        💡 <strong>Astuce:</strong> Si votre projet est rejeté, vous pourrez le modifier et le resoumettre.
-                                    </small>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                    {% elif project.status == 'validated' %}
-                        <!-- Your existing validated message code -->
-                        <div class="status-message validated">
-                            <div class="status-icon">✅</div>
-                            <div class="status-content">
-                                <h4>Projet Validé</h4>
-                                <p>Félicitations ! Votre projet a été validé par l'enseignant. Aucune action supplémentaire n'est requise.</p>
-                            </div>
-                        </div>
-                        
-                    {% elif project.status == 'rejected' %}
-                        <!-- Your existing rejected message code -->
-                        <div class="status-message rejected">
-                            <div class="status-icon">❌</div>
-                            <div class="status-content">
-                                <h4>Projet Rejeté</h4>
-                                <p>Votre projet a été rejeté. Consultez les commentaires de l'enseignant ci-dessous pour les améliorations à apporter.</p>
-                            </div>
-                        </div>
-                        
-                        {% if is_owner %}
-                            <a href="{% url 'student:project_edit' project.id %}" class="action-btn primary">
-                                ✏️ Modifier le Projet
-                            </a>
-                            <form method="post" action="{% url 'student:project_reopen' project.id %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="action-btn warning">
-                                    🔄 Reprendre les Modifications
-                                </button>
-                            </form>
-                        {% endif %}
-                        
-                    {% elif project.status == 'revision_requested' %}
-                        <div class="status-message rejected">
-                            <div class="status-icon">🔄</div>
-                            <div class="status-content">
-                                <h4>Révision Demandée</h4>
-                                <p>L'enseignant demande des modifications avant validation. Consultez ses commentaires (projet et livrables), apportez les corrections, puis resoumettez.</p>
-                            </div>
-                        </div>
-
-                        {% if is_owner %}
-                            <a href="{% url 'student:project_edit' project.id %}" class="action-btn primary">
-                                ✏️ Modifier le Projet
-                            </a>
-                            <a href="{% url 'student:project_submit_confirmation' project.id %}" class="action-btn success">
-                                🚀 Resoumettre pour Validation
-                            </a>
-                        {% endif %}
-                        <a href="{% url 'student:upload_deliverable' project.id %}" class="action-btn primary">
-                            📎 Ajouter un Livrable
-                        </a>
-
-                    {% else %}
-                        <!-- Fallback message -->
-                        <div class="status-message default">
-                            <div class="status-icon">ℹ️</div>
-                            <div class="status-content">
-                                <h4>Aucune Action Disponible</h4>
-                                <p>Aucune action n'est actuellement disponible pour ce projet.</p>
-                            </div>
-                        </div>
-                    {% endif %}
-
-                <!-- Public Showcase Section -->
-                    {% if is_owner %}
-                        <div style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 2px solid var(--border-primary);">
-                            {% if project.status == 'validated' %}
-                                {% if not project.is_public %}
-                                    <!-- Make Public Button -->
-                                    <div style="text-align: center; margin-bottom: var(--space-4);">
-                                        <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(79, 172, 254, 0.1)); padding: var(--space-4); border-radius: var(--radius-lg); border: 1px solid rgba(102, 126, 234, 0.3); margin-bottom: var(--space-4);">
-                                            <h4 style="color: var(--accent-primary); margin: 0 0 var(--space-2) 0; font-size: var(--text-lg);">🌟 Partagez votre succès!</h4>
-                                            <p style="margin: 0; color: var(--text-secondary); font-size: var(--text-sm);">Votre projet est validé! Rendez-le visible sur la vitrine publique pour inspirer la communauté.</p>
-                                        </div>
-                                        <a href="{% url 'student:make_project_public' project.id %}" 
-                                        class="action-btn" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: var(--space-3) var(--space-6); font-size: var(--text-lg); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
-                                            <i class="fas fa-globe"></i>
-                                            🌟 Partager Publiquement
-                                        </a>
-                                    </div>
-                                {% else %}
-                                    <!-- Already Public - Show Status and Actions -->
-                                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05)); padding: var(--space-4); border-radius: var(--radius-lg); border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: var(--space-4);">
-                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
-                                            <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                                <i class="fas fa-globe text-green-500" style="font-size: var(--text-xl);"></i>
-                                                <span style="font-weight: 600; color: var(--success); font-size: var(--text-lg);">✅ Projet Public</span>
-                                            </div>
-                                            <div style="display: flex; gap: var(--space-3); font-size: var(--text-sm); color: var(--success);">
-                                                <span><i class="fas fa-eye"></i> {{ project.view_count }} vues</span>
-                                                <span><i class="fas fa-heart"></i> {{ project.like_count }} likes</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div style="display: flex; gap: var(--space-8); flex-wrap: wrap;">
-                                            <a href="{% url 'public:project_detail' project.id %}" 
-                                            target="_blank"
-                                            class="action-btn" style="background: var(--success); color: white; flex: 1;">
-                                                <i class="fas fa-external-link-alt"></i>
-                                                👁️ Voir sur la Vitrine
-                                            </a>
-                                            
-                                            <a href="{% url 'student:make_project_private' project.id %}" 
-                                            class="action-btn" style="background: var(--warning); color: white; flex: 1;">
-                                                <i class="fas fa-eye-slash"></i>
-                                                🔒 Retirer du Public
-                                            </a>
-                                        </div>
-                                    </div>
-                    {% endif %}
-                {% else %}
-                    <!-- Project not validated yet -->
-                    <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05)); color: var(--accent-primary); padding: var(--space-4); border-radius: var(--radius-lg); border: 1px solid rgba(59, 130, 246, 0.3); text-align: center;">
-                        <i class="fas fa-info-circle" style="font-size: var(--text-xl); margin-bottom: var(--space-2);"></i>
-                        <div style="font-weight: 600; margin-bottom: var(--space-1);">Publication publique disponible après validation</div>
-                        <div style="font-size: var(--text-sm); opacity: 0.8;">Votre projet doit être <strong>validé</strong> pour pouvoir être partagé publiquement</div>
-                    </div>
-                {% endif %}
-            </div>
+  </div>
+  <div class="actions">
+    {% if actions.can_edit %}<a class="btn" href="{% url 'student:project_edit' project.id %}">{% icon "pencil" %} Modifier</a>{% endif %}
+    {% if actions.can_submit %}<a class="btn btn-primary" href="{% url 'student:project_submit_confirmation' project.id %}">{% icon "send" %} Soumettre</a>{% endif %}
+    {% if is_owner and project.status == "rejected" %}
+      <form method="post" action="{% url 'student:project_reopen' project.id %}">{% csrf_token %}<button class="btn btn-primary" type="submit">{% icon "rotate-ccw" %} Retravailler le projet</button></form>
+    {% endif %}
+    {% if is_owner %}
+    <details class="menu">
+      <summary class="btn btn-icon" aria-label="Autres actions">{% icon "more-horizontal" %}</summary>
+      <div class="menu-list">
+        {% if project.is_public %}
+          <a href="{% url 'public:project_detail' project.id %}">{% icon "globe" %} Voir sur la vitrine</a>
+          <a href="{% url 'student:make_project_private' project.id %}">{% icon "eye-off" %} Retirer de la vitrine</a>
+        {% elif project.can_be_made_public %}
+          <a href="{% url 'student:make_project_public' project.id %}">{% icon "globe" %} Publier sur la vitrine</a>
         {% endif %}
-                </div>
+        {% if actions.can_delete %}<hr><a class="danger" href="{% url 'student:project_delete' project.id %}">{% icon "trash-2" %} Supprimer le projet</a>{% endif %}
+        {% if not project.is_public and not project.can_be_made_public and not actions.can_delete %}<span class="menu-header">Aucune autre action pour l'instant.</span>{% endif %}
+      </div>
+    </details>
+    {% endif %}
+  </div>
+</header>
+
+{% if is_owner and not actions.can_submit and actions.submit_blocked_reason and project.status in "in_progress,revision_requested" %}
+<div class="alert alert-warn">{% icon "alert-triangle" %}<div><div class="alert-title">Soumission impossible pour l'instant</div>{{ actions.submit_blocked_reason }}</div></div>
+{% elif project.status == "revision_requested" %}
+<div class="alert alert-info">{% icon "info" %}<div><div class="alert-title">Révision demandée</div>Consultez les commentaires de l'enseignant, corrigez puis soumettez à nouveau.</div></div>
+{% elif project.status == "rejected" %}
+<div class="alert alert-danger">{% icon "alert-circle" %}<div><div class="alert-title">Projet rejeté</div>Lisez les commentaires, puis « Retravailler le projet » pour le rouvrir.</div></div>
+{% elif project.status == "submitted" %}
+<div class="alert alert-ok">{% icon "check-circle-2" %}<div>Projet soumis{% if project.assignment_submitted_at %} le {{ project.assignment_submitted_at|date:"j F à H:i" }}{% endif %}. En attente de l'évaluation.</div></div>
+{% endif %}
+
+<div class="with-aside">
+  <div class="stack stack-lg">
+    <section class="card card-body stack" aria-labelledby="desc-title">
+      <h2 id="desc-title" class="section-title">Description</h2>
+      <div class="prose-pre">{{ project.description }}</div>
+      <dl class="dl">
+        {% if project.technologies %}<dt>Technologies</dt><dd>{{ project.technologies }}</dd>{% endif %}
+        {% if project.module_or_company %}<dt>Cadre</dt><dd>{{ project.module_or_company }}</dd>{% endif %}
+        <dt>Période</dt><dd>{{ project.start_date|date:"d/m/Y" }}{% if project.end_date %} → {{ project.end_date|date:"d/m/Y" }}{% endif %}</dd>
+      </dl>
+    </section>
+
+    <section class="card" id="livrables" aria-labelledby="files-title">
+      <div class="card-header"><h2 id="files-title">Livrables <span class="subtle">{{ deliverables|length }}</span></h2>
+        {% if actions.can_add_deliverables %}<a class="btn btn-sm" href="{% url 'student:upload_deliverable' project.id %}">{% icon "upload" %} Ajouter</a>{% endif %}</div>
+      {% if deliverables %}
+      <ul class="file-list">
+        {% for d in deliverables %}
+        <li class="file-row">
+          <span class="file-icon">{% if d.file_type == "presentation" %}{% icon "presentation" %}{% elif d.file_type == "source_code" %}{% icon "code-2" %}{% else %}{% icon "file-text" %}{% endif %}</span>
+          <div>
+            <div class="file-name">{{ d.name }} <span class="version">v{{ d.version }}</span></div>
+            <div class="file-meta"><span>{{ d.get_file_type_display }}</span><span>{{ d.upload_date|date:"d/m/Y H:i" }}</span>{% with n=d.feedback_comments.all|length %}{% if n %}<span>{{ n }} commentaire{{ n|pluralize }}</span>{% endif %}{% endwith %}</div>
+          </div>
+          <div class="cluster cluster-sm">
+            {% if d.preview_url %}<a class="btn btn-sm btn-ghost" href="{{ d.preview_url }}" target="_blank" rel="noopener">{% icon "eye" %}<span class="visually-hidden">Aperçu de {{ d.name }}</span></a>{% endif %}
+            <a class="btn btn-sm" href="{{ d.download_url }}">{% icon "download" %}<span class="visually-hidden">Télécharger {{ d.name }}</span></a>
+          </div>
+          <details class="file-history">
+            <summary>{% with n=d.feedback_comments.all|length %}{% if n %}{{ n }} retour{{ n|pluralize }}{% else %}Répondre{% endif %}{% endwith %}{% if d.history %} · {{ d.history|length }} version{{ d.history|length|pluralize }} précédente{{ d.history|length|pluralize }}{% endif %}</summary>
+            {% if d.history %}<ul>{% for old in d.history %}<li><span class="version">v{{ old.version }}</span> {{ old.upload_date|date:"d/m/Y H:i" }} — <a href="{{ old.download_url }}">Télécharger</a></li>{% endfor %}</ul>{% endif %}
+            <div class="comments">
+              {% for c in d.feedback_comments.all %}
+              <div class="comment">{% avatar c.author size="sm" %}<div><div class="comment-head"><span class="comment-author">{{ c.author.get_full_name|default:c.author.username }}</span><span class="comment-meta">{{ c.created_at|date:"d/m/Y H:i" }}</span></div><div class="comment-body">{{ c.content }}</div></div></div>
+              {% endfor %}
+              <form method="post" action="{% url 'student:add_deliverable_comment' d.id %}" class="cluster">
+                {% csrf_token %}
+                <label class="visually-hidden" for="reply-{{ d.id }}">Répondre sur {{ d.name }}</label>
+                <input class="input grow" id="reply-{{ d.id }}" name="content" placeholder="Répondre…" maxlength="5000" required>
+                <button class="btn btn-sm" type="submit">Envoyer</button>
+              </form>
             </div>
+          </details>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty">{% icon "paperclip" %}<h3>Aucun livrable</h3><p>Déposez rapports, présentations ou code. Un fichier du même nom devient une nouvelle version.</p></div>
+      {% endif %}
+    </section>
 
-            <!-- Teacher Grade -->
-            {% if evaluation %}
-            <div class="section-card" style="border-left: 4px solid #4299e1;">
-                <div class="section-header">
-                    <h2 class="section-title">🎓 Note de l'enseignant</h2>
-                </div>
-                <div class="section-body">
-                    <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;">
-                        <span style="font-size: 2.2rem; font-weight: 800; color: {% if evaluation.score >= 14 %}#38a169{% elif evaluation.score >= 10 %}#d69e2e{% else %}#e53e3e{% endif %};">
-                            {{ evaluation.score }}/20
-                        </span>
-                        <span style="font-weight: 700; color: var(--text-secondary);">{{ evaluation.get_mention }}</span>
-                        <span style="color: var(--text-muted); font-size: var(--text-sm);">
-                            par {{ evaluation.teacher.user.get_full_name|default:evaluation.teacher.user.username }}
-                            le {{ evaluation.updated_at|date:"d/m/Y" }}
-                        </span>
-                    </div>
+    <section class="card" id="jalons" aria-labelledby="ms-title">
+      <div class="card-header"><h2 id="ms-title">Jalons</h2>{% if actions.can_add_milestones %}<a class="btn btn-sm" href="{% url 'student:add_milestone' project.id %}">{% icon "plus" %} Ajouter</a>{% endif %}</div>
+      {% if milestones %}
+      <ul class="file-list">
+        {% for m in milestones %}
+        <li class="file-row">
+          <form method="post" action="{% url 'student:toggle_milestone' m.id %}">{% csrf_token %}
+            <button class="btn btn-sm btn-icon{% if m.completed %} btn-primary{% endif %}" type="submit" aria-pressed="{% if m.completed %}true{% else %}false{% endif %}">{% icon "check" size=16 %}<span class="visually-hidden">{% if m.completed %}Marquer « {{ m.title }} » comme non terminé{% else %}Marquer « {{ m.title }} » comme terminé{% endif %}</span></button>
+          </form>
+          <div><div class="file-name">{{ m.title }}</div>{% if m.description %}<div class="file-meta">{{ m.description }}</div>{% endif %}</div>
+          <div>{% if m.completed %}<span class="subtle text-sm">Terminé le {{ m.completed_at|date:"d/m" }}</span>{% else %}{% deadline m.due_date %}{% endif %}</div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty">{% icon "flag" %}<h3>Aucun jalon</h3><p>Découpez le projet en étapes datées pour suivre l'avancement de l'équipe.</p></div>
+      {% endif %}
+    </section>
 
-                    {% if evaluation.criteria.all %}
-                    <div style="margin-top: var(--space-4);">
-                        {% for criterion in evaluation.criteria.all %}
-                        <div style="display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--border-primary);">
-                            <span>
-                                <strong>{{ criterion.name }}</strong>
-                                {% if criterion.comment %}<span style="color: var(--text-muted);"> — {{ criterion.comment }}</span>{% endif %}
-                            </span>
-                            <span style="font-weight: 700; white-space: nowrap;">{{ criterion.score }}/20</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    {% if evaluation.comments %}
-                    <div style="margin-top: var(--space-4); padding: var(--space-3); background: var(--bg-tertiary, rgba(66,153,225,0.06)); border-radius: 8px; line-height: 1.6; white-space: pre-line;">
-                        {{ evaluation.comments }}
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Project Description -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2 class="section-title">📝 Description du Projet</h2>
-                </div>
-                <div class="section-body">
-                    <div style="line-height: 1.6; color: var(--text-secondary);">
-                        {{ project.description|linebreaks }}
-                    </div>
-                    
-                    {% if project.module_or_company %}
-                    <div style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-primary);">
-                        <strong style="color: var(--accent-primary);">🏢 Module/Entreprise:</strong> {{ project.module_or_company }}
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Collaborators -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2 class="section-title">👥 Équipe de Projet</h2>
-                    <span style="font-size: var(--text-sm); color: var(--text-muted);">{{ collaborators.count|add:1 }} membre{{ collaborators.count|add:1|pluralize }}</span>
-                </div>
-                <div class="section-body">
-                    <!-- Project Owner -->
-                    <div style="margin-bottom: var(--space-6);">
-                        <h4 style="color: var(--accent-primary); margin-bottom: var(--space-3); font-size: var(--text-lg);">👑 Propriétaire du Projet</h4>
-                        <div class="collaborator-card" style="border-left: 4px solid #f59e0b;">
-                            <div class="collaborator-avatar" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                                {{ project.student.user.first_name|first|default:project.student.user.username|first|upper }}
-                            </div>
-                            <div style="flex: 1;">
-                                <strong style="color: var(--text-primary);">{{ project.student.user.get_full_name|default:project.student.user.username }}</strong><br>
-                                <small style="color: var(--text-muted);">{{ project.student.student_id }} • {{ project.student.department }}</small>
-                            </div>
-                            <div style="background: #f59e0b; color: white; padding: var(--space-1) var(--space-3); border-radius: var(--radius-md); font-size: var(--text-xs); font-weight: 600;">
-                                PROPRIÉTAIRE
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Collaborators -->
-                    {% if collaborators %}
-                    <div style="margin-bottom: var(--space-6);">
-                        <h4 style="color: var(--accent-primary); margin-bottom: var(--space-3); font-size: var(--text-lg);">🤝 Collaborateurs ({{ collaborators.count }})</h4>
-                        <div class="collaborators-grid">
-                            {% for collaborator in collaborators %}
-                            <div class="collaborator-card">
-                                <div class="collaborator-avatar">
-                                    {{ collaborator.user.first_name|first|default:collaborator.user.username|first|upper }}
-                                </div>
-                                <div style="flex: 1;">
-                                    <strong style="color: var(--text-primary);">{{ collaborator.user.get_full_name|default:collaborator.user.username }}</strong><br>
-                                    <small style="color: var(--text-muted);">{{ collaborator.student_id }} • {{ collaborator.department }}</small>
-                                </div>
-                                {% if is_owner and project.status == 'in_progress' %}
-                                <a href="{% url 'student:remove_collaborator' project.id collaborator.id %}" 
-                                   class="action-btn danger" style="padding: var(--space-1) var(--space-2); font-size: var(--text-xs);"
-                                   onclick="return confirm('Retirer {{ collaborator.user.get_full_name|default:collaborator.user.username|escapejs }} du projet?')">
-                                    🗑️
-                                </a>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Add Collaborators (Owner Only) -->
-                    {% if project.status == 'in_progress' and is_owner %}
-                    <div style="margin-top: var(--space-6);">
-                        <h4 style="color: var(--accent-primary); margin-bottom: var(--space-3); font-size: var(--text-lg);">➕ Ajouter des Collaborateurs</h4>
-                        <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%); padding: var(--space-4); border-radius: var(--radius-lg); margin-bottom: var(--space-4); border: 1px solid rgba(79, 70, 229, 0.2);">
-                            <p style="margin: 0; color: var(--accent-primary); font-size: var(--text-sm);">
-                                Il reste {{ 10|add:"-"|add:collaborators.count }} place{{ 10|add:"-"|add:collaborators.count|pluralize }} pour des collaborateurs (sur un maximum de 10).
-                            </p>
-                        </div>
-                        
-                        {% if collaborators.count < 10 %}
-                        <form method="post" action="{% url 'student:add_collaborator' project.id %}" class="add-collaborator-form">
-                            {% csrf_token %}
-                            <div style="margin-bottom: var(--space-4);">
-                                <label for="collaborator" style="display: block; margin-bottom: var(--space-2); font-weight: 600; color: var(--accent-primary);">Sélectionner un étudiant:</label>
-                                <select name="collaborator" id="collaborator" class="select2" style="width: 100%" required>
-                                    <option value="">Rechercher un étudiant...</option>
-                                    {% for student in available_students %}
-                                        <option value="{{ student.id }}" 
-                                                data-department="{{ student.department }}"
-                                                data-year="{{ student.year_of_study }}">
-                                            {{ student.user.get_full_name|default:student.user.username }}
-                                            ({{ student.student_id }}) - {{ student.department }} - {{ student.get_year_of_study_display }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <button type="submit" class="action-btn primary">📤 Envoyer l'Invitation</button>
-                        </form>
-                        {% else %}
-                        <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%); color: var(--error); padding: var(--space-4); border-radius: var(--radius-lg); border: 1px solid rgba(239, 68, 68, 0.3);">
-                            Vous avez atteint le nombre maximum de collaborateurs (10) pour ce projet.
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Pending Invitations -->
-                    {% if pending_invitations %}
-                    <div class="pending-invitations">
-                        <h4 style="margin: 0 0 var(--space-4) 0; color: #856404; font-size: var(--text-lg);">⏳ Invitations en Attente ({{ pending_invitations.count }})</h4>
-                        {% for invitation in pending_invitations %}
-                        <div class="invitation-item">
-                            <div>
-                                <strong style="color: var(--text-primary);">{{ invitation.recipient.user.get_full_name|default:invitation.recipient.user.username }}</strong>
-                                <span style="color: #856404; font-size: var(--text-xs);">({{ invitation.recipient.student_id }})</span>
-                                <div style="font-size: var(--text-xs); color: #856404;">Envoyée le {{ invitation.created_at|date:"d/m/Y à H:i" }}</div>
-                            </div>
-                            <form method="post" action="{% url 'student:cancel_invitation' invitation.id %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="action-btn" style="background: var(--text-muted); color: white; padding: var(--space-1) var(--space-2); font-size: var(--text-xs);">Annuler</button>
-                            </form>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Timeline and Milestones -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2 class="section-title">🎯 Jalons du Projet</h2>
-                    <span style="font-size: var(--text-sm); color: var(--text-muted);">{{ milestones.count }} jalon{{ milestones.count|pluralize }}</span>
-                </div>
-                <div class="section-body">
-                    {% if milestones %}
-                        <div class="timeline-container">
-                            {% for milestone in milestones %}
-                            <div class="milestone-item {% if milestone.completed %}completed{% elif milestone.is_overdue %}overdue{% endif %}">
-                                <div class="milestone-marker {% if milestone.completed %}milestone-completed{% elif milestone.is_overdue %}milestone-overdue{% else %}milestone-pending{% endif %}">
-                                    {% if milestone.completed %}✓{% else %}•{% endif %}
-                                </div>
-                                
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3); gap: var(--space-4);">
-                                    <h4 style="margin: 0; color: var(--accent-primary); font-size: var(--text-lg);">
-                                        {{ milestone.title }}
-                                        {% if milestone.is_overdue and not milestone.completed %}
-                                            <span style="background: var(--error); color: white; padding: var(--space-1) var(--space-2); border-radius: var(--radius-md); font-size: var(--text-xs); margin-left: var(--space-2);">EN RETARD</span>
-                                        {% endif %}
-                                    </h4>
-                                    {% if project.status == 'in_progress' %}
-                                    <form method="post" action="{% url 'student:toggle_milestone' milestone.id %}" style="margin: 0;">
-                                        {% csrf_token %}
-                                        {% if milestone.completed %}
-                                            <button type="submit" class="action-btn" style="background: var(--text-muted); color: white; padding: var(--space-1) var(--space-2); font-size: var(--text-xs);">
-                                                ↩️ Marquer Non Complété
-                                            </button>
-                                        {% else %}
-                                            <button type="submit" class="action-btn success" style="padding: var(--space-1) var(--space-2); font-size: var(--text-xs);">
-                                                ✅ Marquer Complété
-                                            </button>
-                                        {% endif %}
-                                    </form>
-                                    {% endif %}
-                                </div>
-                                
-                                <div style="color: var(--text-muted); font-size: var(--text-sm); margin-bottom: var(--space-2);">
-                                    <strong>Échéance:</strong> {{ milestone.due_date|date:"d/m/Y" }}
-                                </div>
-                                
-                                {% if milestone.description %}
-                                <p style="margin: var(--space-2) 0; color: var(--text-secondary);">{{ milestone.description }}</p>
-                                {% endif %}
-
-                                {% if milestone.completed %}
-                                <div style="margin-top: var(--space-3); padding: var(--space-3); background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%); border-radius: var(--radius-lg); font-size: var(--text-sm); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3);">
-                                    <strong>✅ Complété</strong> par {{ milestone.completed_by.get_full_name|default:milestone.completed_by.username }} 
-                                    le {{ milestone.completed_at|date:"d/m/Y à H:i" }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="empty-state">
-                            <div class="empty-state-icon">🎯</div>
-                            <h3>Aucun jalon défini</h3>
-                            <p>Ajoutez des jalons pour suivre la progression de votre projet.</p>
-                            {% if project.status == 'in_progress' %}
-                            <a href="{% url 'student:add_milestone' project.id %}" class="action-btn primary">🎯 Ajouter le Premier Jalon</a>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Deliverables -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2 class="section-title">📎 Livrables</h2>
-                    <span style="font-size: var(--text-sm); color: var(--text-muted);">{{ deliverables|length }} livrable{{ deliverables|length|pluralize }}</span>
-                </div>
-                <div class="section-body">
-                    {% if deliverables %}
-                        <div class="deliverables-grid">
-                            {% for deliverable in deliverables %}
-                            <div class="deliverable-card">
-                                <div class="deliverable-header">
-                                    <div style="flex: 1;">
-                                        <h4 style="margin: 0 0 var(--space-2) 0; color: var(--accent-primary); font-size: var(--text-lg);">
-                                            {{ deliverable.name }}
-                                            {% if deliverable.version > 1 %}
-                                            <span style="background: rgba(66,153,225,0.15); color: var(--accent-primary); font-size: var(--text-xs); font-weight: 700; padding: 2px 8px; border-radius: 999px; vertical-align: middle;">v{{ deliverable.version }}</span>
-                                            {% endif %}
-                                        </h4>
-                                        <div style="font-size: var(--text-sm); color: var(--text-muted);">
-                                            <strong>Type:</strong> {{ deliverable.get_file_type_display }}<br>
-                                            <strong>Uploadé le:</strong> {{ deliverable.upload_date|date:"d/m/Y H:i" }}
-                                        </div>
-                                    </div>
-                                    <div class="deliverable-icon">📄</div>
-                                </div>
-                                <div style="margin-top: var(--space-4); display: flex; gap: var(--space-2);">
-                                    {% if deliverable.is_previewable %}
-                                        <button type="button" class="action-btn primary js-preview" style="padding: var(--space-2) var(--space-3); font-size: var(--text-xs);"
-                                                data-url="{{ deliverable.preview_url }}" data-kind="{% if deliverable.extension == '.pdf' %}pdf{% else %}image{% endif %}" data-name="{{ deliverable.name }}">
-                                            👁️ Aperçu
-                                        </button>
-                                    {% endif %}
-                                    <a href="{{ deliverable.download_url }}" class="action-btn success" style="padding: var(--space-2) var(--space-3); font-size: var(--text-xs);" target="_blank">
-                                        📥 Télécharger
-                                    </a>
-                                </div>
-
-                                <!-- Anciennes versions -->
-                                {% if deliverable.history %}
-                                <details style="margin-top: var(--space-3);">
-                                    <summary style="cursor: pointer; font-size: var(--text-sm); color: var(--text-muted); font-weight: 600;">
-                                        🕘 {{ deliverable.history|length }} ancienne{{ deliverable.history|length|pluralize }} version{{ deliverable.history|length|pluralize }}
-                                    </summary>
-                                    {% for old in deliverable.history %}
-                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--border-color); font-size: var(--text-sm);">
-                                        <span style="color: var(--text-muted);">v{{ old.version }} — {{ old.upload_date|date:"d/m/Y H:i" }}</span>
-                                        <a href="{{ old.download_url }}" target="_blank" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">📥 Télécharger</a>
-                                    </div>
-                                    {% endfor %}
-                                </details>
-                                {% endif %}
-
-                                <!-- Feedback enseignant sur ce livrable -->
-                                {% with feedbacks=deliverable.feedback_comments.all %}
-                                {% if feedbacks or is_owner or is_collaborator %}
-                                <div style="margin-top: var(--space-4); border-top: 1px solid var(--border-color); padding-top: var(--space-3);">
-                                    <div style="font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-2);">
-                                        💬 Feedback sur ce livrable ({{ feedbacks|length }})
-                                    </div>
-                                    {% for fb in feedbacks %}
-                                    <div style="margin-bottom: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: 8px; background: var(--bg-secondary); {% if fb.is_teacher_comment %}border-left: 3px solid var(--accent-primary);{% endif %}">
-                                        <div style="display: flex; justify-content: space-between; font-size: var(--text-xs); color: var(--text-muted); margin-bottom: var(--space-1);">
-                                            <span>
-                                                {% if fb.is_teacher_comment %}👨‍🏫{% else %}🎓{% endif %}
-                                                <strong>{{ fb.author.get_full_name|default:fb.author.username }}</strong>
-                                                {% if fb.is_teacher_comment %}(Enseignant){% endif %}
-                                            </span>
-                                            <span>{{ fb.created_at|date:"d/m/Y H:i" }}</span>
-                                        </div>
-                                        <div style="font-size: var(--text-sm); color: var(--text-primary);">{{ fb.content|linebreaksbr }}</div>
-                                    </div>
-                                    {% endfor %}
-                                    {% if is_owner or is_collaborator %}
-                                    <form method="post" action="{% url 'student:add_deliverable_comment' deliverable.id %}" style="margin-top: var(--space-2);">
-                                        {% csrf_token %}
-                                        <textarea name="content" rows="2" required style="width: 100%;" placeholder="Répondre au feedback..."></textarea>
-                                        <button type="submit" class="action-btn primary" style="margin-top: var(--space-2); padding: var(--space-2) var(--space-3); font-size: var(--text-xs);">
-                                            💬 Répondre
-                                        </button>
-                                    </form>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-                                {% endwith %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📎</div>
-                            <h3>Aucun livrable</h3>
-                            <p>Uploadez vos documents, rapports et présentations.</p>
-                            {% if project.status == 'in_progress' or project.status == 'revision_requested' %}
-                            <a href="{% url 'student:upload_deliverable' project.id %}" class="action-btn primary">📎 Ajouter le Premier Livrable</a>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Discussion Section -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2 class="section-title">💬 Discussion du Projet</h2>
-                    <span style="font-size: var(--text-sm); color: var(--text-muted);">{{ project.comments.all.count }} commentaire{{ project.comments.all.count|pluralize }}</span>
-                </div>
-                <div class="section-body">
-                    <!-- Comment Form -->
-                    {% if is_owner or is_collaborator %}
-                    <div style="margin-bottom: var(--space-6);">
-                        <form method="post" action="{% url 'student:add_comment' project.id %}">
-                            {% csrf_token %}
-                            <div style="margin-bottom: var(--space-3);">
-                                <textarea name="content" rows="3" placeholder="Ajouter un commentaire sur le projet..." 
-                                          style="width: 100%; padding: var(--space-3); border: 2px solid var(--border-primary); border-radius: var(--radius-lg); resize: vertical; font-family: inherit; background: var(--bg-secondary); color: var(--text-primary);" required></textarea>
-                            </div>
-                            <button type="submit" class="action-btn primary">💬 Publier le Commentaire</button>
-                        </form>
-                    </div>
-                    {% endif %}
-
-                    <!-- Comments List -->
-                    {% if project.comments.all %}
-                    <div class="comment-section">
-                        {% for comment in project.comments.all %}
-                        <div class="comment-item {% if comment.is_teacher_comment %}comment-teacher{% else %}comment-student{% endif %}">
-                            <div class="comment-header">
-                                <div class="comment-author">
-                                    {% if comment.is_teacher_comment %}
-                                        🎓 {{ comment.author.get_full_name|default:comment.author.username }} (Enseignant)
-                                    {% else %}
-                                        👤 {{ comment.author.get_full_name|default:comment.author.username }}
-                                    {% endif %}
-                                </div>
-                                <div class="comment-date">{{ comment.created_at|date:"d/m/Y H:i" }}</div>
-                            </div>
-                            <div style="line-height: 1.5; color: var(--text-secondary);">
-                                {{ comment.content|linebreaks }}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="empty-state">
-                        <div class="empty-state-icon">💬</div>
-                        <h3>Aucun commentaire</h3>
-                        <p>Commencez la discussion sur ce projet. Partagez vos idées et vos questions!</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+    <section class="card" id="discussion" aria-labelledby="disc-title">
+      <div class="card-header"><h2 id="disc-title">Discussion</h2></div>
+      <div class="card-body stack">
+        <form method="post" action="{% url 'student:add_comment' project.id %}" class="stack stack-sm">
+          {% csrf_token %}
+          <label class="visually-hidden" for="new-comment">Nouveau message</label>
+          <textarea class="textarea" id="new-comment" name="content" rows="3" maxlength="5000" placeholder="Écrire à l'équipe et à l'enseignant…" required></textarea>
+          <div><button class="btn btn-primary btn-sm" type="submit">Publier</button></div>
+        </form>
+        <div class="comments">
+          {% for c in comments %}
+          <div class="comment{% if c.is_teacher_comment %} is-teacher{% endif %}">{% avatar c.author size="sm" %}<div><div class="comment-head"><span class="comment-author">{{ c.author.get_full_name|default:c.author.username }}</span>{% if c.is_teacher_comment %}<span class="chip chip-accent no-dot">Enseignant</span>{% endif %}<span class="comment-meta">{{ c.created_at|date:"d/m/Y H:i" }}</span></div><div class="comment-body">{{ c.content }}</div></div></div>
+          {% empty %}
+          <p class="muted">Aucun message pour l'instant.</p>
+          {% endfor %}
         </div>
+      </div>
+    </section>
+  </div>
 
-        <!-- Sidebar -->
-        <div>
-            <!-- Project Information -->
-            <div class="sidebar-card">
-                <div class="sidebar-header">
-                    <h3 style="color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xl); font-weight: 700;">
-                        ℹ️ Informations du Projet
-                    </h3>
-                </div>
-                <div class="sidebar-body">
-                    <table class="info-table">
-                        <tr>
-                            <th>Type de projet</th>
-                            <td>{{ project.get_project_type_display }}</td>
-                        </tr>
-                        <tr>
-                            <th>Date de début</th>
-                            <td>{{ project.start_date|date:"d/m/Y" }}</td>
-                        </tr>
-                        {% if project.end_date %}
-                        <tr>
-                            <th>Date de fin</th>
-                            <td>{{ project.end_date|date:"d/m/Y" }}</td>
-                        </tr>
-                        {% endif %}
-                        <tr>
-                            <th>Propriétaire</th>
-                            <td>{{ project.student.user.get_full_name|default:project.student.user.username }}</td>
-                        </tr>
-                        <tr>
-                            <th>Département</th>
-                            <td>{{ project.student.department }}</td>
-                        </tr>
-                        {% if project.module %}
-                        <tr>
-                            <th>Module associé</th>
-                            <td>{{ project.module.code }} - {{ project.module.name }}</td>
-                        </tr>
-                        {% endif %}
-                    </table>
-                </div>
-            </div>
+  <aside class="stack">
+    {% if evaluation %}
+    <section class="card card-body stack" aria-labelledby="eval-title">
+      <h2 id="eval-title" class="section-title">Évaluation</h2>
+      <div class="spread"><span class="serif display num">{{ evaluation.score|floatformat:"-2" }}<span class="muted text-sm"> / 20</span></span><span class="chip {% if evaluation.score >= 14 %}chip-ok{% elif evaluation.score >= 10 %}chip-warn{% else %}chip-danger{% endif %} no-dot">{{ evaluation.get_mention }}</span></div>
+      {% if evaluation.comments %}<p class="prose-pre">{{ evaluation.comments }}</p>{% endif %}
+      {% with criteria=evaluation.criteria.all %}{% if criteria %}
+      <dl class="dl">{% for c in criteria %}<dt>{{ c.name }}</dt><dd class="num">{{ c.score|floatformat:"-2" }}{% if c.comment %} <span class="subtle">— {{ c.comment }}</span>{% endif %}</dd>{% endfor %}</dl>
+      {% endif %}{% endwith %}
+      <p class="subtle text-sm">Par {{ evaluation.teacher.user.get_full_name|default:"l'enseignant" }}, le {{ evaluation.updated_at|date:"d/m/Y" }}</p>
+    </section>
+    {% endif %}
 
-            <!-- Project Activity -->
-            <div class="sidebar-card">
-                <div class="sidebar-header">
-                    <h3 style="color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xl); font-weight: 700;">
-                        📊 Activité du Projet
-                    </h3>
-                </div>
-                <div class="sidebar-body">
-                    {% if project_activities %}
-                    <div style="max-height: 300px; overflow-y: auto;">
-                        {% for activity in project_activities %}
-                        <div style="padding: var(--space-3) 0; border-bottom: 1px solid var(--border-primary);">
-                            <div style="font-weight: 600; color: var(--accent-primary); font-size: var(--text-sm);">
-                                {{ activity.get_activity_type_display }}
-                            </div>
-                            <div style="font-size: var(--text-xs); color: var(--text-muted); margin: var(--space-1) 0;">
-                                {{ activity.description }}
-                            </div>
-                            <div style="font-size: var(--text-xs); color: var(--text-muted);">
-                                Par {{ activity.user.get_full_name|default:activity.user.username }} • {{ activity.created_at|timesince }}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="empty-state" style="padding: var(--space-6);">
-                        <div style="font-size: var(--text-4xl); margin-bottom: var(--space-3); opacity: 0.3;">📊</div>
-                        <p style="font-size: var(--text-sm); margin: 0;">Aucune activité enregistrée</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+    <section class="card card-body stack" aria-labelledby="team-title">
+      <div class="spread"><h2 id="team-title" class="section-title">Équipe</h2>{% if team.max_allowed %}<span class="muted text-sm">{{ team.team_size }} / {{ team.max_allowed }}</span>{% endif %}</div>
+      {% if team.max_allowed and team.max_allowed > 1 %}<progress class="meter{% if team.size_status.status == 'too_small' %} is-warn{% endif %}" value="{{ team.team_size }}" max="{{ team.max_allowed }}">{{ team.team_size }} sur {{ team.max_allowed }}</progress>{% endif %}
+      {% if team.size_status.message %}<p class="muted text-sm">{{ team.size_status.message }}</p>{% endif %}
+      <ul class="side-list" role="list">
+        <li class="person">{% avatar project.student size="sm" %}<span>{{ project.student.get_full_name }} <span class="subtle text-sm">· responsable</span></span></li>
+        {% for c in collaborators %}
+        <li class="person spread">
+          <span class="cluster cluster-sm">{% avatar c size="sm" %}{{ c.get_full_name }}</span>
+          {% if is_owner and project.status == "in_progress" %}
+          <form method="post" action="{% url 'student:remove_collaborator' project.id c.id %}" data-confirm="{{ c.get_full_name }} ne fera plus partie de l'équipe." data-confirm-title="Retirer ce membre ?" data-confirm-action="Retirer" data-confirm-danger>{% csrf_token %}<button class="btn btn-sm btn-ghost btn-icon" type="submit">{% icon "user-x" size=16 %}<span class="visually-hidden">Retirer {{ c.get_full_name }}</span></button></form>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% if pending_invitations %}
+      <div class="stack stack-sm">
+        <h3 class="text-sm muted">Invitations envoyées</h3>
+        {% for inv in pending_invitations %}
+        <div class="spread text-sm"><span>{{ inv.recipient.get_full_name }}</span>
+          <form method="post" action="{% url 'student:cancel_invitation' inv.id %}">{% csrf_token %}<button class="btn-link text-sm" type="submit">Annuler</button></form></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if actions.can_invite_collaborators and available_students %}
+      <form method="post" action="{% url 'student:add_collaborator' project.id %}" class="stack stack-sm">
+        {% csrf_token %}
+        <label class="text-sm" for="invite-student"><strong>Inviter un étudiant</strong></label>
+        <select class="select" id="invite-student" name="collaborator" required>
+          <option value="">Choisir…</option>
+          {% for s in available_students %}<option value="{{ s.id }}">{{ s.get_full_name }} ({{ s.student_id }})</option>{% endfor %}
+        </select>
+        <button class="btn btn-sm" type="submit">{% icon "user-plus" %} Envoyer l'invitation</button>
+      </form>
+      {% endif %}
+      {% if assignment_context.is_assignment_project and assignment_context.assignment.is_team_work and project.status == "in_progress" %}<a class="text-sm" href="{% url 'student:teammates_board' assignment_context.assignment.id %}">Voir qui cherche une équipe</a>{% endif %}
+    </section>
 
-            <!-- Quick Stats -->
-            <div class="sidebar-card">
-                <div class="sidebar-header">
-                    <h3 style="color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xl); font-weight: 700;">
-                        📈 Statistiques Rapides
-                    </h3>
-                </div>
-                <div class="sidebar-body">
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-number">{{ milestones.count }}</div>
-                            <div class="stat-label">Jalons</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">{{ deliverables|length }}</div>
-                            <div class="stat-label">Livrables</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">{{ collaborators.count|add:1 }}</div>
-                            <div class="stat-label">Membres</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">{{ project.comments.all.count }}</div>
-                            <div class="stat-label">Commentaires</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- File Preview Modal -->
-    <div id="filePreviewModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="previewTitle">Aperçu du fichier</h3>
-                <button class="close" onclick="closePreview()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="previewContainer">
-                    <!-- Content will be inserted here -->
-                </div>
-            </div>
-        </div>
-    </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-$(document).ready(function() {
-    $('#collaborator').select2({
-        placeholder: "Rechercher par nom, ID étudiant, ou département...",
-        allowClear: true,
-        width: '100%',
-        language: {
-            noResults: function() {
-                return "Aucun étudiant disponible";
-            },
-            searching: function() {
-                return "Recherche...";
-            }
-        }
-    });
-});
-
-function previewFile(url, kind, fileName) {
-    const modal = document.getElementById('filePreviewModal');
-    const container = document.getElementById('previewContainer');
-    document.getElementById('previewTitle').textContent = 'Aperçu : ' + fileName;
-    container.replaceChildren();
-
-    // Only PDFs and images get a preview URL (see ProjectDeliverable.preview_url)
-    const isImage = kind === 'image';
-    const element = document.createElement(isImage ? 'img' : 'iframe');
-    element.src = url;
-    element.style.width = '100%';
-    element.style.height = isImage ? 'auto' : '100%';
-    element.style.border = 'none';
-    element.alt = fileName;
-    container.appendChild(element);
-    modal.style.display = 'flex';
-}
-
-document.querySelectorAll('.js-preview').forEach(function (button) {
-    button.addEventListener('click', function () {
-        previewFile(button.dataset.url, button.dataset.kind, button.dataset.name);
-    });
-});
-
-function closePreview() {
-    const modal = document.getElementById('filePreviewModal');
-    modal.style.display = 'none';
-    document.getElementById('previewContainer').innerHTML = '';
-}
-
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById('filePreviewModal');
-    if (event.target === modal) {
-        closePreview();
-    }
-}
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closePreview();
-    }
-});
-</script>
+    <section class="card card-body stack" aria-labelledby="act-title">
+      <h2 id="act-title" class="section-title">Activité</h2>
+      {% if project_activities %}
+      <ul class="timeline">{% for a in project_activities|slice:":12" %}<li><div>{{ a.description }}<div class="when">{{ a.user.get_full_name|default:a.user.username }} · {{ a.created_at|date:"d/m H:i" }}</div></div></li>{% endfor %}</ul>
+      {% else %}<p class="muted text-sm">Aucune activité.</p>{% endif %}
+    </section>
+  </aside>
+</div>
+{% endwith %}
 {% endblock %}

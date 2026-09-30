@@ -289,9 +289,9 @@ class DeliverableVersioningTests(TestCase):
         response = self.client.get(reverse("student:project_detail", args=[self.project.id]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "v2")
-        self.assertContains(response, "ancienne")
+        self.assertContains(response, "version précédente")
         # Only one card for the deliverable (grouped), counted once
-        self.assertContains(response, "1 livrable")
+        self.assertContains(response, 'Livrables <span class="subtle">1</span>', html=False)
 
 
 class TeammatesBoardTests(TestCase):

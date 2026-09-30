@@ -48,3 +48,4 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   border-radius: var(--r); font-weight: 600; text-decoration: none;
 }
 .skip-link:focus { top: var(--s-4); }
+.text-ok { color: var(--ok); } .text-warn { color: var(--warn); } .text-danger { color: var(--danger); }

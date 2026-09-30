@@ -215,6 +215,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   border-radius: var(--r); font-weight: 600; text-decoration: none;
 }
 .skip-link:focus { top: var(--s-4); }
+.text-ok { color: var(--ok); } .text-warn { color: var(--warn); } .text-danger { color: var(--danger); }
 
 /* --- 04-layout.css --- */
 /* ==========================================================================
@@ -245,6 +246,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .w-full { width: 100%; }
 .nowrap { white-space: nowrap; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grow { flex: 1 1 auto; min-width: 0; }
 
 /* --- components/10-button.css --- */
 /* Buttons: primary / secondary / ghost / danger; sizes sm / md; icon-only; loading */
@@ -329,7 +331,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .dropzone input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .dropzone:focus-within { box-shadow: var(--focus-ring); }
 .form-section { display: grid; gap: var(--s-5); padding: var(--s-6) 0; border-top: 1px solid var(--line); }
-.form-section:first-child { border-top: 0; padding-top: 0; }
+.form-section:first-of-type { border-top: 0; padding-top: 0; }
 @media (min-width: 1024px) {
   .form-section { grid-template-columns: 240px minmax(0, 1fr); gap: var(--s-7); }
 }
@@ -742,3 +744,9 @@ progress.meter.is-warn::-moz-progress-bar { background: var(--warn); }
 /* Page sections inside the app content area */
 .content > section + section, .content > .stack + section, .content > section + .stack { margin-top: var(--s-8); }
 .attention { --min: 340px; }
+/* Paint the sidebar column full height (the sticky sidebar itself is only 100vh tall).
+   A hard-stop gradient = a flat color block + 1px border, not a visual gradient. */
+@media (min-width: 1024px) {
+  .app { background-image: linear-gradient(to right, var(--surface) calc(var(--sidebar-w) - 1px),
+    var(--line) calc(var(--sidebar-w) - 1px), var(--line) var(--sidebar-w), transparent var(--sidebar-w)); }
+}

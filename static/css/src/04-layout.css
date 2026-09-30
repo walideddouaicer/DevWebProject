@@ -26,3 +26,4 @@
 .w-full { width: 100%; }
 .nowrap { white-space: nowrap; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grow { flex: 1 1 auto; min-width: 0; }

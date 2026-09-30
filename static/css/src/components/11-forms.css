@@ -45,7 +45,7 @@
 .dropzone input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .dropzone:focus-within { box-shadow: var(--focus-ring); }
 .form-section { display: grid; gap: var(--s-5); padding: var(--s-6) 0; border-top: 1px solid var(--line); }
-.form-section:first-child { border-top: 0; padding-top: 0; }
+.form-section:first-of-type { border-top: 0; padding-top: 0; }
 @media (min-width: 1024px) {
   .form-section { grid-template-columns: 240px minmax(0, 1fr); gap: var(--s-7); }
 }
