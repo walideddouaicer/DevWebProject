@@ -1,9 +1,7 @@
 # sending emails
 import logging
 
-from django.conf import settings
 from django.core.cache import cache
-from django.core.mail import send_mail
 from django.utils import timezone
 
 
@@ -45,45 +43,26 @@ logger = logging.getLogger(__name__)
 
 
 def send_invitation_email(invitation):
-    """Send notification email when a collaboration invitation is sent"""
-    try:
-        # Respect the recipient's notification preferences
-        recipient_user = invitation.recipient.user
-        if hasattr(recipient_user, "preferences"):
-            prefs = recipient_user.preferences
-            if not prefs.email_notifications or not prefs.collaboration_notifications:
-                return False
-            if prefs.email_digest:
-                # Digest users get a daily summary instead of per-event emails
-                return False
+    """Email the invitation recipient, respecting their notification preferences."""
+    from ensa_project_manager.emails import absolute_url, send_templated_email
 
-        recipient_email = recipient_user.email
-        sender_name = invitation.sender.user.get_full_name() or invitation.sender.user.username
-        project_title = invitation.project.title
-
-        subject = f"Invitation à collaborer sur le projet: {project_title}"
-        message = f"""
-        Bonjour,
-        
-        {sender_name} vous invite à collaborer sur le projet "{project_title}".
-        
-        Pour répondre à cette invitation, connectez-vous à votre compte ENSA Project Manager.
-        
-        Cordialement,
-        L'équipe ENSA Project Manager
-        """
-
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [recipient_email],
-            fail_silently=False,
-        )
-
-        return True
-    except Exception as e:
-        # Log but don't raise the exception
-        logger.error(f"Email sending failed: {e}")
-        print(f"Email sending failed: {e}")
+    recipient_user = invitation.recipient.user
+    prefs = getattr(recipient_user, "preferences", None)
+    if prefs is not None and (
+        not prefs.email_notifications
+        or not prefs.collaboration_notifications
+        or prefs.email_digest  # digest users get a daily summary instead
+    ):
         return False
+    sender = invitation.sender.user
+    return send_templated_email(
+        f"Invitation à rejoindre le projet « {invitation.project.title} »",
+        "invitation",
+        {
+            "recipient_name": recipient_user.first_name or recipient_user.username,
+            "sender_name": sender.get_full_name() or sender.username,
+            "project": invitation.project,
+            "invitations_url": absolute_url("student:invitations_list"),
+        },
+        [recipient_user.email],
+    )

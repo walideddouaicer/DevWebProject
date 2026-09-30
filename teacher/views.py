@@ -538,9 +538,8 @@ def add_teacher_comment(request, project_id):
 @require_http_methods(["POST"])
 def post_module_announcement(request, module_id):
     """Broadcast an announcement to every active student of a module."""
-    from django.conf import settings
-    from django.core.mail import send_mail
 
+    from ensa_project_manager.emails import absolute_url, send_templated_email
     from student.models import Notification, UserPreferences
 
     from .models import ModuleAnnouncement
@@ -598,22 +597,20 @@ def post_module_announcement(request, module_id):
         if prefs and prefs.email_digest:
             # Digest users get the announcement in their daily summary instead
             continue
-        try:
-            send_mail(
-                subject=f"[{module.code}] {title}",
-                message=(
-                    f"Bonjour {user.first_name or user.username},\n\n"
-                    f"Annonce de {teacher_name} pour le module {module.code} — {module.name}:\n\n"
-                    f"{content}\n\n"
-                    "Cordialement,\nENSA Project Manager"
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
+        if send_templated_email(
+            f"[{module.code}] {title}",
+            "announcement",
+            {
+                "user": user,
+                "teacher_name": teacher_name,
+                "module": module,
+                "title": title,
+                "content": content,
+                "modules_url": absolute_url("student:my_modules"),
+            },
+            [user.email],
+        ):
             emailed += 1
-        except Exception:
-            pass
 
     messages.success(
         request,

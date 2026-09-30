@@ -257,6 +257,9 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@ensaprojectmanager.com")
 
+# Absolute base URL used in emails (no trailing slash), e.g. https://projets.ensa.ma
+SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000").rstrip("/")
+
 
 # ---------------------------------------------------------------------------
 # Security hardening

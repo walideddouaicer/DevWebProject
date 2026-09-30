@@ -1,0 +1,11 @@
+{% autoescape off %}Bonjour {{ registration.first_name }},
+
+Nous avons bien reçu votre demande d'inscription en tant que {{ registration.get_role_display|lower }} sur ENSA Project Manager.
+
+  Nom d'utilisateur : {{ registration.username }}
+  Adresse e-mail    : {{ registration.email }}
+
+Un administrateur va examiner votre demande. Vous recevrez un e-mail dès que votre compte sera activé.
+
+L'équipe ENSA Project Manager
+{% endautoescape %}

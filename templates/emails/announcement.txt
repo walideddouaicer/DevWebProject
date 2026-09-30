@@ -1,0 +1,12 @@
+{% autoescape off %}Bonjour {{ user.first_name|default:user.username }},
+
+Annonce de {{ teacher_name }} pour le module {{ module.code }} — {{ module.name }} :
+
+{{ title }}
+
+{{ content }}
+
+Voir le module : {{ modules_url }}
+
+L'équipe ENSA Project Manager
+{% endautoescape %}

@@ -2,6 +2,7 @@
 from django import forms
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 
 from student.models import StudentProfile
 from teacher.models import TeacherProfile
@@ -31,6 +32,22 @@ class BaseSignupForm(forms.ModelForm):
             "username": forms.TextInput(attrs={"class": "form-control"}),
             "email": forms.EmailInput(attrs={"class": "form-control"}),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        password = cleaned.get("password")
+        if password:
+            candidate = User(
+                username=cleaned.get("username", ""),
+                email=cleaned.get("email", ""),
+                first_name=cleaned.get("first_name", ""),
+                last_name=cleaned.get("last_name", ""),
+            )
+            try:
+                validate_password(password, user=candidate)
+            except forms.ValidationError as error:
+                self.add_error("password", error)
+        return cleaned
 
     def clean_password_confirm(self):
         password = self.cleaned_data.get("password")

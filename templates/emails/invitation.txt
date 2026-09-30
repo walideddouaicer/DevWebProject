@@ -1,0 +1,9 @@
+{% autoescape off %}Bonjour {{ recipient_name }},
+
+{{ sender_name }} vous invite à rejoindre l'équipe du projet « {{ project.title }} »{% if project.project_assignment %} (devoir : {{ project.project_assignment.title }}){% endif %}.
+
+Répondre à l'invitation :
+{{ invitations_url }}
+
+L'équipe ENSA Project Manager
+{% endautoescape %}

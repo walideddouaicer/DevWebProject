@@ -376,7 +376,6 @@ class RegressionTests(Fixtures):
         self.assertEqual(project.module_id, self.module.id)
 
     # B16 -----------------------------------------------------------------
-    @expectedFailure
     def test_B16_approval_email_has_a_real_login_link(self):
         registration = PendingRegistration.objects.create(
             email="new@example.com",
@@ -396,7 +395,6 @@ class RegressionTests(Fixtures):
         self.assertIn("/login/", mail.outbox[0].body)
 
     # B17 -----------------------------------------------------------------
-    @expectedFailure
     def test_B17_signup_rejects_common_passwords(self):
         form = StudentSignupForm(
             data={

@@ -1,0 +1,9 @@
+{% autoescape off %}Bonjour {{ registration.first_name }},
+
+Votre compte ENSA Project Manager est activé.
+
+Connectez-vous avec votre nom d'utilisateur ({{ registration.username }}) et le mot de passe choisi lors de l'inscription :
+{{ login_url }}
+
+L'équipe ENSA Project Manager
+{% endautoescape %}
