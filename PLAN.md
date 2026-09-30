@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P2 done → P3 next (P3.1 split view modules)**
+- Phase: **P3 done → P4 next (P4.1 production settings)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (152 tests; 1 expected failure left = B20 locale, fixed in P4.1)
+- Last green `make check`: 2026-09-30 (163 tests; 1 expected failure = B20, fixed in P4.1)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -281,19 +281,19 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
 
 ### P3 — Code structure & performance
 
-- [ ] **P3.1 Split giant view modules** into packages: `student/views/{projects,deliverables,
+- [x] **P3.1 Split giant view modules** into packages: `student/views/{projects,deliverables,
   milestones,invitations,notifications,modules,profile,assignments,calendar}.py`, same for teacher
   and administrator. No behavior change; URLs unchanged; remove `from .x import *`.
-- [ ] **P3.2 Forms everywhere.** Replace `request.POST.get(...)` parsing in comments, announcements,
+- [x] **P3.2 Forms everywhere.** Replace `request.POST.get(...)` parsing in comments, announcements,
   revision requests, grading, and bulk actions with Django forms (validation, max lengths).
-- [ ] **P3.3 Query budget.** Add `assertNumQueries`-style tests (upper bounds) for: student
+- [x] **P3.3 Query budget.** Add `assertNumQueries`-style tests (upper bounds) for: student
   dashboard, project detail, teacher dashboard, assignment progress, admin dashboard, admin users
   list, public showcase, search. Fix N+1s (the admin dashboard's per-module loop → annotate; teacher
   dashboard loop; get_team_statistics; comment `author_profile` lookups in loops).
-- [ ] **P3.4 Context processors.** One cheap badge-count processor per role, cached per user in
+- [x] **P3.4 Context processors.** One cheap badge-count processor per role, cached per user in
   the configured cache with explicit invalidation where notifications/invitations change
   (centralize in `notify_team`/invitation helpers). Remove the hour-bucket cache keys.
-- [ ] **P3.5 Pagination** on every unbounded list (notifications, users, projects, reports,
+- [x] **P3.5 Pagination** on every unbounded list (notifications, users, projects, reports,
   showcase already has it, activities).
 
 ### P4 — Production configuration & deployment artifacts
@@ -613,3 +613,9 @@ Everything else in this plan is decided by Claude.
   with ≤4 indexed COUNTs per request beats cache invalidation complexity; exact at all times.
   Removed the 3 per-app processors, `clear_student_context_cache`, and the dead
   `pending_module_approvals` banner.
+- **2026-09-30** · P3.1–P3.5 · Views split into packages (splitter script: copies all imports,
+  relocates relative imports, re-exports in `views/__init__`; ruff prunes). Forms for all
+  free-text POSTs; admin module create/edit had NO validation before (AdminModuleForm). Query
+  budgets + growth tests (tests/test_query_budget.py) → fixed N+1s on admin users/projects/
+  modules/dashboard, teacher dashboard/projects/module projects. One uncached badges processor.
+  Pagination helper/component on 6 lists. Next: P4.1.
