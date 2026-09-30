@@ -441,7 +441,16 @@ class Project(models.Model):
             # For non-assignment projects, use regular collaboration
             self.collaborators.add(student)
             return True
+        self.check_can_join(student)
+        self.collaborators.add(student)
+        return True
 
+    def check_can_join(self, student):
+        """Raise ValidationError if ``student`` may not join this team (assignment rules)."""
+        if student.pk == self.student_id or self.collaborators.filter(pk=student.pk).exists():
+            raise ValidationError(f"{student.get_full_name()} fait déjà partie de l'équipe.")
+        if not self.is_assignment_project():
+            return
         assignment = self.project_assignment
 
         # Check if assignment allows collaboration
@@ -483,9 +492,52 @@ class Project(models.Model):
                 f"{student.get_full_name()} travaille déjà sur ce devoir dans le projet '{existing_project.title}'."
             )
 
-        # Add the collaborator
-        self.collaborators.add(student)
-        return True
+    def invite(self, by, recipient):
+        """Owner ``by`` invites ``recipient`` to the team. Returns the invitation.
+
+        Raises ValidationError with a French message when the invitation isn't allowed.
+        The recipient gets an in-app notification and (preferences permitting) an email.
+        """
+        if by.pk != self.student_id:
+            raise ValidationError("Seul le propriétaire du projet peut inviter des coéquipiers.")
+        if self.status != "in_progress":
+            raise ValidationError("On ne peut inviter des coéquipiers que sur un projet en cours.")
+        if self.is_assignment_project() and not self.project_assignment.is_team_work:
+            raise ValidationError("Ce devoir doit être fait individuellement.")
+        if self.get_remaining_team_slots() <= 0:
+            raise ValidationError("Votre équipe a atteint la taille maximale autorisée.")
+        self.check_can_join(recipient)
+
+        with transaction.atomic():
+            invitation, created = CollaborationInvitation.objects.get_or_create(
+                project=self,
+                recipient=recipient,
+                defaults={"sender": by, "status": "pending", "message": ""},
+            )
+            if not created:
+                if invitation.status == "pending":
+                    raise ValidationError(
+                        f"Une invitation a déjà été envoyée à {recipient.get_full_name()}."
+                    )
+                invitation.status = "pending"
+                invitation.sender = by
+                invitation.message = ""
+                invitation.save()
+            message = f"{by.get_full_name()} vous invite à rejoindre le projet « {self.title} »"
+            if self.is_assignment_project():
+                message += f" (devoir « {self.project_assignment.title} »)"
+            Notification.objects.create(
+                recipient=recipient,
+                project=self,
+                project_assignment=self.project_assignment,
+                notification_type="invitation",
+                message=message + ".",
+            )
+
+        from .utils import send_invitation_email
+
+        transaction.on_commit(lambda: send_invitation_email(invitation), robust=True)
+        return invitation
 
     def remove_assignment_collaborator(self, student):
         """Remove collaborator with assignment-specific checks"""
@@ -947,6 +999,40 @@ class CollaborationInvitation(models.Model):
 
     def __str__(self):
         return f"Invitation from {self.sender} to {self.recipient} for {self.project}"
+
+    def accept(self):
+        """Recipient joins the team. If the rules no longer allow it (team full, already on
+        another team for the assignment...), the invitation is closed and ValidationError
+        is raised with the reason."""
+        if self.status != "pending":
+            raise ValidationError("Cette invitation n'est plus valide.")
+        project, student = self.project, self.recipient
+        try:
+            project.check_can_join(student)
+        except ValidationError:
+            self.status = "rejected"
+            self.save(update_fields=["status", "updated_at"])
+            raise
+        with transaction.atomic():
+            project.collaborators.add(student)
+            self.status = "accepted"
+            self.save(update_fields=["status", "updated_at"])
+            if project.is_assignment_project():
+                # Joined a team: stop advertising on the teammates board
+                TeammateRequest.objects.filter(
+                    assignment=project.project_assignment, student=student
+                ).update(is_active=False)
+            name = student.get_full_name()
+            project._log(student.user, "collaborator_added", f"{name} a rejoint l'équipe")
+            project.notify_team(
+                f"{name} a rejoint l'équipe du projet « {project.title} ».", exclude=student
+            )
+
+    def decline(self):
+        if self.status != "pending":
+            raise ValidationError("Cette invitation n'est plus valide.")
+        self.status = "rejected"
+        self.save(update_fields=["status", "updated_at"])
 
 
 # notifications

@@ -158,6 +158,22 @@ class ImportStudentsTests(TestCase):
         self.assertFalse(response.context["import_done"])
         self.assertEqual(StudentProfile.objects.count(), 0)
 
+    def test_import_rejects_corrupt_or_wrong_type_files(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        for upload in (
+            SimpleUploadedFile("roster.xlsx", b"this is not a zip"),
+            SimpleUploadedFile("roster.csv", b"Prenom,Nom\nA,B\n"),
+            SimpleUploadedFile("roster.xlsx", b""),
+        ):
+            with self.subTest(upload.name):
+                response = self.client.post(
+                    reverse("administrator:import_students"), {"excel_file": upload}
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertFalse(response.context.get("import_done"))
+        self.assertEqual(StudentProfile.objects.count(), 0)
+
     def test_template_download(self):
         response = self.client.get(reverse("administrator:student_import_template"))
         self.assertEqual(response.status_code, 200)

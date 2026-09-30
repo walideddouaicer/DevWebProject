@@ -59,19 +59,19 @@ class BaseSignupForm(forms.ModelForm):
 
     def clean_username(self):
         username = self.cleaned_data.get("username")
-        if User.objects.filter(username=username).exists():
+        if User.objects.filter(username__iexact=username).exists():
             raise forms.ValidationError("Ce nom d'utilisateur existe déjà.")
-        if PendingRegistration.objects.filter(username=username).exists():
+        if PendingRegistration.objects.filter(username__iexact=username).exists():
             raise forms.ValidationError(
                 "Une demande d'inscription avec ce nom d'utilisateur est en attente."
             )
         return username
 
     def clean_email(self):
-        email = self.cleaned_data.get("email")
-        if User.objects.filter(email=email).exists():
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Un compte avec cette adresse email existe déjà.")
-        if PendingRegistration.objects.filter(email=email).exists():
+        if PendingRegistration.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError(
                 "Une demande d'inscription avec cette adresse email est en attente."
             )

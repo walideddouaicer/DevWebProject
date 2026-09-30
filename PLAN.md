@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P7.1 in progress** — permission matrix done; next: coverage 79% → ≥80% (team, milestones, student modules, accounts views, admin modules/projects, teacher assignments), malformed imports, reminder/digest commands.
+- Phase: **P7.1 done → P7.2 next (security review)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (234 tests)
+- Last green `make check`: 2026-09-30 (275 tests, coverage 83%)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -417,7 +417,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
 
 ### P7 — Hardening, QA, docs
 
-- [ ] **P7.1 Test gap fill:** coverage ≥ 80% on the core apps; add tests for every permission
+- [x] **P7.1 Test gap fill:** coverage ≥ 80% on the core apps; add tests for every permission
   boundary (a matrix test: role × view → expected status), file download permissions, imports
   with malformed files, reminders/digest commands, state machine.
 - [ ] **P7.2 Security review pass:** run the `security-review` mindset over the whole diff
@@ -761,3 +761,14 @@ Everything else in this plan is decided by Claude.
   deleted. Duplicate `student:password_change(_done)` routes removed (settings links to the
   global one). Allowlisted: 3 legacy admin RedirectView aliases; `student:deliverable_download`
   (shared by design; private files stay 404 for anon so ids can't be probed).
+- **2026-09-30** · P7.1 (part 2) · Coverage 79% → 83%. Team rules consolidated on the model:
+  `Project.check_can_join(student)` (shared by `add_assignment_collaborator` and the new
+  `Project.invite(by, recipient)`), `CollaborationInvitation.accept()/decline()` (accept
+  re-checks the rules, closes the invitation if they fail, notifies the team);
+  `add_collaborator` (POST-only now) and `respond_to_invitation` views went from ~250 lines to
+  ~40. Signup views merged into `_signup()`; username/email duplicate checks case-insensitive,
+  email stored lowercase; dead `accounts:admin_signup` stub removed (admins: `createadmin`).
+  New suites: tests/test_team_flows.py, tests/test_accounts_modules_admin.py (validators,
+  signup, join/leave module, admin assign/unassign/unenroll, moderation), corrupt-import test.
+  Remaining < 80%: teacher/views/assignments.py 66%, student/views/projects.py 67% — covered
+  end-to-end by P7.5 instead.
