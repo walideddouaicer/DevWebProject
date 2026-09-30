@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import views
 
@@ -25,5 +26,9 @@ urlpatterns = [
     ),
     path("features/", views.features, name="features"),
     path("about/", views.about, name="about"),
-    path("explore/", views.explore_projects, name="explore_projects"),  # Future social feature
+    path(
+        "explore/",
+        RedirectView.as_view(pattern_name="public:projects_showcase"),
+        name="explore_projects",
+    ),
 ]

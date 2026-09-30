@@ -44,18 +44,7 @@ ROLES = {
 }
 
 # (role, url name) -> "5xx" or "mutates". Bug ids refer to PLAN.md §3.
-KNOWN_FAILURES = {
-    # B7: missing templates
-    **{
-        (role, "public:explore_projects"): "5xx"
-        for role in ["anon", "owner", "student", "teacher", "teacher_other", "admin"]
-    },
-    ("teacher", "teacher:assignment_teams"): "5xx",
-    ("admin", "administrator:users_overview"): "5xx",
-    ("admin", "administrator:students_list"): "5xx",
-    ("admin", "administrator:teachers_list"): "5xx",
-    ("admin", "administrator:statistics"): "5xx",
-}
+KNOWN_FAILURES = {}
 
 # URL names never requested (logout ends the session; Django admin is out of scope).
 SKIP = {"logout"}

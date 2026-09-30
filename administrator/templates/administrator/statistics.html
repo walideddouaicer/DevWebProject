@@ -1,0 +1,50 @@
+{% extends 'administrator/base.html' %}
+{% comment %}Functional placeholder built in PLAN P2.1; redesigned in P6.10.{% endcomment %}
+{% block title %}Statistiques — Administration{% endblock %}
+{% block content %}
+<h1>Statistiques</h1>
+
+<section>
+  <h2>Projets par type</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Projets</th></tr></thead>
+    <tbody>
+      {% for row in project_type_stats %}<tr><td>{{ row.type }}</td><td>{{ row.count }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Projets par statut</h2>
+  <table>
+    <thead><tr><th>Statut</th><th>Projets</th></tr></thead>
+    <tbody>
+      {% for row in status_stats %}<tr><td>{{ row.status }}</td><td>{{ row.count }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Modules actifs</h2>
+  <table>
+    <thead><tr><th>Module</th><th>Étudiants inscrits</th><th>Projets</th></tr></thead>
+    <tbody>
+      {% for module in module_stats %}
+      <tr><td>{{ module.code }} — {{ module.name }}</td><td>{{ module.student_count }}</td><td>{{ module.project_count }}</td></tr>
+      {% empty %}<tr><td colspan="3">Aucun module actif.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Charge des enseignants</h2>
+  <table>
+    <thead><tr><th>Enseignant</th><th>Modules</th><th>Étudiants</th></tr></thead>
+    <tbody>
+      {% for teacher in teacher_workload %}
+      <tr><td>{{ teacher.user.get_full_name|default:teacher.user.username }}</td><td>{{ teacher.module_count }}</td><td>{{ teacher.student_count }}</td></tr>
+      {% empty %}<tr><td colspan="3">Aucun enseignant.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

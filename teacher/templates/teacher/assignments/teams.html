@@ -1,0 +1,30 @@
+{% extends 'teacher/base.html' %}
+{% comment %}Functional placeholder built in PLAN P2.1; redesigned in P6.9.{% endcomment %}
+{% block title %}Équipes — {{ assignment.title }}{% endblock %}
+{% block content %}
+<h1>Équipes</h1>
+<p>{{ assignment.title }} — {{ assignment.module.code }}</p>
+<p>{{ total_teams }} équipe{{ total_teams|pluralize }} · {{ students_in_teams_count }} étudiant{{ students_in_teams_count|pluralize }} en équipe sur {{ total_enrolled }} ({{ participation_rate }} %) · {{ valid_teams }} de taille valide · {{ submitted_teams }} soumise{{ submitted_teams|pluralize }}</p>
+
+<table>
+  <thead><tr><th>Projet</th><th>Membres</th><th>Taille</th><th>Option</th><th>Statut</th></tr></thead>
+  <tbody>
+    {% for team in teams_data %}
+    <tr>
+      <td><a href="{% url 'teacher:project_review' team.project.id %}">{{ team.project.title }}</a></td>
+      <td>{% for member in team.all_members %}{{ member.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      <td>{{ team.team_size }} — {{ team.size_status.message }}</td>
+      <td>{{ team.selected_option.title|default:"—" }}</td>
+      <td>{{ team.project.get_status_display }}</td>
+    </tr>
+    {% empty %}<tr><td colspan="5">Aucune équipe formée pour l'instant.</td></tr>{% endfor %}
+  </tbody>
+</table>
+
+<h2>Étudiants sans équipe</h2>
+<ul>
+  {% for student in unassigned_students %}<li>{{ student.get_full_name }} ({{ student.student_id }})</li>
+  {% empty %}<li>Tous les étudiants concernés ont une équipe.</li>{% endfor %}
+</ul>
+<p><a href="{% url 'teacher:assignment_detail' assignment.id %}">Retour au devoir</a></p>
+{% endblock %}

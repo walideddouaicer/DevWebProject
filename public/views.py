@@ -57,21 +57,6 @@ def about(request):
     return render(request, "public/about.html", context)
 
 
-def explore_projects(request):
-    """Public project gallery (future social feature)"""
-    # For now, show validated projects
-    projects = (
-        Project.objects.filter(status="validated")
-        .select_related("student__user", "module")
-        .order_by("-created_at")[:12]
-    )
-
-    context = get_common_context()
-    context["projects"] = projects
-
-    return render(request, "public/explore_projects.html", context)
-
-
 def public_projects_showcase(request):
     """Main showcase page - accessible from homepage 'Projects' button"""
 

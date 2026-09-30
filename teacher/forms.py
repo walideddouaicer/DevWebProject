@@ -460,9 +460,7 @@ class StudentSelectionForm(forms.Form):
     select_all = forms.BooleanField(
         required=False,
         initial=False,
-        widget=forms.CheckboxInput(
-            attrs={"class": "form-checkbox", "onchange": "toggleSelectAll(this.checked)"}
-        ),
+        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
         label="Sélectionner tous les étudiants",
     )
 

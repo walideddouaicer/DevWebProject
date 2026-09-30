@@ -1,0 +1,28 @@
+{% extends 'teacher/base.html' %}
+{% comment %}Functional placeholder built in PLAN P2.1; redesigned in P6.9.{% endcomment %}
+{% block title %}Étudiants assignés — {{ assignment.title }}{% endblock %}
+{% block content %}
+<h1>Étudiants assignés</h1>
+<p>{{ assignment.title }} — {{ assignment.module.code }}</p>
+<p>{{ total_assigned }} assigné{{ total_assigned|pluralize }} sur {{ total_enrolled }} inscrit{{ total_enrolled|pluralize }} ({{ unassigned_count }} non assigné{{ unassigned_count|pluralize }}).</p>
+
+<form method="post">
+  {% csrf_token %}
+  <fieldset>
+    <legend>{{ form.selected_students.label }}</legend>
+    {% if form.selected_students.help_text %}<p>{{ form.selected_students.help_text }}</p>{% endif %}
+    {{ form.selected_students }}
+    {{ form.selected_students.errors }}
+  </fieldset>
+  <p><label>{{ form.select_all }} {{ form.select_all.label }}</label></p>
+  <button type="submit">Assigner les étudiants sélectionnés</button>
+</form>
+
+<h2>Déjà assignés</h2>
+<ul>
+  {% for direct in assigned_students %}
+  <li>{{ direct.student.get_full_name }} ({{ direct.student.student_id }}) — {{ direct.get_status_display }}</li>
+  {% empty %}<li>Aucun étudiant assigné pour l'instant.</li>{% endfor %}
+</ul>
+<p><a href="{% url 'teacher:assignment_detail' assignment.id %}">Retour au devoir</a></p>
+{% endblock %}

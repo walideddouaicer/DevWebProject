@@ -229,7 +229,6 @@ class RegressionTests(Fixtures):
         )
 
     # B7 ------------------------------------------------------------------
-    @expectedFailure
     def test_B7_teacher_assignment_students_and_teams_pages_render(self):
         direct = self.assignment(target_selection="specific_students", status="draft")
         self.login(self.teacher)
@@ -237,7 +236,6 @@ class RegressionTests(Fixtures):
             response = self.client.get(reverse(f"teacher:{name}", args=[direct.id]))
             self.assertLess(response.status_code, 400, name)
 
-    @expectedFailure
     def test_B7_admin_and_public_pages_render(self):
         self.login(self.admin)
         for path in [

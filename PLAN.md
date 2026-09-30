@@ -594,3 +594,8 @@ Everything else in this plan is decided by Claude.
   django-axes lockout (disabled under `manage.py test`, re-enabled per test); public logout
   was a GET link (405 on Django 5) → form. **Found B25** (stored XSS via inline JS handlers),
   patched; full removal in P6. Next: P2.1.
+- **2026-09-30** · D12 (P2.1 triage) · Built: admin statistics, teacher assignment students +
+  teams (plain placeholder templates, redesigned in P6). Redirected: admin users/, users/
+  students/, users/teachers/ → users_list tabs; public /explore/ → showcase. Deleted unrouted
+  admin views module_oversight, toggle_module_status, recent_module_activity, and the duplicated
+  registration URL entries. Smoke KNOWN_FAILURES is now empty.

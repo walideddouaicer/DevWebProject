@@ -1,5 +1,6 @@
 # administrator/urls.py
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import views
 
@@ -29,16 +30,28 @@ urlpatterns = [
         "assignments/<int:assignment_id>/remove/", views.remove_assignment, name="remove_assignment"
     ),
     # User Management
-    path("users/", views.users_overview, name="users_overview"),
+    path(
+        "users/",
+        RedirectView.as_view(pattern_name="administrator:users_list"),
+        name="users_overview",
+    ),
     path("users/list/", views.users_list, name="users_list"),
-    path("users/students/", views.students_list, name="students_list"),
+    path(
+        "users/students/",
+        RedirectView.as_view(url="/administrator/users/list/?type=students"),
+        name="students_list",
+    ),
     path("users/students/import/", views.import_students, name="import_students"),
     path(
         "users/students/import/template/",
         views.download_student_import_template,
         name="student_import_template",
     ),
-    path("users/teachers/", views.teachers_list, name="teachers_list"),
+    path(
+        "users/teachers/",
+        RedirectView.as_view(url="/administrator/users/list/?type=teachers"),
+        name="teachers_list",
+    ),
     path("users/teachers/import/", views.import_teachers, name="import_teachers"),
     path(
         "users/teachers/import/template/",
@@ -66,16 +79,4 @@ urlpatterns = [
     path("exports/projects/", views.export_projects, name="export_projects"),
     path("exports/statistics/", views.export_statistics, name="export_statistics"),
     path("exports/users/", views.export_users, name="export_users"),
-    # NEW: Registration Management
-    path("registrations/pending/", views.pending_registrations, name="pending_registrations"),
-    path(
-        "registrations/<int:registration_id>/approve/",
-        views.approve_registration,
-        name="approve_registration",
-    ),
-    path(
-        "registrations/<int:registration_id>/reject/",
-        views.reject_registration,
-        name="reject_registration",
-    ),
 ]
