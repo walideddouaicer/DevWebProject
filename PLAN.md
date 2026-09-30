@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P5 done → P6 next (P6.1 auth pages)**
+- Phase: **P6.10 done → P6.11 next (search)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (198 tests)
+- Last green `make check`: 2026-09-30 (213 tests)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -404,7 +404,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   team settings reveal conditionally), options management, students selection (the page built in
   P2.1), teams view, progress (table with bulk-select action bar, filters, export), publish
   confirm, option delete confirm, module creation, my modules.
-- [ ] **P6.10 Admin:** dashboard (useful numbers + pending work queues: registrations, reports),
+- [x] **P6.10 Admin:** dashboard (useful numbers + pending work queues: registrations, reports),
   users list (tabs, search, activate/deactivate), imports (students/teachers, with a result
   report), pending registrations, modules list/create/edit/detail/delete, teacher-module
   assignments, projects list/detail, moderation queue, exports page, statistics.
@@ -712,3 +712,12 @@ Everything else in this plan is decided by Claude.
   checklist, subject delete, module creation. assignments_dashboard/detail views rewritten
   (−230 lines). my_modules → redirect. Create of a direct "specific students" assignment now
   lands on the students page. Old teacher base/CSS/JS deleted.
+- **2026-09-30** · P6.10 · Admin area on `layouts/app.html`: dashboard (attention cards for
+  registrations/reports, stat strip, latest projects, top modules), users list (tabs, filters,
+  toggle active with confirm), pending registrations, student/teacher imports (dropzone +
+  result report), modules list/create/edit (shared `_module_fields.html`)/detail/archive,
+  teacher-module assignments (workload now one annotated query), projects list (filters,
+  export keeps filters) and detail, moderation queue (hide/unhide/dismiss with note), exports,
+  statistics. remove_student_from_module POST-only (JSON only for XHR). Fixed `.card-link`
+  overriding `.stack` display. Deleted old admin base + CSS and legacy student base.css/main.js.
+  Screens: 16 admin pages, 0 serious a11y. Note for P6.13: filter bars stack tall on 390px.

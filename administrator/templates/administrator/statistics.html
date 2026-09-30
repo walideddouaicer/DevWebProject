@@ -1,50 +1,16 @@
-{% extends 'administrator/base.html' %}
-{% comment %}Functional placeholder built in PLAN P2.1; redesigned in P6.10.{% endcomment %}
-{% block title %}Statistiques — Administration{% endblock %}
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Statistiques{% endblock %}
 {% block content %}
-<h1>Statistiques</h1>
-
-<section>
-  <h2>Projets par type</h2>
-  <table>
-    <thead><tr><th>Type</th><th>Projets</th></tr></thead>
-    <tbody>
-      {% for row in project_type_stats %}<tr><td>{{ row.type }}</td><td>{{ row.count }}</td></tr>{% endfor %}
-    </tbody>
-  </table>
+<header class="page-header"><div><h1>Statistiques</h1></div><div class="actions"><a class="btn" href="{% url 'administrator:export_statistics' %}">{% icon "download" %} Rapport PDF</a></div></header>
+<div class="grid">
+  <section class="card"><div class="card-header"><h2>Projets par statut</h2></div><table class="table"><tbody>{% for row in status_stats %}<tr><td>{{ row.status }}</td><td class="num col-actions">{{ row.count }}</td></tr>{% endfor %}</tbody></table></section>
+  <section class="card"><div class="card-header"><h2>Projets par type</h2></div><table class="table"><tbody>{% for row in project_type_stats %}<tr><td>{{ row.type }}</td><td class="num col-actions">{{ row.count }}</td></tr>{% endfor %}</tbody></table></section>
+</div>
+<section class="stack"><h2 class="section-title">Modules actifs</h2>
+  <div class="table-wrap"><table class="table table-stack"><thead><tr><th>Module</th><th>Étudiants</th><th>Projets</th></tr></thead><tbody>{% for m in module_stats %}<tr><td><a class="row-title" href="{% url 'administrator:module_detail' m.id %}"><span class="mono">{{ m.code }}</span> {{ m.name }}</a></td><td data-label="Étudiants" class="num">{{ m.student_count }}</td><td data-label="Projets" class="num">{{ m.project_count }}</td></tr>{% empty %}<tr class="empty-row"><td colspan="3">Aucun module actif.</td></tr>{% endfor %}</tbody></table></div>
 </section>
-
-<section>
-  <h2>Projets par statut</h2>
-  <table>
-    <thead><tr><th>Statut</th><th>Projets</th></tr></thead>
-    <tbody>
-      {% for row in status_stats %}<tr><td>{{ row.status }}</td><td>{{ row.count }}</td></tr>{% endfor %}
-    </tbody>
-  </table>
-</section>
-
-<section>
-  <h2>Modules actifs</h2>
-  <table>
-    <thead><tr><th>Module</th><th>Étudiants inscrits</th><th>Projets</th></tr></thead>
-    <tbody>
-      {% for module in module_stats %}
-      <tr><td>{{ module.code }} — {{ module.name }}</td><td>{{ module.student_count }}</td><td>{{ module.project_count }}</td></tr>
-      {% empty %}<tr><td colspan="3">Aucun module actif.</td></tr>{% endfor %}
-    </tbody>
-  </table>
-</section>
-
-<section>
-  <h2>Charge des enseignants</h2>
-  <table>
-    <thead><tr><th>Enseignant</th><th>Modules</th><th>Étudiants</th></tr></thead>
-    <tbody>
-      {% for teacher in teacher_workload %}
-      <tr><td>{{ teacher.user.get_full_name|default:teacher.user.username }}</td><td>{{ teacher.module_count }}</td><td>{{ teacher.student_count }}</td></tr>
-      {% empty %}<tr><td colspan="3">Aucun enseignant.</td></tr>{% endfor %}
-    </tbody>
-  </table>
+<section class="stack"><h2 class="section-title">Charge des enseignants</h2>
+  <div class="table-wrap"><table class="table table-stack"><thead><tr><th>Enseignant</th><th>Modules</th><th>Étudiants</th></tr></thead><tbody>{% for t in teacher_workload %}<tr><td>{{ t.user.get_full_name|default:t.user.username }}</td><td data-label="Modules" class="num">{{ t.module_count }}</td><td data-label="Étudiants" class="num">{{ t.student_count }}</td></tr>{% empty %}<tr class="empty-row"><td colspan="3">Aucun enseignant.</td></tr>{% endfor %}</tbody></table></div>
 </section>
 {% endblock %}

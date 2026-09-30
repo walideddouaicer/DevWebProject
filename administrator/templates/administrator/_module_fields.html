@@ -1,0 +1,7 @@
+{% load ui %}
+{% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+<div class="form-grid form-grid-2">{% field form.code label="Code" help="Unique, 3 à 10 caractères. Communiqué aux étudiants pour s'inscrire ; il ne peut plus changer ensuite." %}{% field form.name label="Intitulé" %}</div>
+{% field form.description label="Description" %}
+<div class="form-grid form-grid-2">{% field form.academic_year label="Année universitaire" help="Format 2026-2027." %}{% field form.semester label="Semestre" %}</div>
+{% field form.classroom label="Salle" help="Facultatif." %}
+{% field form.is_active label="Module actif" help="Un module archivé n'accepte plus d'inscriptions." %}

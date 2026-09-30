@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from ensa_project_manager.pagination import paginate
-from student.models import Project, StudentProfile
+from student.models import Project
 from teacher.models import Module, ModuleAssignment, ModuleEnrollment, TeacherProfile
 
 from ..forms import AdminModuleForm
@@ -219,29 +219,22 @@ def assignments_management(request):
     total_modules = modules.count()
     total_unassigned = unassigned_modules.count()
 
-    # Add workload counts to teachers for template
-    teachers_with_workload = []
-    for teacher in teachers:
-        teacher_assignments = ModuleAssignment.objects.filter(
-            teacher=teacher, is_active=True
-        ).count()
-
-        # Calculate total students taught by this teacher
-        teacher_modules = ModuleAssignment.objects.filter(
-            teacher=teacher, is_active=True
-        ).values_list("module_id", flat=True)
-
-        total_students = 0
-        for module_id in teacher_modules:
-            total_students += ModuleEnrollment.objects.filter(
-                module_id=module_id, is_active=True
-            ).count()
-
-        # Add attributes for template
-        teacher.assignment_count = teacher_assignments
-        teacher.student_count = total_students
-
-        teachers_with_workload.append(teacher)
+    # Workload per teacher in one query (distinct: two joined counts)
+    teachers_with_workload = list(
+        teachers.annotate(
+            assignment_count=Count(
+                "module_assignments", filter=Q(module_assignments__is_active=True), distinct=True
+            ),
+            student_count=Count(
+                "module_assignments__module__enrollments",
+                filter=Q(
+                    module_assignments__is_active=True,
+                    module_assignments__module__enrollments__is_active=True,
+                ),
+                distinct=True,
+            ),
+        )
+    )
 
     context = {
         "admin": admin,
@@ -348,55 +341,23 @@ def remove_assignment(request, assignment_id):
 @admin_required
 @require_POST
 def remove_student_from_module(request, module_id, student_id):
-    """Remove a student from a module"""
-    get_object_or_404(AdminProfile, user=request.user)
-
-    try:
-        module = Module.objects.get(id=module_id)
-        student = StudentProfile.objects.get(id=student_id)
-
-        # Find the enrollment
-        enrollment = ModuleEnrollment.objects.get(module=module, student=student, is_active=True)
-
-        # Deactivate the enrollment (soft delete)
+    """Unenroll a student (soft: the enrollment is deactivated)."""
+    module = get_object_or_404(Module, id=module_id)
+    enrollment = (
+        ModuleEnrollment.objects.filter(module=module, student_id=student_id, is_active=True)
+        .select_related("student__user")
+        .first()
+    )
+    if enrollment is None:
+        message, ok = "Cet étudiant n'est pas inscrit à ce module.", False
+    else:
         enrollment.is_active = False
-        enrollment.save()
-
-        if request.method == "POST":
-            # For AJAX requests
-            return JsonResponse(
-                {
-                    "success": True,
-                    "message": f"{student.user.get_full_name() or student.user.username} a été désinscrit du module {module.code}.",
-                }
-            )
-        else:
-            # For regular requests
-            messages.success(
-                request,
-                f"{student.user.get_full_name() or student.user.username} a été désinscrit du module {module.code}.",
-            )
-            return redirect("administrator:module_detail", module_id=module.id)
-
-    except ModuleEnrollment.DoesNotExist:
-        error_msg = "Cet étudiant n'est pas inscrit à ce module."
-        if request.method == "POST":
-            return JsonResponse({"success": False, "message": error_msg})
-        else:
-            messages.error(request, error_msg)
-            return redirect("administrator:module_detail", module_id=module_id)
-    except (Module.DoesNotExist, StudentProfile.DoesNotExist):
-        error_msg = "Module ou étudiant introuvable."
-        if request.method == "POST":
-            return JsonResponse({"success": False, "message": error_msg})
-        else:
-            messages.error(request, error_msg)
-            return redirect("administrator:modules_list")
-    except Exception:
-        logger.exception("Unenrollment failed")
-        error_msg = "Erreur lors de la désinscription. Réessayez plus tard."
-        if request.method == "POST":
-            return JsonResponse({"success": False, "message": error_msg})
-        else:
-            messages.error(request, error_msg)
-            return redirect("administrator:module_detail", module_id=module_id)
+        enrollment.save(update_fields=["is_active"])
+        message, ok = (
+            f"{enrollment.student.get_full_name()} a été désinscrit de {module.code}.",
+            True,
+        )
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({"success": ok, "message": message})
+    (messages.success if ok else messages.error)(request, message)
+    return redirect("administrator:module_detail", module_id=module.id)
