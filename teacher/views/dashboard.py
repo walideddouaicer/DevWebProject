@@ -1,70 +1,61 @@
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
-from django.shortcuts import redirect, render
+from datetime import timedelta
 
+from django.db.models import Count, Q
+from django.shortcuts import render
+from django.utils import timezone
+
+from accounts.permissions import manageable_assignments, teacher_required
 from student.models import Project
 
-from ..models import (
-    ModuleAssignment,
-    TeacherProfile,
-)
+from ..models import ModuleAssignment
 
 
-@login_required
+@teacher_required
 def dashboard(request):
-    """Enhanced teacher dashboard with module and project data"""
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant. Contactez l'administrateur.")
-        return redirect("login")
-
-    # Get teacher's assigned modules
-    assigned_modules = (
+    """Review queue first, then upcoming deadlines, then modules."""
+    teacher = request.teacher
+    assigned_modules = list(
         ModuleAssignment.objects.filter(teacher=teacher, is_active=True)
         .select_related("module")
         .annotate(
             enrolled_count=Count(
-                "module__enrollments", filter=Q(module__enrollments__is_active=True)
-            )
+                "module__enrollments", filter=Q(module__enrollments__is_active=True), distinct=True
+            ),
+            project_count=Count("module__projects", distinct=True),
+            waiting_count=Count(
+                "module__projects",
+                filter=Q(module__projects__status="submitted"),
+                distinct=True,
+            ),
         )
+        .order_by("module__code")
     )
+    module_ids = [a.module_id for a in assigned_modules]
+    projects = Project.objects.filter(module_id__in=module_ids)
 
-    # Get teacher's module IDs
-    teacher_module_ids = assigned_modules.values_list("module", flat=True)
-
-    # Import here to avoid circular imports
-
-    # Get projects from teacher's modules
-    teacher_projects = Project.objects.filter(module__in=teacher_module_ids)
-
-    # Calculate statistics
-    total_modules = assigned_modules.count()
-    total_projects = teacher_projects.count()
-    pending_projects = teacher_projects.filter(status="submitted").count()
-    validated_projects = teacher_projects.filter(status="validated").count()
-
-    total_students = sum(assignment.enrolled_count for assignment in assigned_modules)
-
-    # Get recent modules for display
-    recent_modules = assigned_modules[:5]  # Show 5 most recent
-
-    # Get recent projects for the activity section
-    recent_projects = teacher_projects.select_related("student__user", "module").order_by(
-        "-updated_at"
-    )[:5]
+    review_queue = (
+        projects.filter(status="submitted")
+        .select_related("student__user", "module", "project_assignment")
+        .prefetch_related("collaborators__user")
+        .order_by("assignment_submitted_at", "updated_at")[:10]
+    )
+    now = timezone.now()
+    upcoming = list(
+        manageable_assignments(teacher)
+        .filter(status="published", deadline__gte=now, deadline__lte=now + timedelta(days=21))
+        .select_related("module")
+        .order_by("deadline")[:6]
+    )
 
     context = {
         "teacher": teacher,
-        "total_modules": total_modules,
-        "total_students": total_students,
-        "total_projects": total_projects,
-        "pending_projects": pending_projects,
-        "validated_projects": validated_projects,
-        "recent_modules": recent_modules,
-        "recent_projects": recent_projects,
         "assigned_modules": assigned_modules,
+        "review_queue": review_queue,
+        "waiting_total": projects.filter(status="submitted").count(),
+        "upcoming": upcoming,
+        "total_students": sum(a.enrolled_count for a in assigned_modules),
+        "total_projects": projects.count(),
+        "validated_projects": projects.filter(status="validated").count(),
+        "drafts": manageable_assignments(teacher).filter(status="draft").count(),
     }
-
     return render(request, "teacher/dashboard.html", context)

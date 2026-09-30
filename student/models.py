@@ -15,7 +15,7 @@ from .storage import get_private_storage
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     student_id = models.CharField(max_length=20, unique=True)
-    year_of_study = models.IntegerField(choices=[(3, "3rd Year"), (4, "4th Year"), (5, "5th Year")])
+    year_of_study = models.IntegerField(choices=[(3, "3e année"), (4, "4e année"), (5, "5e année")])
     department = models.CharField(max_length=100)
 
     # NEW PROFILE FIELDS - All optional

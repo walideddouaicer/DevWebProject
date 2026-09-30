@@ -66,7 +66,8 @@
 .auth-card .brand { border: 0; padding: 0; height: auto; margin-bottom: var(--s-6); }
 .auth-card h1 { font-family: var(--font-serif); font-size: var(--text-2xl); font-weight: 500; margin-bottom: var(--s-2); }
 /* Page sections inside the app content area */
-.content > section + section, .content > .stack + section, .content > section + .stack { margin-top: var(--s-8); }
+.content > * + * { margin-top: var(--s-7); }
+.content > .page-header + * { margin-top: 0; }
 .attention { --min: 340px; }
 /* Paint the sidebar column full height (the sticky sidebar itself is only 100vh tall).
    A hard-stop gradient = a flat color block + 1px border, not a visual gradient. */

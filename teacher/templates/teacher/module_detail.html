@@ -1,338 +1,83 @@
-{% extends 'teacher/base.html' %}
-{% load static %}
-
-{% block title %}{{ module.code }} - {{ module.name }}{% endblock %}
-
-{% block breadcrumb_items %}
-<span style="margin: 0 8px; color: var(--text-muted);">></span>
-<a href="{% url 'teacher:modules_list' %}" style="color: var(--accent-primary); text-decoration: none;">Mes Modules</a>
-<span style="margin: 0 8px; color: var(--text-muted);">></span>
-<span style="color: var(--text-primary);">{{ module.code }}</span>
-{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'teacher/css/module_detail.css' %}">
-
-{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}{{ module.code }} — {{ module.name }}{% endblock %}
 {% block content %}
-    <!-- Module Hero -->
-    <div class="module-hero">
-        <div class="hero-content">
-            <div class="hero-text">
-                <h1 class="hero-title">
-                    <i class="fas fa-book"></i>
-                    {{ module.code }} - {{ module.name }}
-                </h1>
-                
-                <div class="hero-meta">
-                    <div class="meta-card">
-                        <div class="meta-label">Semestre</div>
-                        <div class="meta-value">{{ module.get_semester_display }}</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-label">Année Académique</div>
-                        <div class="meta-value">{{ module.academic_year }}</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-label">Étudiants Inscrits</div>
-                        <div class="meta-value">{{ total_students }}</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-label">Statut</div>
-                        <div class="meta-value">
-                            {% if module.is_active %}
-                                <i class="fas fa-check-circle" style="color: var(--success);"></i> Actif
-                            {% else %}
-                                <i class="fas fa-times-circle" style="color: var(--error);"></i> Inactif
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="hero-icon">📚</div>
-        </div>
-    </div>
-
-    <!-- Quick Actions Panel -->
-    <div class="quick-actions-panel">
-        <div class="actions-header">
-            <h3 class="actions-title">
-                <i class="fas fa-bolt"></i>
-                Actions Rapides
-            </h3>
-            <span class="actions-subtitle">Gérez rapidement ce module</span>
-        </div>
-        <div class="action-buttons">
-            <a href="{% url 'teacher:module_projects' module.id %}" class="action-btn primary">
-                <i class="fas fa-project-diagram"></i>
-                Tous les Projets ({{ total_projects|default:0 }})
-            </a>
-            {% if submitted_projects > 0 %}
-            <a href="{% url 'teacher:module_projects' module.id %}?status=submitted" class="action-btn warning">
-                <i class="fas fa-clock"></i>
-                À Évaluer ({{ submitted_projects }})
-            </a>
-            {% endif %}
-            <a href="{% url 'teacher:student_projects' %}?module={{ module.id }}" class="action-btn secondary">
-                <i class="fas fa-globe"></i>
-                Vue Globale
-            </a>
-            <a href="{% url 'teacher:export_module_roster' module.id %}" class="action-btn secondary">
-                <i class="fas fa-file-excel"></i>
-                Exporter les Étudiants
-            </a>
-        </div>
-    </div>
-
-    <!-- Module Announcements (ROADMAP #10) -->
-    <div style="background: var(--bg-secondary, white); border: 1px solid var(--border-primary, #e2e8f0); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
-        <h3 style="margin-bottom: 6px;"><i class="fas fa-bullhorn" style="color: var(--accent-primary, #4299e1);"></i> Annonces du module</h3>
-        <p style="color: var(--text-muted, #718096); font-size: 0.9rem; margin-bottom: 16px;">
-            Envoyez un message à tous les étudiants inscrits ({{ total_students }}) — notification dans l'application + email selon leurs préférences.
-        </p>
-
-        <form method="post" action="{% url 'teacher:post_module_announcement' module.id %}">
-            {% csrf_token %}
-            <input type="text" name="title" required maxlength="200" placeholder="Titre de l'annonce..."
-                   style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-primary, #e2e8f0); border-radius: 8px; margin-bottom: 8px; background: var(--bg-primary, white); color: inherit; font: inherit;">
-            <textarea name="content" required rows="3" placeholder="Contenu de l'annonce (changement de salle, rappel, consignes...)..."
-                      style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-primary, #e2e8f0); border-radius: 8px; background: var(--bg-primary, white); color: inherit; font: inherit;"></textarea>
-            <button type="submit" class="action-btn primary" style="margin-top: 10px; border: none; cursor: pointer;"
-                    onclick="return confirm('Envoyer cette annonce à tous les étudiants inscrits ?')">
-                <i class="fas fa-paper-plane"></i>
-                Publier l'annonce
-            </button>
-        </form>
-
-        {% if announcements %}
-        <div style="margin-top: 20px; border-top: 1px solid var(--border-primary, #edf2f7); padding-top: 12px;">
-            <strong style="font-size: 0.85rem; color: var(--text-muted, #718096); text-transform: uppercase;">Dernières annonces</strong>
-            {% for announcement in announcements %}
-            <div style="padding: 10px 0; border-bottom: 1px dashed var(--border-primary, #edf2f7);">
-                <strong>{{ announcement.title }}</strong>
-                <span style="color: var(--text-muted, #718096); font-size: 0.8rem;">
-                    — {{ announcement.created_at|date:"d/m/Y H:i" }}
-                </span>
-                <div style="color: var(--text-secondary, #4a5568); font-size: 0.9rem; margin-top: 4px; white-space: pre-line;">{{ announcement.content }}</div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Module Settings -->
-    <div class="module-settings">
-        <div class="settings-header">
-            <h3 class="settings-title">
-                <i class="fas fa-cog"></i>
-                Paramètres du Module
-            </h3>
-            <div class="settings-icon">
-                <i class="fas fa-book"></i>
-            </div>
-        </div>
-        
-        <div class="code-panel">
-            <h4>
-                <i class="fas fa-key"></i>
-                Code d'inscription pour les étudiants
-            </h4>
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div>
-                    <p style="margin: 0 0 12px 0; color: var(--text-muted);">
-                        Les étudiants utilisent ce code pour rejoindre votre module:
-                    </p>
-                    <div class="code-display-large">{{ module.code }}</div>
-                </div>
-                <div style="font-size: 3em; opacity: 0.2; color: var(--accent-primary);">
-                    <i class="fas fa-link"></i>
-                </div>
-            </div>
-        </div>
-        
-        <div class="settings-grid">
-            <div class="setting-item">
-                <div class="setting-label">
-                    <i class="fas fa-toggle-on"></i>
-                    Statut du Module
-                </div>
-                <div class="setting-value">
-                    {% if module.is_active %}
-                        <i class="fas fa-check-circle" style="color: var(--success);"></i> Actif
-                    {% else %}
-                        <i class="fas fa-times-circle" style="color: var(--error);"></i> Inactif
-                    {% endif %}
-                </div>
-            </div>
-            <div class="setting-item">
-                <div class="setting-label">
-                    <i class="fas fa-calendar-alt"></i>
-                    Semestre
-                </div>
-                <div class="setting-value">{{ module.get_semester_display }}</div>
-            </div>
-            <div class="setting-item">
-                <div class="setting-label">
-                    <i class="fas fa-graduation-cap"></i>
-                    Année Académique
-                </div>
-                <div class="setting-value">{{ module.academic_year }}</div>
-            </div>
-            <div class="setting-item">
-                <div class="setting-label">
-                    <i class="fas fa-user-tie"></i>
-                    Date d'assignation
-                </div>
-                <div class="setting-value">{{ assignment.assigned_at|date:"d/m/Y" }}</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistics -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value">{{ total_students }}</div>
-            <div class="stat-label">Étudiants Inscrits</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ total_projects|default:0 }}</div>
-            <div class="stat-label">Projets Totaux</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ submitted_projects|default:0 }}</div>
-            <div class="stat-label">Projets Soumis</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ validated_projects|default:0 }}</div>
-            <div class="stat-label">Projets Validés</div>
-        </div>
-    </div>
-
-    <!-- Two Column Layout -->
-    <div class="content-grid">
-        
-        <!-- Students Management -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-users"></i>
-                    Étudiants ({{ total_students }})
-                </h2>
-            </div>
-            
-            {% if enrollments %}
-                <div class="students-grid">
-                    {% for enrollment in enrollments %}
-                    <div class="student-card">
-                        <div class="student-header">
-                            <div class="student-avatar">
-                                {{ enrollment.student.user.first_name|first|default:enrollment.student.user.username|first|upper }}
-                            </div>
-                            <div style="flex: 1;">
-                                <div class="student-name">
-                                    {{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}
-                                </div>
-                                <div class="student-info">
-                                    <strong>ID:</strong> {{ enrollment.student.student_id }}<br>
-                                    <strong>Département:</strong> {{ enrollment.student.department }}<br>
-                                    <strong>Année:</strong> {{ enrollment.student.get_year_of_study_display }}<br>
-                                    <strong>Inscrit le:</strong> {{ enrollment.enrolled_at|date:"d/m/Y" }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">👥</div>
-                    <div class="empty-title">Aucun étudiant inscrit</div>
-                    <div class="empty-description">
-                        Les étudiants peuvent rejoindre avec le code: <strong>{{ module.code }}</strong>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Recent Projects -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-project-diagram"></i>
-                    Projets Récents
-                </h2>
-                <a href="{% url 'teacher:module_projects' module.id %}" class="card-action">Voir tous</a>
-            </div>
-            
-            {% if module_projects %}
-                <div class="projects-list">
-                    {% for project in module_projects %}
-                    <div class="project-item">
-                        <div class="project-info">
-                            <h4 class="project-title">
-                                <a href="{% url 'teacher:project_review' project.id %}">
-                                    {{ project.title }}
-                                </a>
-                            </h4>
-                            <div class="project-meta">
-                                <strong>Par:</strong> {{ project.student.user.get_full_name|default:project.student.user.username }}<br>
-                                <strong>Type:</strong> {{ project.get_project_type_display }}<br>
-                                <strong>Dernière MAJ:</strong> {{ project.updated_at|date:"d/m/Y H:i" }}
-                            </div>
-                        </div>
-                        <div class="project-actions">
-                            <span class="status-badge status-{{ project.status|lower }}">
-                                {{ project.get_status_display }}
-                            </span>
-                            <a href="{% url 'teacher:project_review' project.id %}" class="btn btn-sm">
-                                <i class="fas fa-eye"></i> Examiner
-                            </a>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">📋</div>
-                    <div class="empty-title">Aucun projet</div>
-                    <div class="empty-description">
-                        Les projets apparaîtront ici lorsque les étudiants créeront des projets associés à ce module.
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Module Description -->
-    {% if module.description %}
-    <div class="section-card">
-        <div class="section-header">
-            <h2 class="section-title">
-                <i class="fas fa-file-alt"></i>
-                Description du Module
-            </h2>
-        </div>
-        <div style="background: var(--bg-tertiary); padding: 24px; border-radius: 12px; border-left: 4px solid var(--accent-primary);">
-            {{ module.description|linebreaks }}
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Navigation Footer -->
-    <div class="navigation-footer">
-        <div class="nav-buttons">
-            <a href="{% url 'teacher:modules_list' %}" class="action-btn secondary">
-                <i class="fas fa-arrow-left"></i>
-                Retour aux Modules
-            </a>
-            <a href="{% url 'teacher:module_projects' module.id %}" class="action-btn primary">
-                <i class="fas fa-project-diagram"></i>
-                Gérer les Projets
-            </a>
-        </div>
-        <div class="nav-info">
-            <strong>Module assigné le:</strong> {{ assignment.assigned_at|date:"d/m/Y" }}
-        </div>
-    </div>
+<header class="page-header">
+  <div>
+    <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="{% url 'teacher:modules_list' %}">Modules</a></nav>
+    <h1>{{ module.name }}</h1>
+    <div class="meta"><span>Code d'inscription : <strong class="mono">{{ module.code }}</strong></span><span>{{ module.get_semester_display }} · {{ module.academic_year }}</span>{% if module.classroom %}<span>{{ module.classroom }}</span>{% endif %}</div>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'teacher:export_module_roster' module.id %}">{% icon "file-spreadsheet" %} Liste Excel</a>
+    <a class="btn btn-primary" href="{% url 'teacher:assignment_create' %}?module={{ module.id }}">{% icon "plus" %} Nouveau devoir</a>
+  </div>
+</header>
+<div class="stat-strip">
+  <div class="stat"><span class="value">{{ total_students }}</span><span class="label">étudiants</span></div>
+  <div class="stat"><span class="value">{{ total_projects }}</span><span class="label">projets</span></div>
+  <div class="stat"><span class="value">{{ submitted_projects }}</span><span class="label">à relire</span></div>
+  <div class="stat"><span class="value">{{ validated_projects }}</span><span class="label">validés</span></div>
+</div>
+<div class="with-aside">
+  <div class="stack stack-lg">
+    <section class="stack" aria-labelledby="asg-title">
+      <div class="spread"><h2 id="asg-title" class="section-title">Devoirs <span class="count">{{ module_assignments|length }}</span></h2></div>
+      {% if module_assignments %}
+      <div class="table-wrap"><table class="table table-stack">
+        <thead><tr><th>Devoir</th><th>Statut</th><th>Échéance</th><th class="col-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody>{% for a in module_assignments %}<tr>
+          <td><a class="row-title" href="{% url 'teacher:assignment_detail' a.id %}">{{ a.title }}</a><div class="subtle text-sm">{% if a.assignment_type == "choice_based" %}Sujets au choix{% else %}Sujet imposé{% endif %} · {% if a.is_team_work %}équipes de {{ a.min_team_size }} à {{ a.max_team_size }}{% else %}individuel{% endif %}</div></td>
+          <td data-label="Statut">{% status_chip a.status %}</td>
+          <td data-label="Échéance">{% if a.status == "published" %}{% deadline a.deadline %}{% else %}<span class="subtle">{{ a.deadline|date:"d/m/Y" }}</span>{% endif %}</td>
+          <td class="col-actions"><a class="btn btn-sm" href="{% url 'teacher:assignment_progress' a.id %}">Suivi</a></td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="card empty">{% icon "clipboard-list" %}<h3>Aucun devoir</h3><p>Créez un devoir pour ce module.</p></div>{% endif %}
+    </section>
+    <section class="stack" aria-labelledby="proj-title">
+      <div class="spread"><h2 id="proj-title" class="section-title">Projets récents</h2><a class="text-sm" href="{% url 'teacher:module_projects' module.id %}">Tous les projets</a></div>
+      {% if module_projects %}
+      <div class="table-wrap"><table class="table table-stack">
+        <thead><tr><th>Projet</th><th>Étudiant</th><th>Statut</th><th>Mis à jour</th></tr></thead>
+        <tbody>{% for p in module_projects %}<tr>
+          <td><a class="row-title" href="{% url 'teacher:project_review' p.id %}">{{ p.title }}</a></td>
+          <td data-label="Étudiant">{{ p.student.get_full_name }}</td>
+          <td data-label="Statut">{% status_chip p.status %}</td>
+          <td data-label="Mis à jour" class="subtle">{{ p.updated_at|date:"d/m/Y" }}</td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<p class="muted">Aucun projet pour l'instant.</p>{% endif %}
+    </section>
+    <section class="stack" aria-labelledby="roster-title">
+      <h2 id="roster-title" class="section-title">Étudiants inscrits <span class="count">{{ total_students }}</span></h2>
+      {% if enrollments %}
+      <div class="table-wrap"><table class="table table-stack">
+        <thead><tr><th>Étudiant</th><th>Numéro</th><th>Année</th><th>Inscrit le</th></tr></thead>
+        <tbody>{% for e in enrollments %}<tr>
+          <td><span class="cluster cluster-sm">{% avatar e.student size="sm" %}{{ e.student.get_full_name }}</span></td>
+          <td data-label="Numéro" class="mono">{{ e.student.student_id }}</td>
+          <td data-label="Année">{{ e.student.get_year_of_study_display }}</td>
+          <td data-label="Inscrit le" class="subtle">{{ e.enrolled_at|date:"d/m/Y" }}</td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="card empty">{% icon "users" %}<h3>Aucun étudiant inscrit</h3><p>Communiquez le code <strong class="mono">{{ module.code }}</strong> à vos étudiants.</p></div>{% endif %}
+    </section>
+  </div>
+  <aside class="stack">
+    <section class="card card-body stack" aria-labelledby="ann-title">
+      <h2 id="ann-title" class="section-title">Annonce aux étudiants</h2>
+      <form method="post" action="{% url 'teacher:post_module_announcement' module.id %}" class="stack stack-sm" data-confirm="L'annonce sera envoyée aux {{ total_students }} étudiants inscrits (notification et e-mail selon leurs préférences)." data-confirm-title="Envoyer l'annonce ?" data-confirm-action="Envoyer">
+        {% csrf_token %}
+        <div class="field"><label for="ann-t">Titre</label><input id="ann-t" name="title" maxlength="200" required></div>
+        <div class="field"><label for="ann-c">Message</label><textarea id="ann-c" name="content" rows="5" maxlength="5000" required></textarea></div>
+        <div><button class="btn btn-primary btn-sm" type="submit">{% icon "megaphone" %} Envoyer</button></div>
+      </form>
+      {% if announcements %}
+      <ul class="timeline">{% for an in announcements %}<li><div><strong>{{ an.title }}</strong><div class="when">{{ an.created_at|date:"d/m/Y" }}{% if an.teacher %} · {{ an.teacher.user.get_full_name }}{% endif %}</div></div></li>{% endfor %}</ul>
+      {% endif %}
+    </section>
+    {% if module.description %}<section class="card card-body stack"><h2 class="section-title">Description</h2><p class="prose-pre muted">{{ module.description }}</p></section>{% endif %}
+  </aside>
+</div>
 {% endblock %}

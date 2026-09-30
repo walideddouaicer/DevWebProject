@@ -393,7 +393,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   assignment, my modules, join module.
 - [x] **P6.6 Student profile & settings:** profile view/edit (avatar upload with preview),
   settings tabs (compte, notifications incl. digest, apparence), make public / make private flows.
-- [ ] **P6.7 Teacher core:** dashboard (review queue first: submitted projects awaiting action,
+- [x] **P6.7 Teacher core:** dashboard (review queue first: submitted projects awaiting action,
   upcoming deadlines, module list), modules list/detail (roster, announcements composer, exports),
   module projects, student projects list (filterable table).
 - [ ] **P6.8 Teacher review & grading:** project review page (deliverables with versions and
@@ -694,3 +694,9 @@ Everything else in this plan is decided by Claude.
   `NotificationPreferencesForm` incl. assignment_reminders + digest / apparence / compte),
   profile view + edit, publish-to-showcase form (single form, tags, public files opt-in),
   unpublish confirm. `AccountSettingsForm` deleted. delete_profile_picture POST-only.
+- **2026-09-30** · P6.7 · Teacher dashboard (review queue, deadlines with hand-in %, modules),
+  modules list, module detail (assignments, recent projects, roster, announcement composer with
+  confirm, Excel roster), shared `teacher/_projects_table.html` for projects lists.
+  module_management → redirect to module detail (template deleted). Fixed: dashboard student
+  count was multiplied by projects (missing distinct) + test; year labels French. Global rule:
+  `.content > * + *` spacing.

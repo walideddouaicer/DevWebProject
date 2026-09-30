@@ -4,12 +4,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
+from accounts.permissions import teacher_required
 from ensa_project_manager.pagination import paginate
 from student.models import Notification, Project
 
@@ -28,28 +29,28 @@ from .assignments import get_teacher_or_error
 logger = logging.getLogger(__name__)
 
 
-@login_required
+@teacher_required
 def modules_list(request):
-    """View to display all modules assigned to the teacher"""
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant. Contactez l'administrateur.")
-        return redirect("login")
-
-    # Get all assigned modules with related data
+    """Modules the teacher teaches, with enrolment and project counts."""
     assigned_modules = (
-        ModuleAssignment.objects.filter(teacher=teacher, is_active=True)
+        ModuleAssignment.objects.filter(teacher=request.teacher, is_active=True)
         .select_related("module")
-        .prefetch_related("module__enrollments__student__user")
+        .annotate(
+            enrolled_count=Count(
+                "module__enrollments", filter=Q(module__enrollments__is_active=True), distinct=True
+            ),
+            project_count=Count("module__projects", distinct=True),
+            waiting_count=Count(
+                "module__projects", filter=Q(module__projects__status="submitted"), distinct=True
+            ),
+        )
+        .order_by("module__code")
     )
-
-    context = {
-        "teacher": teacher,
-        "assigned_modules": assigned_modules,
-    }
-
-    return render(request, "teacher/modules_list.html", context)
+    return render(
+        request,
+        "teacher/modules_list.html",
+        {"teacher": request.teacher, "assigned_modules": assigned_modules},
+    )
 
 
 @login_required
@@ -95,6 +96,10 @@ def module_detail(request, module_id):
     # Recent announcements for this module
     announcements = module.announcements.select_related("teacher__user")[:5]
 
+    from ..models import ProjectAssignment
+
+    module_assignments = ProjectAssignment.objects.filter(module=module).order_by("-created_at")
+
     context = {
         "teacher": teacher,
         "module": module,
@@ -105,6 +110,7 @@ def module_detail(request, module_id):
         "total_projects": total_projects,
         "submitted_projects": submitted_projects,
         "validated_projects": validated_projects,
+        "module_assignments": module_assignments,
         "announcements": announcements,
     }
 
@@ -136,7 +142,7 @@ def module_projects(request, module_id):
     # Get all projects from this module
     projects = (
         Project.objects.filter(module=module)
-        .select_related("student__user")
+        .select_related("student__user", "module")
         .annotate(
             collaborator_count=Count("collaborators", distinct=True),
             deliverable_count=Count("deliverables", distinct=True),
@@ -171,34 +177,10 @@ def module_projects(request, module_id):
     return render(request, "teacher/module_projects.html", context)
 
 
-@login_required
+@teacher_required
 def module_management(request, module_id):
-    """Module management interface for teachers"""
-    try:
-        teacher = TeacherProfile.objects.get(user=request.user)
-    except TeacherProfile.DoesNotExist:
-        messages.error(request, "Vous n'avez pas de profil enseignant.")
-        return redirect("login")
-
-    try:
-        assignment = ModuleAssignment.objects.get(
-            teacher=teacher, module_id=module_id, is_active=True
-        )
-    except ModuleAssignment.DoesNotExist:
-        messages.error(request, "Vous n'avez pas accès à ce module.")
-        return redirect("teacher:modules_list")
-    module = assignment.module
-
-    enrollments = ModuleEnrollment.objects.filter(module=module, is_active=True).select_related(
-        "student__user"
-    )
-    context = {
-        "teacher": teacher,
-        "module": module,
-        "assignment": assignment,
-        "enrollments": enrollments,
-    }
-    return render(request, "teacher/module_management.html", context)
+    """Former roster page, merged into the module page."""
+    return redirect("teacher:module_detail", module_id=module_id)
 
 
 @login_required

@@ -1,318 +1,69 @@
-{% extends 'teacher/base.html' %}
-{% load static %}
-
-{% block title %}ENSA Project Manager - Tableau de Bord{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'teacher/css/dashboard.css' %}">
-
-{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Tableau de bord{% endblock %}
 {% block content %}
-    <!-- Page Header -->
-    <div class="page-header">
-        <h1 class="page-title">
-            <i class="fas fa-chart-pie"></i>
-            Tableau de Bord Enseignant
-        </h1>
-        <div class="top-actions">
-            <a href="{% url 'teacher:student_projects' %}?status=submitted" class="action-btn {% if pending_projects > 0 %}primary{% endif %}">
-                <i class="fas fa-clock"></i>
-                {% if pending_projects > 0 %}À Évaluer ({{ pending_projects }}){% else %}Évaluations{% endif %}
-            </a>
-        </div>
-    </div>
+<header class="page-header">
+  <div><div class="eyebrow">{% now "l j F" %}</div><h1>Bonjour {{ user.first_name|default:user.username }}</h1></div>
+  <div class="actions">
+    <a class="btn" href="{% url 'teacher:create_teacher_module' %}">{% icon "folder-plus" %} Nouveau module</a>
+    <a class="btn btn-primary" href="{% url 'teacher:assignment_create' %}">{% icon "plus" %} Nouveau devoir</a>
+  </div>
+</header>
 
-    <!-- Welcome Hero -->
-    <div class="welcome-hero">
-        <div class="welcome-content">
-            <h2 class="welcome-title">
-                Bienvenue, 
-                {% if teacher.user.first_name or teacher.user.last_name %}
-                    {{ teacher.user.first_name }} {{ teacher.user.last_name }}
-                {% else %}
-                    {{ teacher.user.username }}
-                {% endif %}
-            </h2>
-            <p class="welcome-subtitle">
-                Gérez vos modules, évaluez les projets de vos étudiants et suivez leurs progrès depuis votre tableau de bord centralisé.
-            </p>
-            
-            <div class="welcome-meta">
-                <div class="meta-item">
-                    <div class="meta-label">ID Enseignant</div>
-                    <div class="meta-value">{{ teacher.teacher_id|default:"Non défini" }}</div>
-                </div>
-                <div class="meta-item">
-                    <div class="meta-label">Département</div>
-                    <div class="meta-value">{{ teacher.department }}</div>
-                </div>
-                <div class="meta-item">
-                    <div class="meta-label">Modules Assignés</div>
-                    <div class="meta-value">{{ total_modules }}</div>
-                </div>
-                <div class="meta-item">
-                    <div class="meta-label">Étudiants Supervisés</div>
-                    <div class="meta-value">{{ total_students }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="stat-strip">
+  <div class="stat"><span class="value">{{ waiting_total }}</span><span class="label">projet{{ waiting_total|pluralize }} à relire</span></div>
+  <div class="stat"><span class="value">{{ upcoming|length }}</span><span class="label">échéance{{ upcoming|length|pluralize }} sous 3 semaines</span></div>
+  <div class="stat"><span class="value">{{ total_students }}</span><span class="label">étudiants suivis</span></div>
+  <div class="stat"><span class="value">{{ validated_projects }} / {{ total_projects }}</span><span class="label">projets validés</span></div>
+</div>
 
-    <!-- Quick Actions Panel -->
-    {% if pending_projects > 0 or total_projects > 0 or total_modules > 0 %}
-    <div class="quick-actions-panel">
-        <div class="quick-actions-header">
-            <h3 class="quick-actions-title">
-                <i class="fas fa-bolt"></i>
-                Actions Rapides
-            </h3>
-            <span style="font-size: 0.9em; color: var(--text-muted);">Gérez rapidement vos tâches importantes</span>
-        </div>
-        
-        <div class="action-grid">
-            {% if pending_projects > 0 %}
-            <a href="{% url 'teacher:student_projects' %}?status=submitted" class="action-card urgent">
-                <div class="action-info">
-                    <div class="action-icon" style="background: linear-gradient(135deg, var(--warning), #d97706);">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="action-text">
-                        <h4>Projets à évaluer</h4>
-                        <p>Projets en attente de votre validation</p>
-                    </div>
-                </div>
-                <span class="action-count">{{ pending_projects }}</span>
-            </a>
-            {% endif %}
-            
-            <a href="{% url 'teacher:student_projects' %}" class="action-card">
-                <div class="action-info">
-                    <div class="action-icon" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
-                        <i class="fas fa-project-diagram"></i>
-                    </div>
-                    <div class="action-text">
-                        <h4>Tous les projets</h4>
-                        <p>Centre d'évaluation complet</p>
-                    </div>
-                </div>
-                <span class="action-count">{{ total_projects }}</span>
-            </a>
-            
-            <a href="{% url 'teacher:modules_list' %}" class="action-card">
-                <div class="action-info">
-                    <div class="action-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <div class="action-text">
-                        <h4>Gérer mes modules</h4>
-                        <p>Administrer vos modules d'enseignement</p>
-                    </div>
-                </div>
-                <span class="action-count">{{ total_modules }}</span>
-            </a>
-            
-            {% if validated_projects > 0 %}
-            <a href="{% url 'teacher:student_projects' %}?status=validated" class="action-card">
-                <div class="action-info">
-                    <div class="action-icon" style="background: linear-gradient(135deg, var(--success), #059669);">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="action-text">
-                        <h4>Projets validés</h4>
-                        <p>Projets approuvés avec succès</p>
-                    </div>
-                </div>
-                <span class="action-count">{{ validated_projects }}</span>
-            </a>
-            {% endif %}
-        </div>
-    </div>
+<section class="stack" aria-labelledby="queue-title">
+  <div class="spread"><h2 id="queue-title" class="section-title">À relire <span class="count">{{ waiting_total }}</span></h2>{% if waiting_total > 10 %}<a class="text-sm" href="{% url 'teacher:student_projects' %}?status=submitted">Tout voir</a>{% endif %}</div>
+  {% if review_queue %}
+  <div class="table-wrap">
+    <table class="table table-stack">
+      <thead><tr><th>Projet</th><th>Équipe</th><th>Soumis</th><th class="col-actions"><span class="visually-hidden">Action</span></th></tr></thead>
+      <tbody>
+        {% for p in review_queue %}
+        <tr>
+          <td><a class="row-title" href="{% url 'teacher:project_review' p.id %}">{{ p.title }}</a><div class="subtle text-sm">{{ p.module.code }}{% if p.project_assignment %} · {{ p.project_assignment.title }}{% endif %}</div></td>
+          <td data-label="Équipe"><div class="avatar-stack">{% avatar p.student size="sm" %}{% for c in p.collaborators.all %}{% avatar c size="sm" %}{% endfor %}</div></td>
+          <td data-label="Soumis" class="subtle">{% if p.assignment_submitted_at %}{{ p.assignment_submitted_at|date:"d/m à H:i" }}{% else %}{{ p.updated_at|date:"d/m" }}{% endif %}</td>
+          <td class="col-actions"><a class="btn btn-sm btn-primary" href="{% url 'teacher:project_review' p.id %}">Relire</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card empty">{% icon "inbox" %}<h3>Rien à relire</h3><p>Les projets soumis par vos étudiants apparaîtront ici.</p></div>
+  {% endif %}
+</section>
+
+<div class="grid attention">
+  <section class="card" aria-labelledby="up-title">
+    <div class="card-header"><h2 id="up-title">Échéances à venir</h2><a class="text-sm" href="{% url 'teacher:assignments_dashboard' %}">Devoirs</a></div>
+    {% if upcoming %}
+    <ul class="results">
+      {% for a in upcoming %}{% with pct=a.get_completion_percentage %}
+      <li><a href="{% url 'teacher:assignment_progress' a.id %}"><span>{{ a.title }}</span>{% deadline a.deadline %}<span class="result-sub">{{ a.module.code }} · {{ pct }} % des étudiants ont rendu</span></a></li>
+      {% endwith %}{% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty">{% icon "calendar" %}<h3>Aucune échéance proche</h3>{% if drafts %}<p>{{ drafts }} devoir{{ drafts|pluralize }} en brouillon.</p><a class="btn btn-sm" href="{% url 'teacher:assignments_dashboard' %}">Publier</a>{% endif %}</div>
     {% endif %}
-
-    <!-- Statistics Overview -->
-    <div class="stats-grid">
-        <div class="stat-card" style="--card-accent: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-            <div class="stat-header">
-                <div class="stat-content">
-                    <h3>Modules Assignés</h3>
-                    <div class="stat-value">{{ total_modules }}</div>
-                    <div class="stat-change positive">
-                        <i class="fas fa-book"></i>
-                        Modules actifs
-                    </div>
-                </div>
-                <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-                    <i class="fas fa-book"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="stat-card" style="--card-accent: linear-gradient(135deg, #10b981, #059669);">
-            <div class="stat-header">
-                <div class="stat-content">
-                    <h3>Étudiants Supervisés</h3>
-                    <div class="stat-value">{{ total_students }}</div>
-                    <div class="stat-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        Inscrits dans vos modules
-                    </div>
-                </div>
-                <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-                    <i class="fas fa-user-graduate"></i>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stat-card" style="--card-accent: linear-gradient(135deg, #f59e0b, #d97706);">
-            <div class="stat-header">
-                <div class="stat-content">
-                    <h3>En Attente d'Évaluation</h3>
-                    <div class="stat-value">{{ pending_projects }}</div>
-                    <div class="stat-change {% if pending_projects > 0 %}negative{% else %}positive{% endif %}">
-                        <i class="fas fa-{% if pending_projects > 0 %}exclamation-triangle{% else %}check{% endif %}"></i>
-                        {% if pending_projects > 0 %}Action requise{% else %}À jour{% endif %}
-                    </div>
-                </div>
-                <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                    <i class="fas fa-clock"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="stat-card" style="--card-accent: linear-gradient(135deg, #667eea, #764ba2);">
-            <div class="stat-header">
-                <div class="stat-content">
-                    <h3>Projets Totaux</h3>
-                    <div class="stat-value">{{ total_projects }}</div>
-                    <div class="stat-change positive">
-                        <i class="fas fa-project-diagram"></i>
-                        Tous vos projets
-                    </div>
-                </div>
-                <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                    <i class="fas fa-project-diagram"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Two Column Layout for Recent Activity -->
-    <div class="content-grid">
-        <!-- Recent Modules -->
-        <div class="content-card">
-            <div class="card-header">
-                <h2 class="card-title">
-                    <i class="fas fa-book"></i>
-                    Modules Récents
-                </h2>
-                <a href="{% url 'teacher:modules_list' %}" class="card-action">Voir tous</a>
-            </div>
-            <div class="card-content">
-                {% if assigned_modules %}
-                    <ul class="activity-list">
-                        {% for assignment in recent_modules %}
-                        <li class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-book"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">
-                                    <a href="{% url 'teacher:module_detail' assignment.module.id %}">
-                                        {{ assignment.module.code }} - {{ assignment.module.name|truncatewords:4 }}
-                                    </a>
-                                </div>
-                                <div class="activity-meta">
-                                    {{ assignment.enrolled_count }} étudiant{{ assignment.enrolled_count|pluralize }} • {{ assignment.module.get_semester_display }}
-                                </div>
-                            </div>
-                            <div class="activity-action">
-                                <a href="{% url 'teacher:module_projects' assignment.module.id %}" class="btn btn-sm">
-                                    <i class="fas fa-project-diagram"></i> Projets
-                                </a>
-                            </div>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="empty-state">
-                        <div class="empty-icon">📚</div>
-                        <div class="empty-title">Aucun module assigné</div>
-                        <div class="empty-description">
-                            Contactez l'administration pour obtenir des assignations de modules.
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Recent Project Activity -->
-        <div class="content-card">
-            <div class="card-header">
-                <h2 class="card-title">
-                    <i class="fas fa-history"></i>
-                    Activité Récente
-                </h2>
-                <a href="{% url 'teacher:student_projects' %}" class="card-action">Voir tous</a>
-            </div>
-            <div class="card-content">
-                {% if recent_projects %}
-                    <ul class="activity-list">
-                        {% for project in recent_projects %}
-                        <li class="activity-item">
-                            <div class="activity-icon">
-                                {% if project.status == 'submitted' %}
-                                    <i class="fas fa-clock" style="color: var(--warning);"></i>
-                                {% elif project.status == 'validated' %}
-                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
-                                {% elif project.status == 'rejected' %}
-                                    <i class="fas fa-times-circle" style="color: var(--error);"></i>
-                                {% else %}
-                                    <i class="fas fa-file-alt"></i>
-                                {% endif %}
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">
-                                    <a href="{% url 'teacher:project_review' project.id %}">
-                                        {{ project.title|truncatewords:5 }}
-                                    </a>
-                                </div>
-                                <div class="activity-meta">
-                                    {{ project.student.user.get_full_name|default:project.student.user.username }} • {{ project.updated_at|timesince }}
-                                </div>
-                            </div>
-                            <div class="activity-action">
-                                <span class="status-badge status-{{ project.status|lower }}">
-                                    {{ project.get_status_display }}
-                                </span>
-                            </div>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="empty-state">
-                        <div class="empty-icon">📋</div>
-                        <div class="empty-title">Aucune activité récente</div>
-                        <div class="empty-description">
-                            Les projets apparaîtront ici une fois soumis par vos étudiants.
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    {% if not assigned_modules %}
-    <!-- No Modules State -->
-    <div class="content-card" style="text-align: center; padding: 60px;">
-        <div class="empty-icon">📚</div>
-        <h2 class="empty-title">Aucun Module Assigné</h2>
-        <div class="empty-description" style="max-width: 500px; margin: 0 auto 25px;">
-            Vous n'avez actuellement aucun module assigné. Contactez l'administration pour obtenir des assignations de modules et commencer à superviser des étudiants.
-        </div>
-        <p style="font-size: 0.9em; color: var(--text-muted);">
-            <em>Note:</em> Les modules sont assignés par l'administrateur via l'interface d'administration.
-        </p>
-    </div>
+  </section>
+  <section class="card" aria-labelledby="mod-title">
+    <div class="card-header"><h2 id="mod-title">Mes modules</h2><a class="text-sm" href="{% url 'teacher:modules_list' %}">Tout voir</a></div>
+    {% if assigned_modules %}
+    <ul class="results">
+      {% for a in assigned_modules %}
+      <li><a href="{% url 'teacher:module_detail' a.module_id %}"><span><span class="mono">{{ a.module.code }}</span> {{ a.module.name }}</span>{% if a.waiting_count %}<span class="chip chip-warn">{{ a.waiting_count }} à relire</span>{% endif %}<span class="result-sub">{{ a.enrolled_count }} étudiant{{ a.enrolled_count|pluralize }} · {{ a.project_count }} projet{{ a.project_count|pluralize }}</span></a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty">{% icon "book-open" %}<h3>Aucun module</h3><p>Créez un module ou demandez à l'administration de vous en attribuer un.</p><a class="btn btn-sm" href="{% url 'teacher:create_teacher_module' %}">Créer un module</a></div>
     {% endif %}
+  </section>
+</div>
 {% endblock %}

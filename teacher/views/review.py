@@ -59,7 +59,10 @@ def student_projects(request):
         Project.objects.filter(module__in=teacher_modules)
         .select_related("student__user", "module")
         .prefetch_related("collaborators__user")
-        .annotate(deliverable_count=Count("deliverables", distinct=True))
+        .annotate(
+            deliverable_count=Count("deliverables", distinct=True),
+            collaborator_count=Count("collaborators", distinct=True),
+        )
         .order_by("-updated_at")
     )
 

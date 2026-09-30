@@ -1,201 +1,24 @@
-{% extends 'teacher/base.html' %}
-{% load static %}
-
-{% block title %}Mes Modules - ENSA Project Manager{% endblock %}
-
-{% block breadcrumb_items %}
-<span style="margin: 0 8px; color: var(--text-muted);">></span>
-<span style="color: var(--text-primary);">Mes Modules</span>
-{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'teacher/css/modules_list.css' %}">
-
-{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Mes modules{% endblock %}
 {% block content %}
-    <!-- Top Actions -->
-    <div class="top-actions" style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-        <a href="{% url 'teacher:create_teacher_module' %}" class="action-btn primary">
-            <i class="fas fa-plus"></i>
-            Créer un Module
-        </a>
-    </div>
-    <!-- Modules Hero Section -->
-    <div class="modules-hero">
-        <div class="hero-content">
-            <div class="hero-text">
-                <h1><i class="fas fa-book"></i> Mes Modules</h1>
-                <p>
-                    Gérez vos {{ assigned_modules.count }} modules d'enseignement et {{ total_students }} étudiants inscrits
-                </p>
-            </div>
-            <div class="hero-icon">📚</div>
-        </div>
-    </div>
-
-    {% if assigned_modules %}
-    <!-- Modules Grid -->
-    <div class="modules-grid">
-        {% for assignment in assigned_modules %}
-        <div class="module-card">
-            <!-- Module Header -->
-            <div class="module-header">
-                <h2 class="module-title">
-                    <i class="fas fa-book"></i>
-                    {{ assignment.module.code }} - {{ assignment.module.name }}
-                </h2>
-                <div class="module-meta">
-                    <div class="meta-item">
-                        <i class="fas fa-calendar-alt"></i>
-                        <strong>Semestre:</strong> {{ assignment.module.get_semester_display }}
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-graduation-cap"></i>
-                        <strong>Année:</strong> {{ assignment.module.academic_year }}
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-user-tie"></i>
-                        <strong>Assigné le:</strong> {{ assignment.assigned_at|date:"d/m/Y" }}
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-key"></i>
-                        <strong>Code:</strong> <span class="code-display">{{ assignment.module.code }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Module Body -->
-            <div class="module-body">
-                <!-- Quick Stats -->
-                <div class="stats-row">
-                    <div class="stat-item">
-                        <div class="stat-number">{{ assignment.module.get_enrolled_students_count }}</div>
-                        <div class="stat-label">Étudiants</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">{{ assignment.module.projects.count|default:0 }}</div>
-                        <div class="stat-label">Projets</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">{{ assignment.module.projects.filter.status.submitted.count|default:0 }}</div>
-                        <div class="stat-label">À évaluer</div>
-                    </div>
-                </div>
-
-                <!-- Students Preview -->
-                <div class="students-preview">
-                    <div class="students-header">
-                        <h4 class="students-title">
-                            <i class="fas fa-users"></i>
-                            Étudiants Inscrits
-                        </h4>
-                        <span class="students-count">{{ assignment.module.get_enrolled_students_count }}</span>
-                    </div>
-                    
-                    {% if assignment.module.enrollments.all %}
-                        <div class="students-list">
-                            {% for enrollment in assignment.module.enrollments.all %}
-                            {% if enrollment.is_active %}
-                            <div class="student-item">
-                                <div class="student-info">
-                                    <div class="student-name">
-                                        {{ enrollment.student.user.get_full_name|default:enrollment.student.user.username }}
-                                    </div>
-                                    <div class="student-details">
-                                        {{ enrollment.student.student_id }} • {{ enrollment.student.department }}
-                                    </div>
-                                </div>
-                                <div class="student-date">
-                                    {{ enrollment.enrolled_at|date:"d/m" }}
-                                </div>
-                            </div>
-                            {% endif %}
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div style="text-align: center; padding: 20px; color: var(--text-muted);">
-                            <i class="fas fa-user-plus" style="font-size: 2em; margin-bottom: 12px; opacity: 0.3;"></i>
-                            <p style="margin: 0; font-size: 0.9em;">Aucun étudiant inscrit</p>
-                            <p style="margin: 8px 0 0 0; font-size: 0.8em; opacity: 0.8;">
-                                Code d'inscription: <strong>{{ assignment.module.code }}</strong>
-                            </p>
-                        </div>
-                    {% endif %}
-                </div>
-
-                {% if assignment.module.description %}
-                <div class="module-description">
-                    <i class="fas fa-info-circle" style="margin-right: 8px; color: var(--accent-primary);"></i>
-                    {{ assignment.module.description|truncatewords:25 }}
-                </div>
-                {% endif %}
-
-                <!-- Action Buttons -->
-                <div class="action-bar">
-                    <a href="{% url 'teacher:module_projects' assignment.module.id %}" class="action-btn primary">
-                        <i class="fas fa-project-diagram"></i>
-                        Voir Projets
-                    </a>
-                    <a href="{% url 'teacher:module_detail' assignment.module.id %}" class="action-btn secondary">
-                        <i class="fas fa-cog"></i>
-                        Gérer
-                    </a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- Information Panel -->
-    <div class="info-panel">
-        <div class="info-header">
-            <div class="info-icon">
-                <i class="fas fa-info-circle"></i>
-            </div>
-            <div class="info-content">
-                <h3>Informations sur la Gestion des Modules</h3>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <strong>Code d'inscription</strong>
-                        <p>Les étudiants utilisent le code du module pour s'inscrire automatiquement à vos cours.</p>
-                    </div>
-                    <div class="info-item">
-                        <strong>Nouveaux modules</strong>
-                        <p>Contactez l'administration pour obtenir l'assignation de nouveaux modules d'enseignement.</p>
-                    </div>
-                    <div class="info-item">
-                        <strong>Gestion des étudiants</strong>
-                        <p>Suivez les inscriptions et gérez les projets de vos étudiants depuis chaque module.</p>
-                    </div>
-                    <div class="info-item">
-                        <strong>Évaluations</strong>
-                        <p>Accédez rapidement aux projets nécessitant une évaluation depuis le centre d'évaluation.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    {% else %}
-    <!-- Empty State -->
-    <div class="empty-state">
-        <div class="empty-icon">📚</div>
-        <h2 class="empty-title">Aucun Module Assigné</h2>
-        <div class="empty-description">
-            Vous n'avez actuellement aucun module assigné. Une fois que l'administration vous assignera des modules d'enseignement, 
-            ils apparaîtront ici avec la liste des étudiants inscrits et leurs projets.
-        </div>
-        <div style="margin-top: 32px;">
-            <a href="{% url 'teacher:dashboard' %}" class="action-btn primary" style="max-width: 200px;">
-                <i class="fas fa-arrow-left"></i>
-                Retour au tableau de bord
-            </a>
-        </div>
-        <div class="empty-note">
-            <i class="fas fa-info-circle"></i>
-            Les modules sont assignés par l'administrateur via l'interface d'administration.
-        </div>
-    </div>
-    {% endif %}
+<header class="page-header">
+  <div><h1>Mes modules</h1><p class="meta">Les étudiants rejoignent un module avec son code.</p></div>
+  <div class="actions"><a class="btn btn-primary" href="{% url 'teacher:create_teacher_module' %}">{% icon "plus" %} Nouveau module</a></div>
+</header>
+{% if assigned_modules %}
+<div class="grid">
+  {% for a in assigned_modules %}{% with m=a.module %}
+  <article class="card card-body stack stack-sm">
+    <div class="spread"><span class="mono text-sm muted">{{ m.code }}</span>{% if a.waiting_count %}<span class="chip chip-warn">{{ a.waiting_count }} à relire</span>{% elif not m.is_active %}<span class="chip">Inactif</span>{% endif %}</div>
+    <h2 class="text-base"><a class="plain" href="{% url 'teacher:module_detail' m.id %}">{{ m.name }}</a></h2>
+    <p class="subtle text-sm">{{ m.get_semester_display }} · {{ m.academic_year }}{% if m.classroom %} · {{ m.classroom }}{% endif %}</p>
+    <p class="muted text-sm">{{ a.enrolled_count }} étudiant{{ a.enrolled_count|pluralize }} · {{ a.project_count }} projet{{ a.project_count|pluralize }}</p>
+    <div class="cluster cluster-sm"><a class="btn btn-sm" href="{% url 'teacher:module_detail' m.id %}">Ouvrir</a><a class="btn btn-sm btn-ghost" href="{% url 'teacher:module_projects' m.id %}">Projets</a></div>
+  </article>
+  {% endwith %}{% endfor %}
+</div>
+{% else %}
+<div class="card empty">{% icon "book-open" %}<h3>Aucun module</h3><p>Créez votre premier module : vous obtiendrez un code à partager avec vos étudiants.</p><a class="btn btn-primary btn-sm" href="{% url 'teacher:create_teacher_module' %}">Créer un module</a></div>
+{% endif %}
 {% endblock %}

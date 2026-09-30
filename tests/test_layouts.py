@@ -82,3 +82,12 @@ class HtmxMessagesTests(Fixtures):
         page = self.client.get(reverse("student:notifications"), HTTP_HX_REQUEST="true")
         toasts = json.loads(page["HX-Trigger"])["toast"]
         self.assertEqual(toasts[0]["level"], "success")
+
+
+class TeacherDashboardCountTests(Fixtures):
+    def test_student_count_is_not_multiplied_by_projects(self):
+        for student in self.students[:3]:
+            self.project(student, status="submitted")
+        self.login(self.teacher)
+        response = self.client.get(reverse("teacher:dashboard"))
+        self.assertEqual(response.context["total_students"], len(self.students))

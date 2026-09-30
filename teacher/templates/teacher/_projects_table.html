@@ -1,0 +1,17 @@
+{% load ui %}
+{% if projects %}
+<div class="table-wrap"><table class="table table-stack">
+  <thead><tr><th>Projet</th><th>Équipe</th><th>Statut</th><th>Livrables</th><th>Mis à jour</th><th class="col-actions"><span class="visually-hidden">Action</span></th></tr></thead>
+  <tbody>{% for p in projects %}<tr>
+    <td><a class="row-title" href="{% url 'teacher:project_review' p.id %}">{{ p.title }}</a><div class="subtle text-sm">{% if p.module %}{{ p.module.code }} · {% endif %}{{ p.get_project_type_display }}</div></td>
+    <td data-label="Équipe"><span class="cluster cluster-sm">{% avatar p.student size="sm" %}<span>{{ p.student.get_full_name }}{% if p.collaborator_count %} <span class="subtle">+{{ p.collaborator_count }}</span>{% endif %}</span></span></td>
+    <td data-label="Statut">{% status_chip p.status %}</td>
+    <td data-label="Livrables" class="num">{{ p.deliverable_count|default:0 }}</td>
+    <td data-label="Mis à jour" class="subtle">{{ p.updated_at|date:"d/m/Y" }}</td>
+    <td class="col-actions"><a class="btn btn-sm{% if p.status == 'submitted' %} btn-primary{% endif %}" href="{% url 'teacher:project_review' p.id %}">{% if p.status == "submitted" %}Relire{% else %}Ouvrir{% endif %}</a></td>
+  </tr>{% endfor %}</tbody>
+</table></div>
+{% include "components/pagination.html" with page=page_obj %}
+{% else %}
+<div class="card empty">{% icon "folder" %}<h3>Aucun projet</h3><p>{% if status_filter or module_filter %}Aucun projet ne correspond à ces filtres.{% else %}Les projets de vos étudiants apparaîtront ici.{% endif %}</p></div>
+{% endif %}
