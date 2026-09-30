@@ -36,6 +36,7 @@ ROLES = {
     "teacher": "prof.alami",
     "admin": "admin",
 }
+SAMPLE_QUERY = {"search:search": "?q=web", "search:search_projects": "?q=web"}
 NAMESPACE_ROLE = {"student": "student", "teacher": "teacher", "administrator": "admin"}
 
 
@@ -107,9 +108,12 @@ print(json.dumps(out))
     pages = []
     for name, path in json.loads(result.stdout.strip().splitlines()[-1]):
         role = NAMESPACE_ROLE.get(name.split(":")[0]) if ":" in name else None
-        roles = (
-            [role] if role else (["anon", "student"] if name.startswith("public:") else ["anon"])
-        )
+        if role:
+            roles = [role]
+        elif name.startswith("search:"):
+            roles, path = list(ROLES), path + SAMPLE_QUERY.get(name, "")
+        else:
+            roles = ["anon", "student"] if name.startswith("public:") else ["anon"]
         for r in roles:
             pages.append((r, name, path))
     return pages
@@ -225,6 +229,8 @@ def main():
                                 or urlparse(page.url).path != urlparse(BASE + path).path
                             ):
                                 continue  # POST-only, redirect, file download or permission page
+                            if not page.evaluate("!!document.querySelector('main')"):
+                                continue  # HTMX fragment, not a page
                             slug = name.replace(":", "_")
                             target = out_dir / role / f"{slug}__{width}__{theme}.png"
                             target.parent.mkdir(parents=True, exist_ok=True)

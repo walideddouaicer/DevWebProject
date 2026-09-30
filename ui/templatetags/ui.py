@@ -1,8 +1,11 @@
 """Design-system template tags (PLAN P5.3+)."""
 
+import re
+
 from django import template
 from django.templatetags.static import static
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -203,3 +206,19 @@ def field(bound_field, label="", help="", hide_label=False):
 def tone(value):
     """Deterministic 0-5 tone for a string (avatars, cover fallbacks)."""
     return sum(ord(c) for c in str(value)) % 6
+
+
+@register.filter
+def highlight(value, query):
+    """Escape ``value`` and wrap case-insensitive matches of ``query`` in <mark>."""
+    text = str(value)
+    query = str(query or "").strip()
+    if not query:
+        return escape(text)
+    parts = re.split(f"({re.escape(query)})", text, flags=re.IGNORECASE)
+    return mark_safe(
+        "".join(
+            f"<mark>{escape(part)}</mark>" if i % 2 else escape(part)
+            for i, part in enumerate(parts)
+        )
+    )

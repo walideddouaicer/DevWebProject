@@ -239,5 +239,55 @@
   document.addEventListener("change", function () { refreshConditional(); });
   refreshConditional();
 
+  // Top-bar quick search: HTMX fills #quick-results; arrows move through links,
+  // Escape closes, "/" focuses the field from anywhere.
+  var quickInput = document.querySelector("[data-quick-search]");
+  var quickPanel = document.getElementById("quick-results");
+  if (quickInput && quickPanel) {
+    var quickLinks = function () { return Array.prototype.slice.call(quickPanel.querySelectorAll("a")); };
+    var closeQuick = function () { quickPanel.hidden = true; };
+    var openQuick = function () { if (quickPanel.innerHTML.trim()) quickPanel.hidden = false; };
+    document.addEventListener("htmx:afterSwap", function (event) {
+      if (event.target === quickPanel) {
+        quickPanel.hidden = !quickPanel.innerHTML.trim() || document.activeElement !== quickInput;
+      }
+    });
+    quickInput.addEventListener("focus", openQuick);
+    quickInput.addEventListener("input", function () { if (quickInput.value.trim().length < 2) closeQuick(); });
+    quickInput.form.addEventListener("keydown", function (event) {
+      var links = quickLinks();
+      var index = links.indexOf(document.activeElement);
+      if (event.key === "Escape") {
+        if (quickPanel.hidden) return; // second Escape: native clear of the field
+        event.preventDefault();
+        if (document.activeElement !== quickInput) quickInput.focus();
+        closeQuick();
+      } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        if (quickPanel.hidden || !links.length) return;
+        event.preventDefault();
+        var step = event.key === "ArrowDown" ? 1 : -1;
+        if (index === -1) index = step === 1 ? -1 : links.length;
+        var next = index + step;
+        if (next < 0) quickInput.focus();
+        else links[Math.min(next, links.length - 1)].focus();
+      }
+    });
+    document.addEventListener("click", function (event) {
+      if (!quickInput.form.contains(event.target)) closeQuick();
+    });
+    quickInput.form.addEventListener("focusout", function (event) {
+      if (event.relatedTarget && !quickInput.form.contains(event.relatedTarget)) closeQuick();
+    });
+    document.addEventListener("keydown", function (event) {
+      var tag = (event.target.tagName || "").toLowerCase();
+      if (event.key === "/" && !event.ctrlKey && !event.metaKey && tag !== "input"
+          && tag !== "textarea" && tag !== "select" && !event.target.isContentEditable) {
+        event.preventDefault();
+        quickInput.focus();
+        quickInput.select();
+      }
+    });
+  }
+
   initToasts();
 })();

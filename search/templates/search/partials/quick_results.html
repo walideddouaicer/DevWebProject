@@ -1,0 +1,13 @@
+{% load ui %}{% if not too_short %}
+<div class="quick-panel">
+  {% for section in sections %}
+  <div class="quick-section">
+    <p class="quick-heading">{% icon section.icon size=14 %} {{ section.title }}</p>
+    <ul class="results" role="list">{% for item in section.items %}<li>{% include "search/_result.html" %}</li>{% endfor %}</ul>
+  </div>
+  {% empty %}
+  <p class="quick-empty" role="status">Aucun résultat pour « {{ query }} »</p>
+  {% endfor %}
+  <a class="quick-all" href="{% url 'search:search' %}?q={{ query|urlencode }}">{% icon "search" size=16 %} Tous les résultats pour « {{ query }} »</a>
+</div>
+{% endif %}

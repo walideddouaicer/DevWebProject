@@ -1,0 +1,1 @@
+{% load ui %}<a href="{{ item.url }}"><span class="result-title">{{ item.title|highlight:query }}</span>{% if item.status %}{% status_chip item.status %}{% elif item.badge %}<span class="chip no-dot">{{ item.badge }}</span>{% else %}<span></span>{% endif %}{% if item.subtitle %}<span class="result-sub">{{ item.subtitle|highlight:query }}</span>{% endif %}</a>

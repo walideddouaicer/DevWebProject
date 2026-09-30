@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P6.10 done → P6.11 next (search)**
+- Phase: **P6.11 done → P6.12 next (emails)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (213 tests)
+- Last green `make check`: 2026-09-30 (219 tests)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -408,7 +408,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   users list (tabs, search, activate/deactivate), imports (students/teachers, with a result
   report), pending registrations, modules list/create/edit/detail/delete, teacher-module
   assignments, projects list/detail, moderation queue, exports page, statistics.
-- [ ] **P6.11 Search:** global search page + top-bar quick search (HTMX dropdown, keyboard nav).
+- [x] **P6.11 Search:** global search page + top-bar quick search (HTMX dropdown, keyboard nav).
 - [ ] **P6.12 Emails:** HTML + text templates (invitation, approval, reset, reminders, digest,
   announcement, grade) with an inline-CSS-safe simple layout; preview route in DEBUG.
 - [ ] **P6.13 Cleanup sweep:** delete every old per-app CSS/JS file and unused template; grep
@@ -721,3 +721,11 @@ Everything else in this plan is decided by Claude.
   statistics. remove_student_from_module POST-only (JSON only for XHR). Fixed `.card-link`
   overriding `.stack` display. Deleted old admin base + CSS and legacy student base.css/main.js.
   Screens: 16 admin pages, 0 serious a11y. Note for P6.13: filter bars stack tall on 390px.
+- **2026-09-30** · P6.11 · Search moved to `search/services.py` (`search(user, q, limit)` →
+  role + `Section`/`Result` dataclasses, `reverse()` URLs, ≥2 chars, member projects also
+  match module code/name, teacher people search prefetches enrollments — no N+1). Full page
+  on app/public layout by role; top-bar HTMX quick search (`search:quick`, 4 per section,
+  "/" shortcut, arrows, Escape closes, click-outside). `|highlight:q` filter (escapes, then
+  `<mark>`). Fixed globally: `.col-actions` width 1% pushed stacked-table buttons off-card on
+  mobile. screens.py skips HTMX fragments and audits search for every role with `?q=web`.
+  `search.SearchQuery` model is unused (left in place; drop in P7 cleanup with a migration).

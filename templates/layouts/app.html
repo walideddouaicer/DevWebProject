@@ -39,7 +39,11 @@ search, notifications and user menu. Pages fill {% block content %}; use
       <form class="topbar-search" action="{% url 'search:search' %}" method="get" role="search">
         {% icon "search" %}
         <label class="visually-hidden" for="global-search">Rechercher</label>
-        <input id="global-search" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Rechercher un projet, un module, une personne…" autocomplete="off">
+        <input id="global-search" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Rechercher un projet, un module, une personne…" autocomplete="off" maxlength="100"
+               aria-controls="quick-results" data-quick-search
+               hx-get="{% url 'search:quick' %}" hx-trigger="input changed delay:250ms" hx-target="#quick-results" hx-sync="this:replace">
+        <kbd class="search-kbd" aria-hidden="true">/</kbd>
+        <div class="quick-results" id="quick-results" hidden></div>
       </form>
       <div class="topbar-actions">
         {% if user_role == "student" %}
