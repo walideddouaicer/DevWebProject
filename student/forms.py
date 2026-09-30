@@ -9,8 +9,35 @@ from .models import (
     ProjectReport,
     PublicProjectComment,
     StudentProfile,
+    UserPreferences,
 )
 from .validators import validate_deliverable_file, validate_image_file
+
+
+class NotificationPreferencesForm(forms.ModelForm):
+    """Every preference the app actually honours (emails, reminders, digest)."""
+
+    class Meta:
+        model = UserPreferences
+        fields = [
+            "email_notifications",
+            "collaboration_notifications",
+            "project_notifications",
+            "assignment_reminders",
+            "email_digest",
+        ]
+        labels = {
+            "email_notifications": "Recevoir des e-mails",
+            "collaboration_notifications": "Invitations à rejoindre une équipe",
+            "project_notifications": "Annonces des modules",
+            "assignment_reminders": "Rappels d'échéance (J-7, J-3, J-1)",
+            "email_digest": "Un seul e-mail récapitulatif par jour",
+        }
+        help_texts = {
+            "email_notifications": "Désactivé : vous ne recevez plus aucun e-mail, seulement les "
+            "notifications dans l'application.",
+            "email_digest": "Remplace les e-mails individuels par un résumé quotidien à 18 h.",
+        }
 
 
 class ProjectForm(forms.ModelForm):
@@ -395,48 +422,6 @@ class StudentProfileForm(forms.ModelForm):
             profile.save()
 
         return profile
-
-
-class AccountSettingsForm(forms.Form):
-    """Form for account-related settings"""
-
-    change_password = forms.BooleanField(
-        required=False,
-        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
-        label="Je veux changer mon mot de passe",
-    )
-
-    # Notification preferences (functional now)
-    email_notifications = forms.BooleanField(
-        required=False,
-        initial=True,
-        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
-        label="Recevoir les notifications par email",
-    )
-
-    project_notifications = forms.BooleanField(
-        required=False,
-        initial=True,
-        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
-        label="Notifications de projets",
-    )
-
-    collaboration_notifications = forms.BooleanField(
-        required=False,
-        initial=True,
-        widget=forms.CheckboxInput(attrs={"class": "form-checkbox"}),
-        label="Notifications de collaboration",
-    )
-
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop("user", None)
-        super().__init__(*args, **kwargs)
-
-        # Pre-populate settings if user is provided
-        if user:
-            # You could load user preferences from a UserPreferences model
-            # For now, we'll use default values
-            pass
 
 
 class CommentForm(forms.Form):

@@ -1,213 +1,37 @@
-<!-- student/templates/student/make_project_public.html -->
-{% extends 'student/base.html' %}
-{% load static %}
-
-{% block title %}Rendre Public - {{ project.title }}{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/make_project_public.css' %}">
-{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Publier « {{ project.title }} »{% endblock %}
+{% block content_class %}content-narrow{% endblock %}
 {% block content %}
-<div class="public-publication-container">
-    <div class="public-publication-workspace">
-        <!-- Hero Header -->
-        <div class="publication-hero">
-            <div class="hero-content">
-                <h1 class="hero-title">🌟 Partagez votre projet avec le monde</h1>
-                <p class="hero-subtitle">Rendez votre projet "{{ project.title }}" visible sur la vitrine publique</p>
-            </div>
-        </div>
-
-        <!-- Project Preview -->
-        <div class="project-preview-card">
-            <div class="preview-header">
-                <h2 class="preview-title">📋 Aperçu de votre projet</h2>
-            </div>
-            
-            <div class="preview-grid">
-                <div class="preview-content">
-                    <h3 class="project-title-display">{{ project.title }}</h3>
-                    <p class="project-description-display">{{ project.description|truncatewords:30 }}</p>
-                    
-                    <div class="project-meta-list">
-                        <div class="meta-item">
-                            <span class="meta-label">Type:</span>
-                            <span class="meta-value">{{ project.get_project_type_display }}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="meta-label">Technologies:</span>
-                            <span class="meta-value">{{ project.technologies|default:"Non spécifié" }}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="meta-label">Statut:</span>
-                            <span class="meta-value">✅ {{ project.get_status_display }}</span>
-                        </div>
-                        {% if project.module %}
-                        <div class="meta-item">
-                            <span class="meta-label">Module:</span>
-                            <span class="meta-value">{{ project.module.name }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="included-content">
-                    <h4 class="included-title">📁 Contenu inclus dans l'affichage public:</h4>
-                    <ul class="included-list">
-                        <li class="included-item">
-                            <i class="fas fa-check check-icon"></i>
-                            <span class="included-text">Titre et description du projet</span>
-                        </li>
-                        <li class="included-item">
-                            <i class="fas fa-check check-icon"></i>
-                            <span class="included-text">Technologies utilisées</span>
-                        </li>
-                        <li class="included-item">
-                            <i class="fas fa-check check-icon"></i>
-                            <span class="included-text">Livrables ({{ project.deliverables.count }} fichier{{ project.deliverables.count|pluralize }})</span>
-                        </li>
-                        <li class="included-item">
-                            <i class="fas fa-check check-icon"></i>
-                            <span class="included-text">Jalons ({{ project.milestones.count }} jalon{{ project.milestones.count|pluralize }})</span>
-                        </li>
-                        <li class="included-item">
-                            <i class="fas fa-check check-icon"></i>
-                            <span class="included-text">Informations sur l'auteur</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Publication Options -->
-        <div class="publication-options">
-            <!-- Quick Publish -->
-            <div class="publication-option quick">
-                <div class="option-header">
-                    <div class="option-icon-container">
-                        <i class="fas fa-bolt option-icon"></i>
-                    </div>
-                    <h3 class="option-title">⚡ Publication Rapide</h3>
-                    <p class="option-description">Publier instantanément avec le contenu actuel</p>
-                </div>
-                
-                <div class="features-box">
-                    <h4 class="features-title">✅ Inclus automatiquement:</h4>
-                    <ul class="features-list">
-                        <li class="feature-item">• Titre et description du projet</li>
-                        <li class="feature-item">• Tous vos livrables et fichiers</li>
-                        <li class="feature-item">• Technologies et jalons</li>
-                        <li class="feature-item">• Image par défaut générée</li>
-                    </ul>
-                </div>
-                
-                <form method="post" class="publication-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="quick_publish">
-                    {{ quick_form.as_p }}
-                    <button type="submit" class="submit-button">
-                        🚀 Publier Maintenant
-                    </button>
-                </form>
-            </div>
-
-            <!-- Enhanced Publish -->
-            <div class="publication-option enhanced">
-                <div class="option-header">
-                    <div class="option-icon-container">
-                        <i class="fas fa-palette option-icon"></i>
-                    </div>
-                    <h3 class="option-title">🎨 Publication Enrichie</h3>
-                    <p class="option-description">Personnaliser l'affichage public (optionnel)</p>
-                </div>
-                
-                <form method="post" enctype="multipart/form-data" class="publication-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="enhanced_publish">
-                    
-                    <div class="form-fields">
-                        <div class="form-field">
-                            <label class="form-label">{{ enhanced_form.public_cover_image.label }}</label>
-                            {{ enhanced_form.public_cover_image }}
-                            <p class="form-help">{{ enhanced_form.public_cover_image.help_text }}</p>
-                        </div>
-                        
-                        <div class="form-field">
-                            <label class="form-label">{{ enhanced_form.public_description.label }}</label>
-                            {{ enhanced_form.public_description }}
-                            <p class="form-help">{{ enhanced_form.public_description.help_text }}</p>
-                        </div>
-                        
-                        <div class="form-grid">
-                            <div class="form-field">
-                                <label class="form-label">{{ enhanced_form.public_demo_url.label }}</label>
-                                {{ enhanced_form.public_demo_url }}
-                            </div>
-                            
-                            <div class="form-field">
-                                <label class="form-label">{{ enhanced_form.public_github_url.label }}</label>
-                                {{ enhanced_form.public_github_url }}
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">
-                                {{ enhanced_form.public_deliverables }}
-                                {{ enhanced_form.public_deliverables.label }}
-                            </label>
-                            <p class="form-help">Par défaut, vos fichiers restent privés (équipe, enseignants et administration uniquement).</p>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="submit-button">
-                        ✨ Publier avec Personnalisation
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Important Notes -->
-        <div class="important-notes">
-            <div class="notes-header">
-                <i class="fas fa-info-circle notes-icon"></i>
-                <h3 class="notes-title">📌 Important à savoir:</h3>
-            </div>
-            <ul class="notes-list">
-                <li class="note-item">
-                    <div class="note-bullet"></div>
-                    <p class="note-text">Votre projet sera <strong>instantanément visible</strong> sur la vitrine publique</p>
-                </li>
-                <li class="note-item">
-                    <div class="note-bullet"></div>
-                    <p class="note-text">Tous vos <strong>livrables seront accessibles</strong> aux visiteurs</p>
-                </li>
-                <li class="note-item">
-                    <div class="note-bullet"></div>
-                    <p class="note-text">Vous pouvez <strong>modifier ou retirer</strong> votre projet à tout moment</p>
-                </li>
-                <li class="note-item">
-                    <div class="note-bullet"></div>
-                    <p class="note-text">La communauté pourra <strong>aimer et commenter</strong> votre projet</p>
-                </li>
-                <li class="note-item">
-                    <div class="note-bullet"></div>
-                    <p class="note-text">Seuls les projets <strong>validés</strong> peuvent être rendus publics</p>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Action Footer -->
-        <div class="action-footer">
-            <a href="{% url 'student:project_detail' project.id %}" class="btn-back">
-                ← Retour au Projet
-            </a>
-            
-            {% if project.is_public %}
-                <a href="{% url 'public:project_detail' project.id %}" class="btn-view-public">
-                    👁️ Voir sur la Vitrine Publique
-                </a>
-            {% endif %}
-        </div>
+<header class="page-header">
+  <div><nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="{% url 'student:project_detail' project.id %}">{{ project.title }}</a><span class="sep">/</span><span>Vitrine</span></nav>
+  <h1>Publier sur la vitrine</h1><p class="meta">Le projet sera visible par tous, y compris sans compte. Vous pourrez le retirer à tout moment.</p></div>
+</header>
+<form method="post" enctype="multipart/form-data" class="card card-body" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="action" value="enhanced_publish">
+  <div class="form-section">
+    <header><h2>Présentation publique</h2><p>Tout est facultatif : sans texte, la description du projet est reprise.</p></header>
+    <div class="form-grid">
+      {% field enhanced_form.public_description label="Description publique" help="Expliquez le problème résolu et le résultat, pour un lecteur extérieur." %}
+      <div class="field">
+        <label for="{{ enhanced_form.public_cover_image.id_for_label }}">Image de couverture</label>
+        <input type="file" name="{{ enhanced_form.public_cover_image.html_name }}" id="{{ enhanced_form.public_cover_image.id_for_label }}" accept="image/png,image/jpeg,image/webp">
+        <p class="field-help">Format paysage conseillé (16:9), 5 Mo maximum.</p>
+      </div>
+      {% if enhanced_form.showcase_tags.field.queryset %}
+      <fieldset class="field"><legend class="field-label">Thèmes (5 maximum)</legend><div class="cluster">{% for choice in enhanced_form.showcase_tags %}<label class="check">{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}</div></fieldset>
+      {% endif %}
     </div>
-</div>
+  </div>
+  <div class="form-section">
+    <header><h2>Liens</h2></header>
+    <div class="form-grid">{% field enhanced_form.public_demo_url label="Démonstration en ligne" %}{% field enhanced_form.public_github_url label="Code source" %}{% field enhanced_form.public_portfolio_url label="Page du projet" %}</div>
+  </div>
+  <div class="form-section">
+    <header><h2>Fichiers</h2></header>
+    <div class="form-grid">{% field enhanced_form.public_deliverables label="Rendre les livrables téléchargeables" help="Par défaut, vos fichiers restent réservés à l'équipe, aux enseignants et à l'administration." %}</div>
+  </div>
+  <div class="form-actions"><a class="btn btn-ghost" href="{% url 'student:project_detail' project.id %}">Annuler</a><button class="btn btn-primary" type="submit">{% icon "globe" %} Publier</button></div>
+</form>
 {% endblock %}

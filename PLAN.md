@@ -391,7 +391,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
 - [x] **P6.5 Student assignments & modules:** assignments list (grouped by urgency), assignment
   detail, option selection (compare options side by side, clear availability), create-project-from-
   assignment, my modules, join module.
-- [ ] **P6.6 Student profile & settings:** profile view/edit (avatar upload with preview),
+- [x] **P6.6 Student profile & settings:** profile view/edit (avatar upload with preview),
   settings tabs (compte, notifications incl. digest, apparence), make public / make private flows.
 - [ ] **P6.7 Teacher core:** dashboard (review queue first: submitted projects awaiting action,
   upcoming deadlines, module list), modules list/detail (roster, announcements composer, exports),
@@ -690,3 +690,7 @@ Everything else in this plan is decided by Claude.
   `groups`), assignment detail, subject choice (radio cards, one template for both entry points),
   start-project form, my modules (join + leave with confirm). Model choice labels translated to
   French (migrations *_french_choice_labels). join_module now returns to Mes modules.
+- **2026-09-30** · P6.6 · Student settings tabs (profil / notifications via
+  `NotificationPreferencesForm` incl. assignment_reminders + digest / apparence / compte),
+  profile view + edit, publish-to-showcase form (single form, tags, public files opt-in),
+  unpublish confirm. `AccountSettingsForm` deleted. delete_profile_picture POST-only.
