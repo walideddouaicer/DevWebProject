@@ -124,6 +124,8 @@ class SmokeTest(TestCase):
             "user_id": User.objects.get(username="etu.anas").id,
             "new_status": "submitted",
             "response": "accept",
+            "uidb64": "MQ",  # an invalid reset link: renders the "lien invalide" page
+            "token": "set-password",
         }
         # Routes whose kwarg name is ambiguous get their own values
         cls.overrides = {

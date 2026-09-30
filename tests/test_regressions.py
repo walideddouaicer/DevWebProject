@@ -433,7 +433,6 @@ class RegressionTests(Fixtures):
         self.assertTrue(settings.LANGUAGE_CODE.startswith("fr"))
 
     # B22 -----------------------------------------------------------------
-    @expectedFailure
     def test_B22_password_reset_exists(self):
         try:
             url = reverse("password_reset")
