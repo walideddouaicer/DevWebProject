@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P0 done → P1 next (P1.1 permission layer)**
+- Phase: **P1 done → P2 next (P2.1 missing-template triage)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (112 tests: 88 pass + 24 expected failures; also green on Postgres 16)
+- Last green `make check`: 2026-09-30 (143 tests, 13 expected failures remaining = open bugs)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -212,25 +212,25 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
 
 ### P1 — Critical security & correctness (B1–B6, B8)
 
-- [ ] **P1.1 Permission layer.** `accounts/permissions.py` (decorators + project access helpers, §4).
+- [x] **P1.1 Permission layer.** `accounts/permissions.py` (decorators + project access helpers, §4).
   Unit tests for each decorator (anon → login redirect with `next`, wrong role → 403).
-- [ ] **P1.2 B1** Replace every `Q(student)|Q(collaborators)` + get pattern with the helpers
+- [x] **P1.2 B1** Replace every `Q(student)|Q(collaborators)` + get pattern with the helpers
   (they use `.distinct()` / membership checks). grep: `Q(student=student) | Q(collaborators=student)`.
-- [ ] **P1.3 Project state machine** on the model (§4), with tests for each legal/illegal transition,
+- [x] **P1.3 Project state machine** on the model (§4), with tests for each legal/illegal transition,
   deadline, team size, option required, team-wide DirectStudentAssignment sync (fixes **B14**),
   and notifications to the whole team.
-- [ ] **P1.4 B3/B4/B21-legacy** Delete `project_change_status`, `student:project_approve`,
+- [x] **P1.4 B3/B4/B21-legacy** Delete `project_change_status`, `student:project_approve`,
   `student:project_reject`, and `student:add_feedback` (teacher feedback lives in the teacher app).
   Remove their URLs and template links; the "back to in progress" UX goes through
   `Project.reopen` in a POST view if it's still needed. Rewire teacher approve/reject/revision/
   bulk/grade to the state machine.
-- [ ] **P1.5 B2** Remove `collaborators` from ProjectForm (create and edit). Collaboration only
+- [x] **P1.5 B2** Remove `collaborators` from ProjectForm (create and edit). Collaboration only
   through invitations. Also remove `module` from the edit form for assignment projects (B15)
   and validate `end_date >= start_date`.
-- [ ] **P1.6 B5** `@require_POST` on every mutating view (list in B5; re-grep for views that
+- [x] **P1.6 B5** `@require_POST` on every mutating view (list in B5; re-grep for views that
   `.save()`/`.delete()`/`.update()` without a method check). Convert template links into POST forms
   (plain restyle is fine for now; P6 redesigns them). Smoke test's no-mutation-on-GET assertions pass.
-- [ ] **P1.7 B6 Private deliverables.** Separate storage: `DELIVERABLE_ROOT = BASE_DIR/'private'`
+- [x] **P1.7 B6 Private deliverables.** Separate storage: `DELIVERABLE_ROOT = BASE_DIR/'private'`
   (env-configurable) and a custom FileSystemStorage for `ProjectDeliverable.file`; a data
   migration that moves existing files. Download view `student:deliverable_download` /
   `teacher:…` / `public:…` with permission checks; `FileResponse(as_attachment=True)`, correct
@@ -238,8 +238,8 @@ All reproduced at runtime unless marked (unverified). IDs are referenced by task
   allowlist (and zip bombs aren't our problem; size cap stays). Add a `Project.public_deliverables`
   opt-in (BooleanField, default False) that is shown in make-public. The public page lists files only if it's on.
   Also validate image uploads with Pillow (`Image.verify()`), not just the extension.
-- [ ] **P1.8 B8** All student assignment views use `@student_required`.
-- [ ] **P1.9 Login security.** django-axes (5 failures → 15 min lockout, keyed on username+IP),
+- [x] **P1.8 B8** All student assignment views use `@student_required`.
+- [x] **P1.9 Login security.** django-axes (5 failures → 15 min lockout, keyed on username+IP),
   session security settings, logout via POST only (Django 5 requires it; check templates).
 
 ### P2 — Broken pages & logic bugs (B7, B9–B18, B22–B24)
@@ -585,3 +585,12 @@ Everything else in this plan is decided by Claude.
   tests verified to fail for the right reason; CI yml; suite green on Postgres too.
   Notes: smoke test uses kwarg overrides for ambiguous route params. Media from seeding goes
   to `media/` (gitignored). Next: P1.1.
+- **2026-09-30** · P1.1–P1.9 · Permission layer (`accounts/permissions.py`); B1 fixed via
+  member helper; Project workflow state machine (submit/validate/reject/request_revision/
+  reopen) + 13 tests; legacy status/approve/reject/feedback endpoints deleted; ProjectForm
+  lost its collaborators field; all mutating views POST-only (smoke test now has zero
+  "mutates" exceptions); private deliverable storage + permission-checked downloads +
+  public opt-in (`Project.public_deliverables`); student assignment views role-guarded;
+  django-axes lockout (disabled under `manage.py test`, re-enabled per test); public logout
+  was a GET link (405 on Django 5) → form. **Found B25** (stored XSS via inline JS handlers),
+  patched; full removal in P6. Next: P2.1.

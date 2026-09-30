@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 import sys
 import tempfile
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -92,6 +93,8 @@ INSTALLED_APPS = [
     "teacher",
     "administrator",
     "search",
+    # Third party
+    "axes",
 ]
 
 MIDDLEWARE = [
@@ -102,6 +105,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Must stay last: turns failed-login lockouts into responses.
+    "axes.middleware.AxesMiddleware",
 ]
 
 ROOT_URLCONF = "ensa_project_manager.urls"
@@ -199,6 +204,23 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Login throttling (django-axes): 5 failures for the same username+IP -> 15 min lockout.
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+AXES_FAILURE_LIMIT = int(os.environ.get("AXES_FAILURE_LIMIT", "5"))
+AXES_COOLOFF_TIME = timedelta(minutes=int(os.environ.get("AXES_COOLOFF_MINUTES", "15")))
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_TEMPLATE = "registration/lockout.html"
+# Behind a reverse proxy (Caddy in production) the client IP is in X-Forwarded-For.
+AXES_IPWARE_PROXY_COUNT = int(os.environ.get("TRUSTED_PROXY_COUNT", "0")) or None
+if AXES_IPWARE_PROXY_COUNT:
+    AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
+# Tests log in with client.login() (no request object); lockout tests re-enable it.
+AXES_ENABLED = not (len(sys.argv) > 1 and sys.argv[1] == "test")
 
 # Authentication settings
 LOGIN_URL = "login"  # The URL name for your login page
