@@ -41,9 +41,9 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P7.1 done → P7.2 next (security review)**
+- Phase: **P7.2 done → P7.3 next (enforce CSP)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (275 tests, coverage 83%)
+- Last green `make check`: 2026-09-30 (282 tests)
 - Open NEEDS-USER items: none yet (deployment ones come at P8)
 
 ---
@@ -420,7 +420,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
 - [x] **P7.1 Test gap fill:** coverage ≥ 80% on the core apps; add tests for every permission
   boundary (a matrix test: role × view → expected status), file download permissions, imports
   with malformed files, reminders/digest commands, state machine.
-- [ ] **P7.2 Security review pass:** run the `security-review` mindset over the whole diff
+- [x] **P7.2 Security review pass:** run the `security-review` mindset over the whole diff
   (IDOR on every `<int:…_id>` URL, mass assignment in forms, open redirects on `next`, upload
   handling, email header injection, XSS in `|safe`/`mark_safe` uses (grep), CSV/Excel formula
   injection in exports → prefix `= + - @` cells with `'`). Fix what's found; add tests.
@@ -772,3 +772,15 @@ Everything else in this plan is decided by Claude.
   signup, join/leave module, admin assign/unassign/unenroll, moderation), corrupt-import test.
   Remaining < 80%: teacher/views/assignments.py 66%, student/views/projects.py 67% — covered
   end-to-end by P7.5 instead.
+- **2026-09-30** · P7.2 · Review: no `|safe`/autoescape-off in HTML templates; one
+  `mark_safe` (`|highlight`, escapes first); no raw SQL (health check only); no redirects to
+  user input; ModelForm field lists narrow (no status/owner/visibility fields; ProjectForm
+  module limited to enrolled, removed on assignment projects); URLFields reject `javascript:`;
+  uploads allowlisted + PIL-verified, deliverables private. New
+  `test_outsiders_cannot_mutate_by_post` (smoke): unrelated student / teacher POST a rich
+  payload to every id-taking route → no DB change, fingerprint widened (comments, likes,
+  reports, grades, announcements, titles, modules, options); public like/comment/report on a
+  private project must 404. Fixed: spreadsheet formula injection (`exports.safe_cell` on
+  every exported cell), export filename via `content_disposition_header`, email subjects
+  collapsed to one line, `.ics` escaping of `\r`. Export header colour → accent.
+  tests/test_security.py covers these + login `next` open-redirect.

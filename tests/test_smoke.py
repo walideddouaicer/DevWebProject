@@ -18,19 +18,26 @@ from django.urls import URLPattern, URLResolver, get_resolver, reverse
 from accounts.models import PendingRegistration
 from student.models import (
     CollaborationInvitation,
+    DeliverableComment,
     Notification,
     Project,
+    ProjectComment,
     ProjectDeliverable,
+    ProjectLike,
     ProjectMilestone,
+    ProjectReport,
+    PublicProjectComment,
     StudentProfile,
     TeammateRequest,
 )
 from teacher.models import (
     DirectStudentAssignment,
     Module,
+    ModuleAnnouncement,
     ModuleAssignment,
     ModuleEnrollment,
     ProjectAssignment,
+    ProjectEvaluation,
     ProjectOption,
 )
 
@@ -76,6 +83,17 @@ def iter_url_names(patterns=None, namespace=""):
             yield f"{namespace}{pattern.name}", list(pattern.pattern.converters)
 
 
+def _counted():
+    return (
+        ProjectComment,
+        DeliverableComment,
+        PublicProjectComment,
+        ProjectLike,
+        ProjectReport,
+        ModuleAnnouncement,
+    )
+
+
 def fingerprint():
     """Cheap snapshot of mutable state that no GET request may change."""
     return (
@@ -92,6 +110,12 @@ def fingerprint():
         list(ProjectDeliverable.objects.order_by("id").values_list("id")),
         list(User.objects.order_by("id").values_list("id", "is_active")),
         list(PendingRegistration.objects.order_by("id").values_list("id", "is_approved")),
+        [m.objects.count() for m in _counted()],
+        list(ProjectEvaluation.objects.order_by("id").values_list("id", "score")),
+        list(Project.objects.order_by("id").values_list("id", "title", "is_hidden_by_admin")),
+        list(ProjectMilestone.objects.order_by("id").values_list("id", "title")),
+        list(Module.objects.order_by("id").values_list("id", "name", "is_active")),
+        list(ProjectOption.objects.order_by("id").values_list("id", "title")),
     )
 
 
@@ -228,6 +252,63 @@ class SmokeTest(TestCase):
                 status, _ = responses.get((role, name), (None, ""))
                 if status == 200 and name not in OUTSIDER_ALLOWED:
                     problems.append(f"{role:14} {name}: 200 on someone else's resource")
+        self.assertFalse(problems, "\n" + "\n".join(problems))
+
+    def test_outsiders_cannot_mutate_by_post(self):
+        """IDOR on writes: an unrelated student / teacher POSTs a plausible payload to every
+        route that takes an object id; nothing may change (public-site actions excepted)."""
+        project = Project.objects.get(pk=self.kwargs["project_id"])
+        payload = {
+            "content": "Commentaire",
+            "title": "Pirate",
+            "description": "d",
+            "name": "x",
+            "action": "hide",
+            "admin_notes": "x",
+            "response": "accept",
+            "score": "20",
+            "comments": "x",
+            "validate_project": "on",
+            "message": "x",
+            "reason": "spam",
+            "collaborator": self.kwargs["user_id"],
+            "due_date": "2030-01-01",
+            "module_code": project.module.code if project.module else "X",
+            "student_ids": [self.kwargs["student_id"]],
+            "project_ids": [project.id],
+            "status": "validated",
+            "is_active": "on",
+            "code": "PWN1",
+        }
+        # Actions on the requester's own data that happen to take a shared object's id
+        own_actions = {"student:leave_module"}  # leaves *their own* enrollment
+        public_actions = {
+            "public:toggle_project_like",
+            "public:add_project_comment",
+            "public:add_public_comment",
+            "public:report_project",
+        }
+        # Likes/comments/reports are legitimate on showcase projects only; on a private
+        # project they must 404 like everything else.
+        skipped = own_actions | (public_actions if project.is_public else set())
+        problems = []
+        self.client.raise_request_exception = False
+        for role in ("student", "teacher_other"):
+            self.client.force_login(User.objects.get(username=ROLES[role]))
+            for name, params in iter_url_names():
+                if not params or name in SKIP or name in skipped:
+                    continue
+                values = {**self.kwargs, **self.overrides.get(name, {})}
+                path = reverse(name, kwargs={p: values[p] for p in params})
+                with transaction.atomic():
+                    before = fingerprint()
+                    with transaction.atomic():
+                        response = self.client.post(path, payload)
+                    if response.status_code >= 500:
+                        problems.append(f"{role:14} {name}: {response.status_code}")
+                    elif before != fingerprint():
+                        problems.append(f"{role:14} {name}: MUTATED ({response.status_code})")
+                    transaction.set_rollback(True)
         self.assertFalse(problems, "\n" + "\n".join(problems))
 
     def test_every_url_every_role(self):

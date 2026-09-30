@@ -36,6 +36,7 @@ def send_templated_email(subject, template, context, recipients):
     recipients = [r for r in recipients if r]
     if not recipients:
         return False
+    subject = " ".join(str(subject).split())  # no header injection via titles with newlines
     text, html = render_email(template, context)
     message = EmailMultiAlternatives(subject, text, settings.DEFAULT_FROM_EMAIL, recipients)
     if html:

@@ -1,6 +1,7 @@
 # Excel / PDF export helpers (ROADMAP #7).
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.http import content_disposition_header
 
 EXCEL_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
@@ -8,9 +9,24 @@ EXCEL_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetm
 def excel_response(workbook, filename):
     """Serialize an openpyxl workbook into a download response."""
     response = HttpResponse(content_type=EXCEL_CONTENT_TYPE)
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Content-Disposition"] = content_disposition_header(True, filename)
     workbook.save(response)
     return response
+
+
+FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def safe_cell(value):
+    """Neutralise spreadsheet formula injection: text starting with = + - @ (or a tab/CR)
+    is prefixed with a quote so Excel/LibreOffice show it instead of evaluating it."""
+    if isinstance(value, str) and value.startswith(FORMULA_PREFIXES):
+        return "'" + value
+    return value
+
+
+def _append(sheet, values):
+    sheet.append([safe_cell(v) for v in values])
 
 
 def _style_header(sheet):
@@ -18,7 +34,7 @@ def _style_header(sheet):
     from openpyxl.styles import Font, PatternFill
 
     header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="4299E1", end_color="4299E1", fill_type="solid")
+    header_fill = PatternFill(start_color="1F5C57", end_color="1F5C57", fill_type="solid")
     for cell in sheet[1]:
         cell.font = header_font
         cell.fill = header_fill
@@ -42,7 +58,8 @@ def build_projects_workbook(projects):
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Projets"
-    sheet.append(
+    _append(
+        sheet,
         [
             "Titre",
             "Étudiant",
@@ -56,13 +73,14 @@ def build_projects_workbook(projects):
             "Créé le",
             "Date début",
             "Date fin",
-        ]
+        ],
     )
 
     for project in projects:
         evaluation = getattr(project, "evaluation", None)
         collaborators = ", ".join(c.get_full_name() for c in project.collaborators.all())
-        sheet.append(
+        _append(
+            sheet,
             [
                 project.title,
                 project.student.get_full_name(),
@@ -76,7 +94,7 @@ def build_projects_workbook(projects):
                 project.created_at.strftime("%d/%m/%Y"),
                 project.start_date.strftime("%d/%m/%Y") if project.start_date else "",
                 project.end_date.strftime("%d/%m/%Y") if project.end_date else "",
-            ]
+            ],
         )
 
     _style_header(sheet)
@@ -92,7 +110,8 @@ def build_users_workbook(students, teachers):
 
     sheet = workbook.active
     sheet.title = "Étudiants"
-    sheet.append(
+    _append(
+        sheet,
         [
             "Prénom",
             "Nom",
@@ -102,10 +121,11 @@ def build_users_workbook(students, teachers):
             "Année",
             "Département",
             "Inscrit le",
-        ]
+        ],
     )
     for s in students:
-        sheet.append(
+        _append(
+            sheet,
             [
                 s.user.first_name,
                 s.user.last_name,
@@ -115,13 +135,14 @@ def build_users_workbook(students, teachers):
                 s.get_year_of_study_display(),
                 s.department,
                 s.user.date_joined.strftime("%d/%m/%Y"),
-            ]
+            ],
         )
     _style_header(sheet)
     _autosize(sheet)
 
     sheet2 = workbook.create_sheet("Enseignants")
-    sheet2.append(
+    _append(
+        sheet2,
         [
             "Prénom",
             "Nom",
@@ -130,10 +151,11 @@ def build_users_workbook(students, teachers):
             "ID Enseignant",
             "Département",
             "Inscrit le",
-        ]
+        ],
     )
     for t in teachers:
-        sheet2.append(
+        _append(
+            sheet2,
             [
                 t.user.first_name,
                 t.user.last_name,
@@ -142,7 +164,7 @@ def build_users_workbook(students, teachers):
                 t.teacher_id or "",
                 t.department,
                 t.user.date_joined.strftime("%d/%m/%Y"),
-            ]
+            ],
         )
     _style_header(sheet2)
     _autosize(sheet2)
@@ -157,10 +179,11 @@ def build_module_roster_workbook(module, enrollments):
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = module.code[:31]
-    sheet.append(["Prénom", "Nom", "ID Étudiant", "Email", "Année", "Département", "Inscrit le"])
+    _append(sheet, ["Prénom", "Nom", "ID Étudiant", "Email", "Année", "Département", "Inscrit le"])
     for enrollment in enrollments:
         s = enrollment.student
-        sheet.append(
+        _append(
+            sheet,
             [
                 s.user.first_name,
                 s.user.last_name,
@@ -169,7 +192,7 @@ def build_module_roster_workbook(module, enrollments):
                 s.get_year_of_study_display(),
                 s.department,
                 enrollment.enrolled_at.strftime("%d/%m/%Y"),
-            ]
+            ],
         )
     _style_header(sheet)
     _autosize(sheet)
@@ -183,7 +206,8 @@ def build_assignment_results_workbook(assignment, projects):
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Résultats"
-    sheet.append(
+    _append(
+        sheet,
         [
             "Projet",
             "Chef d'équipe",
@@ -196,13 +220,14 @@ def build_assignment_results_workbook(assignment, projects):
             "Note /20",
             "Mention",
             "Appréciation",
-        ]
+        ],
     )
 
     for project in projects:
         evaluation = getattr(project, "evaluation", None)
         team = ", ".join(m.get_full_name() for m in project.get_team_members())
-        sheet.append(
+        _append(
+            sheet,
             [
                 project.title,
                 project.student.get_full_name(),
@@ -217,7 +242,7 @@ def build_assignment_results_workbook(assignment, projects):
                 float(evaluation.score) if evaluation else "",
                 evaluation.get_mention() if evaluation else "",
                 evaluation.comments if evaluation else "",
-            ]
+            ],
         )
 
     _style_header(sheet)
@@ -248,7 +273,7 @@ def build_statistics_pdf():
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2 * cm, bottomMargin=2 * cm)
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
-        "Title2", parent=styles["Title"], textColor=colors.HexColor("#2d3748")
+        "Title2", parent=styles["Title"], textColor=colors.HexColor("#1b1a17")
     )
 
     def stat_table(rows):
@@ -256,7 +281,7 @@ def build_statistics_pdf():
         table.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4299e1")),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f5c57")),
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                     ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                     ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e0")),
