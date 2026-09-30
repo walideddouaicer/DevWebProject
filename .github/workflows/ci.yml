@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main, revamp]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ensa
+          POSTGRES_USER: ensa
+          POSTGRES_PASSWORD: ensa
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ensa"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: ensa
+      DB_USER: ensa
+      DB_PASSWORD: ensa
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements/*.txt
+      - run: make setup
+      - run: make check

@@ -159,6 +159,12 @@ class SmokeTest(TestCase):
             "new_status": "submitted",
             "response": "accept",
         }
+        # Routes whose kwarg name is ambiguous get their own values
+        cls.overrides = {
+            "administrator:remove_assignment": {
+                "assignment_id": ModuleAssignment.objects.filter(module=web).first().id
+            },
+        }
         # A notification for the owner so mark-read endpoints have something to act on
         Notification.objects.create(
             recipient=youssef, notification_type="project_update", message="Test"
@@ -172,7 +178,8 @@ class SmokeTest(TestCase):
                 continue
             missing = [p for p in params if p not in self.kwargs]
             self.assertFalse(missing, f"smoke test has no value for {missing} in {name}")
-            routes.append((name, reverse(name, kwargs={p: self.kwargs[p] for p in params})))
+            values = {**self.kwargs, **self.overrides.get(name, {})}
+            routes.append((name, reverse(name, kwargs={p: values[p] for p in params})))
 
         failures = {}
         self.client.raise_request_exception = False
