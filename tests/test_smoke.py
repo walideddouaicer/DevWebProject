@@ -199,7 +199,9 @@ class InProgressProjectSmokeTest(SmokeTest):
             collaborator_id=project.collaborators.first().id,
             invitation_id=CollaborationInvitation.objects.get(project=project, status="pending").id,
         )
-        Notification.objects.create(recipient=amine, notification_type="project_update", message="x")
+        Notification.objects.create(
+            recipient=amine, notification_type="project_update", message="x"
+        )
         cls.kwargs["notification_id"] = Notification.objects.filter(recipient=amine).last().id
 
     def test_every_url_every_role(self):
