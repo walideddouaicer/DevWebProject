@@ -140,8 +140,10 @@ def relative_day(value, now=None):
 
 
 @register.simple_tag
-def deadline(value, done=False, soon_days=3):
-    """{% deadline assignment.deadline %}: relative wording, exact date in a tooltip, urgency color."""
+def deadline(value, done=False, soon_days=3, status=""):
+    """{% deadline assignment.deadline status=project.status %}: relative wording, exact date in
+    a tooltip, urgency color (neutral once the work is submitted or validated)."""
+    done = done or status in ("submitted", "validated")
     from django.utils import formats, timezone
 
     if not value:

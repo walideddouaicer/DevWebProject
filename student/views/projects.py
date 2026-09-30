@@ -1,12 +1,14 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.permissions import (
     get_project_for_member,
+    member_projects,
     student_required,
 )
 from teacher.models import DirectStudentAssignment
@@ -56,94 +58,69 @@ def project_reopen(request, project_id):
     return redirect("student:project_detail", project_id=project.id)
 
 
-@login_required
+@student_required
 def dashboard(request):
-    student = get_object_or_404(StudentProfile, user=request.user)
+    """What needs my attention (invitations, rework, deadlines), then all my projects."""
+    from datetime import timedelta
 
-    # Get filter parameters
-    search_query = request.GET.get("search", "")
-    project_type = request.GET.get("type", "")
-    status = request.GET.get("status", "")
-    view = request.GET.get("view", "all")  # 'all', 'mine', 'collaborated'
+    from teacher.models import ProjectAssignment
 
-    # Start with all projects for this student
-    if view == "mine":
-        all_projects = Project.objects.filter(student=student)
-    elif view == "collaborated":
-        all_projects = Project.objects.filter(collaborators=student)
-    else:  # 'all' - default
-        all_projects = Project.objects.filter(
-            Q(student=student) | Q(collaborators=student)
-        ).distinct()
+    student = request.student
+    today = timezone.localdate()
+    mine = member_projects(student)
 
-    # Apply filters if provided
-    if search_query:
-        all_projects = all_projects.filter(title__icontains=search_query)
-
-    if project_type:
-        all_projects = all_projects.filter(project_type=project_type)
-
-    if status:
-        all_projects = all_projects.filter(status=status)
-
-    # Get project statistics
-    total_projects = all_projects.count()
-    completed_projects = all_projects.filter(status="validated").count()
-    in_progress_projects = all_projects.filter(status="in_progress").count()
-    pending_validation = all_projects.filter(status="submitted").count()
-
-    # Get pending invitations count
-    pending_invitations_count = CollaborationInvitation.objects.filter(
-        recipient=student, status="pending"
-    ).count()
-
-    # Get active projects for display, applying the same filters
-    # Base queries for owned and collaborated projects
-    owned_projects_base = Project.objects.filter(student=student)
-    collaborated_projects_base = Project.objects.filter(collaborators=student).exclude(
-        student=student
+    # Assignments that target me and that I haven't handed in yet
+    done_assignment_ids = mine.filter(status__in=["submitted", "validated"]).values_list(
+        "project_assignment_id", flat=True
+    )
+    enrolled = student.module_enrollments.filter(is_active=True).values_list("module_id", flat=True)
+    upcoming = (
+        ProjectAssignment.objects.filter(
+            module_id__in=enrolled,
+            status="published",
+            deadline__gte=timezone.now(),
+            deadline__lte=timezone.now() + timedelta(days=21),
+        )
+        .filter(Q(assignment_type="choice_based") | Q(direct_assignments__student=student))
+        .exclude(id__in=done_assignment_ids)
+        .select_related("module")
+        .distinct()
+        .order_by("deadline")[:6]
     )
 
-    # Apply the same filters to both collections
+    projects = (
+        mine.select_related("module", "project_assignment", "student__user")
+        .prefetch_related("collaborators__user")
+        .order_by("-updated_at")
+    )
+    search_query = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "")
     if search_query:
-        owned_projects_base = owned_projects_base.filter(title__icontains=search_query)
-        collaborated_projects_base = collaborated_projects_base.filter(
-            title__icontains=search_query
-        )
+        projects = projects.filter(title__icontains=search_query)
+    if status in dict(Project.STATUS_CHOICES):
+        projects = projects.filter(status=status)
 
-    if project_type:
-        owned_projects_base = owned_projects_base.filter(project_type=project_type)
-        collaborated_projects_base = collaborated_projects_base.filter(project_type=project_type)
-
-    if status:
-        owned_projects_base = owned_projects_base.filter(status=status)
-        collaborated_projects_base = collaborated_projects_base.filter(status=status)
-
-    # Assign the filtered projects
-    owned_projects = owned_projects_base
-    collaborated_projects = collaborated_projects_base
-
-    # Get project type choices for the filter dropdown
-    project_type_choices = dict(Project.PROJECT_TYPES)
-    status_choices = dict(Project.STATUS_CHOICES)
-
+    counts = {
+        row["status"]: row["n"]
+        for row in mine.values("status").annotate(n=Count("id", distinct=True))
+    }
     context = {
         "student": student,
-        "total_projects": total_projects,
-        "completed_projects": completed_projects,
-        "in_progress_projects": in_progress_projects,
-        "pending_validation": pending_validation,
-        "pending_invitations_count": pending_invitations_count,
-        "owned_projects": owned_projects,
-        "collaborated_projects": collaborated_projects,
+        "today": today,
+        "invitations": CollaborationInvitation.objects.filter(recipient=student, status="pending")
+        .select_related("project", "sender__user")
+        .order_by("-created_at")[:5],
+        "to_rework": mine.filter(status__in=["revision_requested", "rejected"]).select_related(
+            "module"
+        ),
+        "upcoming": upcoming,
+        "projects": projects,
+        "counts": counts,
+        "total_projects": sum(counts.values()),
         "search_query": search_query,
-        "project_type": project_type,
         "status": status,
-        "project_type_choices": project_type_choices,
-        "status_choices": status_choices,
-        "view": view,
+        "status_choices": Project.STATUS_CHOICES,
     }
-
     return render(request, "student/dashboard.html", context)
 
 

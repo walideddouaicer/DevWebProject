@@ -24,7 +24,7 @@
 .avatar-sm { --size: 24px; } .avatar-lg { --size: 48px; } .avatar-xl { --size: 72px; }
 .avatar-stack { display: flex; }
 .avatar-stack .avatar { box-shadow: 0 0 0 2px var(--surface); }
-.avatar-stack .avatar + .avatar { margin-left: -8px; }
+.avatar-stack .avatar + .avatar { margin-left: -4px; }
 /* Muted, deterministic avatar colors (index 0-5) */
 .avatar[data-tone="0"] { --avatar-bg: var(--accent-soft); --avatar-fg: var(--accent); }
 .avatar[data-tone="1"] { --avatar-bg: var(--info-soft); --avatar-fg: var(--info); }

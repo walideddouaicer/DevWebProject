@@ -1,548 +1,100 @@
-{% extends 'student/base.html' %}
-{% load static %}
-
-{% block title %}Tableau de Bord - ENSA Project Manager{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'student/css/dashboard.css' %}">
-{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Tableau de bord{% endblock %}
 {% block content %}
-    <!-- Hero Dashboard Header -->
-    <div class="hero-section gradient-overlay">
-        <div class="hero-content">
-            <div class="welcome-grid">
-                <div class="welcome-info">
-                    <h1 class="hero-title">
-                        <i class="fas fa-user-circle hero-icon"></i>
-                        Bienvenue, 
-                        {% if student.user.first_name or student.user.last_name %}
-                            {{ student.user.first_name }} {{ student.user.last_name }}
-                        {% else %}
-                            {{ student.user.username }}
-                        {% endif %}
-                    </h1>
-                    <p class="hero-subtitle">Votre espace de gestion de projets académiques</p>
-                    
-                    <div class="student-details-grid">
-                        <div class="detail-card">
-                            <div class="detail-icon">
-                                <i class="fas fa-id-card"></i>
-                            </div>
-                            <div class="detail-content">
-                                <div class="detail-label">ID Étudiant</div>
-                                <div class="detail-value">{{ student.student_id }}</div>
-                            </div>
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-icon">
-                                <i class="fas fa-graduation-cap"></i>
-                            </div>
-                            <div class="detail-content">
-                                <div class="detail-label">Année d'Étude</div>
-                                <div class="detail-value">{{ student.year_of_study }}</div>
-                            </div>
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-icon">
-                                <i class="fas fa-building"></i>
-                            </div>
-                            <div class="detail-content">
-                                <div class="detail-label">Département</div>
-                                <div class="detail-value">{{ student.department }}</div>
-                            </div>
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-icon">
-                                <i class="fas fa-envelope"></i>
-                            </div>
-                            <div class="detail-content">
-                                <div class="detail-label">Email</div>
-                                <div class="detail-value">{{ student.user.email|default:"Non défini" }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="hero-illustration">
-                    <div class="floating-icon">
-                        <i class="fas fa-rocket"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<header class="page-header">
+  <div>
+    <div class="eyebrow">{{ today|date:"l j F" }}</div>
+    <h1>Bonjour {{ user.first_name|default:user.username }}</h1>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'student:my_modules' %}">{% icon "book-open" %} Rejoindre un module</a>
+    <a class="btn btn-primary" href="{% url 'student:project_create' %}">{% icon "plus" %} Nouveau projet</a>
+  </div>
+</header>
 
-    <!-- Statistics Overview -->
-    <div class="stats-section">
-        <div class="section-header">
-            <h2 class="section-title">
-                <i class="fas fa-chart-bar"></i>
-                Vue d'ensemble
-            </h2>
-            <p class="section-subtitle">Statistiques de vos projets et activités</p>
-        </div>
-        
-        <div class="grid grid-auto-fit">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: var(--accent-gradient);">
-                    <i class="fas fa-project-diagram"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ total_projects }}</div>
-                    <div class="stat-label">Projets Totaux</div>
-                    <div class="stat-change positive">
-                        
-                        
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: var(--info-gradient);">
-                    <i class="fas fa-spinner"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ in_progress_projects }}</div>
-                    <div class="stat-label">Projets en Cours</div>
-                    <div class="stat-change positive">
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: var(--warning-gradient);">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ pending_validation }}</div>
-                    <div class="stat-label">En Attente</div>
-                    <div class="stat-change negative">
-                        
-                        
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: var(--success-gradient);">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value">{{ completed_projects }}</div>
-                    <div class="stat-label">Projets Validés</div>
-                    <div class="stat-change positive">
-                    
-                        
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Priority Notifications -->
-    {% if pending_invitations_count > 0 %}
-    <div class="priority-notification">
-        <div class="alert alert-warning" role="alert">
-            <div class="alert-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div class="alert-content">
-                <h3 class="alert-title">Invitations de Collaboration</h3>
-                <p class="alert-message">
-                    Vous avez {{ pending_invitations_count }} invitation{{ pending_invitations_count|pluralize }} de collaboration en attente de réponse.
-                </p>
-            </div>
-            <div class="alert-actions">
-                <a href="{% url 'student:invitations_list' %}" class="btn btn-warning">
-                    <i class="fas fa-eye"></i>
-                    Voir les Invitations
-                </a>
-            </div>
-        </div>
+{% if invitations or to_rework or upcoming %}
+<section class="stack" aria-labelledby="attention-title">
+  <h2 id="attention-title" class="section-title">À faire</h2>
+  <div class="grid attention">
+    {% if invitations %}
+    <div class="card">
+      <div class="card-header"><h3>Invitations <span class="subtle">{{ invitations|length }}</span></h3><a class="text-sm" href="{% url 'student:invitations_list' %}">Tout voir</a></div>
+      <ul class="results">
+        {% for inv in invitations %}
+        <li class="file-row">
+          {% avatar inv.sender size="sm" %}
+          <div><div class="file-name">{{ inv.project.title }}</div><div class="file-meta">de {{ inv.sender.get_full_name }}</div></div>
+          <div class="cluster cluster-sm">
+            <form method="post" action="{% url 'student:respond_to_invitation' inv.id 'accept' %}">{% csrf_token %}<button class="btn btn-sm btn-primary" type="submit">Accepter</button></form>
+            <form method="post" action="{% url 'student:respond_to_invitation' inv.id 'reject' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost" type="submit">Refuser</button></form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
     </div>
     {% endif %}
 
-    <!-- Quick Actions -->
-    <div class="quick-actions-section">
-        <div class="card card-accent-left">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-bolt"></i>
-                    Actions Rapides
-                </h3>
-                <p class="card-subtitle">Accès rapide aux fonctionnalités principales</p>
-            </div>
-            <div class="card-body">
-                <div class="grid grid-auto-fit">
-                    <a href="{% url 'student:project_create' %}" class="action-card">
-                        <div class="action-icon" style="background: var(--success-gradient);">
-                            <i class="fas fa-plus"></i>
-                        </div>
-                        <div class="action-content">
-                            <h4 class="action-title">Nouveau Projet</h4>
-                            <p class="action-description">Créer un nouveau projet</p>
-                        </div>
-                        <div class="action-arrow">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
-
-                    <a href="{% url 'student:my_modules' %}" class="action-card">
-                        <div class="action-icon" style="background: var(--info-gradient);">
-                            <i class="fas fa-book"></i>
-                        </div>
-                        <div class="action-content">
-                            <h4 class="action-title">Mes Modules</h4>
-                            <p class="action-description">Gérer vos inscriptions</p>
-                        </div>
-                        <div class="action-arrow">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
-
-                    {% if pending_invitations_count > 0 %}
-                    <a href="{% url 'student:invitations_list' %}" class="action-card priority">
-                        <div class="action-icon" style="background: var(--warning-gradient);">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="action-content">
-                            <h4 class="action-title">Invitations ({{ pending_invitations_count }})</h4>
-                            <p class="action-description">Invitations en attente</p>
-                        </div>
-                        <div class="action-badge">
-                            <span class="badge badge-warning">{{ pending_invitations_count }}</span>
-                        </div>
-                    </a>
-                    {% endif %}
-
-                    {% if unread_notifications_count > 0 %}
-                    <a href="{% url 'student:notifications' %}" class="action-card priority">
-                        <div class="action-icon" style="background: var(--error-gradient);">
-                            <i class="fas fa-bell"></i>
-                        </div>
-                        <div class="action-content">
-                            <h4 class="action-title">Notifications ({{ unread_notifications_count }})</h4>
-                            <p class="action-description">Messages non lus</p>
-                        </div>
-                        <div class="action-badge">
-                            <span class="badge badge-error">{{ unread_notifications_count }}</span>
-                        </div>
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+    {% if to_rework %}
+    <div class="card">
+      <div class="card-header"><h3>À retravailler</h3></div>
+      <ul class="results">
+        {% for p in to_rework %}
+        <li><a href="{% url 'student:project_detail' p.id %}"><span>{{ p.title }}</span>{% status_chip p.status %}<span class="result-sub">{% if p.status == "revision_requested" %}L'enseignant attend des modifications{% else %}Consultez les commentaires avant de rouvrir le projet{% endif %}</span></a></li>
+        {% endfor %}
+      </ul>
     </div>
+    {% endif %}
 
-    <!-- Search and Filters -->
-    <div class="filter-section">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-search"></i>
-                    Recherche et Filtres
-                </h3>
-                <p class="card-subtitle">Trouvez rapidement vos projets</p>
-            </div>
-            <div class="card-body">
-                <form method="get" class="filter-form">
-                    <div class="grid grid-cols-4">
-                        <div class="form-group">
-                            <label class="form-label" for="search">
-                                <i class="fas fa-search"></i>
-                                Recherche
-                            </label>
-                            <input type="text" id="search" name="search" value="{{ search_query }}" 
-                                   class="form-input" placeholder="Titre du projet...">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="status">
-                                <i class="fas fa-chart-bar"></i>
-                                Statut
-                            </label>
-                            <select id="status" name="status" class="form-select">
-                                <option value="">Tous les statuts</option>
-                                <option value="draft" {% if status == 'draft' %}selected{% endif %}>Brouillon</option>
-                                <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>En Cours</option>
-                                <option value="submitted" {% if status == 'submitted' %}selected{% endif %}>Soumis</option>
-                                <option value="validated" {% if status == 'validated' %}selected{% endif %}>Validé</option>
-                                <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejeté</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="type">
-                                <i class="fas fa-folder"></i>
-                                Type de Projet
-                            </label>
-                            <select id="type" name="type" class="form-select">
-                                <option value="">Tous les types</option>
-                                {% for key, value in project_type_choices.items %}
-                                    <option value="{{ key }}" {% if project_type == key %}selected{% endif %}>{{ value }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">&nbsp;</label>
-                            <button type="submit" class="btn btn-primary btn-full">
-                                <i class="fas fa-filter"></i>
-                                Appliquer
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
+    {% if upcoming %}
+    <div class="card">
+      <div class="card-header"><h3>Échéances à venir</h3><a class="text-sm" href="{% url 'student:calendar' %}">Calendrier</a></div>
+      <ul class="results">
+        {% for a in upcoming %}
+        <li><a href="{% url 'student:assignment_detail' a.id %}"><span>{{ a.title }}</span>{% deadline a.deadline %}<span class="result-sub">{{ a.module.code }} · {% if a.assignment_type == "choice_based" %}sujet au choix{% else %}devoir direct{% endif %}{% if a.is_team_work %} · en équipe{% endif %}</span></a></li>
+        {% endfor %}
+      </ul>
     </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
 
-    <!-- Projects Workspace -->
-    <div class="projects-workspace" id="project-list">
-        <div class="card">
-            <div class="card-header">
-                <div class="workspace-header">
-                    <h2 class="card-title">
-                        <i class="fas fa-project-diagram"></i>
-                        Vos Projets
-                    </h2>
-                    <a href="{% url 'student:project_create' %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                        Nouveau Projet
-                    </a>
-                </div>
-            </div>
-            
-            <div class="card-body">
-                <div class="tab-system">
-                    <div class="tab-navigation">
-                        <button class="tab-button active" data-tab="owned" role="tab" aria-selected="true">
-                            <i class="fas fa-user"></i>
-                            Mes Projets ({{ owned_projects.count }})
-                        </button>
-                        <button class="tab-button" data-tab="collaborated" role="tab" aria-selected="false">
-                            <i class="fas fa-users"></i>
-                            Collaborations ({{ collaborated_projects.count }})
-                        </button>
-                    </div>
-                    
-                    <div class="tab-content active" id="owned-tab" role="tabpanel">
-                        {% if owned_projects %}
-                            <div class="projects-table-container">
-                                <table class="projects-table">
-                                    <thead>
-                                        <tr>
-                                            <th><i class="fas fa-file-alt"></i> Titre</th>
-                                            <th><i class="fas fa-folder"></i> Type</th>
-                                            <th><i class="fas fa-chart-bar"></i> Statut</th>
-                                            <th><i class="fas fa-chart-line"></i> Progression</th>
-                                            <th><i class="fas fa-calendar"></i> Date de Création</th>
-                                            <th><i class="fas fa-cog"></i> Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for project in owned_projects %}
-                                        <tr class="project-row">
-                                            <td>
-                                                <div class="project-title-cell">
-                                                    <i class="fas fa-project-diagram project-icon"></i>
-                                                    <strong>{{ project.title }}</strong>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="project-type">{{ project.get_project_type_display }}</span>
-                                            </td>
-                                            <td>
-                                                <span class="status-indicator status-{{ project.status|lower }}">
-                                                    {{ project.get_status_display }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="progress">
-                                                    <div class="progress-bar progress-{{ project.status|lower }}"></div>
-                                                </div>
-                                                <span class="progress-text">
-                                                    {% if project.status == 'draft' %}25%
-                                                    {% elif project.status == 'in_progress' %}50%
-                                                    {% elif project.status == 'submitted' %}75%
-                                                    {% elif project.status == 'validated' %}100%
-                                                    {% elif project.status == 'rejected' %}25%
-                                                    {% endif %}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="project-date">{{ project.created_at|date:"d/m/Y" }}</span>
-                                            </td>
-                                            <td>
-                                                <div class="action-buttons">
-                                                    <a href="{% url 'student:project_detail' project.id %}" 
-                                                       class="btn btn-sm btn-secondary" data-tooltip="Voir les détails">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-                                                    {% if project.status == 'draft' or project.status == 'in_progress' %}
-                                                        <a href="{% url 'student:project_edit' project.id %}" 
-                                                           class="btn btn-sm btn-primary" data-tooltip="Modifier le projet">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                    {% endif %}
-                                                    {% if project.status == 'draft' %}
-                                                        <a href="{% url 'student:project_delete' project.id %}" 
-                                                           class="btn btn-sm btn-danger" data-tooltip="Supprimer le projet">
-                                                            <i class="fas fa-trash"></i>
-                                                        </a>
-                                                    {% endif %}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% else %}
-                            <div class="empty-state">
-                                <div class="empty-state-icon">
-                                    <i class="fas fa-project-diagram"></i>
-                                </div>
-                                <h3>Aucun projet créé</h3>
-                                <p>Vous n'avez pas encore créé de projets. Commencez dès maintenant!</p>
-                                <a href="{% url 'student:project_create' %}" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-plus"></i>
-                                    Créer mon Premier Projet
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="tab-content" id="collaborated-tab" role="tabpanel">
-                        {% if collaborated_projects %}
-                            <div class="projects-table-container">
-                                <table class="projects-table">
-                                    <thead>
-                                        <tr>
-                                            <th><i class="fas fa-file-alt"></i> Titre</th>
-                                            <th><i class="fas fa-user"></i> Propriétaire</th>
-                                            <th><i class="fas fa-folder"></i> Type</th>
-                                            <th><i class="fas fa-chart-bar"></i> Statut</th>
-                                            <th><i class="fas fa-chart-line"></i> Progression</th>
-                                            <th><i class="fas fa-calendar"></i> Date de Création</th>
-                                            <th><i class="fas fa-cog"></i> Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for project in collaborated_projects %}
-                                        <tr class="project-row">
-                                            <td>
-                                                <div class="project-title-cell">
-                                                    <i class="fas fa-handshake project-icon"></i>
-                                                    <strong>{{ project.title }}</strong>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="owner-cell">
-                                                    <div class="avatar avatar-sm">
-                                                        {{ project.student.user.first_name|first|default:project.student.user.username|first|upper }}
-                                                    </div>
-                                                    {{ project.student.user.get_full_name|default:project.student.user.username }}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="project-type">{{ project.get_project_type_display }}</span>
-                                            </td>
-                                            <td>
-                                                <span class="status-indicator status-{{ project.status|lower }}">
-                                                    {{ project.get_status_display }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="progress">
-                                                    <div class="progress-bar progress-{{ project.status|lower }}"></div>
-                                                </div>
-                                                <span class="progress-text">
-                                                    {% if project.status == 'draft' %}25%
-                                                    {% elif project.status == 'in_progress' %}50%
-                                                    {% elif project.status == 'submitted' %}75%
-                                                    {% elif project.status == 'validated' %}100%
-                                                    {% elif project.status == 'rejected' %}25%
-                                                    {% endif %}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="project-date">{{ project.created_at|date:"d/m/Y" }}</span>
-                                            </td>
-                                            <td>
-                                                <a href="{% url 'student:project_detail' project.id %}" 
-                                                   class="btn btn-sm btn-primary" data-tooltip="Voir le projet">
-                                                    <i class="fas fa-eye"></i>
-                                                    Voir
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% else %}
-                            <div class="empty-state">
-                                <div class="empty-state-icon">
-                                    <i class="fas fa-handshake"></i>
-                                </div>
-                                <h3>Aucune collaboration</h3>
-                                <p>Vous ne collaborez sur aucun projet actuellement.</p>
-                                <p class="text-theme-muted">Vous recevrez des invitations de collaboration qui apparaîtront dans la section "Invitations".</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Tab functionality is handled by main.js
-    
-    // Animate statistics on page load
-    animateStats();
-    
-    // Add hover effects to project rows
-    enhanceProjectRows();
-});
-
-function animateStats() {
-    const statValues = document.querySelectorAll('.stat-value');
-    
-    statValues.forEach(stat => {
-        const value = parseInt(stat.textContent);
-        let current = 0;
-        const increment = value / 30;
-        
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= value) {
-                current = value;
-                clearInterval(timer);
-            }
-            stat.textContent = Math.floor(current);
-        }, 50);
-    });
-}
-
-function enhanceProjectRows() {
-    const projectRows = document.querySelectorAll('.project-row');
-    
-    projectRows.forEach(row => {
-        row.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateX(4px)';
-            this.style.boxShadow = 'var(--shadow-lg)';
-        });
-        
-        row.addEventListener('mouseleave', function() {
-            this.style.transform = '';
-            this.style.boxShadow = '';
-        });
-    });
-}
-</script>
+<section class="stack" aria-labelledby="projects-title">
+  <div class="spread">
+    <h2 id="projects-title" class="section-title">Mes projets <span class="count">{{ total_projects }}</span></h2>
+    <p class="muted text-sm">
+      {% with n=counts.in_progress|default:0 %}{{ n }} en cours{% endwith %} ·
+      {% with n=counts.submitted|default:0 %}{{ n }} soumis{% endwith %} ·
+      {% with n=counts.validated|default:0 %}{{ n }} validé{{ n|pluralize }}{% endwith %}
+    </p>
+  </div>
+  <form method="get" class="filter-bar" role="search">
+    <div class="field grow"><label for="q">Rechercher</label><input id="q" type="search" name="q" value="{{ search_query }}" placeholder="Titre du projet"></div>
+    <div class="field"><label for="status">Statut</label><select id="status" name="status"><option value="">Tous</option>{% for key, label in status_choices %}<option value="{{ key }}"{% if key == status %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <button class="btn" type="submit">Filtrer</button>
+  </form>
+  {% if projects %}
+  <div class="table-wrap">
+    <table class="table table-stack">
+      <thead><tr><th>Projet</th><th>Équipe</th><th>Statut</th><th>Échéance</th><th>Mis à jour</th></tr></thead>
+      <tbody>
+        {% for p in projects %}
+        <tr>
+          <td><a class="row-title" href="{% url 'student:project_detail' p.id %}">{{ p.title }}</a><div class="subtle text-sm">{% if p.module %}{{ p.module.code }} · {% endif %}{{ p.get_project_type_display }}</div></td>
+          <td data-label="Équipe"><div class="avatar-stack">{% avatar p.student size="sm" %}{% for c in p.collaborators.all %}{% avatar c size="sm" %}{% endfor %}</div></td>
+          <td data-label="Statut">{% status_chip p.status %}</td>
+          <td data-label="Échéance">{% if p.project_assignment %}{% deadline p.project_assignment.deadline status=p.status %}{% elif p.end_date %}{% deadline p.end_date status=p.status %}{% else %}<span class="subtle">—</span>{% endif %}</td>
+          <td data-label="Mis à jour" class="subtle">{{ p.updated_at|date:"d/m/Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif search_query or status %}
+  <div class="card empty">{% icon "search" %}<h3>Aucun projet ne correspond</h3><a class="btn btn-sm" href="{% url 'student:dashboard' %}">Réinitialiser</a></div>
+  {% else %}
+  <div class="card empty">{% icon "folder-plus" %}<h3>Aucun projet pour l'instant</h3><p>Créez un projet personnel ou démarrez-en un depuis un devoir de vos modules.</p><div class="cluster"><a class="btn btn-primary btn-sm" href="{% url 'student:project_create' %}">Nouveau projet</a><a class="btn btn-sm" href="{% url 'student:assignments_dashboard' %}">Voir mes devoirs</a></div></div>
+  {% endif %}
+</section>
 {% endblock %}
