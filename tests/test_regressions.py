@@ -121,13 +121,12 @@ class RegressionTests(Fixtures):
             self.assertLess(response.status_code, 400, name)
 
     # B2 ------------------------------------------------------------------
-    @expectedFailure
     def test_B2_project_form_cannot_attach_collaborators(self):
         s = self.students
         individual = self.assignment(is_team_work=False)
         project = self.project(s[0], assignment=individual)
         self.login(s[0])
-        self.client.post(
+        response = self.client.post(
             reverse("student:project_edit", args=[project.id]),
             {
                 "title": "Projet",
@@ -138,7 +137,24 @@ class RegressionTests(Fixtures):
                 "collaborators": [s[1].id, s[2].id],
             },
         )
+        self.assertEqual(response.status_code, 302)  # the edit itself succeeded
         self.assertEqual(project.collaborators.count(), 0)
+
+    def test_project_end_date_cannot_precede_start_date(self):
+        from student.forms import ProjectForm
+
+        form = ProjectForm(
+            data={
+                "title": "P",
+                "description": "d",
+                "project_type": "module",
+                "start_date": "2026-05-10",
+                "end_date": "2026-05-01",
+            },
+            current_student=self.students[0],
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("end_date", form.errors)
 
     # B3 ------------------------------------------------------------------
     def test_B3_status_url_cannot_bypass_submission_rules(self):
@@ -347,7 +363,6 @@ class RegressionTests(Fixtures):
         self.assertEqual(statuses, {"submitted"})
 
     # B15 -----------------------------------------------------------------
-    @expectedFailure
     def test_B15_student_cannot_detach_assignment_project_from_module(self):
         assignment = self.assignment()
         project = self.project(self.students[0], assignment=assignment)

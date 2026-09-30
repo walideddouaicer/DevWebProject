@@ -12,13 +12,6 @@ from .validators import validate_deliverable_file, validate_image_file
 
 
 class ProjectForm(forms.ModelForm):
-    collaborators = forms.ModelMultipleChoiceField(
-        queryset=StudentProfile.objects.all(),
-        required=False,
-        widget=forms.SelectMultiple(attrs={"class": "select-multiple"}),
-        help_text="Commencez à taper le nom d'un étudiant pour le trouver (maximum 10)",
-    )
-
     # Module selection field
     module = forms.ModelChoiceField(
         queryset=None,  # Will be set in __init__
@@ -38,7 +31,6 @@ class ProjectForm(forms.ModelForm):
             "start_date",
             "end_date",
             "module",
-            "collaborators",
         ]
         widgets = {
             "title": forms.TextInput(
@@ -63,56 +55,31 @@ class ProjectForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Get the current student to exclude from collaborator choices
         current_student = kwargs.pop("current_student", None)
         super().__init__(*args, **kwargs)
+        from teacher.models import Module
 
-        # Add CSS classes to fields that don't have widgets defined in Meta
         self.fields["module"].widget.attrs.update({"class": "form-select"})
-        self.fields["collaborators"].widget.attrs.update({"class": "form-select"})
-
         if current_student:
-            # Exclude the current student from collaborator choices
-            self.fields["collaborators"].queryset = StudentProfile.objects.exclude(
-                id=current_student.id
-            )
-
-            # Set module queryset safely
-            try:
-                from teacher.models import Module, ModuleEnrollment
-
-                # Get enrolled modules for this student
-                enrolled_modules = ModuleEnrollment.objects.filter(
-                    student=current_student, is_active=True
-                ).values_list("module", flat=True)
-
-                # Set the queryset - handle empty case
-                if enrolled_modules:
-                    self.fields["module"].queryset = Module.objects.filter(
-                        id__in=enrolled_modules, is_active=True
-                    ).order_by("code")
-                else:
-                    # If no enrolled modules, set empty queryset
-                    self.fields["module"].queryset = Module.objects.none()
-
-            except Exception:
-                # Fallback to empty queryset if there's any import or query issue
-                from teacher.models import Module
-
-                self.fields["module"].queryset = Module.objects.none()
+            self.fields["module"].queryset = Module.objects.filter(
+                enrollments__student=current_student,
+                enrollments__is_active=True,
+                is_active=True,
+            ).order_by("code")
         else:
-            # If no current student, set empty queryset
-            from teacher.models import Module
-
             self.fields["module"].queryset = Module.objects.none()
 
-    def clean_collaborators(self):
-        collaborators = self.cleaned_data.get("collaborators")
-        if collaborators and len(collaborators) > 10:
-            raise forms.ValidationError(
-                "Vous ne pouvez sélectionner que 10 collaborateurs maximum."
-            )
-        return collaborators
+        # An assignment project belongs to the assignment's module; students can't move it
+        # (it would drop out of the teacher's review scope).
+        if self.instance.pk and self.instance.project_assignment_id:
+            del self.fields["module"]
+
+    def clean(self):
+        cleaned = super().clean()
+        start, end = cleaned.get("start_date"), cleaned.get("end_date")
+        if start and end and end < start:
+            self.add_error("end_date", "La date de fin doit être postérieure à la date de début.")
+        return cleaned
 
 
 class DeliverableForm(forms.ModelForm):
