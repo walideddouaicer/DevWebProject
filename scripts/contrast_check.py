@@ -9,7 +9,7 @@ import re
 import sys
 from pathlib import Path
 
-TOKENS = Path(__file__).resolve().parent.parent / "static/css/src/01-tokens.css"
+TOKENS = Path(__file__).resolve().parent.parent / "assets/css/01-tokens.css"
 
 # (foreground, background, minimum ratio, what it is)
 PAIRS = [

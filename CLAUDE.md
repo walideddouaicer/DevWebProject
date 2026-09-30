@@ -47,7 +47,7 @@ django.db.backends.postgresql DB_NAME=ensa DB_USER=ensa DB_PASSWORD=ensa DB_HOST
 | `e2e/` | Browser journeys (tag `e2e`): `BrowserTestCase` in `e2e/base.py`; failure screenshots in `e2e/artifacts/` |
 | `docs/` | `DEPLOY.md` (server setup), `OPERATIONS.md` (jobs, logs, secrets) |
 
-UI rules: CSS sources in `static/css/src/**` built into `static/css/app.css` by
+UI rules: CSS sources in `assets/css/**` built into `static/css/app.css` by
 `scripts/build_css.py` (commit both). No inline `style`/`on*`/`<script>` anywhere (the CSP
 is enforced; widget attrs are tested too), no CDN. Emails: `templates/emails/<name>.txt` +
 `.html`, sent with `ensa_project_manager.emails.send_templated_email`, gated by `wants_email`.

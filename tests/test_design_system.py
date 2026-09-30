@@ -22,7 +22,7 @@ class DesignSystemTests(SimpleTestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
 
     def test_dark_token_blocks_are_identical(self):
-        css = (ROOT / "static/css/src/01-tokens.css").read_text()
+        css = (ROOT / "assets/css/01-tokens.css").read_text()
         explicit = re.search(r':root\[data-theme="dark"\] \{(.*?)\}', css, re.S).group(1)
         automatic = re.search(r':not\(\[data-theme="dark"\]\) \{(.*?)\}', css, re.S).group(1)
         normalize = lambda block: re.sub(r"\s+", " ", block).strip()  # noqa: E731

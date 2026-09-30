@@ -41,10 +41,10 @@ Status markers: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked o
 
 ## 1. CURRENT STATE
 
-- Phase: **P7.6 done → P7.7 next (release candidate)**
+- Phase: **P7 done → P8 blocked on the user (§7 questions asked 2026-09-30)**
 - Branch: `revamp` (created from `main` @ `5c3597d`)
-- Last green `make check`: 2026-09-30 (285 tests; `make e2e` 3 journeys green)
-- Open NEEDS-USER items: none yet (deployment ones come at P8)
+- Last green `make check`: 2026-09-30 (286 tests; `make e2e` green; prod stack verified)
+- Open NEEDS-USER items: §7 items 1–5, asked 2026-09-30; tag `v2.0.0-rc1` is local only
 
 ---
 
@@ -441,7 +441,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
   deploy, `createadmin`, email setup, backups/restore drill, upgrades, rollback),
   `docs/OPERATIONS.md` (cron jobs, logs, common tasks, how to rotate secrets), `CHANGELOG.md`.
   CLAUDE.md final update. Mark ROADMAP.md as superseded.
-- [ ] **P7.7 Release candidate:** tag `v2.0.0-rc1` locally; write a short summary for the user of
+- [x] **P7.7 Release candidate:** tag `v2.0.0-rc1` locally; write a short summary for the user of
   what changed and exactly what they need to do (§7) — in plain language, ≤ 15 lines.
 
 ### P8 — Deployment (blocked on the user; do only after P7)
@@ -818,3 +818,12 @@ Everything else in this plan is decided by Claude.
   redirects to login, report requires login → admin hides → 404; direct individual
   assignment → J-3 reminder (notification + email) → start project → no duplicate reminder.
   Not done: running the journeys against the prod compose stack (needs the P8 server).
+- **2026-09-30** · P7.7 · Prod compose stack rebuilt and exercised over HTTPS (localhost:8443):
+  /healthz ok, createadmin, check_email, scheduler, backup, security headers, browser pass
+  (signup → approve → student login, admin pages, search, Django admin; 0 console errors).
+  **Two deploy blockers found and fixed:** (1) the Docker build failed — collectstatic
+  collected the CSS *sources* (static/css/src) whose relative font URLs don't resolve under
+  WhiteNoise's manifest storage → sources moved to `assets/css/` (outside STATICFILES_DIRS) +
+  test `ProductionCollectstaticTests` runs collectstatic with the manifest storage;
+  (2) scheduler raced `web`'s migrations on start and marked failed jobs as done for the
+  day → entrypoint waits for `migrate --check`. Tagged `v2.0.0-rc1` (local, not pushed).

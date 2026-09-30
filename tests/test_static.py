@@ -24,3 +24,29 @@ class StaticReferencesTests(SimpleTestCase):
                 if not finders.find(path):
                     missing.append(f"{template.relative_to(ROOT)}: {path}")
         self.assertEqual(missing, [])
+
+
+class ProductionCollectstaticTests(SimpleTestCase):
+    """The Docker build runs collectstatic with WhiteNoise's manifest storage, which fails on
+    any CSS url() that doesn't resolve. That broke the image once (CSS sources were collected
+    with relative font paths); run the same thing here."""
+
+    def test_collectstatic_with_manifest_storage(self):
+        import io
+        import tempfile
+
+        from django.core.management import call_command
+        from django.test import override_settings
+
+        with tempfile.TemporaryDirectory() as root:
+            storages = {
+                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+                "staticfiles": {
+                    "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+                },
+            }
+            with override_settings(STATIC_ROOT=root, STORAGES=storages):
+                call_command("collectstatic", interactive=False, verbosity=0, stdout=io.StringIO())
+            collected = {p.name for p in Path(root).rglob("*.css")}
+        self.assertIn("app.css", collected)
+        self.assertNotIn("01-tokens.css", collected)  # sources stay out of the image
