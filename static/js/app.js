@@ -180,5 +180,42 @@
     window.showToast("Une erreur est survenue. Réessayez.", "error");
   });
 
+  /* ---- Repeating rows: [data-add-row="#tbody"][data-template="#tpl"], [data-remove-row] -- */
+  document.addEventListener("click", function (event) {
+    var add = event.target.closest("[data-add-row]");
+    if (add) {
+      var target = document.querySelector(add.dataset.addRow);
+      var template = document.querySelector(add.dataset.template);
+      if (target && template) {
+        target.append(template.content.cloneNode(true));
+        var inputs = target.lastElementChild.querySelectorAll("input");
+        if (inputs.length) inputs[0].focus();
+      }
+      return;
+    }
+    var remove = event.target.closest("[data-remove-row]");
+    if (remove) {
+      remove.closest("tr").remove();
+      updateRubricMean();
+    }
+    if (event.target.closest("[data-print]")) window.print();
+  });
+
+  /* ---- Rubric average (grading page) ------------------------------------------- */
+  function updateRubricMean() {
+    var output = document.querySelector("[data-rubric-mean]");
+    if (!output) return;
+    var values = Array.prototype.map.call(document.querySelectorAll(".rubric-score"), function (input) {
+      return parseFloat(input.value.replace(",", "."));
+    }).filter(function (value) { return !isNaN(value) && value >= 0 && value <= 20; });
+    output.textContent = values.length
+      ? (values.reduce(function (a, b) { return a + b; }, 0) / values.length).toFixed(2).replace(".", ",")
+      : "—";
+  }
+  document.addEventListener("input", function (event) {
+    if (event.target.classList.contains("rubric-score")) updateRubricMean();
+  });
+  updateRubricMean();
+
   initToasts();
 })();

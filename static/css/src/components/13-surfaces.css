@@ -84,3 +84,8 @@
   .table-assignments th:nth-child(3) { width: 15%; }
   .table-assignments th:nth-child(5) { width: 150px; }
 }
+.rubric th:nth-child(2), .rubric td:nth-child(2) { width: 120px; }
+.rubric td { padding-block: var(--s-2); }
+details > summary.btn { list-style: none; }
+details > summary.btn::-webkit-details-marker { display: none; }
+details[open] > summary.btn { background: var(--sunken); }

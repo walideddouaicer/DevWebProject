@@ -1,466 +1,97 @@
-{% extends 'teacher/base.html' %}
-{% load static %}
-
-{% block title %}{{ project.title }} - Évaluation{% endblock %}
-
-{% block breadcrumb_items %}
-<span style="margin: 0 8px; color: var(--text-muted);">></span>
-<a href="{% url 'teacher:student_projects' %}" style="color: var(--accent-primary); text-decoration: none;">Projets & Évaluations</a>
-<span style="margin: 0 8px; color: var(--text-muted);">></span>
-<span style="color: var(--text-primary);">{{ project.title|truncatewords:3 }}</span>
-{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'teacher/css/project_review.css' %}">
-
-{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load ui %}
+{% block title %}Relecture — {{ project.title }}{% endblock %}
 {% block content %}
-    <!-- Project Hero -->
-    <div class="project-hero">
-        <div class="hero-content">
-            <div class="hero-text">
-                <h1 class="hero-title">{{ project.title }}</h1>
-                <div class="hero-status">
-                    <span class="status-large">
-                        {% if project.status == 'submitted' %}⏳
-                        {% elif project.status == 'validated' %}✅
-                        {% elif project.status == 'rejected' %}❌
-                        {% elif project.status == 'revision_requested' %}🔄
-                        {% else %}📝{% endif %}
-                        {{ project.get_status_display }}
-                    </span>
-                    {% if project.module %}
-                    <span class="module-badge">
-                        <i class="fas fa-book"></i>
-                        {{ project.module.code }}
-                    </span>
-                    {% endif %}
-                </div>
-                
-                <div class="project-meta-grid">
-                    <div class="meta-card">
-                        <div class="meta-label">
-                            <i class="fas fa-user"></i>
-                            Étudiant
-                        </div>
-                        <div class="meta-value">{{ project.student.user.get_full_name|default:project.student.user.username }}</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-label">
-                            <i class="fas fa-tag"></i>
-                            Type de Projet
-                        </div>
-                        <div class="meta-value">{{ project.get_project_type_display }}</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-label">
-                            <i class="fas fa-calendar-plus"></i>
-                            Créé le
-                        </div>
-                        <div class="meta-value">{{ project.created_at|date:"d/m/Y" }}</div>
-                    </div>
-                    <div class="meta-card">
-                        <div class="meta-label">
-                            <i class="fas fa-clock"></i>
-                            Dernière MAJ
-                        </div>
-                        <div class="meta-value">{{ project.updated_at|date:"d/m/Y H:i" }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="hero-icon">📋</div>
-        </div>
+<header class="page-header">
+  <div>
+    <nav class="breadcrumb" aria-label="Fil d'Ariane"><a href="{% url 'teacher:student_projects' %}">Projets</a>{% if project.module %}<span class="sep">/</span><a href="{% url 'teacher:module_detail' project.module.id %}">{{ project.module.code }}</a>{% endif %}{% if project.project_assignment %}<span class="sep">/</span><a href="{% url 'teacher:assignment_progress' project.project_assignment.id %}">{{ project.project_assignment.title }}</a>{% endif %}</nav>
+    <h1>{{ project.title }} {% status_chip project.status %}</h1>
+    <div class="meta">
+      <span class="cluster cluster-sm"><span class="avatar-stack">{% avatar project.student size="sm" %}{% for c in project.collaborators.all %}{% avatar c size="sm" %}{% endfor %}</span>{{ project.student.get_full_name }}{% for c in project.collaborators.all %}, {{ c.get_full_name }}{% endfor %}</span>
+      {% if project.selected_option %}<span>Sujet : {{ project.selected_option.title }}</span>{% endif %}
+      {% if project.project_assignment %}{% deadline project.project_assignment.deadline status=project.status %}{% endif %}
     </div>
+  </div>
+  <div class="actions">
+    {% if project.status in "submitted,validated" %}<a class="btn{% if not evaluation %} btn-primary{% endif %}" href="{% url 'teacher:grade_project' project.id %}">{% icon "star" %} {% if evaluation %}Modifier la note{% else %}Noter{% endif %}</a>{% endif %}
+  </div>
+</header>
 
-    <!-- Evaluation Panel -->
-    {% if project.status == 'submitted' %}
-    <div class="evaluation-panel urgent">
-        <div class="eval-header">
-            <div class="eval-icon danger">!</div>
-            <div class="eval-content">
-                <h3 style="color: var(--error);">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Évaluation Urgente Requise
-                </h3>
-                <p style="color: var(--error);">Ce projet a été soumis par l'étudiant et attend votre évaluation immédiate.</p>
+<div class="with-aside">
+  <div class="stack stack-lg">
+    <section class="card card-body stack"><h2 class="section-title">Description</h2><div class="prose-pre">{{ project.description }}</div>
+      {% if project.technologies %}<dl class="dl"><dt>Technologies</dt><dd>{{ project.technologies }}</dd></dl>{% endif %}</section>
+
+    <section class="card" aria-labelledby="files-title">
+      <div class="card-header"><h2 id="files-title">Livrables <span class="subtle">{{ deliverables|length }}</span></h2></div>
+      {% if deliverables %}
+      <ul class="file-list">
+        {% for d in deliverables %}
+        <li class="file-row">
+          <span class="file-icon">{% if d.file_type == "presentation" %}{% icon "presentation" %}{% elif d.file_type == "source_code" %}{% icon "code-2" %}{% else %}{% icon "file-text" %}{% endif %}</span>
+          <div><div class="file-name">{{ d.name }} <span class="version">v{{ d.version }}</span></div><div class="file-meta"><span>{{ d.get_file_type_display }}</span><span>{{ d.upload_date|date:"d/m/Y H:i" }}</span></div></div>
+          <div class="cluster cluster-sm">
+            {% if d.preview_url %}<a class="btn btn-sm btn-ghost" href="{{ d.preview_url }}" target="_blank" rel="noopener">{% icon "eye" %}<span class="visually-hidden">Aperçu de {{ d.name }}</span></a>{% endif %}
+            <a class="btn btn-sm" href="{{ d.download_url }}">{% icon "download" %}<span class="visually-hidden">Télécharger {{ d.name }}</span></a>
+          </div>
+          <details class="file-history"{% if d.feedback_comments.all %} open{% endif %}>
+            <summary>{% with n=d.feedback_comments.all|length %}{% if n %}{{ n }} commentaire{{ n|pluralize }}{% else %}Commenter ce livrable{% endif %}{% endwith %}{% if d.history %} · {{ d.history|length }} version{{ d.history|length|pluralize }} précédente{{ d.history|length|pluralize }}{% endif %}</summary>
+            {% if d.history %}<ul>{% for old in d.history %}<li><span class="version">v{{ old.version }}</span> {{ old.upload_date|date:"d/m/Y H:i" }} — <a href="{{ old.download_url }}">Télécharger</a></li>{% endfor %}</ul>{% endif %}
+            <div class="comments">
+              {% for c in d.feedback_comments.all %}<div class="comment">{% avatar c.author size="sm" %}<div><div class="comment-head"><span class="comment-author">{{ c.author.get_full_name|default:c.author.username }}</span><span class="comment-meta">{{ c.created_at|date:"d/m/Y H:i" }}</span></div><div class="comment-body">{{ c.content }}</div></div></div>{% endfor %}
+              <form method="post" action="{% url 'teacher:add_deliverable_comment' d.id %}" class="cluster">{% csrf_token %}<label class="visually-hidden" for="fb-{{ d.id }}">Commentaire sur {{ d.name }}</label><input class="input grow" id="fb-{{ d.id }}" name="content" maxlength="5000" placeholder="Votre retour sur ce fichier…" required><button class="btn btn-sm" type="submit">Envoyer</button></form>
             </div>
-        </div>
-        <div class="evaluation-actions">
-            <a href="{% url 'teacher:grade_project' project.id %}" class="eval-btn validate" style="text-decoration: none;">
-                <i class="fas fa-star"></i>
-                Noter &amp; Valider
-            </a>
-            <form method="post" action="{% url 'teacher:approve_project' project.id %}" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="eval-btn validate" onclick="return confirm('Êtes-vous sûr de vouloir valider ce projet sans le noter?')">
-                    <i class="fas fa-check"></i>
-                    Valider sans note
-                </button>
-            </form>
-            <form method="post" action="{% url 'teacher:reject_project' project.id %}" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="eval-btn reject" onclick="return confirm('Êtes-vous sûr de vouloir rejeter ce projet?')">
-                    <i class="fas fa-times"></i>
-                    Rejeter le Projet
-                </button>
-            </form>
-        </div>
-        <details class="revision-request" style="margin-top: var(--space-4);">
-            <summary style="cursor: pointer; color: var(--accent-primary); font-weight: 600;">
-                <i class="fas fa-undo"></i>
-                Demander des révisions (sans rejeter)
-            </summary>
-            <form method="post" action="{% url 'teacher:request_revision' project.id %}" style="margin-top: var(--space-3);">
-                {% csrf_token %}
-                <textarea name="content" rows="3" required style="width: 100%;"
-                          placeholder="Décrivez les modifications attendues avant validation (ex: compléter le rapport, corriger la section 3, ajouter les sources)..."></textarea>
-                <button type="submit" class="eval-btn" style="margin-top: var(--space-2);">
-                    <i class="fas fa-undo"></i>
-                    Demander une Révision
-                </button>
-            </form>
-        </details>
-    </div>
+          </details>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<div class="empty">{% icon "paperclip" %}<h3>Aucun livrable déposé</h3></div>{% endif %}
+    </section>
+
+    {% if milestones %}
+    <section class="card" aria-labelledby="ms-title"><div class="card-header"><h2 id="ms-title">Jalons</h2></div>
+      <ul class="file-list">{% for m in milestones %}<li class="file-row"><span class="file-icon">{% if m.completed %}{% icon "check-circle-2" css="text-ok" %}{% else %}{% icon "flag" %}{% endif %}</span><div><div class="file-name">{{ m.title }}</div>{% if m.description %}<div class="file-meta">{{ m.description }}</div>{% endif %}</div><div>{% if m.completed %}<span class="subtle text-sm">Terminé le {{ m.completed_at|date:"d/m" }}</span>{% else %}{% deadline m.due_date %}{% endif %}</div></li>{% endfor %}</ul>
+    </section>
     {% endif %}
 
-    {% if project.status == 'revision_requested' %}
-    <div class="evaluation-panel">
-        <div class="eval-header">
-            <div class="eval-icon">🔄</div>
-            <div class="eval-content">
-                <h3>Révision en cours</h3>
-                <p>Vous avez demandé des révisions sur ce projet. L'étudiant peut le modifier et le resoumettre.</p>
-            </div>
+    <section class="card" aria-labelledby="disc-title">
+      <div class="card-header"><h2 id="disc-title">Discussion</h2></div>
+      <div class="card-body stack">
+        <form method="post" action="{% url 'teacher:add_teacher_comment' project.id %}" class="stack stack-sm">{% csrf_token %}<label class="visually-hidden" for="tc">Commentaire</label><textarea class="textarea" id="tc" name="content" rows="3" maxlength="5000" placeholder="Un retour général pour l'équipe…" required></textarea><div><button class="btn btn-primary btn-sm" type="submit">Publier</button></div></form>
+        <div class="comments">
+          {% for c in comments %}<div class="comment{% if c.is_teacher_comment %} is-teacher{% endif %}">{% avatar c.author size="sm" %}<div><div class="comment-head"><span class="comment-author">{{ c.author.get_full_name|default:c.author.username }}</span>{% if c.is_teacher_comment %}<span class="chip chip-accent no-dot">Enseignant</span>{% endif %}<span class="comment-meta">{{ c.created_at|date:"d/m/Y H:i" }}</span></div><div class="comment-body">{{ c.content }}</div></div></div>
+          {% empty %}<p class="muted">Aucun message.</p>{% endfor %}
         </div>
-    </div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="stack">
+    {% if project.status == "submitted" %}
+    <section class="card card-body stack" aria-labelledby="decide-title">
+      <h2 id="decide-title" class="section-title">Décision</h2>
+      <form method="post" action="{% url 'teacher:approve_project' project.id %}" data-confirm="L'équipe sera notifiée de la validation. Vous pourrez noter le projet ensuite." data-confirm-title="Valider le projet ?" data-confirm-action="Valider">{% csrf_token %}<button class="btn btn-primary w-full" type="submit">{% icon "check" %} Valider</button></form>
+      <details class="stack stack-sm"><summary class="btn w-full">{% icon "rotate-ccw" %} Demander une révision</summary>
+        <form method="post" action="{% url 'teacher:request_revision' project.id %}" class="stack stack-sm">{% csrf_token %}<label for="rev" class="text-sm"><strong>Modifications attendues</strong></label><textarea class="textarea" id="rev" name="content" rows="4" maxlength="5000" required placeholder="Ex. compléter la section tests, corriger le diagramme de classes…"></textarea><button class="btn btn-sm" type="submit">Envoyer la demande</button></form>
+      </details>
+      <details class="stack stack-sm"><summary class="btn btn-danger w-full">{% icon "x" %} Rejeter</summary>
+        <form method="post" action="{% url 'teacher:reject_project' project.id %}" class="stack stack-sm" data-confirm="Le projet sera marqué comme rejeté ; l'équipe pourra le rouvrir pour le retravailler." data-confirm-title="Rejeter le projet ?" data-confirm-action="Rejeter" data-confirm-danger>{% csrf_token %}<label for="rej" class="text-sm"><strong>Motif</strong> (facultatif)</label><textarea class="textarea" id="rej" name="reason" rows="3" maxlength="5000"></textarea><button class="btn btn-danger btn-sm" type="submit">Rejeter le projet</button></form>
+      </details>
+    </section>
     {% endif %}
 
-    <!-- Grade Panel -->
     {% if evaluation %}
-    <div class="evaluation-panel">
-        <div class="eval-header">
-            <div class="eval-icon">🎓</div>
-            <div class="eval-content">
-                <h3>Note: {{ evaluation.score }}/20 — {{ evaluation.get_mention }}</h3>
-                <p>Notée par {{ evaluation.teacher.user.get_full_name|default:evaluation.teacher.user.username }} le {{ evaluation.updated_at|date:"d/m/Y H:i" }}</p>
-                {% if evaluation.comments %}
-                <p style="margin-top: 8px; white-space: pre-line;">{{ evaluation.comments }}</p>
-                {% endif %}
-                {% if evaluation.criteria.all %}
-                <ul style="margin-top: 10px; padding-left: 18px;">
-                    {% for criterion in evaluation.criteria.all %}
-                    <li><strong>{{ criterion.name }}:</strong> {{ criterion.score }}/20{% if criterion.comment %} — {{ criterion.comment }}{% endif %}</li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-            </div>
-        </div>
-        <div class="evaluation-actions" style="margin-top: 12px;">
-            <a href="{% url 'teacher:grade_project' project.id %}" class="eval-btn" style="text-decoration: none;">
-                <i class="fas fa-pen"></i>
-                Modifier la note
-            </a>
-        </div>
-    </div>
-    {% elif project.status == 'validated' %}
-    <div class="evaluation-panel">
-        <div class="eval-header">
-            <div class="eval-icon">🎓</div>
-            <div class="eval-content">
-                <h3>Projet validé — pas encore noté</h3>
-                <p>Vous pouvez attribuer une note et une grille d'évaluation à ce projet.</p>
-            </div>
-        </div>
-        <div class="evaluation-actions" style="margin-top: 12px;">
-            <a href="{% url 'teacher:grade_project' project.id %}" class="eval-btn validate" style="text-decoration: none;">
-                <i class="fas fa-star"></i>
-                Noter le projet
-            </a>
-        </div>
-    </div>
+    <section class="card card-body stack" aria-labelledby="eval-title">
+      <div class="spread"><h2 id="eval-title" class="section-title">Note</h2><a class="text-sm" href="{% url 'teacher:grade_project' project.id %}">Modifier</a></div>
+      <div class="spread"><span class="serif display num">{{ evaluation.score|floatformat:"-2" }}<span class="muted text-sm"> / 20</span></span><span class="chip {% if evaluation.score >= 14 %}chip-ok{% elif evaluation.score >= 10 %}chip-warn{% else %}chip-danger{% endif %} no-dot">{{ evaluation.get_mention }}</span></div>
+      {% with criteria=evaluation.criteria.all %}{% if criteria %}<dl class="dl">{% for c in criteria %}<dt>{{ c.name }}</dt><dd class="num">{{ c.score|floatformat:"-2" }}</dd>{% endfor %}</dl>{% endif %}{% endwith %}
+    </section>
     {% endif %}
 
-    <!-- Feedback Panel -->
-    <div class="feedback-panel">
-        <div class="feedback-header">
-            <h3 class="feedback-title">
-                <i class="fas fa-comment-dots"></i>
-                Ajouter un Feedback Enseignant
-            </h3>
-            <div class="feedback-icon">
-                <i class="fas fa-comment-dots"></i>
-            </div>
-        </div>
-        <form method="post" action="{% url 'teacher:add_teacher_comment' project.id %}" class="feedback-form">
-            {% csrf_token %}
-            <textarea name="content" rows="4" placeholder="Rédigez votre commentaire détaillé, suggestions d'amélioration, points forts du projet, ou feedback constructif pour guider l'étudiant..." required></textarea>
-            <button type="submit" class="feedback-submit">
-                <i class="fas fa-paper-plane"></i>
-                Envoyer le Feedback
-            </button>
-        </form>
-    </div>
-
-    <!-- Content Sections -->
-    <div class="content-sections">
-        
-        <!-- Project Description -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-file-alt"></i>
-                    Description du Projet
-                </h2>
-            </div>
-            <div class="description-card">
-                {{ project.description|linebreaks }}
-                
-                {% if project.module_or_company %}
-                <div class="company-info">
-                    <i class="fas fa-building" style="color: var(--accent-primary);"></i>
-                    <strong>Module/Entreprise:</strong> {{ project.module_or_company }}
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Two Column Layout -->
-        <div class="two-column">
-            
-            <!-- Collaborators -->
-            {% if project.collaborators.exists %}
-            <div class="section-card">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-users"></i>
-                        Collaborateurs
-                    </h2>
-                    <span class="section-count">{{ project.collaborators.count }}</span>
-                </div>
-                <div class="collaborators-grid">
-                    {% for collaborator in project.collaborators.all %}
-                    <div class="collaborator-card">
-                        <div class="collaborator-avatar">
-                            {{ collaborator.user.first_name|first|default:collaborator.user.username|first|upper }}
-                        </div>
-                        <div class="collaborator-info">
-                            <div class="collaborator-name">
-                                {{ collaborator.user.get_full_name|default:collaborator.user.username }}
-                            </div>
-                            <div class="collaborator-details">
-                                <strong>ID:</strong> {{ collaborator.student_id }}<br>
-                                <strong>Département:</strong> {{ collaborator.department }}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Deliverables -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-paperclip"></i>
-                        Livrables
-                    </h2>
-                    <span class="section-count">{{ deliverables|length }}</span>
-                </div>
-                {% if deliverables %}
-                    <div class="deliverables-grid">
-                        {% for deliverable in deliverables %}
-                        <div class="deliverable-card">
-                            <div class="deliverable-header">
-                                <div class="deliverable-info">
-                                    <h4 class="deliverable-title">
-                                        {{ deliverable.name }}
-                                        {% if deliverable.version > 1 %}
-                                        <span style="background: rgba(66,153,225,0.15); color: var(--accent-primary); font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; vertical-align: middle;">v{{ deliverable.version }}</span>
-                                        {% endif %}
-                                    </h4>
-                                    <div class="deliverable-meta">
-                                        <strong>Type:</strong> {{ deliverable.get_file_type_display }}<br>
-                                        <strong>Uploadé le:</strong> {{ deliverable.upload_date|date:"d/m/Y H:i" }}
-                                    </div>
-                                </div>
-                                <div class="deliverable-icon">📄</div>
-                            </div>
-                            <a href="{{ deliverable.download_url }}" class="download-btn" target="_blank">
-                                <i class="fas fa-download"></i>
-                                Télécharger
-                            </a>
-
-                            {% if deliverable.history %}
-                            <details style="margin-top: var(--space-3);">
-                                <summary style="cursor: pointer; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
-                                    <i class="fas fa-history"></i>
-                                    {{ deliverable.history|length }} ancienne{{ deliverable.history|length|pluralize }} version{{ deliverable.history|length|pluralize }}
-                                </summary>
-                                {% for old in deliverable.history %}
-                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--border-color); font-size: 0.85rem;">
-                                    <span style="color: var(--text-muted);">v{{ old.version }} — {{ old.upload_date|date:"d/m/Y H:i" }}</span>
-                                    <a href="{{ old.download_url }}" target="_blank" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">
-                                        <i class="fas fa-download"></i> Télécharger
-                                    </a>
-                                </div>
-                                {% endfor %}
-                            </details>
-                            {% endif %}
-
-                            <!-- Per-deliverable feedback thread -->
-                            <div class="deliverable-feedback" style="margin-top: var(--space-3); border-top: 1px solid var(--border-color); padding-top: var(--space-3);">
-                                {% for fb in deliverable.feedback_comments.all %}
-                                <div class="comment-item {% if fb.is_teacher_comment %}teacher-comment{% else %}student-comment{% endif %}" style="margin-bottom: var(--space-2);">
-                                    <div class="comment-header">
-                                        <div class="comment-author">
-                                            {% if fb.is_teacher_comment %}
-                                                <i class="fas fa-chalkboard-teacher"></i>
-                                            {% else %}
-                                                <i class="fas fa-user-graduate"></i>
-                                            {% endif %}
-                                            {{ fb.author.get_full_name|default:fb.author.username }}
-                                        </div>
-                                        <div class="comment-date">{{ fb.created_at|date:"d/m/Y H:i" }}</div>
-                                    </div>
-                                    <div class="comment-content">{{ fb.content|linebreaks }}</div>
-                                </div>
-                                {% endfor %}
-                                <form method="post" action="{% url 'teacher:add_deliverable_comment' deliverable.id %}">
-                                    {% csrf_token %}
-                                    <textarea name="content" rows="2" required style="width: 100%;"
-                                              placeholder="Feedback sur ce livrable..."></textarea>
-                                    <button type="submit" class="download-btn" style="margin-top: var(--space-2);">
-                                        <i class="fas fa-comment"></i>
-                                        Commenter ce livrable
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="empty-state">
-                        <div class="empty-icon">📎</div>
-                        <div class="empty-title">Aucun livrable</div>
-                        <div class="empty-description">L'étudiant n'a pas encore téléchargé de fichiers pour ce projet.</div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Milestones -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-tasks"></i>
-                    Jalons du Projet
-                </h2>
-                <span class="section-count">{{ milestones.count }}</span>
-            </div>
-            {% if milestones %}
-                <div class="milestone-timeline">
-                    {% for milestone in milestones %}
-                    <div class="milestone-item">
-                        <div class="milestone-marker {% if milestone.completed %}milestone-completed{% elif milestone.is_overdue %}milestone-overdue{% else %}milestone-pending{% endif %}">
-                            {% if milestone.completed %}✓{% else %}•{% endif %}
-                        </div>
-                        <div class="milestone-content">
-                            <h4 class="milestone-title">{{ milestone.title }}</h4>
-                            <div class="milestone-meta">
-                                <span>
-                                    <i class="fas fa-calendar"></i>
-                                    <strong>Échéance:</strong> {{ milestone.due_date|date:"d/m/Y" }}
-                                </span>
-                                {% if milestone.completed %}
-                                    <span style="color: var(--success);">
-                                        <i class="fas fa-check-circle"></i>
-                                        Complété le {{ milestone.completed_at|date:"d/m/Y" }}
-                                    </span>
-                                {% elif milestone.is_overdue %}
-                                    <span style="color: var(--error);">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        En retard
-                                    </span>
-                                {% endif %}
-                            </div>
-                            {% if milestone.description %}
-                            <div class="milestone-description">{{ milestone.description }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">🎯</div>
-                    <div class="empty-title">Aucun jalon défini</div>
-                    <div class="empty-description">L'étudiant n'a pas encore défini de jalons pour ce projet.</div>
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Comments and Discussion -->
-        <div class="section-card">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-comments"></i>
-                    Discussion et Historique
-                </h2>
-                <span class="section-count">{{ comments.count }}</span>
-            </div>
-            {% if comments %}
-                <div class="comments-section">
-                    {% for comment in comments %}
-                    <div class="comment-item {% if comment.is_teacher_comment %}teacher-comment{% else %}student-comment{% endif %}">
-                        <div class="comment-header">
-                            <div class="comment-author">
-                                {% if comment.is_teacher_comment %}
-                                    <i class="fas fa-chalkboard-teacher"></i>
-                                    {{ comment.author.get_full_name|default:comment.author.username }}
-                                    <span class="author-badge">Enseignant</span>
-                                {% else %}
-                                    <i class="fas fa-user-graduate"></i>
-                                    {{ comment.author.get_full_name|default:comment.author.username }}
-                                    <span class="author-badge" style="background: var(--text-muted);">Étudiant</span>
-                                {% endif %}
-                            </div>
-                            <div class="comment-date">{{ comment.created_at|date:"d/m/Y H:i" }}</div>
-                        </div>
-                        <div class="comment-content">
-                            {{ comment.content|linebreaks }}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">💬</div>
-                    <div class="empty-title">Aucun commentaire</div>
-                    <div class="empty-description">Soyez le premier à laisser un feedback détaillé sur ce projet!</div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Navigation Footer -->
-    <div class="navigation-footer">
-        <div class="nav-buttons">
-            <a href="{% url 'teacher:student_projects' %}" class="nav-btn secondary">
-                <i class="fas fa-arrow-left"></i>
-                Retour à la Liste
-            </a>
-            {% if project.module %}
-            <a href="{% url 'teacher:module_projects' project.module.id %}" class="nav-btn secondary">
-                <i class="fas fa-book"></i>
-                Autres Projets du Module
-            </a>
-            {% endif %}
-            <a href="{% url 'teacher:student_projects' %}?status=submitted" class="nav-btn warning">
-                <i class="fas fa-clock"></i>
-                Projets en Attente
-            </a>
-        </div>
-    </div>
+    <section class="card card-body stack" aria-labelledby="act-title">
+      <h2 id="act-title" class="section-title">Activité</h2>
+      {% if activities %}<ul class="timeline">{% for a in activities|slice:":15" %}<li><div>{{ a.description }}<div class="when">{{ a.user.get_full_name|default:a.user.username }} · {{ a.created_at|date:"d/m H:i" }}</div></div></li>{% endfor %}</ul>{% else %}<p class="muted text-sm">Aucune activité.</p>{% endif %}
+    </section>
+  </aside>
+</div>
 {% endblock %}

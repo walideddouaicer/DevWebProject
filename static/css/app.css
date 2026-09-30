@@ -248,6 +248,20 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .grow { flex: 1 1 auto; min-width: 0; }
 
+/* --- 90-print.css --- */
+/* Print: evaluation sheets and project pages without the app chrome */
+@media print {
+  :root { color-scheme: light; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .sidebar, .topbar, .sidebar-backdrop, .toasts, .skip-link, .page-header .actions,
+  .form-actions, [data-print], [data-add-row], [data-remove-row], .site-header, .site-footer { display: none !important; }
+  .app { display: block; background: none; }
+  .content { padding: 0; }
+  .card { border-color: #999; break-inside: avoid; }
+  a { color: #000; text-decoration: none; }
+  input, textarea { border: 0 !important; padding: 0 !important; background: none !important; }
+}
+
 /* --- components/10-button.css --- */
 /* Buttons: primary / secondary / ghost / danger; sizes sm / md; icon-only; loading */
 .btn {
@@ -477,6 +491,11 @@ input[type="file"]::file-selector-button:hover { background: var(--sunken); }
   .table-assignments th:nth-child(3) { width: 15%; }
   .table-assignments th:nth-child(5) { width: 150px; }
 }
+.rubric th:nth-child(2), .rubric td:nth-child(2) { width: 120px; }
+.rubric td { padding-block: var(--s-2); }
+details > summary.btn { list-style: none; }
+details > summary.btn::-webkit-details-marker { display: none; }
+details[open] > summary.btn { background: var(--sunken); }
 
 /* --- components/14-feedback.css --- */
 /* Alerts, toasts, dialogs, menus, progress, loading */

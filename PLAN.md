@@ -396,7 +396,7 @@ screenshots at both widths and themes reviewed, axe: zero serious/critical)
 - [x] **P6.7 Teacher core:** dashboard (review queue first: submitted projects awaiting action,
   upcoming deadlines, module list), modules list/detail (roster, announcements composer, exports),
   module projects, student projects list (filterable table).
-- [ ] **P6.8 Teacher review & grading:** project review page (deliverables with versions and
+- [x] **P6.8 Teacher review & grading:** project review page (deliverables with versions and
   per-file feedback threads, milestones, activity, actions: valider / demander une révision /
   rejeter with reason), grading page (rubric rows editable with HTMX add/remove, live total, mention
   preview), printable evaluation sheet.
@@ -700,3 +700,8 @@ Everything else in this plan is decided by Claude.
   module_management → redirect to module detail (template deleted). Fixed: dashboard student
   count was multiplied by projects (missing distinct) + test; year labels French. Global rule:
   `.content > * + *` spacing.
+- **2026-09-30** · P6.8 · Teacher project review (decision panel: validate / revision with
+  required message / reject with optional reason, per-file feedback threads, milestones,
+  discussion, activity) and grading (editable rubric rows via `data-add-row`/`data-remove-row`
+  + `<template>`, live criteria mean, print button + `90-print.css`). Verified with Playwright:
+  add-row and mean work, no JS errors.

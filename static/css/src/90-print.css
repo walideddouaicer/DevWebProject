@@ -1,0 +1,12 @@
+/* Print: evaluation sheets and project pages without the app chrome */
+@media print {
+  :root { color-scheme: light; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .sidebar, .topbar, .sidebar-backdrop, .toasts, .skip-link, .page-header .actions,
+  .form-actions, [data-print], [data-add-row], [data-remove-row], .site-header, .site-footer { display: none !important; }
+  .app { display: block; background: none; }
+  .content { padding: 0; }
+  .card { border-color: #999; break-inside: avoid; }
+  a { color: #000; text-decoration: none; }
+  input, textarea { border: 0 !important; padding: 0 !important; background: none !important; }
+}
