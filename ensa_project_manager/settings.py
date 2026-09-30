@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     "teacher",
     "administrator",
     "search",
+    "ui",
     # Third party
     "axes",
     "csp",
