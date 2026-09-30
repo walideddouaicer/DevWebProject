@@ -7,9 +7,9 @@
 # their unread notifications from the last 24 hours, instead of an email
 # per event (the immediate-email paths skip digest users).
 
-from django.core.management.base import BaseCommand
-from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import send_mail
+from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from student.models import Notification, UserPreferences
@@ -20,30 +20,33 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--hours', type=int, default=24,
-            help="Fenêtre des notifications à résumer (défaut: 24h)."
+            "--hours",
+            type=int,
+            default=24,
+            help="Fenêtre des notifications à résumer (défaut: 24h).",
         )
         parser.add_argument(
-            '--dry-run', action='store_true',
-            help="Affiche les digests qui seraient envoyés sans rien envoyer."
+            "--dry-run",
+            action="store_true",
+            help="Affiche les digests qui seraient envoyés sans rien envoyer.",
         )
 
     def handle(self, *args, **options):
-        dry_run = options['dry_run']
-        since = timezone.now() - timezone.timedelta(hours=options['hours'])
+        dry_run = options["dry_run"]
+        since = timezone.now() - timezone.timedelta(hours=options["hours"])
         sent = 0
 
         digest_prefs = UserPreferences.objects.filter(
             email_digest=True,
             email_notifications=True,
-        ).select_related('user')
+        ).select_related("user")
 
         for prefs in digest_prefs:
             user = prefs.user
             if not user.email:
                 continue
 
-            student = getattr(user, 'studentprofile', None)
+            student = getattr(user, "studentprofile", None)
             if student is None:
                 continue
 
@@ -51,7 +54,7 @@ class Command(BaseCommand):
                 recipient=student,
                 is_read=False,
                 created_at__gte=since,
-            ).order_by('created_at')
+            ).order_by("created_at")
 
             if not notifications.exists():
                 continue
@@ -72,7 +75,9 @@ class Command(BaseCommand):
             )
 
             if dry_run:
-                self.stdout.write(f"[dry-run] {user.username}: {notifications.count()} notification(s)")
+                self.stdout.write(
+                    f"[dry-run] {user.username}: {notifications.count()} notification(s)"
+                )
                 sent += 1
                 continue
 

@@ -6,20 +6,52 @@ from django import forms
 # Deliverables: documents, archives, images, common source code
 ALLOWED_DELIVERABLE_EXTENSIONS = {
     # documents
-    '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.csv', '.txt', '.md',
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".ppt",
+    ".pptx",
+    ".xls",
+    ".xlsx",
+    ".csv",
+    ".txt",
+    ".md",
     # archives
-    '.zip', '.rar', '.7z', '.tar', '.gz',
+    ".zip",
+    ".rar",
+    ".7z",
+    ".tar",
+    ".gz",
     # images
-    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp',
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".svg",
+    ".webp",
     # code / notebooks
-    '.py', '.java', '.c', '.cpp', '.h', '.hpp', '.js', '.ts', '.html', '.css',
-    '.sql', '.ipynb', '.json', '.xml', '.yml', '.yaml',
+    ".py",
+    ".java",
+    ".c",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".js",
+    ".ts",
+    ".html",
+    ".css",
+    ".sql",
+    ".ipynb",
+    ".json",
+    ".xml",
+    ".yml",
+    ".yaml",
 }
 
-ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
+ALLOWED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 
 MAX_DELIVERABLE_SIZE = 10 * 1024 * 1024  # 10 MB
-MAX_IMAGE_SIZE = 5 * 1024 * 1024         # 5 MB
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
 
 
 def _extension(file):
@@ -55,8 +87,8 @@ def validate_image_file(image):
 
     # Only freshly uploaded files carry a content_type; an unchanged existing
     # FieldFile doesn't (and was already validated at upload time).
-    content_type = getattr(image, 'content_type', None)
-    if content_type and not content_type.startswith('image/'):
+    content_type = getattr(image, "content_type", None)
+    if content_type and not content_type.startswith("image/"):
         raise forms.ValidationError("Le fichier doit être une image.")
 
     return image

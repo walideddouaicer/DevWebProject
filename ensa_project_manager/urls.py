@@ -15,31 +15,32 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.contrib import admin
-from django.urls import path, include
-from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic import RedirectView
+from django.contrib import admin
+from django.contrib.auth import views as auth_views
+from django.urls import include, path
+
 from .views import smart_redirect  # Add this import
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('public.urls', namespace='public')),
-    
+    path("admin/", admin.site.urls),
+    path("", include("public.urls", namespace="public")),
     # Authentication URLs
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),  # Use default LogoutView
-    
-     # Smart redirect after login
-    path('dashboard/', smart_redirect, name='smart_redirect'),
-
+    path(
+        "login/",
+        auth_views.LoginView.as_view(template_name="registration/login.html"),
+        name="login",
+    ),
+    path("logout/", auth_views.LogoutView.as_view(), name="logout"),  # Use default LogoutView
+    # Smart redirect after login
+    path("dashboard/", smart_redirect, name="smart_redirect"),
     # App URLs
-    path('student/', include('student.urls', namespace='student')),
-    path('teacher/', include('teacher.urls', namespace='teacher')),
-    path('administrator/', include('administrator.urls', namespace='administrator')),
-    path('search/', include('search.urls', namespace='search')),
-    path('accounts/', include('accounts.urls', namespace='accounts')),
+    path("student/", include("student.urls", namespace="student")),
+    path("teacher/", include("teacher.urls", namespace="teacher")),
+    path("administrator/", include("administrator.urls", namespace="administrator")),
+    path("search/", include("search.urls", namespace="search")),
+    path("accounts/", include("accounts.urls", namespace="accounts")),
 ]
 
 if settings.DEBUG:

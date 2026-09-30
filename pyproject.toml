@@ -1,0 +1,26 @@
+[project]
+name = "ensa-project-manager"
+version = "2.0.0.dev0"
+requires-python = ">=3.13"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["*/migrations/*", ".venv", "staticfiles", "scripts/vendor"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "DJ"]
+ignore = [
+    "E501",   # long lines: formatter handles code; long French strings are fine
+    "DJ001",  # null=True on CharField: existing schema, revisit in P2.10
+    "DJ008",  # __str__ on every model: not required
+    "B904",   # raise ... from err inside except: noisy for view code
+    "DJ012",  # model body ordering: cosmetic, not worth the churn
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["accounts", "administrator", "ensa_project_manager", "public", "search", "student", "teacher"]
+
+[tool.coverage.run]
+source = ["accounts", "administrator", "public", "search", "student", "teacher", "ensa_project_manager"]
+omit = ["*/migrations/*", "*/tests*.py", "*/test_*.py"]

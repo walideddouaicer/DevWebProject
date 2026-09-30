@@ -10,8 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,6 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Settings are read from environment variables so that secrets never live in
 # source control. A local ".env" file (gitignored) is loaded automatically for
 # convenience during development. In production, set real environment variables.
+
 
 def _load_dotenv(path):
     """Minimal .env loader (no third-party dependency)."""
@@ -89,7 +90,6 @@ INSTALLED_APPS = [
     "teacher",
     "administrator",
     "search",
-
 ]
 
 MIDDLEWARE = [
@@ -107,7 +107,7 @@ ROOT_URLCONF = "ensa_project_manager.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, 'templates')],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -115,9 +115,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                'student.context_processors.student_context',
-                'teacher.context_processors.teacher_context',
-                'administrator.context_processors.admin_context',
+                "student.context_processors.student_context",
+                "teacher.context_processors.teacher_context",
+                "administrator.context_processors.admin_context",
             ],
         },
     },
@@ -199,33 +199,29 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Authentication settings
-LOGIN_URL = 'login'  # The URL name for your login page
-LOGIN_REDIRECT_URL = 'smart_redirect'  # Where to go after login
+LOGIN_URL = "login"  # The URL name for your login page
+LOGIN_REDIRECT_URL = "smart_redirect"  # Where to go after login
 
 # Where to redirect after logout
-LOGOUT_REDIRECT_URL = 'public:homepage'  # Where to go after logout
+LOGOUT_REDIRECT_URL = "public:homepage"  # Where to go after logout
 
 
 # Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
 # Email settings
 # Defaults to the console backend for development (emails print to the terminal).
 # In production set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend and
 # the EMAIL_* variables below.
-EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
-)
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", default=True)
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.environ.get(
-    "DEFAULT_FROM_EMAIL", "noreply@ensaprojectmanager.com"
-)
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@ensaprojectmanager.com")
 
 
 # ---------------------------------------------------------------------------

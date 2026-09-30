@@ -1,10 +1,11 @@
 # accounts/utils.py
-from django.core.mail import send_mail
-from django.conf import settings
-from django.template.loader import render_to_string
 import logging
 
+from django.conf import settings
+from django.core.mail import send_mail
+
 logger = logging.getLogger(__name__)
+
 
 def send_registration_confirmation_email(registration):
     """Send confirmation email when registration is submitted"""
@@ -25,7 +26,7 @@ def send_registration_confirmation_email(registration):
         Cordialement,
         L'équipe ENSA Project Manager
         """
-        
+
         send_mail(
             subject,
             message,
@@ -33,11 +34,12 @@ def send_registration_confirmation_email(registration):
             [registration.email],
             fail_silently=False,
         )
-        
+
         return True
     except Exception as e:
         logger.error(f"Failed to send confirmation email to {registration.email}: {e}")
         return False
+
 
 def send_approval_email(registration):
     """Send email when registration is approved"""
@@ -59,7 +61,7 @@ def send_approval_email(registration):
         Cordialement,
         L'équipe ENSA Project Manager
         """
-        
+
         send_mail(
             subject,
             message,
@@ -67,7 +69,7 @@ def send_approval_email(registration):
             [registration.email],
             fail_silently=False,
         )
-        
+
         return True
     except Exception as e:
         logger.error(f"Failed to send approval email to {registration.email}: {e}")
