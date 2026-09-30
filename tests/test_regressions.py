@@ -388,7 +388,8 @@ class RegressionTests(Fixtures):
             department="GI",
         )
         self.login(self.admin)
-        self.client.post(reverse("administrator:approve_registration", args=[registration.id]))
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(reverse("administrator:approve_registration", args=[registration.id]))
         self.assertEqual(len(mail.outbox), 1)
         self.assertNotIn("[URL_OF_YOUR_SITE]", mail.outbox[0].body)
         self.assertIn("/login/", mail.outbox[0].body)

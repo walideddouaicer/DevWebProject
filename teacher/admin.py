@@ -96,3 +96,35 @@ class ModuleAnnouncementAdmin(admin.ModelAdmin):
 
 
 admin.site.register(ModuleAnnouncement, ModuleAnnouncementAdmin)
+
+
+from .models import DirectStudentAssignment, ProjectAssignment, ProjectOption  # noqa: E402
+
+
+class ProjectOptionInline(admin.TabularInline):
+    model = ProjectOption
+    extra = 0
+    fields = (
+        "title",
+        "estimated_difficulty",
+        "is_unique",
+        "max_teams",
+        "current_teams",
+        "is_available",
+    )
+
+
+@admin.register(ProjectAssignment)
+class ProjectAssignmentAdmin(admin.ModelAdmin):
+    list_display = ("title", "module", "teacher", "assignment_type", "status", "deadline")
+    list_filter = ("status", "assignment_type", "is_team_work", "module")
+    search_fields = ("title", "module__code")
+    list_select_related = ("module", "teacher__user")
+    inlines = [ProjectOptionInline]
+
+
+@admin.register(DirectStudentAssignment)
+class DirectStudentAssignmentAdmin(admin.ModelAdmin):
+    list_display = ("student", "assignment", "status", "assigned_at")
+    list_filter = ("status",)
+    list_select_related = ("student__user", "assignment")

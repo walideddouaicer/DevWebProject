@@ -225,6 +225,9 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
+# Django's built-in admin (technical back office). Not at /admin/ to avoid drive-by scans.
+ADMIN_URL = env("ADMIN_URL", "gestion-interne/").strip("/") + "/"
+
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "smart_redirect"
 LOGOUT_REDIRECT_URL = "public:homepage"
@@ -346,6 +349,7 @@ LOGGING = {
     # Tests exercise error paths on purpose; keep their output readable.
     "root": {"handlers": ["console"], "level": "CRITICAL" if TESTING else LOG_LEVEL},
     "loggers": {
+        "axes": {"level": "WARNING"},
         "django.request": {
             "handlers": ["console", "mail_admins"],
             "level": "CRITICAL" if TESTING else "ERROR",

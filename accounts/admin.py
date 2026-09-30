@@ -1,74 +1,25 @@
 import logging
 
-# accounts/admin.py
 from django.contrib import admin, messages
-from django.contrib.auth.models import User
-from django.utils import timezone
+
+# accounts/admin.py
+from django.db import IntegrityError
 
 from .models import PendingRegistration
 
 logger = logging.getLogger(__name__)
 
 
-@admin.action(description="Approve selected registrations")
+@admin.action(description="Approuver les demandes sélectionnées")
 def approve_registrations(modeladmin, request, queryset):
-    """Approve pending registrations and create user accounts"""
-    approved_count = 0
-
+    approved = 0
     for registration in queryset.filter(is_approved=False):
         try:
-            # Create User account - FIXED VERSION
-            user = User.objects.create(
-                username=registration.username,
-                email=registration.email,
-                first_name=registration.first_name,
-                last_name=registration.last_name,
-                is_active=True,
-            )
-            # The password in registration is already hashed, so set it directly
-            user.password = registration.password
-            user.save()
-
-            # Create role-specific profile
-            if registration.role == "student":
-                from student.models import StudentProfile
-
-                StudentProfile.objects.create(
-                    user=user,
-                    student_id=registration.student_id,
-                    year_of_study=registration.year_of_study,
-                    department=registration.department,
-                )
-            elif registration.role == "teacher":
-                from teacher.models import TeacherProfile
-
-                TeacherProfile.objects.create(
-                    user=user,
-                    teacher_id=registration.teacher_id or None,
-                    department=registration.department,
-                )
-
-            # Mark as approved
-            registration.is_approved = True
-            registration.approved_by = request.user
-            registration.approved_at = timezone.now()
-            registration.save()
-
-            # Send approval email
-            from .utils import send_approval_email
-
-            send_approval_email(registration)
-
-            approved_count += 1
-
-        except Exception:
-            logger.exception("Error approving {registration.username}")
-            messages.error(
-                request,
-                "Error approving {registration.username}. Réessayez ; si le problème persiste, contactez l'administration.",
-            )
-
-    messages.success(request, f"Successfully approved {approved_count} registrations.")
+            registration.approve(by=request.user)
+            approved += 1
+        except IntegrityError:
+            messages.error(request, f"{registration.username} : identifiant déjà utilisé.")
+    messages.success(request, f"{approved} demande(s) approuvée(s).")
 
 
 @admin.action(description="Reject selected registrations")

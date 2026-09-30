@@ -33,7 +33,57 @@ class PendingRegistration(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.role}"
 
+    # ============================================
+    # FORMS FOR SIGNUP
+    # ============================================
 
-# ============================================
-# FORMS FOR SIGNUP
-# ============================================
+    def approve(self, by):
+        """Create the account and its role profile atomically, then email the user.
+
+        `by` is the approving User. Raises ValidationError if already approved and
+        IntegrityError if the username/email/ID is taken in the meantime (nothing is
+        left half-created in that case).
+        """
+        from django.core.exceptions import ValidationError
+        from django.db import transaction
+        from django.utils import timezone
+
+        from administrator.models import AdminProfile
+        from student.models import StudentProfile
+        from teacher.models import TeacherProfile
+
+        from .utils import send_approval_email
+
+        if self.is_approved:
+            raise ValidationError("Cette demande a déjà été approuvée.")
+        with transaction.atomic():
+            user = User(
+                username=self.username,
+                email=self.email,
+                first_name=self.first_name,
+                last_name=self.last_name,
+                is_active=True,
+            )
+            user.password = self.password  # already hashed at signup
+            user.save()
+            if self.role == "student":
+                StudentProfile.objects.create(
+                    user=user,
+                    student_id=self.student_id,
+                    year_of_study=self.year_of_study,
+                    department=self.department,
+                )
+            elif self.role == "teacher":
+                TeacherProfile.objects.create(
+                    user=user, teacher_id=self.teacher_id or None, department=self.department
+                )
+            elif self.role == "administrator":
+                AdminProfile.objects.create(
+                    user=user, department=self.department or "Administration"
+                )
+            self.is_approved = True
+            self.approved_by = by
+            self.approved_at = timezone.now()
+            self.save()
+            transaction.on_commit(lambda: send_approval_email(self))
+        return user

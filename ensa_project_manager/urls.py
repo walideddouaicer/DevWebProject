@@ -24,6 +24,10 @@ from django.views.generic import TemplateView
 
 from .views import favicon, security_txt, smart_redirect
 
+admin.site.site_header = "ENSA Project Manager — gestion technique"
+admin.site.site_title = "ENSA Project Manager"
+admin.site.index_title = "Données"
+
 urlpatterns = [
     path(
         "robots.txt",
@@ -36,7 +40,7 @@ urlpatterns = [
         favicon,
         name="favicon",
     ),
-    path("admin/", admin.site.urls),
+    path(settings.ADMIN_URL, admin.site.urls),
     path("", include("public.urls", namespace="public")),
     # Authentication URLs
     path(

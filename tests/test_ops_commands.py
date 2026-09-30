@@ -39,3 +39,22 @@ class CheckEmailTests(TestCase):
     def test_sends_test_message(self):
         call_command("check_email", "ops@example.com", stdout=io.StringIO())
         self.assertEqual(mail.outbox[0].to, ["ops@example.com"])
+
+
+class ApprovalTests(TestCase):
+    def test_administrator_registration_gets_admin_profile(self):
+        from django.contrib.auth.hashers import make_password
+
+        from accounts.models import PendingRegistration
+
+        approver = User.objects.create_user("boss", "b@example.com", "x")
+        registration = PendingRegistration.objects.create(
+            email="new-admin@example.com",
+            first_name="A",
+            last_name="B",
+            username="newadmin",
+            password=make_password("x"),
+            role="administrator",
+        )
+        user = registration.approve(by=approver)
+        self.assertEqual(get_role(user), "admin")

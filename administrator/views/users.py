@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
+from django.db import IntegrityError
 from django.db.models import Count, OuterRef, Q, Subquery
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
@@ -47,71 +48,23 @@ def pending_registrations(request):
 
 @admin_required
 def approve_registration(request, registration_id):
-    """Approve a pending registration"""
-    get_object_or_404(AdminProfile, user=request.user)
-
+    """Approve a pending registration (logic in PendingRegistration.approve)."""
     registration = get_object_or_404(PendingRegistration, id=registration_id, is_approved=False)
-
     if request.method == "POST":
-        from django.db import transaction
-
-        from accounts.utils import send_approval_email
-
         try:
-            # All-or-nothing: if profile creation fails (e.g. duplicate
-            # student_id), no orphan User account is left behind.
-            with transaction.atomic():
-                user = User.objects.create(
-                    username=registration.username,
-                    email=registration.email,
-                    first_name=registration.first_name,
-                    last_name=registration.last_name,
-                    is_active=True,
-                )
-                # Set the already hashed password directly
-                user.password = registration.password
-                user.save()
-
-                # Create appropriate profile
-                if registration.role == "student":
-                    StudentProfile.objects.create(
-                        user=user,
-                        student_id=registration.student_id,
-                        year_of_study=registration.year_of_study,
-                        department=registration.department,
-                    )
-                    profile_type = "étudiant"
-                elif registration.role == "teacher":
-                    TeacherProfile.objects.create(
-                        user=user,
-                        teacher_id=registration.teacher_id or None,
-                        department=registration.department,
-                    )
-                    profile_type = "enseignant"
-                else:
-                    profile_type = registration.get_role_display().lower()
-
-                # Mark as approved
-                registration.is_approved = True
-                registration.approved_by = request.user
-                registration.approved_at = timezone.now()
-                registration.save()
-
-            messages.success(
-                request,
-                f"Compte {profile_type} approuvé pour {registration.first_name} {registration.last_name}",
-            )
-
-            # Notify the user by email (console backend in dev)
-            send_approval_email(registration)
-
-        except Exception:
-            logger.exception("Erreur lors de l'approbation")
+            registration.approve(by=request.user)
+        except IntegrityError:
             messages.error(
                 request,
-                "Erreur lors de l'approbation. Réessayez ; si le problème persiste, contactez l'administration.",
+                f"Impossible d'approuver {registration.username} : le nom d'utilisateur, "
+                "l'e-mail ou l'identifiant est déjà utilisé par un autre compte.",
             )
-
+        else:
+            messages.success(
+                request,
+                f"Compte {registration.get_role_display().lower()} approuvé pour "
+                f"{registration.first_name} {registration.last_name}.",
+            )
     return redirect("administrator:pending_registrations")
 
 
