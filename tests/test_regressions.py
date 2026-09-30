@@ -11,7 +11,6 @@ import os
 import shutil
 import tempfile
 from datetime import timedelta
-from unittest import expectedFailure
 
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -427,7 +426,6 @@ class RegressionTests(Fixtures):
             self.assertEqual(response.status_code, 404, name)
 
     # B20 -----------------------------------------------------------------
-    @expectedFailure
     def test_B20_locale_matches_audience(self):
         self.assertEqual(settings.TIME_ZONE, "Africa/Casablanca")
         self.assertTrue(settings.LANGUAGE_CODE.startswith("fr"))

@@ -4,7 +4,8 @@ MANAGE = $(PY) manage.py
 # Throwaway prod-like env used only for `check --deploy`.
 DEPLOY_ENV = DJANGO_DEBUG=False ENVIRONMENT=prod \
 	DJANGO_SECRET_KEY=check-deploy-only-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJ \
-	DJANGO_ALLOWED_HOSTS=example.com DJANGO_CSRF_TRUSTED_ORIGINS=https://example.com
+	DJANGO_ALLOWED_HOSTS=example.com SITE_URL=https://example.com EMAIL_HOST=smtp.example.com \
+	DATABASE_URL=postgres://u:p@localhost:5432/db
 
 .PHONY: setup run test lint format check coverage screens seed docker-build docker-up
 
