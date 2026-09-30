@@ -24,7 +24,7 @@ ENV PATH="/venv/bin:$PATH" \
     SCHEDULER_STATE_FILE=/data/scheduler.json
 
 RUN groupadd --system app && useradd --system --gid app --home /app app \
-    && mkdir -p /data/media /data/private && chown -R app:app /data
+    && mkdir -p /data/media /data/private /data/state && chown -R app:app /data
 
 COPY --from=deps /venv /venv
 COPY --chown=app:app . .

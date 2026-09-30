@@ -1,0 +1,40 @@
+# Local development with Postgres (PLAN P4.7). The plain `make run` (SQLite) also works.
+#   docker compose up --build        -> http://localhost:8000
+#   docker compose run --rm web manage seed_demo
+services:
+  web:
+    build: .
+    entrypoint: ["docker/entrypoint.sh"]
+    command: ["sh", "-c", "python manage.py wait_for_db && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+    environment:
+      ENVIRONMENT: dev
+      DJANGO_DEBUG: "True"
+      DATABASE_URL: postgres://ensa:ensa@db:5432/ensa
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - devdata:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ensa
+      POSTGRES_USER: ensa
+      POSTGRES_PASSWORD: ensa
+    ports:
+      - "5433:5432"
+    volumes:
+      - devpg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ensa -d ensa"]
+      interval: 3s
+      retries: 20
+
+volumes:
+  devpg:
+  devdata:

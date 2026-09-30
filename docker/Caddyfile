@@ -1,0 +1,26 @@
+# Reverse proxy + automatic HTTPS (PLAN P4.7). DOMAIN comes from the environment;
+# with DOMAIN=localhost Caddy uses its internal CA (local testing).
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Public uploads (avatars, cover images). Validated images only; served sandboxed.
+	handle_path /media/* {
+		root * /srv/media
+		header {
+			X-Content-Type-Options nosniff
+			Content-Security-Policy "sandbox; default-src 'none'; img-src 'self'"
+			Cache-Control "public, max-age=604800"
+		}
+		file_server
+	}
+
+	handle {
+		reverse_proxy web:8000
+	}
+
+	header -Server
+	log {
+		output stdout
+		format console
+	}
+}
